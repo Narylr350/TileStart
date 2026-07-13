@@ -11,9 +11,16 @@ public partial class App : System.Windows.Application
     private WinKeyHook? _winKeyHook;
     private bool _isPaused;
 
+    public App()
+    {
+        DispatcherUnhandledException += (_, args) => DiagnosticLog.Write($"Dispatcher exception: {args.Exception}");
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => DiagnosticLog.Write($"Unhandled exception: {args.ExceptionObject}");
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        DiagnosticLog.Write("Host startup started.");
 
         _singleInstance = new SingleInstanceGuard();
         if (!_singleInstance.IsPrimaryInstance)
@@ -23,7 +30,9 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        DiagnosticLog.Write("Creating main window.");
         MainWindow = new MainWindow();
+        DiagnosticLog.Write("Main window created.");
         _server = new OpenRequestServer((MainWindow)MainWindow, Dispatcher);
         _server.Start();
         _winKeyHook = new WinKeyHook(() => Dispatcher.BeginInvoke(((MainWindow)MainWindow).ShowFromShell));
@@ -34,6 +43,7 @@ public partial class App : System.Windows.Application
                                  SetPaused,
                                  WinKeyHook.OpenNativeStartMenu,
                                  ExitFromTray);
+        DiagnosticLog.Write("Host startup completed.");
     }
 
     private void SetPaused(bool paused)
