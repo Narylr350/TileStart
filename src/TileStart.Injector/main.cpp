@@ -17,7 +17,33 @@ void PrintUsage()
     std::wcout << L"Usage:\n"
                   L"  TileStart.Injector.exe --probe <ShellHook.dll>\n"
                   L"  TileStart.Injector.exe --inject <ShellHook.dll> <explorer-pid>\n"
-                  L"  TileStart.Injector.exe --stop <ShellHook.dll> <explorer-pid>\n";
+                  L"  TileStart.Injector.exe --stop <ShellHook.dll> <explorer-pid>\n"
+                  L"  TileStart.Injector.exe --watch <ShellHook.dll> <host-pid>\n";
+}
+
+std::optional<DWORD> GetWindowsBuildNumber()
+{
+    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    const auto rtl_get_version = reinterpret_cast<LONG(WINAPI*)(OSVERSIONINFOW*)>(GetProcAddress(ntdll, "RtlGetVersion"));
+    if (rtl_get_version == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    OSVERSIONINFOW version{.dwOSVersionInfoSize = sizeof(version)};
+    return rtl_get_version(&version) == 0 ? std::optional{version.dwBuildNumber} : std::nullopt;
+}
+
+std::optional<DWORD> FindShellExplorerProcessId()
+{
+    const HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
+    DWORD process_id = 0;
+    if (taskbar != nullptr)
+    {
+        GetWindowThreadProcessId(taskbar, &process_id);
+    }
+
+    return process_id == 0 ? std::nullopt : std::optional{process_id};
 }
 
 std::optional<std::uintptr_t> FindRemoteModuleBase(DWORD process_id, const std::wstring& dll_path)
@@ -136,6 +162,13 @@ int Probe(const std::filesystem::path& dll_path)
 
 int Inject(const std::filesystem::path& dll_path, DWORD process_id)
 {
+    const auto build = GetWindowsBuildNumber();
+    if (!build || *build != 19045)
+    {
+        std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
+        return 1;
+    }
+
     const std::wstring absolute_path = std::filesystem::absolute(dll_path).wstring();
     const HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
                                        FALSE,
@@ -146,7 +179,7 @@ int Inject(const std::filesystem::path& dll_path, DWORD process_id)
         return 1;
     }
 
-    if (!LoadRemoteLibrary(process, absolute_path))
+    if (!FindRemoteModuleBase(process_id, absolute_path) && !LoadRemoteLibrary(process, absolute_path))
     {
         std::wcerr << std::format(L"Remote LoadLibraryW failed: error={}\n", GetLastError());
         CloseHandle(process);
@@ -178,16 +211,69 @@ int Stop(const std::filesystem::path& dll_path, DWORD process_id)
         return 1;
     }
 
+    const auto remote_module = FindRemoteModuleBase(process_id, absolute_path);
     const auto stop_export = FindRemoteExport(process_id, absolute_path, "TileStartStopHook");
-    const auto result = stop_export ? CallRemoteExport(process, *stop_export) : std::nullopt;
-    CloseHandle(process);
-    if (!result || *result == 0)
+    const auto stopped = stop_export ? CallRemoteExport(process, *stop_export) : std::nullopt;
+    if (!remote_module || !stopped || *stopped == 0)
     {
+        CloseHandle(process);
         std::wcerr << L"ShellHook was not running or could not be stopped.\n";
         return 1;
     }
 
-    std::wcout << std::format(L"Stopped ShellHook in PID {}.\n", process_id);
+    const HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
+    const auto free_library = reinterpret_cast<std::uintptr_t>(GetProcAddress(kernel32, "FreeLibrary"));
+    const auto unloaded = CallRemoteExport(process, free_library, reinterpret_cast<LPVOID>(*remote_module));
+    CloseHandle(process);
+    if (!unloaded || *unloaded == 0)
+    {
+        std::wcerr << L"ShellHook stopped but could not be unloaded.\n";
+        return 1;
+    }
+
+    std::wcout << std::format(L"Stopped and unloaded ShellHook in PID {}.\n", process_id);
+    return 0;
+}
+
+int Watch(const std::filesystem::path& dll_path, DWORD host_process_id)
+{
+    const auto build = GetWindowsBuildNumber();
+    if (!build || *build != 19045)
+    {
+        std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
+        return 1;
+    }
+
+    const HANDLE host_process = OpenProcess(SYNCHRONIZE, FALSE, host_process_id);
+    if (host_process == nullptr)
+    {
+        std::wcerr << std::format(L"Unable to monitor Host process {}: error={}\n", host_process_id, GetLastError());
+        return 1;
+    }
+
+    DWORD injected_process_id = 0;
+    while (WaitForSingleObject(host_process, 0) == WAIT_TIMEOUT)
+    {
+        const auto shell_process_id = FindShellExplorerProcessId();
+        if (!shell_process_id)
+        {
+            injected_process_id = 0;
+        }
+        else if (*shell_process_id != injected_process_id && Inject(dll_path, *shell_process_id) == 0)
+        {
+            injected_process_id = *shell_process_id;
+        }
+
+        Sleep(500);
+    }
+
+    CloseHandle(host_process);
+    const auto shell_process_id = FindShellExplorerProcessId();
+    if (shell_process_id && *shell_process_id == injected_process_id)
+    {
+        Stop(dll_path, *shell_process_id);
+    }
+
     return 0;
 }
 
@@ -228,6 +314,11 @@ int wmain(int argc, wchar_t* argv[])
         if (std::wstring_view(argv[1]) == L"--stop")
         {
             return Stop(argv[2], *process_id);
+        }
+
+        if (std::wstring_view(argv[1]) == L"--watch")
+        {
+            return Watch(argv[2], *process_id);
         }
     }
 
