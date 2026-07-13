@@ -1,0 +1,15 @@
+<Window x:Class="TileStart.Host.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TileStart"
+        Width="500"
+        Height="180"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+    <Grid Background="#202020">
+        <StackPanel Margin="28" VerticalAlignment="Center">
+            <TextBlock Foreground="White" FontSize="28" Text="TileStart Host" />
+            <TextBlock Margin="0,10,0,0" Foreground="#CFCFCF" FontSize="15" Text="已收到 Shell 开始菜单请求。" />
+        </StackPanel>
+    </Grid>
+</Window>

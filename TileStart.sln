@@ -4,6 +4,14 @@ VisualStudioVersion = 18.0.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "TileStart.ShellProbe", "src\TileStart.ShellProbe\TileStart.ShellProbe.vcxproj", "{5F5578B1-C585-4B94-B41B-15911CB684B5}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "TileStart.ShellHook", "src\TileStart.ShellHook\TileStart.ShellHook.vcxproj", "{41F5B22A-72EB-491D-88CB-B0AE38886421}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "TileStart.Injector", "src\TileStart.Injector\TileStart.Injector.vcxproj", "{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TileStart.Host", "src\TileStart.Host\TileStart.Host.csproj", "{74565D41-1A1C-4F46-9695-5B11514BB6EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -14,5 +22,25 @@ Global
 		{5F5578B1-C585-4B94-B41B-15911CB684B5}.Debug|x64.Build.0 = Debug|x64
 		{5F5578B1-C585-4B94-B41B-15911CB684B5}.Release|x64.ActiveCfg = Release|x64
 		{5F5578B1-C585-4B94-B41B-15911CB684B5}.Release|x64.Build.0 = Release|x64
+		{41F5B22A-72EB-491D-88CB-B0AE38886421}.Debug|x64.ActiveCfg = Debug|x64
+		{41F5B22A-72EB-491D-88CB-B0AE38886421}.Debug|x64.Build.0 = Debug|x64
+		{41F5B22A-72EB-491D-88CB-B0AE38886421}.Release|x64.ActiveCfg = Release|x64
+		{41F5B22A-72EB-491D-88CB-B0AE38886421}.Release|x64.Build.0 = Release|x64
+		{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E}.Debug|x64.ActiveCfg = Debug|x64
+		{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E}.Debug|x64.Build.0 = Debug|x64
+		{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E}.Release|x64.ActiveCfg = Release|x64
+		{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E}.Release|x64.Build.0 = Release|x64
+		{74565D41-1A1C-4F46-9695-5B11514BB6EF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{74565D41-1A1C-4F46-9695-5B11514BB6EF}.Debug|x64.Build.0 = Debug|Any CPU
+		{74565D41-1A1C-4F46-9695-5B11514BB6EF}.Release|x64.ActiveCfg = Release|Any CPU
+		{74565D41-1A1C-4F46-9695-5B11514BB6EF}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{41F5B22A-72EB-491D-88CB-B0AE38886421} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{A4D2B01B-2EF7-47C8-99ED-3846FCA53C4E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{74565D41-1A1C-4F46-9695-5B11514BB6EF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
