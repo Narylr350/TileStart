@@ -31,7 +31,16 @@ public sealed class WinKeyHook : IDisposable
 
     public void Start()
     {
-        _hook = SetWindowsHookExW(WhKeyboardLl, _callback, GetModuleHandleW(null), 0);
+        if (_hook == 0)
+        {
+            _hook = SetWindowsHookExW(WhKeyboardLl, _callback, GetModuleHandleW(null), 0);
+        }
+    }
+
+    public static void OpenNativeStartMenu()
+    {
+        InjectKey((ushort)VkLwin, 0, KeyEventExtendedKey);
+        InjectKey((ushort)VkLwin, 0, KeyEventExtendedKey | KeyEventKeyUp);
     }
 
     public void Dispose()
@@ -46,6 +55,10 @@ public sealed class WinKeyHook : IDisposable
             UnhookWindowsHookEx(_hook);
             _hook = 0;
         }
+
+        _winKeyDown = false;
+        _winKeyChord = false;
+        _winVirtualKey = 0;
     }
 
     private nint Callback(int code, nint message, nint data)

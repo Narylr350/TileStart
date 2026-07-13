@@ -18,7 +18,7 @@ void PrintUsage()
                   L"  TileStart.Injector.exe --probe <ShellHook.dll>\n"
                   L"  TileStart.Injector.exe --inject <ShellHook.dll> <explorer-pid>\n"
                   L"  TileStart.Injector.exe --stop <ShellHook.dll> <explorer-pid>\n"
-                  L"  TileStart.Injector.exe --watch <ShellHook.dll> <host-pid>\n";
+                  L"  TileStart.Injector.exe --watch <ShellHook.dll> <host-pid> <stop-event>\n";
 }
 
 std::optional<DWORD> GetWindowsBuildNumber()
@@ -235,7 +235,7 @@ int Stop(const std::filesystem::path& dll_path, DWORD process_id)
     return 0;
 }
 
-int Watch(const std::filesystem::path& dll_path, DWORD host_process_id)
+int Watch(const std::filesystem::path& dll_path, DWORD host_process_id, const wchar_t* stop_event_name)
 {
     const auto build = GetWindowsBuildNumber();
     if (!build || *build != 19045)
@@ -245,14 +245,24 @@ int Watch(const std::filesystem::path& dll_path, DWORD host_process_id)
     }
 
     const HANDLE host_process = OpenProcess(SYNCHRONIZE, FALSE, host_process_id);
-    if (host_process == nullptr)
+    const HANDLE stop_event = OpenEventW(SYNCHRONIZE, FALSE, stop_event_name);
+    if (host_process == nullptr || stop_event == nullptr)
     {
+        if (host_process != nullptr)
+        {
+            CloseHandle(host_process);
+        }
+        if (stop_event != nullptr)
+        {
+            CloseHandle(stop_event);
+        }
         std::wcerr << std::format(L"Unable to monitor Host process {}: error={}\n", host_process_id, GetLastError());
         return 1;
     }
 
+    const HANDLE wait_handles[] = {host_process, stop_event};
     DWORD injected_process_id = 0;
-    while (WaitForSingleObject(host_process, 0) == WAIT_TIMEOUT)
+    while (WaitForMultipleObjects(2, wait_handles, FALSE, 500) == WAIT_TIMEOUT)
     {
         const auto shell_process_id = FindShellExplorerProcessId();
         if (!shell_process_id)
@@ -263,10 +273,9 @@ int Watch(const std::filesystem::path& dll_path, DWORD host_process_id)
         {
             injected_process_id = *shell_process_id;
         }
-
-        Sleep(500);
     }
 
+    CloseHandle(stop_event);
     CloseHandle(host_process);
     const auto shell_process_id = FindShellExplorerProcessId();
     if (shell_process_id && *shell_process_id == injected_process_id)
@@ -297,6 +306,18 @@ int wmain(int argc, wchar_t* argv[])
         return Probe(argv[2]);
     }
 
+    if (argc == 5 && std::wstring_view(argv[1]) == L"--watch")
+    {
+        const auto host_process_id = ParseProcessId(argv[3]);
+        if (!host_process_id)
+        {
+            PrintUsage();
+            return 2;
+        }
+
+        return Watch(argv[2], *host_process_id, argv[4]);
+    }
+
     if (argc == 4)
     {
         const auto process_id = ParseProcessId(argv[3]);
@@ -314,11 +335,6 @@ int wmain(int argc, wchar_t* argv[])
         if (std::wstring_view(argv[1]) == L"--stop")
         {
             return Stop(argv[2], *process_id);
-        }
-
-        if (std::wstring_view(argv[1]) == L"--watch")
-        {
-            return Watch(argv[2], *process_id);
         }
     }
 

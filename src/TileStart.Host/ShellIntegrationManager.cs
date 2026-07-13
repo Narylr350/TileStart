@@ -1,15 +1,28 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace TileStart.Host;
 
 public sealed class ShellIntegrationManager : IDisposable
 {
+    private readonly string _stopEventName = $"Local\\TileStart.Injector.Stop.{Environment.ProcessId}";
+    private readonly EventWaitHandle _stopEvent;
     private Process? _watcher;
+
+    public ShellIntegrationManager()
+    {
+        _stopEvent = new EventWaitHandle(false, EventResetMode.AutoReset, _stopEventName);
+    }
 
     public bool Start()
     {
+        if (_watcher is { HasExited: false })
+        {
+            return true;
+        }
+
         var injectorPath = FindNativeFile("TileStart.Injector.exe");
         var hookPath = FindNativeFile("TileStart.ShellHook.dll");
         if (injectorPath is null || hookPath is null)
@@ -17,6 +30,7 @@ public sealed class ShellIntegrationManager : IDisposable
             return false;
         }
 
+        _stopEvent.Reset();
         var startInfo = new ProcessStartInfo
         {
             FileName = injectorPath,
@@ -27,6 +41,7 @@ public sealed class ShellIntegrationManager : IDisposable
         startInfo.ArgumentList.Add("--watch");
         startInfo.ArgumentList.Add(hookPath);
         startInfo.ArgumentList.Add(Environment.ProcessId.ToString());
+        startInfo.ArgumentList.Add(_stopEventName);
         try
         {
             _watcher = Process.Start(startInfo);
@@ -38,9 +53,31 @@ public sealed class ShellIntegrationManager : IDisposable
         }
     }
 
+    public void Stop()
+    {
+        if (_watcher is null)
+        {
+            return;
+        }
+
+        if (!_watcher.HasExited)
+        {
+            _stopEvent.Set();
+            if (!_watcher.WaitForExit(7000))
+            {
+                _watcher.Kill();
+                _watcher.WaitForExit();
+            }
+        }
+
+        _watcher.Dispose();
+        _watcher = null;
+    }
+
     public void Dispose()
     {
-        _watcher?.Dispose();
+        Stop();
+        _stopEvent.Dispose();
     }
 
     private static string? FindNativeFile(string fileName)

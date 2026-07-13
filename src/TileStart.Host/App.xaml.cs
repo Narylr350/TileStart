@@ -2,15 +2,26 @@ using System.Windows;
 
 namespace TileStart.Host;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private OpenRequestServer? _server;
     private ShellIntegrationManager? _shellIntegration;
+    private SingleInstanceGuard? _singleInstance;
+    private TrayIcon? _trayIcon;
     private WinKeyHook? _winKeyHook;
+    private bool _isPaused;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        _singleInstance = new SingleInstanceGuard();
+        if (!_singleInstance.IsPrimaryInstance)
+        {
+            SingleInstanceGuard.NotifyPrimaryInstance();
+            Shutdown();
+            return;
+        }
 
         MainWindow = new MainWindow();
         _server = new OpenRequestServer((MainWindow)MainWindow, Dispatcher);
@@ -19,16 +30,48 @@ public partial class App : Application
         _winKeyHook.Start();
         _shellIntegration = new ShellIntegrationManager();
         _shellIntegration.Start();
+        _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
+                                 SetPaused,
+                                 WinKeyHook.OpenNativeStartMenu,
+                                 ExitFromTray);
+    }
+
+    private void SetPaused(bool paused)
+    {
+        if (_isPaused == paused)
+        {
+            return;
+        }
+
+        _isPaused = paused;
+        if (paused)
+        {
+            _winKeyHook?.Dispose();
+            _shellIntegration?.Stop();
+        }
+        else
+        {
+            _winKeyHook?.Start();
+            _shellIntegration?.Start();
+        }
+    }
+
+    private void ExitFromTray()
+    {
+        ((MainWindow)MainWindow).AllowClose();
+        Shutdown();
     }
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        _trayIcon?.Dispose();
         _winKeyHook?.Dispose();
         if (_server is not null)
         {
             await _server.StopAsync();
         }
         _shellIntegration?.Dispose();
+        _singleInstance?.Dispose();
 
         base.OnExit(e);
     }
