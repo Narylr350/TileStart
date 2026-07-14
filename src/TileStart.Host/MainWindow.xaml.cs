@@ -321,17 +321,50 @@ public partial class MainWindow : Window
         }
         else
         {
-            tile.Name = dialog.TileName;
-            tile.Arguments = dialog.Arguments;
-            tile.WorkingDirectory = dialog.WorkingDirectory;
-            tile.IconPath = dialog.IconPath;
-            tile.RunAsAdministrator = dialog.RunAsAdministrator;
-            tile.Size = dialog.TileSize;
-            tile.Icon = ShellIconLoader.Load(string.IsNullOrWhiteSpace(tile.IconPath) ? tile.LaunchTarget : tile.IconPath);
+            ApplyTileSettings(tile, dialog);
         }
 
         TileLayoutEngine.Normalize(group);
         TileLayoutStore.Save(TileLayout);
+    }
+
+    private void AddCommandTile_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = new TileItem
+        {
+            Name = "新磁贴",
+            TargetType = TileTargetType.Command,
+            Size = TileSize.Medium,
+        };
+        var dialog = new TileSettingsWindow(tile, true) { Owner = this };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        ApplyTileSettings(tile, dialog);
+        var group = TileLayout.Groups.LastOrDefault();
+        if (group is null)
+        {
+            group = new TileGroup();
+            TileLayout.Groups.Add(group);
+        }
+
+        var location = TileLayoutEngine.FindFirstAvailable(group, tile);
+        TileLayoutEngine.Add(group, tile, location.Column, location.Row);
+        TileLayoutStore.Save(TileLayout);
+    }
+
+    private static void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
+    {
+        tile.Name = dialog.TileName;
+        tile.LaunchTarget = dialog.LaunchTarget;
+        tile.Arguments = dialog.Arguments;
+        tile.WorkingDirectory = dialog.WorkingDirectory;
+        tile.IconPath = dialog.IconPath;
+        tile.RunAsAdministrator = dialog.RunAsAdministrator;
+        tile.Size = dialog.TileSize;
+        tile.Icon = ShellIconLoader.Load(string.IsNullOrWhiteSpace(tile.IconPath) ? tile.LaunchTarget : tile.IconPath);
     }
 
     private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

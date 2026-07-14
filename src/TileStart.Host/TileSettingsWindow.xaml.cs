@@ -9,18 +9,22 @@ namespace TileStart.Host;
 
 public partial class TileSettingsWindow : Window
 {
-    public TileSettingsWindow(TileItem tile)
+    public TileSettingsWindow(TileItem tile, bool isNew = false)
     {
         InitializeComponent();
         NameBox.Text = tile.Name;
+        TargetBox.Text = tile.LaunchTarget;
         ArgumentsBox.Text = tile.Arguments;
         WorkingDirectoryBox.Text = tile.WorkingDirectory;
         IconPathBox.Text = tile.IconPath;
         SizeBox.SelectedValue = tile.Size.ToString();
         RunAsAdministratorBox.IsChecked = tile.RunAsAdministrator;
+        TargetPanel.Visibility = isNew || tile.TargetType == TileTargetType.Command ? Visibility.Visible : Visibility.Collapsed;
+        UnpinButton.Visibility = isNew ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public string TileName => NameBox.Text.Trim();
+    public string LaunchTarget => TargetBox.Text.Trim();
     public string Arguments => ArgumentsBox.Text.Trim();
     public string WorkingDirectory => WorkingDirectoryBox.Text.Trim();
     public string IconPath => IconPathBox.Text.Trim();
@@ -59,6 +63,12 @@ public partial class TileSettingsWindow : Window
         if (string.IsNullOrWhiteSpace(TileName))
         {
             MessageBox.Show(this, "磁贴名称不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (TargetPanel.Visibility == Visibility.Visible && string.IsNullOrWhiteSpace(LaunchTarget))
+        {
+            MessageBox.Show(this, "命令或可执行文件不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 

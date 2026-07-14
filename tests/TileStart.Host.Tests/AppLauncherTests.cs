@@ -26,6 +26,24 @@ public sealed class AppLauncherTests
     }
 
     [Fact]
+    public void CreateStartInfoSupportsCustomCommand()
+    {
+        var tile = new TileItem
+        {
+            Name = "命令提示符",
+            TargetType = TileTargetType.Command,
+            LaunchTarget = "cmd.exe",
+            Arguments = "/c echo TileStart",
+        };
+
+        var startInfo = AppLauncher.CreateStartInfo(tile);
+
+        Assert.Equal("cmd.exe", startInfo.FileName);
+        Assert.Equal("/c echo TileStart", startInfo.Arguments);
+        Assert.True(startInfo.UseShellExecute);
+    }
+
+    [Fact]
     public void CreateStartInfoExecutesPowerShellScriptWithConfiguredArguments()
     {
         var tile = new TileItem

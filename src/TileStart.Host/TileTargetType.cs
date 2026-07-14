@@ -7,4 +7,5 @@ public enum TileTargetType
     Folder,
     Script,
     Url,
+    Command,
 }

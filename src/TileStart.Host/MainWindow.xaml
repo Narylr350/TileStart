@@ -200,74 +200,82 @@
         </Grid>
 
         <Border Grid.Column="2" BorderBrush="#2B2B2B" BorderThickness="1,0,0,0">
-            <ScrollViewer Margin="0,48,0,0"
-                          HorizontalScrollBarVisibility="Hidden"
-                          VerticalScrollBarVisibility="Disabled">
-                <ItemsControl Margin="0,0,18,18" ItemsSource="{Binding TileLayout.Groups}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:TileGroup}">
-                            <StackPanel Width="416" Margin="0,0,16,0">
-                                <TextBlock Height="24" Margin="4,0,0,0" FontSize="14" Text="{Binding Name}" />
-                                <ItemsControl Width="416"
-                                              Height="{Binding PixelHeight}"
-                                              AllowDrop="True"
-                                              ItemsSource="{Binding Tiles}"
-                                              Tag="{Binding}"
-                                              DragOver="TileGroup_DragOver"
-                                              Drop="TileGroup_Drop">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemContainerStyle>
-                                        <Style TargetType="ContentPresenter">
-                                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                            <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                        </Style>
-                                    </ItemsControl.ItemContainerStyle>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type local:TileItem}">
-                                            <Button Width="{Binding PixelWidth}"
-                                                    Height="{Binding PixelHeight}"
-                                                    Padding="8"
-                                                    Style="{StaticResource TileStyle}"
-                                                    Tag="{Binding}"
-                                                    Click="TileButton_Click"
-                                                    PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown"
-                                                    PreviewMouseMove="TileButton_PreviewMouseMove">
-                                                <Button.ContextMenu>
-                                                    <ContextMenu>
-                                                        <MenuItem Header="磁贴设置…" Click="TileSettings_Click" />
-                                                    </ContextMenu>
-                                                </Button.ContextMenu>
-                                                <Grid>
-                                                    <TextBlock HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="24"
-                                                               FontWeight="SemiBold"
-                                                               Text="{Binding Initial}" />
-                                                    <Image Width="36" Height="36" Source="{Binding Icon}" Stretch="Uniform" />
-                                                    <TextBlock VerticalAlignment="Bottom"
-                                                               FontSize="12"
-                                                               Text="{Binding Name}"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               TextWrapping="Wrap" />
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+            <Grid>
+                <Button Margin="16,10,0,0"
+                        Padding="12,5"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Content="＋ 添加磁贴"
+                        Click="AddCommandTile_Click" />
+                <ScrollViewer Margin="0,48,0,0"
+                              HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl Margin="0,0,18,18" ItemsSource="{Binding TileLayout.Groups}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:TileGroup}">
+                                <StackPanel Width="416" Margin="0,0,16,0">
+                                    <TextBlock Height="24" Margin="4,0,0,0" FontSize="14" Text="{Binding Name}" />
+                                    <ItemsControl Width="416"
+                                                  Height="{Binding PixelHeight}"
+                                                  AllowDrop="True"
+                                                  ItemsSource="{Binding Tiles}"
+                                                  Tag="{Binding}"
+                                                  DragOver="TileGroup_DragOver"
+                                                  Drop="TileGroup_Drop">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                                <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type local:TileItem}">
+                                                <Button Width="{Binding PixelWidth}"
+                                                        Height="{Binding PixelHeight}"
+                                                        Padding="8"
+                                                        Style="{StaticResource TileStyle}"
+                                                        Tag="{Binding}"
+                                                        Click="TileButton_Click"
+                                                        PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown"
+                                                        PreviewMouseMove="TileButton_PreviewMouseMove">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="磁贴设置…" Click="TileSettings_Click" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                    <Grid>
+                                                        <TextBlock HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="24"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Initial}" />
+                                                        <Image Width="36" Height="36" Source="{Binding Icon}" Stretch="Uniform" />
+                                                        <TextBlock VerticalAlignment="Bottom"
+                                                                   FontSize="12"
+                                                                   Text="{Binding Name}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   TextWrapping="Wrap" />
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
         <Border Height="7"
