@@ -7,10 +7,6 @@ namespace TileStart.Host;
 
 public sealed class TileItem : INotifyPropertyChanged
 {
-    public const double CellSize = 48;
-    public const double Gap = 4;
-    public const double CellPitch = CellSize + Gap;
-
     private int _column;
     private int _row;
     private TileSize _size;
@@ -88,16 +84,16 @@ public sealed class TileItem : INotifyPropertyChanged
     }
 
     [JsonIgnore]
-    public double Left => Column * CellPitch;
+    public double Left => Win10TileMetrics.Left(Column);
 
     [JsonIgnore]
-    public double Top => Row * CellPitch;
+    public double Top => Win10TileMetrics.Top(Row);
 
     [JsonIgnore]
-    public double PixelWidth => Size.ColumnSpan() * CellPitch - Gap;
+    public double PixelWidth => Win10TileMetrics.Width(Size);
 
     [JsonIgnore]
-    public double PixelHeight => Size.RowSpan() * CellPitch - Gap;
+    public double PixelHeight => Win10TileMetrics.Height(Size);
 
     [JsonIgnore]
     public string Initial => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[0].ToString().ToUpperInvariant();

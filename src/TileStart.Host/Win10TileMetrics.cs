@@ -1,0 +1,23 @@
+namespace TileStart.Host;
+
+public static class Win10TileMetrics
+{
+    public const int GroupColumns = 8;
+    public const double CellSize = 48;
+    public const double Gap = 4;
+    public const double CellPitch = CellSize + Gap;
+    public const double GroupWidth = GroupColumns * CellPitch - Gap;
+
+    public static double Width(TileSize size) => size.ColumnSpan() * CellPitch - Gap;
+
+    public static double Height(TileSize size) => size.RowSpan() * CellPitch - Gap;
+
+    public static double Left(int column) => column * CellPitch;
+
+    public static double Top(int row) => row * CellPitch;
+
+    public static Win10TileBounds Bounds(TileSize size, int column, int row) =>
+        new(Left(column), Top(row), Width(size), Height(size));
+}
+
+public readonly record struct Win10TileBounds(double Left, double Top, double Width, double Height);

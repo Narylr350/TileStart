@@ -66,7 +66,7 @@ public static class DefaultTileLayout
 
             if (group.Tiles.Count > 0)
             {
-                TileLayoutEngine.Normalize(group);
+                Win10GroupLayout.Normalize(group);
                 layout.Groups.Add(group);
             }
         }
@@ -85,7 +85,7 @@ public static class DefaultTileLayout
                 });
             }
 
-            TileLayoutEngine.Normalize(group);
+            Win10GroupLayout.Normalize(group);
             layout.Groups.Add(group);
         }
 

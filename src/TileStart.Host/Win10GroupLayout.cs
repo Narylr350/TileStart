@@ -1,6 +1,6 @@
 namespace TileStart.Host;
 
-public static class TileLayoutEngine
+public static class Win10GroupLayout
 {
     public static void Normalize(TileGroup group)
     {
@@ -24,7 +24,7 @@ public static class TileLayoutEngine
 
     public static bool Add(TileGroup target, TileItem tile, int column, int row)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > TileGroup.Columns)
+        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
         {
             return false;
         }
@@ -41,7 +41,7 @@ public static class TileLayoutEngine
         if (!source.Tiles.Contains(tile)
             || column < 0
             || row < 0
-            || column + tile.Size.ColumnSpan() > TileGroup.Columns)
+            || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
         {
             return false;
         }
@@ -61,7 +61,7 @@ public static class TileLayoutEngine
 
     public static bool TryMove(TileGroup group, TileItem tile, int column, int row)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > TileGroup.Columns)
+        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
         {
             return false;
         }
@@ -92,7 +92,7 @@ public static class TileLayoutEngine
     {
         for (var row = 0; ; row++)
         {
-            for (var column = 0; column <= TileGroup.Columns - tile.Size.ColumnSpan(); column++)
+            for (var column = 0; column <= Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan(); column++)
             {
                 if (CanFit(tile, column, row, occupied))
                 {
@@ -104,7 +104,7 @@ public static class TileLayoutEngine
 
     private static bool CanFit(TileItem tile, int column, int row, HashSet<(int Column, int Row)> occupied)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > TileGroup.Columns)
+        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
         {
             return false;
         }

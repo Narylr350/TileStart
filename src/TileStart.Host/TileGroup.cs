@@ -8,8 +8,7 @@ namespace TileStart.Host;
 
 public sealed class TileGroup : INotifyPropertyChanged
 {
-    public const int Columns = 8;
-    public const double PixelWidth = Columns * TileItem.CellPitch - TileItem.Gap;
+    public const double PixelWidth = Win10TileMetrics.GroupWidth;
 
     private readonly HashSet<TileItem> _trackedTiles = [];
     private ObservableCollection<TileItem> _tiles = [];
@@ -42,7 +41,7 @@ public sealed class TileGroup : INotifyPropertyChanged
         get
         {
             var rows = Tiles.Count == 0 ? 1 : Tiles.Max(tile => tile.Row + tile.Size.RowSpan());
-            return rows * TileItem.CellPitch - TileItem.Gap;
+            return rows * Win10TileMetrics.CellPitch - Win10TileMetrics.Gap;
         }
     }
 

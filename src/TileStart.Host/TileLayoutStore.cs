@@ -63,7 +63,7 @@ public static class TileLayoutStore
 
         foreach (var group in layout.Groups)
         {
-            TileLayoutEngine.Normalize(group);
+            Win10GroupLayout.Normalize(group);
         }
 
         return layout;

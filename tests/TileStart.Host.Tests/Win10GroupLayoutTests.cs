@@ -2,7 +2,7 @@ using TileStart.Host;
 
 namespace TileStart.Host.Tests;
 
-public sealed class TileLayoutEngineTests
+public sealed class Win10GroupLayoutTests
 {
     [Theory]
     [InlineData(TileSize.Small, 1, 1, 48, 48)]
@@ -19,6 +19,47 @@ public sealed class TileLayoutEngineTests
         Assert.Equal(height, tile.PixelHeight);
     }
 
+
+    [Fact]
+    public void NativeWin10LayoutUsesEightColumnMetricsWithoutOverlap()
+    {
+        var path = System.IO.Path.Combine(AppContext.BaseDirectory, "TestData", "native-layout.xml");
+        var document = System.Xml.Linq.XDocument.Load(path);
+        var layoutOptions = document.Descendants().Single(element => element.Name.LocalName == "LayoutOptions");
+        Assert.Equal(Win10TileMetrics.GroupColumns, (int)layoutOptions.Attribute("StartTileGroupCellWidth")!);
+        Assert.Equal(412, Win10TileMetrics.GroupWidth);
+
+        foreach (var groupElement in document.Descendants().Where(element => element.Name.LocalName == "Group"))
+        {
+            var tiles = groupElement.Elements()
+                .Select(element => new
+                {
+                    Size = ParseNativeSize((string)element.Attribute("Size")!),
+                    Column = (int)element.Attribute("Column")!,
+                    Row = (int)element.Attribute("Row")!,
+                })
+                .ToArray();
+
+            for (var index = 0; index < tiles.Length; index++)
+            {
+                var tile = tiles[index];
+                Assert.InRange(tile.Column, 0, Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan());
+                Assert.True(tile.Row >= 0);
+
+                var bounds = Win10TileMetrics.Bounds(tile.Size, tile.Column, tile.Row);
+                Assert.Equal(tile.Column * Win10TileMetrics.CellPitch, bounds.Left);
+                Assert.Equal(tile.Row * Win10TileMetrics.CellPitch, bounds.Top);
+                Assert.True(bounds.Left + bounds.Width <= Win10TileMetrics.GroupWidth);
+
+                for (var otherIndex = index + 1; otherIndex < tiles.Length; otherIndex++)
+                {
+                    Assert.False(Overlaps(tile.Size, tile.Column, tile.Row,
+                                          tiles[otherIndex].Size, tiles[otherIndex].Column, tiles[otherIndex].Row));
+                }
+            }
+        }
+    }
+
     [Fact]
     public void NormalizeMovesCollidingAndOverflowingTilesToFirstAvailableCells()
     {
@@ -27,7 +68,7 @@ public sealed class TileLayoutEngineTests
         var overflowing = Tile(TileSize.Large, 7, 0);
         var group = new TileGroup { Tiles = [first, colliding, overflowing] };
 
-        TileLayoutEngine.Normalize(group);
+        Win10GroupLayout.Normalize(group);
 
         Assert.Equal((0, 0), (first.Column, first.Row));
         Assert.Equal((2, 0), (colliding.Column, colliding.Row));
@@ -42,9 +83,9 @@ public sealed class TileLayoutEngineTests
         var moving = Tile(TileSize.Medium, 2, 0);
         var group = new TileGroup { Tiles = [stationary, moving] };
 
-        Assert.False(TileLayoutEngine.TryMove(group, moving, 1, 0));
-        Assert.False(TileLayoutEngine.TryMove(group, moving, 7, 0));
-        Assert.True(TileLayoutEngine.TryMove(group, moving, 4, 1));
+        Assert.False(Win10GroupLayout.TryMove(group, moving, 1, 0));
+        Assert.False(Win10GroupLayout.TryMove(group, moving, 7, 0));
+        Assert.True(Win10GroupLayout.TryMove(group, moving, 4, 1));
         Assert.Equal((4, 1), (moving.Column, moving.Row));
     }
 
@@ -55,7 +96,7 @@ public sealed class TileLayoutEngineTests
         var added = Tile(TileSize.Wide, 0, 0);
         var group = new TileGroup { Tiles = [stationary] };
 
-        Assert.True(TileLayoutEngine.Add(group, added, 0, 0));
+        Assert.True(Win10GroupLayout.Add(group, added, 0, 0));
 
         Assert.Equal((0, 0), (added.Column, added.Row));
         Assert.Equal((4, 0), (stationary.Column, stationary.Row));
@@ -69,7 +110,7 @@ public sealed class TileLayoutEngineTests
         var stationary = Tile(TileSize.Medium, 0, 0);
         var group = new TileGroup { Tiles = [stationary, moving] };
 
-        Assert.True(TileLayoutEngine.Move(group, group, moving, 0, 0));
+        Assert.True(Win10GroupLayout.Move(group, group, moving, 0, 0));
 
         Assert.Equal((0, 0), (moving.Column, moving.Row));
         Assert.Equal((2, 0), (stationary.Column, stationary.Row));
@@ -84,7 +125,7 @@ public sealed class TileLayoutEngineTests
         var stationary = Tile(TileSize.Medium, 0, 0);
         var target = new TileGroup { Tiles = [stationary] };
 
-        Assert.True(TileLayoutEngine.Move(source, target, moving, 0, 0));
+        Assert.True(Win10GroupLayout.Move(source, target, moving, 0, 0));
 
         Assert.Empty(source.Tiles);
         Assert.Equal((0, 0), (moving.Column, moving.Row));
@@ -99,7 +140,7 @@ public sealed class TileLayoutEngineTests
         var source = new TileGroup { Tiles = [moving] };
         var target = new TileGroup();
 
-        Assert.False(TileLayoutEngine.Move(source, target, moving, 7, 0));
+        Assert.False(Win10GroupLayout.Move(source, target, moving, 7, 0));
 
         Assert.Same(moving, Assert.Single(source.Tiles));
         Assert.Empty(target.Tiles);
@@ -150,6 +191,27 @@ public sealed class TileLayoutEngineTests
         Assert.Equal(TileSize.Wide, tile.Size);
         Assert.Equal((2, 3), (tile.Column, tile.Row));
     }
+
+    private static TileSize ParseNativeSize(string size) => size switch
+    {
+        "1x1" => TileSize.Small,
+        "2x2" => TileSize.Medium,
+        "4x2" => TileSize.Wide,
+        "4x4" => TileSize.Large,
+        _ => throw new ArgumentOutOfRangeException(nameof(size), size, null),
+    };
+
+    private static bool Overlaps(
+        TileSize firstSize,
+        int firstColumn,
+        int firstRow,
+        TileSize secondSize,
+        int secondColumn,
+        int secondRow) =>
+        firstColumn < secondColumn + secondSize.ColumnSpan()
+        && firstColumn + firstSize.ColumnSpan() > secondColumn
+        && firstRow < secondRow + secondSize.RowSpan()
+        && firstRow + firstSize.RowSpan() > secondRow;
 
     private static TileItem Tile(TileSize size, int column, int row)
     {

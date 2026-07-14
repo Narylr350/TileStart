@@ -324,7 +324,7 @@ public partial class MainWindow : Window
             ApplyTileSettings(tile, dialog);
         }
 
-        TileLayoutEngine.Normalize(group);
+        Win10GroupLayout.Normalize(group);
         TileLayoutStore.Save(TileLayout);
     }
 
@@ -350,8 +350,8 @@ public partial class MainWindow : Window
             TileLayout.Groups.Add(group);
         }
 
-        var location = TileLayoutEngine.FindFirstAvailable(group, tile);
-        TileLayoutEngine.Add(group, tile, location.Column, location.Row);
+        var location = Win10GroupLayout.FindFirstAvailable(group, tile);
+        Win10GroupLayout.Add(group, tile, location.Column, location.Row);
         TileLayoutStore.Save(TileLayout);
     }
 
@@ -414,9 +414,9 @@ public partial class MainWindow : Window
         var position = e.GetPosition(itemsControl);
         if (e.Data.GetData(typeof(TileItem)) is TileItem tile && _dragSource is not null)
         {
-            var column = Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan());
-            var row = Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch));
-            if (TileLayoutEngine.Move(_dragSource, target, tile, column, row))
+            var column = Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0, Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan());
+            var row = Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch));
+            if (Win10GroupLayout.Move(_dragSource, target, tile, column, row))
             {
                 TileLayoutStore.Save(TileLayout);
             }
@@ -441,10 +441,10 @@ public partial class MainWindow : Window
             }
 
             (int Column, int Row) location = added
-                ? TileLayoutEngine.FindFirstAvailable(target, tile)
-                : (Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan()),
-                   Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch)));
-            added |= TileLayoutEngine.Add(target, tile, location.Column, location.Row);
+                ? Win10GroupLayout.FindFirstAvailable(target, tile)
+                : (Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0, Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan()),
+                   Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch)));
+            added |= Win10GroupLayout.Add(target, tile, location.Column, location.Row);
         }
 
         if (added)
