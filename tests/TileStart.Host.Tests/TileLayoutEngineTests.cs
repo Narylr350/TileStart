@@ -117,7 +117,19 @@ public sealed class TileLayoutEngineTests
                     Name = "工具",
                     Tiles =
                     [
-                        new TileItem { Name = "终端", LaunchTarget = "wt.exe", TargetType = TileTargetType.Application, Size = TileSize.Wide, Column = 2, Row = 3 },
+                        new TileItem
+                        {
+                            Name = "终端",
+                            LaunchTarget = "wt.exe",
+                            TargetType = TileTargetType.Application,
+                            Arguments = "-w 0",
+                            WorkingDirectory = @"C:\Work",
+                            IconPath = @"C:\Icons\terminal.ico",
+                            RunAsAdministrator = true,
+                            Size = TileSize.Wide,
+                            Column = 2,
+                            Row = 3,
+                        },
                     ],
                 },
             ],
@@ -131,6 +143,10 @@ public sealed class TileLayoutEngineTests
         Assert.Equal("终端", tile.Name);
         Assert.Equal("wt.exe", tile.LaunchTarget);
         Assert.Equal(TileTargetType.Application, tile.TargetType);
+        Assert.Equal("-w 0", tile.Arguments);
+        Assert.Equal(@"C:\Work", tile.WorkingDirectory);
+        Assert.Equal(@"C:\Icons\terminal.ico", tile.IconPath);
+        Assert.True(tile.RunAsAdministrator);
         Assert.Equal(TileSize.Wide, tile.Size);
         Assert.Equal((2, 3), (tile.Column, tile.Row));
     }

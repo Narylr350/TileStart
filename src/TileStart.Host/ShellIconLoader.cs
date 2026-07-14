@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
@@ -11,9 +12,16 @@ public static class ShellIconLoader
     private const uint ShgfiIcon = 0x000000100;
     private const uint ShgfiLargeIcon = 0x000000000;
     private const uint ShgfiPidl = 0x000000008;
+    private static readonly string[] ImageExtensions = [".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png"];
 
     public static ImageSource? Load(string displayName)
     {
+        var loadedImage = LoadImageFile(displayName);
+        if (loadedImage is not null)
+        {
+            return loadedImage;
+        }
+
         nint itemIdList = 0;
         try
         {
@@ -45,6 +53,30 @@ public static class ShellIconLoader
             {
                 Marshal.FreeCoTaskMem(itemIdList);
             }
+        }
+    }
+
+    private static ImageSource? LoadImageFile(string path)
+    {
+        if (!File.Exists(path) || !ImageExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        try
+        {
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.DecodePixelWidth = 64;
+            image.UriSource = new Uri(path, UriKind.Absolute);
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
+        {
+            return null;
         }
     }
 

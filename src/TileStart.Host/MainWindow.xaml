@@ -241,6 +241,11 @@
                                                     Click="TileButton_Click"
                                                     PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown"
                                                     PreviewMouseMove="TileButton_PreviewMouseMove">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="磁贴设置…" Click="TileSettings_Click" />
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
                                                 <Grid>
                                                     <TextBlock HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"

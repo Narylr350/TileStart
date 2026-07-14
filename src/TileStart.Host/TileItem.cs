@@ -14,12 +14,33 @@ public sealed class TileItem : INotifyPropertyChanged
     private int _column;
     private int _row;
     private TileSize _size;
+    private string _name = string.Empty;
     private ImageSource? _icon;
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = string.Empty;
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (_name == value)
+            {
+                return;
+            }
+
+            _name = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Initial));
+        }
+    }
+
     public string LaunchTarget { get; set; } = string.Empty;
     public TileTargetType TargetType { get; set; }
+    public string Arguments { get; set; } = string.Empty;
+    public string WorkingDirectory { get; set; } = string.Empty;
+    public string IconPath { get; set; } = string.Empty;
+    public bool RunAsAdministrator { get; set; }
 
     public TileSize Size
     {

@@ -6,10 +6,12 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Button = System.Windows.Controls.Button;
+using ContextMenu = System.Windows.Controls.ContextMenu;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
 using ItemsControl = System.Windows.Controls.ItemsControl;
+using MenuItem = System.Windows.Controls.MenuItem;
 
 namespace TileStart.Host;
 
@@ -287,10 +289,49 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (sender is Button { Tag: TileItem tile } && AppLauncher.Launch(tile.Name, tile.LaunchTarget))
+        if (sender is Button { Tag: TileItem tile } && AppLauncher.Launch(tile))
         {
             Hide();
         }
+    }
+
+    private void TileSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem menuItem
+            || ItemsControl.ItemsControlFromItemContainer(menuItem) is not ContextMenu { PlacementTarget: Button { Tag: TileItem tile } })
+        {
+            return;
+        }
+
+        var group = TileLayout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));
+        if (group is null)
+        {
+            return;
+        }
+
+        var dialog = new TileSettingsWindow(tile) { Owner = this };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        if (dialog.ShouldUnpin)
+        {
+            group.Tiles.Remove(tile);
+        }
+        else
+        {
+            tile.Name = dialog.TileName;
+            tile.Arguments = dialog.Arguments;
+            tile.WorkingDirectory = dialog.WorkingDirectory;
+            tile.IconPath = dialog.IconPath;
+            tile.RunAsAdministrator = dialog.RunAsAdministrator;
+            tile.Size = dialog.TileSize;
+            tile.Icon = ShellIconLoader.Load(string.IsNullOrWhiteSpace(tile.IconPath) ? tile.LaunchTarget : tile.IconPath);
+        }
+
+        TileLayoutEngine.Normalize(group);
+        TileLayoutStore.Save(TileLayout);
     }
 
     private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -386,9 +427,17 @@ public partial class MainWindow : Window
             .ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
         foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
         {
-            if (icons.TryGetValue(tile.LaunchTarget, out var icon))
+            if (!string.IsNullOrWhiteSpace(tile.IconPath))
+            {
+                tile.Icon = ShellIconLoader.Load(tile.IconPath);
+            }
+            else if (icons.TryGetValue(tile.LaunchTarget, out var icon))
             {
                 tile.Icon = icon;
+            }
+            else
+            {
+                tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
             }
         }
     }
