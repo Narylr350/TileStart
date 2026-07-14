@@ -461,4 +461,89 @@ Microsoft Learn 对 Windows 10 Start layout 的说明确认：
 
 当前功能底座仍可保留：扫描、启动、持久化、Hook、拖入解析和网格占位模型都有价值；但主界面视觉树、分组布局、交互状态和设置入口需要按原版证据重做。
 
-下一步在正式 UI 重做前，优先完成 **`spike/native-startui-inspection` 原版视觉树探针**。它能直接回答圆角、padding、控件层级、布局尺寸和动态状态，不再继续凭截图猜测。
+下一步转入 **`research/startui-layout-reconstruction` 源码重建研究**：以匹配的公开 PDB、反编译结果和运行时 Visual Tree 为证据，先恢复 `TileMetrics`、`GridMetrics` 与分组布局算法，再以 TileStart 自有源码实现。原版视觉树探针保留为这条证据链中的辅助工具，不再作为独立产品架构。
+
+## 16. 源码重建路线确认
+
+用户已确认后续不以长期修改系统 `StartUI.dll` 为产品架构，而是：
+
+> 使用原版二进制、公开符号和运行时行为逆向关键算法，再把算法以 TileStart 自有源码重新实现。
+
+这不等于试图完整反编译并重新编译 8.5 MB 的 `StartUI.dll`。首批只重建布局、窗口几何和拖动状态机，保留现有扫描、启动、配置和 Shell 接管底座。
+
+### 16.1 网上已有的方法与工具
+
+没有找到微软公开的 Win10 `StartUI` 原始源码，也没有找到第三方完整重建仓库。可用资料是一条由官方接口和开源实战组成的逆向链：
+
+1. **Microsoft Symbol Server**
+   - <https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/microsoft-public-symbols>
+   - 可根据 PE 的 PDB 名称、GUID 和 Age 下载与当前二进制精确匹配的公开 PDB。
+2. **WinDbg 符号和源码路径**
+   - <https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path>
+   - 用于加载符号、设置断点、检查调用栈和对象状态。
+3. **Ghidra PDB Analyzer**
+   - <https://github.com/NationalSecurityAgency/ghidra>
+   - 可将 PDB 中的函数名和类型信息应用到反编译数据库；原生 PDB reader 支持微软 PDB。
+4. **PDBHeaderGenerator**
+   - <https://github.com/Archengius/PDBHeaderGenerator>
+   - 可从 PDB 的类型信息生成 C++ 头文件骨架，适合恢复私有类的字段、继承关系和枚举。
+5. **UWPSpy**
+   - <https://github.com/m417z/UWPSpy>
+   - 使用微软 XAML Diagnostics API 注入 UWP/系统 XAML 进程，查看和实时修改 Visual Tree、属性和 Visual State。
+6. **ExplorerPatcher**
+   - <https://github.com/valinet/ExplorerPatcher>
+   - 展示了 Microsoft 符号下载、StartUI/StartDocked 私有函数 Hook、VisualTreeHelper 遍历和跨 build 模式匹配的完整实战。
+7. **Windhawk Mods**
+   - <https://github.com/ramensoftware/windhawk-mods>
+   - 大量系统进程定向 Hook 示例，可参考 `StartMenuExperienceHost.exe` 的模块过滤、符号 Hook 和最小补丁结构。
+
+没有一篇教程能把 `StartUI.dll` 自动还原成微软原始工程；实际流程是“PDB 命名 + 反编译 + 运行时 Visual Tree + 行为测试 + 人工重写”。
+
+### 16.2 当前机器首次试验
+
+2026-07-15 使用 UWPSpy v1.5.4 对当前 Win10 19045 的 `StartMenuExperienceHost.exe` 做了临时试验：
+
+- 官方发布包：`UWPSpy.zip`
+- 发布包 SHA-256：`486DF873E865C320112774267D52FE0D6BEFE1E857680BF4336FBBD8F8F39826`
+- 目标进程：`StartMenuExperienceHost.exe`
+- 目标框架：UWP / `Windows.UI.Xaml`
+- `InitializeXamlDiagnosticsEx` 调用结果：`S_OK (0x00000000)`
+- 进程模块列表确认 `UWPSpy.dll` 已加载。
+- 本次未出现 UWPSpy Inspector 顶层窗口，尚未导出 Visual Tree，因此不能声称运行时控件检查已经成功。
+- 结束后终止旧 Start Host，系统已重新创建新的 `StartMenuExperienceHost.exe`；新进程未加载 `UWPSpy.dll`。
+
+该结果证明当前系统允许通过 XAML Diagnostics 连接并加载诊断 TAP，但 Inspector 窗口/Visual Tree 回调仍需单独排查。下一次应从 VisualDiagConnection 选择、注入时机和工具日志三个方向定位，而不是重复盲试。
+
+### 16.3 当前 StartUI 公开 PDB
+
+根据当前 `StartUI.dll` 的 RSDS 记录：
+
+- PDB：`StartUI.pdb`
+- GUID：`7B21D1C1-9038-D36F-DA43-F1BBFF31EC03`
+- Age：`1`
+- Symbol Server key：`7B21D1C19038D36FDA43F1BBFF31EC031`
+
+已从 Microsoft Symbol Server 成功下载精确匹配的 PDB到 Windows 临时目录：
+
+- 大小：`39,399,424` bytes
+- SHA-256：`BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404`
+
+PDB 不提交仓库。下一步使用 Ghidra/PDBHeaderGenerator 检查其中是否包含足够的类型信息来恢复：
+
+- `TileMetrics`
+- `GridMetrics`
+- `FrameMetrics`
+- `LayoutResolver`
+- `GroupsLayoutResolver`
+- `TileDragDropRearrangeEngine`
+
+### 16.4 实施顺序
+
+1. 建立 `StartUI.dll + StartUI.pdb` 的 Ghidra 工程，仅放 Windows 临时/研究目录。
+2. 导出首批目标类的函数清单、地址、调用关系和可用类型。
+3. 修复 UWPSpy Inspector 未出现的问题，导出对应控件的运行时属性。
+4. 为当前 `native-layout.xml` 建立期望位置样本。
+5. 在 TileStart 中实现最小 `Win10TileMetrics` 和 `Win10GroupLayout`。
+6. 用原版样本测试几何结果，再逐步加入分组换行和拖动状态机。
+
+首个可提交实现不追求完整菜单，而是：同一份原版布局输入能够在 TileStart 中生成与 Win10 相同的磁贴和分组几何。

@@ -35,7 +35,8 @@
   "files": {
     "overviewScreenshot": "native-start-overview-2560x1600-150pct.png",
     "exportedLayout": "native-layout.xml",
-    "staticAnalysis": "startui-static-analysis.json"
+    "staticAnalysis": "startui-static-analysis.json",
+    "reverseTooling": "startui-reverse-tooling.json"
   },
   "notes": [
     "Geometry values are initial manual measurements and must be rechecked before pixel locking.",

@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-07-15T02:02:00+08:00",
+  "target": {
+    "binary": "StartUI.dll",
+    "binarySha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "pdbName": "StartUI.pdb",
+    "pdbGuid": "7B21D1C1-9038-D36F-DA43-F1BBFF31EC03",
+    "pdbAge": 1,
+    "symbolServerKey": "7B21D1C19038D36FDA43F1BBFF31EC031",
+    "pdbSizeBytes": 39399424,
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404"
+  },
+  "uwpSpyTrial": {
+    "version": "1.5.4",
+    "releaseZipSha256": "486DF873E865C320112774267D52FE0D6BEFE1E857680BF4336FBBD8F8F39826",
+    "targetProcess": "StartMenuExperienceHost.exe",
+    "framework": "UWP",
+    "startHresult": "0x00000000",
+    "moduleLoaded": true,
+    "inspectorWindowObserved": false,
+    "visualTreeExported": false,
+    "cleanup": "Target process restarted; UWPSpy.dll absent from the new process"
+  },
+  "repositoryPolicy": {
+    "commitMicrosoftBinaries": false,
+    "commitPdbFiles": false,
+    "commitDecompilerProjects": false,
+    "commitThirdPartyToolBinaries": false,
+    "commitIndependentReimplementation": true
+  }
+}

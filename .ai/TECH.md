@@ -47,6 +47,29 @@ TileStart.Injector.exe
 
 Win10 和 Win11 使用独立 Shell Adapter，避免把不同系统版本的 Hook 定位和行为混在同一实现中。
 
+## Win10 StartUI 源码重建路线
+
+生产版本不直接托管、修改或依赖微软 `StartUI.dll` 的内部实现。使用当前 Win10 原版二进制、公开 PDB、运行时 XAML Visual Tree 和实机行为作为证据，选择性重建布局与交互算法，并将重写后的源码保存在 TileStart 内。
+
+首批重建范围：
+
+- `TileMetrics`、`GridMetrics` 和 `FrameMetrics`：磁贴、分组和窗口几何。
+- `TileGridLayoutElement`、`LayoutResolver`、`GroupsLayoutResolver`：8 单元网格、组内占位和分组自动换行。
+- `TileDragDropRearrangeEngine`、`KeyboardTileRearrangeEngine`：实时让位、跨组移动和键盘重排。
+- `StartSizingFrame`、`AllAppsPane`、`NavigationPaneView`：窗口缩放、应用列表和导航轨行为。
+
+逆向证据链：
+
+1. 固定目标 `StartUI.dll` 的文件版本和 SHA-256。
+2. 从 PE RSDS 信息取得 PDB GUID/Age，并从 Microsoft Symbol Server 下载匹配的公开 PDB。
+3. 使用 DIA/Ghidra 将 PDB 函数名、类型名和地址映射到反编译结果。
+4. 使用 UWPSpy/XAML Diagnostics 导出运行时 Visual Tree、属性和 Visual State。
+5. 用 WinDbg、ETW 和输入录制补充状态转换与调用顺序。
+6. 只重写已取得证据的最小算法，建立原版布局样本和行为测试。
+7. 反编译伪代码只作为理解材料，不直接作为可提交源码。
+
+该路线保留现有 WPF Host、Shell Hook、IPC、扫描、启动和配置底座；UI 与算法最终均由 TileStart 自己编译和发布。
+
 ## 实现取舍
 
 - Host 不引入 MVVM 框架，使用简单 ViewModel 和命令类。
