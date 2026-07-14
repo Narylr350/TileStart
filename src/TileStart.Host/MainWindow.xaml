@@ -20,12 +20,13 @@
         WindowStartupLocation="Manual"
         WindowStyle="None"
         Deactivated="Window_Deactivated"
-        PreviewKeyDown="Window_PreviewKeyDown">
+        PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewTextInput="Window_PreviewTextInput">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
                             CornerRadius="0"
                             GlassFrameThickness="0"
-                            ResizeBorderThickness="0,6,6,0"
+                            ResizeBorderThickness="0"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
@@ -117,6 +118,24 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <DataTemplate x:Key="AppEntryTemplate">
+            <Button Style="{StaticResource AppRowStyle}" Tag="{Binding}" Click="AppButton_Click">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="34" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="28" Height="28" Background="#3B3B3B">
+                        <Grid>
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" Text="{Binding Initial}" />
+                            <Image Width="28" Height="28" Source="{Binding Icon}" Stretch="Uniform" />
+                        </Grid>
+                    </Border>
+                    <TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" FontSize="14" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Button>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Background="{StaticResource MenuBackground}">
@@ -143,42 +162,45 @@
         </Grid>
 
         <Grid Grid.Column="1">
-            <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="SearchPanel" Margin="8,10,8,4" Background="#2D2D2D" BorderBrush="#666666" BorderThickness="1" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="36" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets" FontSize="14" Text="&#xE721;" />
+                    <TextBox x:Name="SearchBox" Grid.Column="1" Height="34" Padding="0,6" Foreground="White" Background="Transparent" BorderThickness="0" FontFamily="Segoe UI" FontSize="14" TextChanged="SearchBox_TextChanged" />
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="8,18,8,18">
-                    <TextBlock Margin="8,0,0,8" FontSize="14" Text="最近添加" />
-                    <Button Style="{StaticResource AppRowStyle}">
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#0078D7"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Text="T" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" FontSize="14" Text="TileStart" /></Grid>
-                    </Button>
-                    <Button Style="{StaticResource AppRowStyle}">
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#245EDB"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Text="W" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" FontSize="14" Text="Windows Performance Analyzer" TextTrimming="CharacterEllipsis" /></Grid>
-                    </Button>
-                    <Button Style="{StaticResource AppRowStyle}">
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#333333"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Text="G" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" FontSize="14" Text="GPUView" /></Grid>
-                    </Button>
+                    <StackPanel x:Name="RecentPanel">
+                        <TextBlock Margin="8,0,0,8" FontSize="14" Text="最近添加" />
+                        <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
+                        <TextBlock Margin="8,8,0,8" Foreground="#E0E0E0" FontSize="13" Text="展开⌄" />
+                    </StackPanel>
 
-                    <TextBlock Margin="8,8,0,8" Foreground="#E0E0E0" FontSize="13" Text="展开⌄" />
-                    <TextBlock Margin="8,8,0,4" FontSize="14" Text="#" />
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#333333"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="3" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="3DMark" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#333333"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="5" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="5E 对战平台" /></Grid></Button>
-
-                    <TextBlock Margin="8,10,0,4" FontSize="14" Text="A" />
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets" FontSize="22" Text="&#xE8B7;" /><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="AB Download Manager" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#9B245A"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="A" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Access" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#1B4F7A"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Ps" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Adobe Photoshop 2026" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets" FontSize="22" Text="&#xE8B7;" /><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Android Studio" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets" FontSize="22" Text="&#xE8B7;" /><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Antigravity" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#4A4A4A"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="A" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Armoury Crate" /></Grid></Button>
-
-                    <TextBlock Margin="8,10,0,4" FontSize="14" Text="C" />
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#107C10"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="C" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Calculator" /></Grid></Button>
-                    <Button Style="{StaticResource AppRowStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Width="28" Height="28" Background="#333333"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="C" /></Border><TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Text="Camera" /></Grid></Button>
+                    <ItemsControl ItemsSource="{Binding AppsView}" ItemTemplate="{StaticResource AppEntryTemplate}">
+                        <ItemsControl.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="8,10,0,4" FontSize="14" Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ItemsControl.GroupStyle>
+                    </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
 
         <Border Grid.Column="2" BorderBrush="#2B2B2B" BorderThickness="1,0,0,0">
             <ScrollViewer Margin="0,48,0,0"
-                          HorizontalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Hidden"
                           VerticalScrollBarVisibility="Disabled">
                 <StackPanel Margin="0,0,18,18" Orientation="Horizontal">
                     <WrapPanel Width="416" Margin="0,0,16,0" HorizontalAlignment="Left">
@@ -240,5 +262,26 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
+
+        <Border Height="7"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                Cursor="SizeNS"
+                Panel.ZIndex="10"
+                MouseLeftButtonDown="TopResizeBorder_MouseLeftButtonDown" />
+        <Border Width="7"
+                HorizontalAlignment="Right"
+                Background="Transparent"
+                Cursor="SizeWE"
+                Panel.ZIndex="10"
+                MouseLeftButtonDown="RightResizeBorder_MouseLeftButtonDown" />
+        <Border Width="14"
+                Height="14"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                Cursor="SizeNESW"
+                Panel.ZIndex="11"
+                MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
     </Grid>
 </Window>

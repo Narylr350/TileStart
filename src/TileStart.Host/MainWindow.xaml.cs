@@ -1,6 +1,8 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 
@@ -13,19 +15,33 @@ public partial class MainWindow : Window
     private const uint SwpShowWindow = 0x0040;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
+    private const int WmNcLButtonDown = 0x00A1;
+    private const int HtRight = 11;
+    private const int HtTop = 12;
+    private const int HtTopRight = 14;
     private static readonly nint HwndTopmost = new(-1);
+    private readonly ObservableCollection<AppEntry> _apps = [];
     private bool _allowClose;
 
     public MainWindow()
     {
+        AppsView = new ListCollectionView(_apps);
+        AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AppEntry.SortLetter)));
         InitializeComponent();
+        DataContext = this;
         var savedSize = WindowSizeStore.Load();
         if (savedSize is not null)
         {
             Width = Math.Max(MinWidth, savedSize.Value.Width);
             Height = Math.Max(MinHeight, savedSize.Value.Height);
         }
+
+        _ = LoadAppsAsync();
     }
+
+    public ObservableCollection<AppEntry> RecentApps { get; } = [];
+
+    public ICollectionView AppsView { get; }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -38,6 +54,7 @@ public partial class MainWindow : Window
         if (IsVisible)
         {
             SaveCurrentSize();
+            ClearSearch();
             Hide();
             return;
         }
@@ -64,6 +81,27 @@ public partial class MainWindow : Window
         }
 
         base.OnClosing(e);
+    }
+
+    private async Task LoadAppsAsync()
+    {
+        try
+        {
+            var apps = await StartAppScanner.ScanAsync();
+            foreach (var app in apps)
+            {
+                _apps.Add(app);
+            }
+
+            foreach (var app in apps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
+            {
+                RecentApps.Add(app);
+            }
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Application list load failed: {exception}");
+        }
     }
 
     private void PositionOnCurrentMonitor()
@@ -131,17 +169,105 @@ public partial class MainWindow : Window
     private void Window_Deactivated(object? sender, EventArgs e)
     {
         SaveCurrentSize();
+        ClearSearch();
         Hide();
     }
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (e.Key == Key.F && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            ShowSearch();
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape)
         {
-            SaveCurrentSize();
-            Hide();
+            if (SearchPanel.Visibility == Visibility.Visible)
+            {
+                ClearSearch();
+            }
+            else
+            {
+                SaveCurrentSize();
+                Hide();
+            }
             e.Handled = true;
         }
+    }
+
+    private void Window_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (e.OriginalSource == SearchBox || string.IsNullOrEmpty(e.Text))
+        {
+            return;
+        }
+
+        ShowSearch();
+        SearchBox.Text += e.Text;
+        SearchBox.CaretIndex = SearchBox.Text.Length;
+        e.Handled = true;
+    }
+
+    private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        var query = SearchBox.Text.Trim();
+        AppsView.Filter = item => item is AppEntry app && app.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase);
+        RecentPanel.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        AppsView.Refresh();
+    }
+
+    private void ShowSearch()
+    {
+        SearchPanel.Visibility = Visibility.Visible;
+        SearchBox.Focus();
+    }
+
+    private void ClearSearch()
+    {
+        SearchBox.Clear();
+        SearchPanel.Visibility = Visibility.Collapsed;
+        RecentPanel.Visibility = Visibility.Visible;
+        AppsView.Filter = null;
+        AppsView.Refresh();
+    }
+
+    private void AppButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: AppEntry app })
+        {
+            return;
+        }
+
+        if (AppLauncher.Launch(app))
+        {
+            ClearSearch();
+            Hide();
+        }
+    }
+
+    private void TopResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        BeginResize(HtTop, e);
+    }
+
+    private void RightResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        BeginResize(HtRight, e);
+    }
+
+    private void TopRightResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        BeginResize(HtTopRight, e);
+    }
+
+    private void BeginResize(int hitTest, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        ReleaseMouseCapture();
+        SendMessage(new WindowInteropHelper(this).Handle, WmNcLButtonDown, hitTest, 0);
+        SaveCurrentSize();
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -200,6 +326,9 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern nint SendMessage(nint window, int message, nint wParam, nint lParam);
 
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(nint window, ref WindowCompositionAttributeData data);
