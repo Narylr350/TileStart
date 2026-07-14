@@ -27,6 +27,9 @@ TileStart 的目标不是通用启动器，而是：
 - `reference/win10-start/native-layout.xml`
   - 使用 `Export-StartLayout -UseDesktopApplicationID` 导出的当前原生布局。
   - 保留真实分组顺序、磁贴尺寸、行列位置、AUMID、DesktopApplicationID 和 SecondaryTile 信息。
+- `startui-layout-symbols.md`
+  - 当前 `StartUI.dll`、匹配公开 PDB、Ghidra 符号和布局解析器委托边界。
+  - 记录可追溯的常量、公式、函数地址和仍未确认的问题。
 
 ![原版 Windows 10 开始菜单](reference/win10-start/native-start-overview-2560x1600-150pct.png)
 
