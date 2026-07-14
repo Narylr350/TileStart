@@ -14,16 +14,20 @@
 ## 托管代码
 
 ```powershell
-dotnet restore
-dotnet build -c Release
-dotnet test -c Release
+dotnet restore tests\TileStart.Host.Tests\TileStart.Host.Tests.csproj
+dotnet build src\TileStart.Host\TileStart.Host.csproj -c Release
+dotnet test tests\TileStart.Host.Tests\TileStart.Host.Tests.csproj -c Release
 ```
 
-## 原生组件
+仓库根目录的 `global.json` 固定 .NET 8 SDK。不要用 `dotnet build TileStart.sln` 构建混合解决方案；.NET SDK MSBuild 不包含 Visual C++ targets。
+
+## 完整解决方案
 
 ```powershell
-msbuild TileStart.sln /p:Configuration=Release /p:Platform=x64
+msbuild TileStart.sln /restore /m /p:Configuration=Release /p:Platform=x64
 ```
+
+该命令同时构建托管项目、测试项目和三个原生 x64 项目，必须从 Visual Studio Developer PowerShell 执行，或使用 Visual Studio 安装目录中的 `MSBuild.exe`。
 
 ## 发布
 
