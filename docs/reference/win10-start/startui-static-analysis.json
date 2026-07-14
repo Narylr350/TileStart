@@ -1,0 +1,60 @@
+{
+  "analyzedAt": "2026-07-15T02:10:00+08:00",
+  "package": {
+    "name": "Microsoft.Windows.StartMenuExperienceHost",
+    "manifestVersion": "10.0.19041.5438",
+    "installLocation": "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy"
+  },
+  "startUi": {
+    "path": "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartUI.dll",
+    "fileVersion": "10.0.19041.6456",
+    "sizeBytes": 8489472,
+    "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "machine": "x64",
+    "pdbName": "StartUI.pdb",
+    "exports": [
+      "DllCanUnloadNow",
+      "DllGetActivationFactory"
+    ],
+    "importAnchors": [
+      "wincorlib.dll",
+      "StartTileData.dll",
+      "combase.dll"
+    ],
+    "activatableClassAnchors": [
+      "StartUI.AllAppsPane",
+      "StartUI.GridMetrics",
+      "StartUI.NavigationPaneView",
+      "StartUI.SplitViewFrame",
+      "StartUI.StartModel",
+      "StartUI.StartProperties",
+      "StartUI.StartSizingFrame",
+      "StartUI.TileGridView",
+      "StartUI.TileGroupViewControl",
+      "StartUI.TileListView",
+      "StartUI.TileMetrics",
+      "StartUI.TileViewControl"
+    ],
+    "binaryStringAnchors": [
+      "StartSizingFrame.xaml.cpp",
+      "AllAppsPane.xaml.cpp",
+      "StartUI.TileDragDropRearrangeEngine",
+      "StartUI.KeyboardTileRearrangeEngine",
+      "StartUI.TileGroupViewModel",
+      "ThemeAwareBackgroundColorOverlayAccentAcrylicBrush",
+      "StartUnifiedTileModelCache.dat"
+    ]
+  },
+  "method": [
+    "Read AppxManifest.xml",
+    "List package files",
+    "Verify Authenticode signatures",
+    "Run dumpbin /headers /imports /exports",
+    "Extract printable ASCII and UTF-16 strings from StartUI.dll"
+  ],
+  "notes": [
+    "Analysis was read-only.",
+    "The package manifest version and StartUI.dll file version differ; both are recorded exactly as observed.",
+    "Private type and string anchors are evidence for future visual-tree and symbol-guided research, not stable API contracts."
+  ]
+}

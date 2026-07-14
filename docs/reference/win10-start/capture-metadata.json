@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-07-15T00:38:00+08:00",
+  "os": {
+    "edition": "Windows 10 Pro for Workstations",
+    "version": "22H2",
+    "build": 19045
+  },
+  "startMenuExperienceHost": {
+    "package": "Microsoft.Windows.StartMenuExperienceHost",
+    "version": "10.0.19041.5438",
+    "installLocation": "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy"
+  },
+  "display": {
+    "physicalWidth": 2560,
+    "physicalHeight": 1600,
+    "scalePercent": 150,
+    "refreshRateHz": 240,
+    "taskbarEdge": "bottom"
+  },
+  "measuredPhysicalPixels": {
+    "taskbarTop": 1512,
+    "startTop": 359,
+    "startRight": 1878,
+    "tilePaneLeft": 378,
+    "mediumTile": 150,
+    "tileGap": 6
+  },
+  "derivedDip": {
+    "startWidth": 1252.0,
+    "startHeight": 768.67,
+    "tilePaneLeft": 252.0,
+    "mediumTile": 100.0,
+    "tileGap": 4.0
+  },
+  "files": {
+    "overviewScreenshot": "native-start-overview-2560x1600-150pct.png",
+    "exportedLayout": "native-layout.xml",
+    "staticAnalysis": "startui-static-analysis.json"
+  },
+  "notes": [
+    "Geometry values are initial manual measurements and must be rechecked before pixel locking.",
+    "The Start menu was user-resized before capture.",
+    "Exported layout uses GroupCellWidth 8."
+  ]
+}
