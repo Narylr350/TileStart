@@ -22,6 +22,20 @@ public static class TileLayoutEngine
         group.RefreshLayout();
     }
 
+    public static bool Add(TileGroup target, TileItem tile, int column, int row)
+    {
+        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > TileGroup.Columns)
+        {
+            return false;
+        }
+
+        tile.Column = column;
+        tile.Row = row;
+        target.Tiles.Insert(0, tile);
+        Normalize(target);
+        return true;
+    }
+
     public static bool Move(TileGroup source, TileGroup target, TileItem tile, int column, int row)
     {
         if (!source.Tiles.Contains(tile)

@@ -49,6 +49,20 @@ public sealed class TileLayoutEngineTests
     }
 
     [Fact]
+    public void AddKeepsDropPositionAndMovesCollidingTiles()
+    {
+        var stationary = Tile(TileSize.Medium, 0, 0);
+        var added = Tile(TileSize.Wide, 0, 0);
+        var group = new TileGroup { Tiles = [stationary] };
+
+        Assert.True(TileLayoutEngine.Add(group, added, 0, 0));
+
+        Assert.Equal((0, 0), (added.Column, added.Row));
+        Assert.Equal((4, 0), (stationary.Column, stationary.Row));
+        AssertNoOverlap(group);
+    }
+
+    [Fact]
     public void MoveWithinGroupKeepsDropPositionAndAvoidsCollisions()
     {
         var moving = Tile(TileSize.Medium, 4, 0);
@@ -103,7 +117,7 @@ public sealed class TileLayoutEngineTests
                     Name = "工具",
                     Tiles =
                     [
-                        new TileItem { Name = "终端", LaunchTarget = "wt.exe", Size = TileSize.Wide, Column = 2, Row = 3 },
+                        new TileItem { Name = "终端", LaunchTarget = "wt.exe", TargetType = TileTargetType.Application, Size = TileSize.Wide, Column = 2, Row = 3 },
                     ],
                 },
             ],
@@ -116,6 +130,7 @@ public sealed class TileLayoutEngineTests
         Assert.Equal("工具", group.Name);
         Assert.Equal("终端", tile.Name);
         Assert.Equal("wt.exe", tile.LaunchTarget);
+        Assert.Equal(TileTargetType.Application, tile.TargetType);
         Assert.Equal(TileSize.Wide, tile.Size);
         Assert.Equal((2, 3), (tile.Column, tile.Row));
     }

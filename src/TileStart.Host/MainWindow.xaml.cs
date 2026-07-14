@@ -6,6 +6,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Button = System.Windows.Controls.Button;
+using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
 using ItemsControl = System.Windows.Controls.ItemsControl;
@@ -189,11 +190,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Window_Deactivated(object? sender, EventArgs e)
+    private async void Window_Deactivated(object? sender, EventArgs e)
     {
         SaveCurrentSize();
         ClearSearch();
-        Hide();
+        while (Mouse.LeftButton == MouseButtonState.Pressed)
+        {
+            await Task.Delay(50);
+        }
+
+        if (!IsActive && !IsMouseOver)
+        {
+            Hide();
+        }
     }
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -315,28 +324,59 @@ public partial class MainWindow : Window
 
     private void TileGroup_DragOver(object sender, System.Windows.DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(typeof(TileItem)) ? DragDropEffects.Move : DragDropEffects.None;
+        e.Effects = e.Data.GetDataPresent(typeof(TileItem))
+            ? DragDropEffects.Move
+            : e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
     }
 
     private void TileGroup_Drop(object sender, System.Windows.DragEventArgs e)
     {
-        if (sender is not ItemsControl { Tag: TileGroup target }
-            || e.Data.GetData(typeof(TileItem)) is not TileItem tile
-            || _dragSource is null)
+        if (sender is not ItemsControl { Tag: TileGroup target } itemsControl)
         {
             return;
         }
 
-        var position = e.GetPosition((ItemsControl)sender);
-        var column = Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan());
-        var row = Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch));
-        if (TileLayoutEngine.Move(_dragSource, target, tile, column, row))
+        var position = e.GetPosition(itemsControl);
+        if (e.Data.GetData(typeof(TileItem)) is TileItem tile && _dragSource is not null)
         {
-            TileLayoutStore.Save(TileLayout);
+            var column = Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan());
+            var row = Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch));
+            if (TileLayoutEngine.Move(_dragSource, target, tile, column, row))
+            {
+                TileLayoutStore.Save(TileLayout);
+            }
+        }
+        else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+        {
+            AddDroppedTiles(target, paths, position);
         }
 
         e.Handled = true;
+    }
+
+    private void AddDroppedTiles(TileGroup target, IEnumerable<string> paths, System.Windows.Point position)
+    {
+        var added = false;
+        foreach (var path in paths)
+        {
+            var tile = DroppedTileFactory.Create(path);
+            if (tile is null)
+            {
+                continue;
+            }
+
+            (int Column, int Row) location = added
+                ? TileLayoutEngine.FindFirstAvailable(target, tile)
+                : (Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan()),
+                   Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch)));
+            added |= TileLayoutEngine.Add(target, tile, location.Column, location.Row);
+        }
+
+        if (added)
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
     }
 
     private static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)

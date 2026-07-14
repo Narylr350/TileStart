@@ -19,6 +19,7 @@ public sealed class TileItem : INotifyPropertyChanged
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Name { get; set; } = string.Empty;
     public string LaunchTarget { get; set; } = string.Empty;
+    public TileTargetType TargetType { get; set; }
 
     public TileSize Size
     {
