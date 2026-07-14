@@ -19,6 +19,19 @@ public sealed class Win10GroupLayoutTests
         Assert.Equal(height, tile.PixelHeight);
     }
 
+    [Theory]
+    [InlineData(300, 1)]
+    [InlineData(427, 1)]
+    [InlineData(428, 1)]
+    [InlineData(855, 1)]
+    [InlineData(856, 2)]
+    [InlineData(1284, 3)]
+    public void GroupsWrapAtWholeGroupPitch(double availableWidth, int expectedGroupsPerRow)
+    {
+        Assert.Equal(16, Win10TileMetrics.GroupGap);
+        Assert.Equal(428, Win10TileMetrics.GroupPitch);
+        Assert.Equal(expectedGroupsPerRow, Win10TileMetrics.GroupsPerRow(availableWidth));
+    }
 
     [Fact]
     public void NativeWin10LayoutUsesEightColumnMetricsWithoutOverlap()

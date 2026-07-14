@@ -7,6 +7,8 @@ public static class Win10TileMetrics
     public const double Gap = 4;
     public const double CellPitch = CellSize + Gap;
     public const double GroupWidth = GroupColumns * CellPitch - Gap;
+    public const double GroupGap = 16;
+    public const double GroupPitch = GroupWidth + GroupGap;
 
     public static double Width(TileSize size) => size.ColumnSpan() * CellPitch - Gap;
 
@@ -15,6 +17,9 @@ public static class Win10TileMetrics
     public static double Left(int column) => column * CellPitch;
 
     public static double Top(int row) => row * CellPitch;
+
+    public static int GroupsPerRow(double availableWidth) =>
+        Math.Max(1, (int)(availableWidth / GroupPitch));
 
     public static Win10TileBounds Bounds(TileSize size, int column, int row) =>
         new(Left(column), Top(row), Width(size), Height(size));

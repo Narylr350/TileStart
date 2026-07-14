@@ -208,19 +208,21 @@
                         Content="＋ 添加磁贴"
                         Click="AddCommandTile_Click" />
                 <ScrollViewer Margin="0,48,0,0"
-                              HorizontalScrollBarVisibility="Hidden"
-                              VerticalScrollBarVisibility="Disabled">
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
                     <ItemsControl Margin="0,0,18,18" ItemsSource="{Binding TileLayout.Groups}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
+                                <WrapPanel ItemWidth="{x:Static local:Win10TileMetrics.GroupPitch}"
+                                           Orientation="Horizontal" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type local:TileGroup}">
-                                <StackPanel Width="416" Margin="0,0,16,0">
+                                <StackPanel Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                            Margin="0,0,16,24">
                                     <TextBlock Height="24" Margin="4,0,0,0" FontSize="14" Text="{Binding Name}" />
-                                    <ItemsControl Width="416"
+                                    <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                                   Height="{Binding PixelHeight}"
                                                   AllowDrop="True"
                                                   ItemsSource="{Binding Tiles}"
