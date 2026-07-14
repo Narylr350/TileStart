@@ -5,6 +5,10 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
+using Button = System.Windows.Controls.Button;
+using DataObject = System.Windows.DataObject;
+using DragDropEffects = System.Windows.DragDropEffects;
+using ItemsControl = System.Windows.Controls.ItemsControl;
 
 namespace TileStart.Host;
 
@@ -22,6 +26,10 @@ public partial class MainWindow : Window
     private static readonly nint HwndTopmost = new(-1);
     private readonly ObservableCollection<AppEntry> _apps = [];
     private bool _allowClose;
+    private System.Windows.Point _dragStart;
+    private TileItem? _dragTile;
+    private TileGroup? _dragSource;
+    private bool _dragCompleted;
 
     public MainWindow()
     {
@@ -42,6 +50,8 @@ public partial class MainWindow : Window
     public ObservableCollection<AppEntry> RecentApps { get; } = [];
 
     public ICollectionView AppsView { get; }
+
+    public TileLayout TileLayout { get; } = new();
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -96,6 +106,19 @@ public partial class MainWindow : Window
             foreach (var app in apps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
             {
                 RecentApps.Add(app);
+            }
+
+            var savedLayout = TileLayoutStore.Load();
+            var layout = savedLayout ?? DefaultTileLayout.Create(apps);
+            RestoreTileIcons(layout, apps);
+            foreach (var group in layout.Groups)
+            {
+                TileLayout.Groups.Add(group);
+            }
+
+            if (savedLayout is null)
+            {
+                TileLayoutStore.Save(TileLayout);
             }
         }
         catch (Exception exception)
@@ -235,7 +258,7 @@ public partial class MainWindow : Window
 
     private void AppButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not System.Windows.Controls.Button { Tag: AppEntry app })
+        if (sender is not Button { Tag: AppEntry app })
         {
             return;
         }
@@ -244,6 +267,89 @@ public partial class MainWindow : Window
         {
             ClearSearch();
             Hide();
+        }
+    }
+
+    private void TileButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_dragCompleted)
+        {
+            _dragCompleted = false;
+            return;
+        }
+
+        if (sender is Button { Tag: TileItem tile } && AppLauncher.Launch(tile.Name, tile.LaunchTarget))
+        {
+            Hide();
+        }
+    }
+
+    private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragCompleted = false;
+        _dragStart = e.GetPosition(this);
+        _dragTile = (sender as Button)?.Tag as TileItem;
+        _dragSource = _dragTile is null ? null : TileLayout.Groups.FirstOrDefault(group => group.Tiles.Contains(_dragTile));
+    }
+
+    private void TileButton_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _dragTile is null || _dragSource is null)
+        {
+            return;
+        }
+
+        var position = e.GetPosition(this);
+        if (Math.Abs(position.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs(position.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        var tile = _dragTile;
+        _dragCompleted = true;
+        DragDrop.DoDragDrop((DependencyObject)sender, new DataObject(typeof(TileItem), tile), DragDropEffects.Move);
+        _dragTile = null;
+        _dragSource = null;
+    }
+
+    private void TileGroup_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(typeof(TileItem)) ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void TileGroup_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (sender is not ItemsControl { Tag: TileGroup target }
+            || e.Data.GetData(typeof(TileItem)) is not TileItem tile
+            || _dragSource is null)
+        {
+            return;
+        }
+
+        var position = e.GetPosition((ItemsControl)sender);
+        var column = Math.Clamp((int)Math.Round(position.X / TileItem.CellPitch), 0, TileGroup.Columns - tile.Size.ColumnSpan());
+        var row = Math.Max(0, (int)Math.Round(position.Y / TileItem.CellPitch));
+        if (TileLayoutEngine.Move(_dragSource, target, tile, column, row))
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+
+        e.Handled = true;
+    }
+
+    private static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)
+    {
+        var icons = apps
+            .GroupBy(app => app.LaunchTarget, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
+        foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
+        {
+            if (icons.TryGetValue(tile.LaunchTarget, out var icon))
+            {
+                tile.Icon = icon;
+            }
         }
     }
 
