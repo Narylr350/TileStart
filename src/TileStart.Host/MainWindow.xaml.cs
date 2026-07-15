@@ -54,6 +54,8 @@ public partial class MainWindow : Window
 
     public ICollectionView AppsView { get; }
 
+    public IReadOnlyList<AlphabetIndexEntry> AlphabetLetters { get; } = AlphabetIndex.Create();
+
     public TileLayout TileLayout { get; } = new();
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -111,6 +113,7 @@ public partial class MainWindow : Window
                 RecentApps.Add(app);
             }
 
+            AlphabetIndex.UpdateAvailability(AlphabetLetters, apps);
             var savedLayout = TileLayoutStore.Load();
             var layout = savedLayout ?? DefaultTileLayout.Create(apps);
             RestoreTileIcons(layout, apps);
@@ -218,7 +221,11 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape)
         {
-            if (SearchPanel.Visibility == Visibility.Visible)
+            if (LetterIndexPanel.Visibility == Visibility.Visible)
+            {
+                HideLetterIndex();
+            }
+            else if (SearchPanel.Visibility == Visibility.Visible)
             {
                 ClearSearch();
             }
@@ -238,6 +245,7 @@ public partial class MainWindow : Window
             return;
         }
 
+        HideLetterIndex();
         ShowSearch();
         SearchBox.Text += e.Text;
         SearchBox.CaretIndex = SearchBox.Text.Length;
@@ -254,14 +262,52 @@ public partial class MainWindow : Window
 
     private void ShowSearch()
     {
+        HideLetterIndex();
         SearchPanel.Visibility = Visibility.Visible;
         SearchBox.Focus();
+    }
+
+    private void LetterHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (SearchPanel.Visibility == Visibility.Visible)
+        {
+            return;
+        }
+
+        LetterIndexPanel.Visibility = Visibility.Visible;
+    }
+
+    private void AlphabetLetter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: AlphabetIndexEntry { IsAvailable: true } entry })
+        {
+            return;
+        }
+
+        HideLetterIndex();
+        var app = _apps.FirstOrDefault(candidate => candidate.SortLetter.Equals(entry.Label, StringComparison.OrdinalIgnoreCase));
+        if (app is null)
+        {
+            return;
+        }
+
+        AppsList.UpdateLayout();
+        if (AppsList.ItemContainerGenerator.ContainerFromItem(app) is FrameworkElement container)
+        {
+            container.BringIntoView();
+        }
+    }
+
+    private void HideLetterIndex()
+    {
+        LetterIndexPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ClearSearch()
     {
         SearchBox.Clear();
         SearchPanel.Visibility = Visibility.Collapsed;
+        HideLetterIndex();
         RecentPanel.Visibility = Visibility.Visible;
         AppsView.Filter = null;
         AppsView.Refresh();

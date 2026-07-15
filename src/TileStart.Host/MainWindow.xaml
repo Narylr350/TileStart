@@ -125,6 +125,62 @@
             </Setter>
         </Style>
 
+        <Style x:Key="LetterHeaderStyle" TargetType="Button">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="8,0,0,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Background" Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AlphabetButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Background" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.28" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <DataTemplate x:Key="AppEntryTemplate">
             <Button Style="{StaticResource AppRowStyle}" Tag="{Binding}" Click="AppButton_Click">
                 <Grid>
@@ -209,7 +265,8 @@
                 </Grid>
             </Border>
 
-            <ScrollViewer Grid.Row="1"
+            <ScrollViewer x:Name="AppsScrollViewer"
+                          Grid.Row="1"
                           HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Hidden">
                 <StackPanel Margin="8,20,8,16">
@@ -223,16 +280,17 @@
                                    Text="展开⌄" />
                     </StackPanel>
 
-                    <ItemsControl ItemsSource="{Binding AppsView}" ItemTemplate="{StaticResource AppEntryTemplate}">
+                    <ItemsControl x:Name="AppsList"
+                                  ItemsSource="{Binding AppsView}"
+                                  ItemTemplate="{StaticResource AppEntryTemplate}">
                         <ItemsControl.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.HeaderTemplate>
                                     <DataTemplate>
-                                        <TextBlock Height="30"
-                                                   Margin="8,4,0,0"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14"
-                                                   Text="{Binding Name}" />
+                                        <Button Style="{StaticResource LetterHeaderStyle}"
+                                                Tag="{Binding Name}"
+                                                Content="{Binding Name}"
+                                                Click="LetterHeader_Click" />
                                     </DataTemplate>
                                 </GroupStyle.HeaderTemplate>
                             </GroupStyle>
@@ -240,6 +298,41 @@
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
+
+            <Border x:Name="LetterIndexPanel"
+                    Grid.RowSpan="2"
+                    Margin="8"
+                    Padding="8"
+                    Background="#F02A2A2A"
+                    Visibility="Collapsed"
+                    Panel.ZIndex="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="36" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               Text="选择字母" />
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding AlphabetLetters}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
+                                <Button Style="{StaticResource AlphabetButtonStyle}"
+                                        Tag="{Binding}"
+                                        Content="{Binding Label}"
+                                        IsEnabled="{Binding IsAvailable}"
+                                        Click="AlphabetLetter_Click" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
         </Grid>
 
         <Border Grid.Column="2">
