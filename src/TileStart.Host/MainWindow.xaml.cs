@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private System.Windows.Point _dragStart;
     private TileItem? _dragTile;
     private TileGroup? _dragSource;
+    private TileDragTransaction? _dragTransaction;
     private bool _dragCompleted;
 
     public MainWindow()
@@ -547,16 +548,38 @@ public partial class MainWindow : Window
 
         var tile = _dragTile;
         _dragCompleted = true;
-        DragDrop.DoDragDrop((DependencyObject)sender, new DataObject(typeof(TileItem), tile), DragDropEffects.Move);
-        _dragTile = null;
-        _dragSource = null;
+        _dragTransaction = new TileDragTransaction(TileLayout, _dragSource, tile);
+        try
+        {
+            DragDrop.DoDragDrop((DependencyObject)sender, new DataObject(typeof(TileItem), tile), DragDropEffects.Move);
+        }
+        finally
+        {
+            _dragTransaction.Dispose();
+            _dragTransaction = null;
+            _dragTile = null;
+            _dragSource = null;
+        }
     }
 
     private void TileGroup_DragOver(object sender, System.Windows.DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(typeof(TileItem))
-            ? DragDropEffects.Move
-            : e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        if (sender is ItemsControl { Tag: TileGroup target } itemsControl
+            && e.Data.GetData(typeof(TileItem)) is TileItem tile
+            && _dragTransaction is not null)
+        {
+            var (column, row) = GetDropCell(e.GetPosition(itemsControl), tile);
+            e.Effects = _dragTransaction.Preview(target, column, row)
+                ? DragDropEffects.Move
+                : DragDropEffects.None;
+        }
+        else
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
         e.Handled = true;
     }
 
@@ -568,13 +591,14 @@ public partial class MainWindow : Window
         }
 
         var position = e.GetPosition(itemsControl);
-        if (e.Data.GetData(typeof(TileItem)) is TileItem tile && _dragSource is not null)
+        if (e.Data.GetData(typeof(TileItem)) is TileItem tile && _dragTransaction is not null)
         {
-            var column = Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0, Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan());
-            var row = Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch));
-            if (Win10GroupLayout.Move(_dragSource, target, tile, column, row))
+            var (column, row) = GetDropCell(position, tile);
+            if (_dragTransaction.Preview(target, column, row))
             {
+                _dragTransaction.Commit();
                 TileLayoutStore.Save(TileLayout);
+                e.Effects = DragDropEffects.Move;
             }
         }
         else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
@@ -585,7 +609,58 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private void AddDroppedTiles(TileGroup target, IEnumerable<string> paths, System.Windows.Point position)
+    private void TileArea_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(TileItem)) && _dragTransaction is not null)
+        {
+            _dragTransaction.PreviewNewGroup();
+            e.Effects = DragDropEffects.Move;
+        }
+        else
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private void TileArea_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(TileItem)) && _dragTransaction?.PreviewTarget is not null)
+        {
+            _dragTransaction.Commit();
+            TileLayoutStore.Save(TileLayout);
+            e.Effects = DragDropEffects.Move;
+        }
+        else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+        {
+            var group = TileGroupManager.Add(TileLayout);
+            if (AddDroppedTiles(group, paths, new System.Windows.Point()))
+            {
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                TileGroupManager.Remove(TileLayout, group);
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    private static (int Column, int Row) GetDropCell(System.Windows.Point position, TileItem tile)
+    {
+        var column = Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch),
+                                0,
+                                Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan());
+        var row = Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch));
+        return (column, row);
+    }
+
+    private bool AddDroppedTiles(TileGroup target, IEnumerable<string> paths, System.Windows.Point position)
     {
         var added = false;
         foreach (var path in paths)
@@ -607,6 +682,8 @@ public partial class MainWindow : Window
         {
             TileLayoutStore.Save(TileLayout);
         }
+
+        return added;
     }
 
     private static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)

@@ -381,7 +381,10 @@
             </Border>
         </Grid>
 
-        <Border Grid.Column="2">
+        <Border Grid.Column="2"
+                AllowDrop="True"
+                DragOver="TileArea_DragOver"
+                Drop="TileArea_Drop">
             <Border.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />

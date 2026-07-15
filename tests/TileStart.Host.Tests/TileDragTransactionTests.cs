@@ -1,0 +1,96 @@
+using TileStart.Host;
+
+namespace TileStart.Host.Tests;
+
+public sealed class TileDragTransactionTests
+{
+    [Fact]
+    public void PreviewRearrangesImmediatelyAndDisposeRollsBack()
+    {
+        var moving = Tile("moving", TileSize.Medium, 4, 0);
+        var stationary = Tile("stationary", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [stationary, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using (var transaction = new TileDragTransaction(layout, group, moving))
+        {
+            Assert.True(transaction.Preview(group, 0, 0));
+            Assert.Equal((0, 0), (moving.Column, moving.Row));
+            Assert.Equal((2, 0), (stationary.Column, stationary.Row));
+        }
+
+        Assert.Equal([stationary, moving], group.Tiles);
+        Assert.Equal((0, 0), (stationary.Column, stationary.Row));
+        Assert.Equal((4, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void CommitKeepsCrossGroupPreview()
+    {
+        var moving = Tile("moving", TileSize.Wide, 0, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var stationary = Tile("stationary", TileSize.Medium, 0, 0);
+        var target = new TileGroup { Tiles = [stationary] };
+        var layout = new TileLayout { Groups = [source, target] };
+
+        using var transaction = new TileDragTransaction(layout, source, moving);
+        Assert.True(transaction.Preview(target, 0, 0));
+        transaction.Commit();
+
+        Assert.DoesNotContain(source, layout.Groups);
+        Assert.Equal([moving, stationary], target.Tiles);
+        Assert.Equal((0, 0), (moving.Column, moving.Row));
+        Assert.Equal((4, 0), (stationary.Column, stationary.Row));
+    }
+
+    [Fact]
+    public void PreviewNewGroupCanRollbackOrCommit()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var remaining = Tile("remaining", TileSize.Medium, 2, 0);
+        var source = new TileGroup { Tiles = [moving, remaining] };
+        var layout = new TileLayout { Groups = [source] };
+
+        using (var transaction = new TileDragTransaction(layout, source, moving))
+        {
+            var preview = transaction.PreviewNewGroup();
+            Assert.Equal(2, layout.Groups.Count);
+            Assert.Same(moving, Assert.Single(preview.Tiles));
+        }
+
+        Assert.Same(source, Assert.Single(layout.Groups));
+        Assert.Equal([moving, remaining], source.Tiles);
+
+        using var committed = new TileDragTransaction(layout, source, moving);
+        var created = committed.PreviewNewGroup();
+        committed.Commit();
+
+        Assert.Equal(2, layout.Groups.Count);
+        Assert.Same(remaining, Assert.Single(source.Tiles));
+        Assert.Same(moving, Assert.Single(created.Tiles));
+    }
+
+    [Fact]
+    public void RepeatedPreviewsAlwaysStartFromOriginalSnapshot()
+    {
+        var moving = Tile("moving", TileSize.Medium, 4, 0);
+        var stationary = Tile("stationary", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [stationary, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, moving);
+        Assert.True(transaction.Preview(group, 0, 0));
+        Assert.True(transaction.Preview(group, 6, 0));
+
+        Assert.Equal((0, 0), (stationary.Column, stationary.Row));
+        Assert.Equal((6, 0), (moving.Column, moving.Row));
+    }
+
+    private static TileItem Tile(string name, TileSize size, int column, int row) => new()
+    {
+        Name = name,
+        Size = size,
+        Column = column,
+        Row = row,
+    };
+}
