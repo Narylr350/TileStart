@@ -39,6 +39,7 @@ public partial class App : System.Windows.Application
 
         DiagnosticLog.Write("Creating main window.");
         MainWindow = new MainWindow();
+        PrimeHiddenWindow(MainWindow);
         DiagnosticLog.Write("Main window created.");
         _server = new OpenRequestServer(((MainWindow)MainWindow).ShowFromShell, ExitApplication, Dispatcher);
         _server.Start();
@@ -58,6 +59,24 @@ public partial class App : System.Windows.Application
                                  WinKeyHook.OpenNativeStartMenu,
                                  ExitApplication);
         DiagnosticLog.Write("Host startup completed.");
+    }
+
+    private static void PrimeHiddenWindow(Window window)
+    {
+        var left = window.Left;
+        var top = window.Top;
+        var opacity = window.Opacity;
+        var showActivated = window.ShowActivated;
+        window.Left = -32000;
+        window.Top = -32000;
+        window.Opacity = 0;
+        window.ShowActivated = false;
+        window.Show();
+        window.Hide();
+        window.Left = left;
+        window.Top = top;
+        window.Opacity = opacity;
+        window.ShowActivated = showActivated;
     }
 
     private void SetPaused(bool paused)
