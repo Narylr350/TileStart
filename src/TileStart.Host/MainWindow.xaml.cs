@@ -378,8 +378,8 @@ public partial class MainWindow : Window
 
     private void TileSettings_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not MenuItem menuItem
-            || ItemsControl.ItemsControlFromItemContainer(menuItem) is not ContextMenu { PlacementTarget: Button { Tag: TileItem tile } })
+        var tile = GetContextTile(sender);
+        if (tile is null)
         {
             return;
         }
@@ -398,15 +398,62 @@ public partial class MainWindow : Window
 
         if (dialog.ShouldUnpin)
         {
-            group.Tiles.Remove(tile);
-        }
-        else
-        {
-            ApplyTileSettings(tile, dialog);
+            TileContextActions.Unpin(TileLayout, tile);
+            TileLayoutStore.Save(TileLayout);
+            return;
         }
 
+        ApplyTileSettings(tile, dialog);
         Win10GroupLayout.Normalize(group);
         TileLayoutStore.Save(TileLayout);
+    }
+
+    private void UnpinTile_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is not null && TileContextActions.Unpin(TileLayout, tile))
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private void ResizeTile_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is not null
+            && sender is MenuItem { Tag: string sizeName }
+            && Enum.TryParse<TileSize>(sizeName, out var size)
+            && TileContextActions.Resize(TileLayout, tile, size))
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private void RunTileAsAdministrator_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is not null && AppLauncher.LaunchAsAdministrator(tile))
+        {
+            Hide();
+        }
+    }
+
+    private static TileItem? GetContextTile(object sender)
+    {
+        if (sender is not MenuItem item)
+        {
+            return null;
+        }
+
+        ItemsControl? owner = ItemsControl.ItemsControlFromItemContainer(item);
+        while (owner is MenuItem parent)
+        {
+            owner = ItemsControl.ItemsControlFromItemContainer(parent);
+        }
+
+        return owner is ContextMenu { PlacementTarget: Button { Tag: TileItem tile } }
+            ? tile
+            : null;
     }
 
     private void AddCommandTile_Click(object sender, RoutedEventArgs e)

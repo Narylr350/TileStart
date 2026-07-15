@@ -125,6 +125,23 @@
             </Setter>
         </Style>
 
+        <Style x:Key="StartContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="#F22B2B2B" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#5A5A5A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+
+        <Style x:Key="StartMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="12,5,18,5" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
             <Setter Property="Height" Value="30" />
             <Setter Property="Padding" Value="8,0,0,0" />
@@ -454,8 +471,45 @@
                                                     PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown"
                                                     PreviewMouseMove="TileButton_PreviewMouseMove">
                                                 <Button.ContextMenu>
-                                                    <ContextMenu>
-                                                        <MenuItem Header="磁贴设置…" Click="TileSettings_Click" />
+                                                    <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                                                        <ContextMenu.Resources>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="#2B2B2B" />
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="White" />
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#505050" />
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
+                                                        </ContextMenu.Resources>
+                                                        <MenuItem Header="从“开始”屏幕取消固定"
+                                                                  Style="{StaticResource StartMenuItemStyle}"
+                                                                  Click="UnpinTile_Click" />
+                                                        <MenuItem Header="调整大小"
+                                                                  Style="{StaticResource StartMenuItemStyle}">
+                                                            <MenuItem Header="小"
+                                                                      Tag="Small"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="ResizeTile_Click" />
+                                                            <MenuItem Header="中"
+                                                                      Tag="Medium"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="ResizeTile_Click" />
+                                                            <MenuItem Header="宽"
+                                                                      Tag="Wide"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="ResizeTile_Click" />
+                                                            <MenuItem Header="大"
+                                                                      Tag="Large"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="ResizeTile_Click" />
+                                                        </MenuItem>
+                                                        <MenuItem Header="更多"
+                                                                  Style="{StaticResource StartMenuItemStyle}">
+                                                            <MenuItem Header="以管理员身份运行"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="RunTileAsAdministrator_Click" />
+                                                        </MenuItem>
+                                                        <Separator />
+                                                        <MenuItem Header="TileStart 设置…"
+                                                                  Style="{StaticResource StartMenuItemStyle}"
+                                                                  Click="TileSettings_Click" />
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
                                                 <Grid>

@@ -26,6 +26,20 @@ public sealed class AppLauncherTests
     }
 
     [Fact]
+    public void CreateStartInfoCanForceAdministratorVerb()
+    {
+        var tile = new TileItem
+        {
+            Name = "管理工具",
+            LaunchTarget = "tool.exe",
+        };
+
+        var startInfo = AppLauncher.CreateStartInfo(tile, true);
+
+        Assert.Equal("runas", startInfo.Verb);
+    }
+
+    [Fact]
     public void CreateStartInfoSupportsCustomCommand()
     {
         var tile = new TileItem

@@ -9,7 +9,12 @@ public static class AppLauncher
 
     public static bool Launch(TileItem tile) => Launch(tile.Name, CreateStartInfo(tile));
 
-    internal static ProcessStartInfo CreateStartInfo(TileItem tile)
+    public static bool LaunchAsAdministrator(TileItem tile)
+    {
+        return Launch(tile.Name, CreateStartInfo(tile, true));
+    }
+
+    internal static ProcessStartInfo CreateStartInfo(TileItem tile, bool forceAdministrator = false)
     {
         var isPowerShellScript = Path.GetExtension(tile.LaunchTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);
         var startInfo = isPowerShellScript
@@ -29,7 +34,7 @@ public static class AppLauncher
             startInfo.WorkingDirectory = tile.WorkingDirectory;
         }
 
-        if (tile.RunAsAdministrator)
+        if (tile.RunAsAdministrator || forceAdministrator)
         {
             startInfo.Verb = "runas";
         }
