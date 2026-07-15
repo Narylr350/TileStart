@@ -108,15 +108,16 @@ public partial class MainWindow : Window
                 _apps.Add(app);
             }
 
-            foreach (var app in apps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
+            var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
+            foreach (var app in launchableApps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
             {
                 RecentApps.Add(app);
             }
 
             AlphabetIndex.UpdateAvailability(AlphabetLetters, apps);
             var savedLayout = TileLayoutStore.Load();
-            var layout = savedLayout ?? DefaultTileLayout.Create(apps);
-            RestoreTileIcons(layout, apps);
+            var layout = savedLayout ?? DefaultTileLayout.Create(launchableApps);
+            RestoreTileIcons(layout, launchableApps);
             foreach (var group in layout.Groups)
             {
                 TileLayout.Groups.Add(group);
@@ -255,7 +256,12 @@ public partial class MainWindow : Window
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         var query = SearchBox.Text.Trim();
-        AppsView.Filter = item => item is AppEntry app && app.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase);
+        AppsView.Filter = item => item is AppEntry app && MatchesApp(app, query);
+        if (query.Length > 0)
+        {
+            ExpandMatchingFolders(_apps, query);
+        }
+
         RecentPanel.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         AppsView.Refresh();
     }
@@ -320,11 +326,39 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (app.IsFolder)
+        {
+            app.IsExpanded = !app.IsExpanded;
+            return;
+        }
+
         if (AppLauncher.Launch(app))
         {
             ClearSearch();
             Hide();
         }
+    }
+
+    private static bool MatchesApp(AppEntry app, string query) =>
+        query.Length == 0
+        || app.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+        || app.Children.Any(child => MatchesApp(child, query));
+
+    private static bool ExpandMatchingFolders(IEnumerable<AppEntry> entries, string query)
+    {
+        var anyMatch = false;
+        foreach (var entry in entries)
+        {
+            var childMatch = entry.IsFolder && ExpandMatchingFolders(entry.Children, query);
+            if (entry.IsFolder)
+            {
+                entry.IsExpanded = childMatch;
+            }
+
+            anyMatch |= childMatch || entry.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        return anyMatch;
     }
 
     private void TileButton_Click(object sender, RoutedEventArgs e)

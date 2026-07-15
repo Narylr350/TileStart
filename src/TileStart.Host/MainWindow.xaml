@@ -182,28 +182,74 @@
         </Style>
 
         <DataTemplate x:Key="AppEntryTemplate">
-            <Button Style="{StaticResource AppRowStyle}" Tag="{Binding}" Click="AppButton_Click">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="28" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid Width="24" Height="24" HorizontalAlignment="Left">
-                        <Border Background="#343434" />
-                        <TextBlock HorizontalAlignment="Center"
+            <StackPanel>
+                <Button Style="{StaticResource AppRowStyle}" Tag="{Binding}" Click="AppButton_Click">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left">
+                            <Border Background="#343434" />
+                            <TextBlock x:Name="AppInitial"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Text="{Binding Initial}" />
+                            <Image x:Name="AppIcon"
+                                   Width="24"
+                                   Height="24"
+                                   Source="{Binding Icon}"
+                                   Stretch="Uniform" />
+                            <TextBlock x:Name="FolderIcon"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       Foreground="#F4C242"
+                                       Text="&#xE8B7;"
+                                       Visibility="Collapsed" />
+                        </Grid>
+                        <TextBlock Grid.Column="1"
+                                   Margin="8,0,0,0"
                                    VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Text="{Binding Initial}" />
-                        <Image Width="24" Height="24" Source="{Binding Icon}" Stretch="Uniform" />
+                                   FontSize="14"
+                                   Text="{Binding Name}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="FolderChevron"
+                                   Grid.Column="2"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11"
+                                   Text="{Binding FolderChevron}"
+                                   Visibility="Collapsed" />
                     </Grid>
-                    <TextBlock Grid.Column="1"
-                               Margin="8,0,0,0"
-                               VerticalAlignment="Center"
-                               FontSize="14"
-                               Text="{Binding Name}"
-                               TextTrimming="CharacterEllipsis" />
-                </Grid>
-            </Button>
+                </Button>
+                <ItemsControl Margin="20,0,0,0"
+                              ItemsSource="{Binding Children}"
+                              ItemTemplate="{DynamicResource AppEntryTemplate}">
+                    <ItemsControl.Style>
+                        <Style TargetType="ItemsControl">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.Style>
+                </ItemsControl>
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                    <Setter TargetName="AppInitial" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="FolderIcon" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="FolderChevron" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
 

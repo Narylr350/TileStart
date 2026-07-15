@@ -13,10 +13,15 @@ public static class StartAppScanner
         var packagedTask = ScanPackagedAppsAsync();
         await Task.WhenAll(shortcutTask, packagedTask);
 
-        var apps = shortcutTask.Result
+        var shortcutEntries = shortcutTask.Result;
+        var applications = shortcutEntries
+            .Where(entry => !entry.IsFolder)
             .Concat(packagedTask.Result)
             .GroupBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(group => group.OrderByDescending(app => app.AddedAt).First())
+            .Select(group => group.OrderByDescending(app => app.AddedAt).First());
+        var apps = shortcutEntries
+            .Where(entry => entry.IsFolder)
+            .Concat(applications)
             .OrderBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
         DiagnosticLog.Write($"Application scan completed: {apps.Length} entries.");
@@ -30,7 +35,7 @@ public static class StartAppScanner
             Environment.GetFolderPath(Environment.SpecialFolder.Programs),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs"),
         };
-        var apps = new List<AppEntry>();
+        var shortcuts = new List<StartMenuShortcut>();
         foreach (var directory in directories.Where(Directory.Exists))
         {
             try
@@ -43,7 +48,12 @@ public static class StartAppScanner
                     }
 
                     var name = Path.GetFileNameWithoutExtension(path);
-                    apps.Add(CreateEntry(name, path, File.GetCreationTime(path)));
+                    var parent = Path.GetDirectoryName(path) ?? directory;
+                    var relativeFolder = Path.GetRelativePath(directory, parent);
+                    shortcuts.Add(new StartMenuShortcut(name,
+                                                        path,
+                                                        File.GetCreationTime(path),
+                                                        relativeFolder == "." ? string.Empty : relativeFolder));
                 }
             }
             catch (IOException exception)
@@ -56,7 +66,7 @@ public static class StartAppScanner
             }
         }
 
-        return apps;
+        return StartMenuFolderBuilder.Build(shortcuts);
     }
 
     private static Task<IReadOnlyList<AppEntry>> ScanPackagedAppsAsync()
@@ -127,21 +137,8 @@ public static class StartAppScanner
         return completion.Task;
     }
 
-    private static AppEntry CreateEntry(string name, string launchTarget, DateTime addedAt)
-    {
-        var first = name.Trim().FirstOrDefault();
-        var initial = first == default ? "?" : char.ToUpper(first).ToString();
-        var sortLetter = first is >= 'A' and <= 'Z' or >= 'a' and <= 'z' ? char.ToUpperInvariant(first).ToString() : "#";
-        return new AppEntry
-        {
-            Name = name,
-            LaunchTarget = launchTarget,
-            SortLetter = sortLetter,
-            Initial = initial,
-            AddedAt = addedAt,
-            Icon = ShellIconLoader.Load(launchTarget),
-        };
-    }
+    private static AppEntry CreateEntry(string name, string launchTarget, DateTime addedAt) =>
+        AppEntry.Application(name, launchTarget, addedAt, ShellIconLoader.Load(launchTarget));
 
     private static void ReleaseComObject(object? value)
     {
