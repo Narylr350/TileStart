@@ -562,13 +562,21 @@ public partial class MainWindow : Window
     private static void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
     {
         tile.Name = dialog.TileName;
+        tile.Subtitle = dialog.Subtitle;
         tile.LaunchTarget = dialog.LaunchTarget;
         tile.Arguments = dialog.Arguments;
         tile.WorkingDirectory = dialog.WorkingDirectory;
         tile.IconPath = dialog.IconPath;
+        tile.BackgroundImagePath = dialog.BackgroundImagePath;
+        tile.BackgroundColor = dialog.BackgroundColor;
+        tile.ForegroundColor = dialog.ForegroundColor;
+        tile.ShowTitle = dialog.ShowTitle;
+        tile.IconSize = dialog.IconSize;
+        tile.IconPosition = dialog.IconPosition;
         tile.RunAsAdministrator = dialog.RunAsAdministrator;
         tile.Size = dialog.TileSize;
         tile.Icon = ShellIconLoader.Load(string.IsNullOrWhiteSpace(tile.IconPath) ? tile.LaunchTarget : tile.IconPath);
+        tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
     }
 
     private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -740,6 +748,7 @@ public partial class MainWindow : Window
             .ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
         foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
         {
+            tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
             if (!string.IsNullOrWhiteSpace(tile.IconPath))
             {
                 tile.Icon = ShellIconLoader.Load(tile.IconPath);

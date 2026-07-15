@@ -114,7 +114,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TileBorder" Property="Background" Value="#494949" />
+                                <Setter TargetName="TileBorder" Property="Opacity" Value="0.88" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="TileBorder" Property="Opacity" Value="0.72" />
@@ -465,6 +465,8 @@
                                         <DataTemplate DataType="{x:Type local:TileItem}">
                                             <Button Width="{Binding PixelWidth}"
                                                     Height="{Binding PixelHeight}"
+                                                    Background="{Binding BackgroundBrush}"
+                                                    Foreground="{Binding ForegroundBrush}"
                                                     Style="{StaticResource TileStyle}"
                                                     Tag="{Binding}"
                                                     Click="TileButton_Click"
@@ -512,7 +514,9 @@
                                                                   Click="TileSettings_Click" />
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
-                                                <Grid>
+                                                <Grid ClipToBounds="True">
+                                                    <Image Source="{Binding BackgroundImage}"
+                                                           Stretch="UniformToFill" />
                                                     <TextBlock x:Name="TileInitial"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
@@ -520,31 +524,50 @@
                                                                FontWeight="SemiBold"
                                                                Text="{Binding Initial}" />
                                                     <Image x:Name="TileIcon"
-                                                           Width="32"
-                                                           Height="32"
+                                                           Width="{Binding IconSize}"
+                                                           Height="{Binding IconSize}"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            Source="{Binding Icon}"
                                                            Stretch="Uniform" />
-                                                    <TextBlock x:Name="TileTitle"
-                                                               VerticalAlignment="Bottom"
-                                                               FontSize="12"
-                                                               LineHeight="14"
-                                                               MaxHeight="30"
-                                                               Text="{Binding Name}"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               TextWrapping="Wrap" />
+                                                    <StackPanel x:Name="TileText"
+                                                                VerticalAlignment="Bottom">
+                                                        <TextBlock x:Name="TileTitle"
+                                                                   FontSize="12"
+                                                                   LineHeight="14"
+                                                                   MaxHeight="30"
+                                                                   Text="{Binding Name}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   TextWrapping="Wrap" />
+                                                        <TextBlock FontSize="10"
+                                                                   Opacity="0.82"
+                                                                   Text="{Binding Subtitle}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
                                                 </Grid>
                                             </Button>
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
-                                                    <Setter TargetName="TileIcon" Property="Width" Value="24" />
-                                                    <Setter TargetName="TileIcon" Property="Height" Value="24" />
+                                                    <Setter TargetName="TileText" Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ShowTitle}" Value="False">
                                                     <Setter TargetName="TileTitle" Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Size}" Value="Large">
-                                                    <Setter TargetName="TileIcon" Property="Width" Value="44" />
-                                                    <Setter TargetName="TileIcon" Property="Height" Value="44" />
+                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
+                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Left" />
+                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Top" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
+                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Top" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomLeft">
+                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Left" />
+                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Bottom" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomRight">
+                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Bottom" />
                                                 </DataTrigger>
                                             </DataTemplate.Triggers>
                                         </DataTemplate>

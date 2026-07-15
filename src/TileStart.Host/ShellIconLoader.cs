@@ -16,7 +16,7 @@ public static class ShellIconLoader
 
     public static ImageSource? Load(string displayName)
     {
-        var loadedImage = LoadImageFile(displayName);
+        var loadedImage = LoadImage(displayName);
         if (loadedImage is not null)
         {
             return loadedImage;
@@ -56,7 +56,7 @@ public static class ShellIconLoader
         }
     }
 
-    private static ImageSource? LoadImageFile(string path)
+    public static ImageSource? LoadImage(string path)
     {
         if (!File.Exists(path) || !ImageExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
         {

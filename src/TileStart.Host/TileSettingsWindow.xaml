@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="磁贴设置"
         Width="520"
-        Height="620"
+        Height="720"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#202020"
@@ -19,6 +19,9 @@
             <StackPanel>
                 <TextBlock Margin="0,0,0,6" Text="名称" />
                 <TextBox x:Name="NameBox" Height="30" Padding="6,3" />
+
+                <TextBlock Margin="0,14,0,6" Text="副标题" />
+                <TextBox x:Name="SubtitleBox" Height="30" Padding="6,3" />
 
                 <StackPanel x:Name="TargetPanel" Margin="0,14,0,0">
                     <TextBlock Margin="0,0,0,6" Text="命令或可执行文件" />
@@ -51,6 +54,56 @@
                     </StackPanel>
                     <Button Grid.Column="1" Width="72" Height="30" Margin="8,22,0,0" Content="浏览…" Click="BrowseIcon_Click" />
                 </Grid>
+
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,6" Text="背景图片" />
+                        <TextBox x:Name="BackgroundImagePathBox" Height="30" Padding="6,3" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Width="72" Height="30" Margin="8,22,0,0" Content="浏览…" Click="BrowseBackgroundImage_Click" />
+                </Grid>
+
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,6" Text="背景颜色" />
+                        <TextBox x:Name="BackgroundColorBox" Height="30" Padding="6,3" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Width="56" Height="30" Margin="6,22,0,0" Content="选择" Click="ChooseBackgroundColor_Click" />
+                    <StackPanel Grid.Column="3">
+                        <TextBlock Margin="0,0,0,6" Text="文字颜色" />
+                        <TextBox x:Name="ForegroundColorBox" Height="30" Padding="6,3" />
+                    </StackPanel>
+                    <Button Grid.Column="4" Width="56" Height="30" Margin="6,22,0,0" Content="选择" Click="ChooseForegroundColor_Click" />
+                </Grid>
+
+                <CheckBox x:Name="ShowTitleBox" Margin="0,16,0,0" Content="显示磁贴标题" />
+
+                <TextBlock Margin="0,16,0,6" Text="图标大小" />
+                <Slider x:Name="IconSizeBox"
+                        Minimum="16"
+                        Maximum="96"
+                        TickFrequency="8"
+                        IsSnapToTickEnabled="True" />
+
+                <TextBlock Margin="0,16,0,6" Text="图标位置" />
+                <ComboBox x:Name="IconPositionBox" Height="30" SelectedValuePath="Tag">
+                    <ComboBoxItem Content="居中" Tag="Center" />
+                    <ComboBoxItem Content="左上" Tag="TopLeft" />
+                    <ComboBoxItem Content="右上" Tag="TopRight" />
+                    <ComboBoxItem Content="左下" Tag="BottomLeft" />
+                    <ComboBoxItem Content="右下" Tag="BottomRight" />
+                </ComboBox>
 
                 <TextBlock Margin="0,16,0,6" Text="磁贴尺寸" />
                 <ComboBox x:Name="SizeBox" Height="30" SelectedValuePath="Tag">
