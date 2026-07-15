@@ -35,6 +35,7 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 | 磁贴布局 | 四种尺寸、8 单元占位、碰撞、自动换行、拖动事务和跨组移动由测试覆盖 |
 | 任意目标 | 应用、文件、文件夹、批处理、PowerShell、URL 和自定义命令分类/启动参数由测试覆盖 |
 | 持久化 | 分组、磁贴位置、启动参数和视觉设置 JSON 往返由测试覆盖 |
+| Win10 原版对照 | 最新 TileStart 截图保存为 `docs/reference/win10-start/tilestart-mvp-2560x1600-150pct.png`，与同目录原版截图使用相同分辨率和 DPI |
 
 ## 当前开放项
 
@@ -48,7 +49,6 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 6. 验证锁屏、注销、重新登录和登录自启动后的完整生命周期。
 7. 验证全屏游戏或独占全屏应用期间不会误弹。
 8. 在 Windows 11 对目标 build 建立独立任务栏适配器并完成实机验证；当前仅允许 build 19045 注入。
-9. 使用最新安装包完成最终界面截图和原版并排对照。
 
 ## 完成判定
 
