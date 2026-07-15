@@ -19,8 +19,8 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 | 托管构建 | `dotnet build src\TileStart.Host\TileStart.Host.csproj -c Release`，0 警告、0 错误 |
 | 自动测试 | 75 项 xUnit 测试通过，0 项失败 |
 | 完整解决方案 | Visual Studio MSBuild `Release|x64` 构建 Host、Tests、Injector、ShellHook、ShellProbe 通过 |
-| 自包含便携版 | `Build-Package.ps1` 成功发布 Host，并包含 Injector 与 ShellHook |
-| 安装程序 | Inno Setup 6.7.3 成功编译 per-user x64 安装程序 |
+| 自包含便携版 | 最新 main 生成 `72,419,432` 字节 ZIP；SHA-256 `0BFC563120F9773009157DF197FEF74EC8E7081C8DD42C060BCC85AB2FEAEA38` |
+| 安装程序 | 最新 main 生成 `51,224,370` 字节 EXE；SHA-256 `4D654C4AD0E5EBEE24C1F580B91F44E92CE87529874CD171F25C2B277D586612` |
 | 安装/卸载 | 静默安装、启动、卸载实测通过；安装目录、自启动项、Host、Injector 和 Explorer 模块无残留 |
 | 安装自启动任务 | `HKCU\...\Run\TileStart` 写入安装路径，卸载后删除 |
 | Host 生命周期 | `--shutdown` 通过 IPC 请求正常退出；Host、Injector 和远程 DLL 均被清理 |
@@ -48,7 +48,7 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 6. 验证锁屏、注销、重新登录和登录自启动后的完整生命周期。
 7. 验证全屏游戏或独占全屏应用期间不会误弹。
 8. 在 Windows 11 对目标 build 建立独立任务栏适配器并完成实机验证；当前仅允许 build 19045 注入。
-9. 对最新代码重新生成最终便携包和安装程序，并完成最终截图。
+9. 使用最新安装包完成最终界面截图和原版并排对照。
 
 ## 完成判定
 
