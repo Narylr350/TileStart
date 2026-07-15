@@ -248,7 +248,8 @@ public partial class MainWindow : Window
             await Task.Delay(50);
         }
 
-        if (!IsActive && !IsMouseOver)
+        var hasActiveOwnedWindow = OwnedWindows.Cast<Window>().Any(window => window.IsActive);
+        if (StartWindowLifecycle.ShouldHideAfterDeactivation(IsActive, hasActiveOwnedWindow))
         {
             Hide();
         }
