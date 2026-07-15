@@ -19,8 +19,8 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 | 托管构建 | `dotnet build src\TileStart.Host\TileStart.Host.csproj -c Release`，0 警告、0 错误 |
 | 自动测试 | 75 项 xUnit 测试通过，0 项失败 |
 | 完整解决方案 | Visual Studio MSBuild `Release|x64` 构建 Host、Tests、Injector、ShellHook、ShellProbe 通过 |
-| 自包含便携版 | 最新 main 生成 `72,419,432` 字节 ZIP；SHA-256 `0BFC563120F9773009157DF197FEF74EC8E7081C8DD42C060BCC85AB2FEAEA38` |
-| 安装程序 | 最新 main 生成 `51,224,370` 字节 EXE；SHA-256 `4D654C4AD0E5EBEE24C1F580B91F44E92CE87529874CD171F25C2B277D586612` |
+| 自包含便携版 | 最新 main 生成 `72,419,463` 字节 ZIP；SHA-256 `9A119613FF40C2E36BFDA758839CCE78FB4BAA14263BAEF706B71E4F9327FE60` |
+| 安装程序 | 最新 main 生成 `51,225,363` 字节 EXE；SHA-256 `5A4FD527461A00D6BF456FAAAA16F75321464FED46944068F51D45F5E3753DE7` |
 | 安装/卸载 | 静默安装、启动、卸载实测通过；安装目录、自启动项、Host、Injector 和 Explorer 模块无残留 |
 | 安装自启动任务 | `HKCU\...\Run\TileStart` 写入安装路径，卸载后删除 |
 | Host 生命周期 | `--shutdown` 通过 IPC 请求正常退出；Host、Injector 和远程 DLL 均被清理 |
@@ -29,7 +29,8 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 | Explorer 重启 | Shell Explorer PID 改变后 Injector 自动重新注入；Host 退出后新 Explorer 中 DLL 被卸载 |
 | 任务栏开始按钮 | 第一次点击显示 TileStart，第二次点击隐藏；原版开始菜单未显示 |
 | 窗口定位 | 150% DPI 下当前保存尺寸定位为物理矩形 `(0,460)-(2420,1540)`，底边贴合任务栏工作区 |
-| 任务栏边缘计算 | 上、下、左、右、自动隐藏细边和工作区尺寸限制由自动测试覆盖 |
+| 任务栏边缘 | 实际切换左、上、右、下四个位置后，TileStart 分别贴合任务栏内侧；每次 Explorer 重启均重新注入 Hook |
+| 任务栏自动隐藏 | 底部自动隐藏时任务栏退至屏幕外沿，TileStart 底边贴合完整工作区；测试结束恢复原设置 |
 | Win 键状态机 | 左/右 Win、单独释放、Win+E、Win+Shift+S、普通按键序列由自动测试覆盖 |
 | 托盘菜单接线 | 真实 STA NotifyIcon 验证打开、暂停/恢复、原版开始菜单、自启动入口和退出回调 |
 | 磁贴布局 | 四种尺寸、8 单元占位、碰撞、自动换行、拖动事务和跨组移动由测试覆盖 |
@@ -45,10 +46,9 @@ Windows 10 Pro for Workstations 22H2 build 19045 x64
 2. 使用鼠标实际操作通知区域菜单，确认暂停、恢复和打开原版开始菜单的桌面体验。
 3. 在 100%、125%、175%、200% DPI 环境验证窗口、菜单和设置窗口。
 4. 在多显示器及混合 DPI 环境验证触发显示器选择和副任务栏定位。
-5. 实际切换任务栏到顶部、左侧、右侧和自动隐藏后验证。
-6. 验证锁屏、注销、重新登录和登录自启动后的完整生命周期。
-7. 验证全屏游戏或独占全屏应用期间不会误弹。
-8. 在 Windows 11 对目标 build 建立独立任务栏适配器并完成实机验证；当前仅允许 build 19045 注入。
+5. 验证锁屏、注销、重新登录和登录自启动后的完整生命周期。
+6. 验证全屏游戏或独占全屏应用期间不会误弹。
+7. 在 Windows 11 对目标 build 建立独立任务栏适配器并完成实机验证；当前仅允许 build 19045 注入。
 
 ## 完成判定
 
