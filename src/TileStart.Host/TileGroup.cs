@@ -11,6 +11,7 @@ public sealed class TileGroup : INotifyPropertyChanged
     public const double PixelWidth = Win10TileMetrics.GroupWidth;
 
     private readonly HashSet<TileItem> _trackedTiles = [];
+    private string _name = string.Empty;
     private ObservableCollection<TileItem> _tiles = [];
 
     public TileGroup()
@@ -19,7 +20,21 @@ public sealed class TileGroup : INotifyPropertyChanged
     }
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = string.Empty;
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (_name == value)
+            {
+                return;
+            }
+
+            _name = value;
+            OnPropertyChanged();
+        }
+    }
 
     public ObservableCollection<TileItem> Tiles
     {

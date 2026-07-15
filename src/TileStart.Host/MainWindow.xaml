@@ -385,6 +385,8 @@
             <Border.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />
+                    <Separator />
+                    <MenuItem Header="新建组" Click="AddGroup_Click" />
                 </ContextMenu>
             </Border.ContextMenu>
             <ScrollViewer Margin="28,28,0,0"
@@ -401,11 +403,26 @@
                         <DataTemplate DataType="{x:Type local:TileGroup}">
                             <StackPanel Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                         Margin="0,0,16,24">
-                                <TextBlock Height="28"
-                                           Margin="4,0,0,0"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           Text="{Binding Name}" />
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="向左移动" Click="MoveGroupLeft_Click" />
+                                        <MenuItem Header="向右移动" Click="MoveGroupRight_Click" />
+                                        <Separator />
+                                        <MenuItem Header="删除组" Click="DeleteGroup_Click" />
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                                <TextBox Height="28"
+                                         Margin="4,0,0,0"
+                                         Padding="0,4,0,0"
+                                         Foreground="White"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         FontFamily="Segoe UI"
+                                         FontSize="14"
+                                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="单击命名组"
+                                         KeyDown="GroupName_KeyDown"
+                                         LostKeyboardFocus="GroupName_LostKeyboardFocus" />
                                 <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                               Height="{Binding PixelHeight}"
                                               AllowDrop="True"

@@ -435,6 +435,82 @@ public partial class MainWindow : Window
         TileLayoutStore.Save(TileLayout);
     }
 
+    private void AddGroup_Click(object sender, RoutedEventArgs e)
+    {
+        TileGroupManager.Add(TileLayout);
+        TileLayoutStore.Save(TileLayout);
+    }
+
+    private void GroupName_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Enter or Key.Escape))
+        {
+            return;
+        }
+
+        Keyboard.ClearFocus();
+        e.Handled = true;
+    }
+
+    private void GroupName_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        TileLayoutStore.Save(TileLayout);
+    }
+
+    private void MoveGroupLeft_Click(object sender, RoutedEventArgs e)
+    {
+        MoveGroup(sender, -1);
+    }
+
+    private void MoveGroupRight_Click(object sender, RoutedEventArgs e)
+    {
+        MoveGroup(sender, 1);
+    }
+
+    private void MoveGroup(object sender, int offset)
+    {
+        var group = GetContextGroup(sender);
+        if (group is not null && TileGroupManager.Move(TileLayout, group, offset))
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private void DeleteGroup_Click(object sender, RoutedEventArgs e)
+    {
+        var group = GetContextGroup(sender);
+        if (group is null)
+        {
+            return;
+        }
+
+        if (group.Tiles.Count > 0
+            && System.Windows.MessageBox.Show(this,
+                               "删除该组会同时取消固定其中的全部磁贴。是否继续？",
+                               "删除组",
+                               MessageBoxButton.YesNo,
+                               MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        if (TileGroupManager.Remove(TileLayout, group))
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private static TileGroup? GetContextGroup(object sender)
+    {
+        return sender is MenuItem menuItem
+            && ItemsControl.ItemsControlFromItemContainer(menuItem) is ContextMenu
+            {
+                PlacementTarget: FrameworkElement { DataContext: TileGroup group },
+            }
+                ? group
+                : null;
+    }
+
     private static void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
     {
         tile.Name = dialog.TileName;
