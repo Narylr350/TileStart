@@ -23,7 +23,7 @@ if (-not $msbuild)
     throw 'MSBuild was not found.'
 }
 
-& $msbuild (Join-Path $repoRoot 'TileStart.sln') /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+& $msbuild (Join-Path $repoRoot 'TileStart.sln') /restore /p:Configuration=Release /p:Platform=x64 /m /v:minimal
 if ($LASTEXITCODE -ne 0)
 {
     throw "MSBuild failed with exit code $LASTEXITCODE."
@@ -39,6 +39,7 @@ New-Item -ItemType Directory -Path $publishDirectory | Out-Null
     -c Release `
     -r win-x64 `
     --self-contained true `
+    --source 'https://api.nuget.org/v3/index.json' `
     -o $publishDirectory
 if ($LASTEXITCODE -ne 0)
 {

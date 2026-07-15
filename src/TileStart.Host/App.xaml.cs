@@ -22,10 +22,17 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         DiagnosticLog.Write("Host startup started.");
 
+        var shutdownRequested = e.Args.Contains("--shutdown", StringComparer.OrdinalIgnoreCase);
         _singleInstance = new SingleInstanceGuard();
         if (!_singleInstance.IsPrimaryInstance)
         {
-            SingleInstanceGuard.NotifyPrimaryInstance();
+            SingleInstanceGuard.NotifyPrimaryInstance(shutdownRequested);
+            Shutdown();
+            return;
+        }
+
+        if (shutdownRequested)
+        {
             Shutdown();
             return;
         }
@@ -33,7 +40,7 @@ public partial class App : System.Windows.Application
         DiagnosticLog.Write("Creating main window.");
         MainWindow = new MainWindow();
         DiagnosticLog.Write("Main window created.");
-        _server = new OpenRequestServer((MainWindow)MainWindow, Dispatcher);
+        _server = new OpenRequestServer(((MainWindow)MainWindow).ShowFromShell, ExitApplication, Dispatcher);
         _server.Start();
         _winKeyHook = new WinKeyHook(() => Dispatcher.BeginInvoke(((MainWindow)MainWindow).ShowFromShell));
         _winKeyHook.Start();
@@ -42,7 +49,7 @@ public partial class App : System.Windows.Application
         _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
                                  SetPaused,
                                  WinKeyHook.OpenNativeStartMenu,
-                                 ExitFromTray);
+                                 ExitApplication);
         DiagnosticLog.Write("Host startup completed.");
     }
 
@@ -66,7 +73,7 @@ public partial class App : System.Windows.Application
         }
     }
 
-    private void ExitFromTray()
+    private void ExitApplication()
     {
         ((MainWindow)MainWindow).AllowClose();
         Shutdown();

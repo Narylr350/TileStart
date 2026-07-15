@@ -43,10 +43,19 @@ Filename: "{app}\{#AppExeName}"; Description: "启动 TileStart"; Flags: nowait 
 [Code]
 procedure StopTileStart;
 var
+  AppPath: String;
   ResultCode: Integer;
 begin
+  AppPath := ExpandConstant('{app}\TileStart.Host.exe');
+  if FileExists(AppPath) then
+  begin
+    Exec(AppPath, '--shutdown', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(1500);
+  end;
+
   Exec(ExpandConstant('{cmd}'), '/C taskkill /IM TileStart.Host.exe /F >NUL 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Sleep(1500);
+  Sleep(2000);
+  Exec(ExpandConstant('{cmd}'), '/C taskkill /IM TileStart.Injector.exe /F >NUL 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;

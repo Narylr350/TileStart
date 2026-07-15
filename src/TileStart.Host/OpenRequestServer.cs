@@ -8,14 +8,17 @@ public sealed class OpenRequestServer
 {
     private const string PipeName = "TileStart.Host";
     private static readonly byte[] OpenCommand = "OPEN"u8.ToArray();
-    private readonly MainWindow _window;
+    private static readonly byte[] ExitCommand = "EXIT"u8.ToArray();
+    private readonly Action _openWindow;
+    private readonly Action _exit;
     private readonly Dispatcher _dispatcher;
     private readonly CancellationTokenSource _cancellation = new();
     private Task? _listenTask;
 
-    public OpenRequestServer(MainWindow window, Dispatcher dispatcher)
+    public OpenRequestServer(Action openWindow, Action exit, Dispatcher dispatcher)
     {
-        _window = window;
+        _openWindow = openWindow;
+        _exit = exit;
         _dispatcher = dispatcher;
     }
 
@@ -66,10 +69,16 @@ public sealed class OpenRequestServer
                     received += count;
                 }
 
-                var accepted = received == OpenCommand.Length && command.SequenceEqual(OpenCommand);
-                if (accepted)
+                var openRequested = received == OpenCommand.Length && command.SequenceEqual(OpenCommand);
+                var exitRequested = received == ExitCommand.Length && command.SequenceEqual(ExitCommand);
+                var accepted = openRequested || exitRequested;
+                if (openRequested)
                 {
-                    await _dispatcher.InvokeAsync(_window.ShowFromShell).Task;
+                    _ = _dispatcher.BeginInvoke(_openWindow);
+                }
+                else if (exitRequested)
+                {
+                    _ = _dispatcher.BeginInvoke(_exit);
                 }
 
                 await pipe.WriteAsync(new[] { accepted ? (byte)1 : (byte)0 }, cancellationToken);
