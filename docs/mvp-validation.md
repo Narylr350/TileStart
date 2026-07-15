@@ -1,0 +1,65 @@
+# TileStart MVP 验证记录
+
+本文记录可重复验证证据和仍需实机完成的项目。完成状态以当前 Git、构建输出和实际桌面行为为准，不以计划或推测代替。
+
+## 当前环境
+
+```text
+Windows 10 Pro for Workstations 22H2 build 19045 x64
+2560 × 1600
+150% DPI（144 DPI）
+单显示器
+任务栏位于底部
+```
+
+## 已验证
+
+| 范围 | 证据 |
+| --- | --- |
+| 托管构建 | `dotnet build src\TileStart.Host\TileStart.Host.csproj -c Release`，0 警告、0 错误 |
+| 自动测试 | 75 项 xUnit 测试通过，0 项失败 |
+| 完整解决方案 | Visual Studio MSBuild `Release|x64` 构建 Host、Tests、Injector、ShellHook、ShellProbe 通过 |
+| 自包含便携版 | `Build-Package.ps1` 成功发布 Host，并包含 Injector 与 ShellHook |
+| 安装程序 | Inno Setup 6.7.3 成功编译 per-user x64 安装程序 |
+| 安装/卸载 | 静默安装、启动、卸载实测通过；安装目录、自启动项、Host、Injector 和 Explorer 模块无残留 |
+| 安装自启动任务 | `HKCU\...\Run\TileStart` 写入安装路径，卸载后删除 |
+| Host 生命周期 | `--shutdown` 通过 IPC 请求正常退出；Host、Injector 和远程 DLL 均被清理 |
+| IPC 可用 | ShellProbe 获得确认，实测往返约 13.6 ms |
+| IPC 不可用 | ShellProbe 返回 fail-open，原版开始菜单不被阻断 |
+| Explorer 重启 | Shell Explorer PID 改变后 Injector 自动重新注入；Host 退出后新 Explorer 中 DLL 被卸载 |
+| 任务栏开始按钮 | 第一次点击显示 TileStart，第二次点击隐藏；原版开始菜单未显示 |
+| 窗口定位 | 150% DPI 下当前保存尺寸定位为物理矩形 `(0,460)-(2420,1540)`，底边贴合任务栏工作区 |
+| 任务栏边缘计算 | 上、下、左、右、自动隐藏细边和工作区尺寸限制由自动测试覆盖 |
+| Win 键状态机 | 左/右 Win、单独释放、Win+E、Win+Shift+S、普通按键序列由自动测试覆盖 |
+| 托盘菜单接线 | 真实 STA NotifyIcon 验证打开、暂停/恢复、原版开始菜单、自启动入口和退出回调 |
+| 磁贴布局 | 四种尺寸、8 单元占位、碰撞、自动换行、拖动事务和跨组移动由测试覆盖 |
+| 任意目标 | 应用、文件、文件夹、批处理、PowerShell、URL 和自定义命令分类/启动参数由测试覆盖 |
+| 持久化 | 分组、磁贴位置、启动参数和视觉设置 JSON 往返由测试覆盖 |
+
+## 当前开放项
+
+以下项目没有足够实机证据，不能标记为完成：
+
+1. 使用物理键盘逐项确认单独 `Win` 和 `Win+E/R/D/L/I/数字/方向键/Shift+S`。
+2. 使用鼠标实际操作通知区域菜单，确认暂停、恢复和打开原版开始菜单的桌面体验。
+3. 在 100%、125%、175%、200% DPI 环境验证窗口、菜单和设置窗口。
+4. 在多显示器及混合 DPI 环境验证触发显示器选择和副任务栏定位。
+5. 实际切换任务栏到顶部、左侧、右侧和自动隐藏后验证。
+6. 验证锁屏、注销、重新登录和登录自启动后的完整生命周期。
+7. 验证全屏游戏或独占全屏应用期间不会误弹。
+8. 在 Windows 11 对目标 build 建立独立任务栏适配器并完成实机验证；当前仅允许 build 19045 注入。
+9. 对最新代码重新生成最终便携包和安装程序，并完成最终截图。
+
+## 完成判定
+
+只有上述开放项取得对应实机证据，且最终满足以下条件时，MVP 才可宣告完成：
+
+```text
+branch = main
+working tree = clean
+feature branches = none
+TileStart.Host processes = 0
+TileStart.Injector processes = 0
+Explorer TileStart.ShellHook modules = 0
+push/tag/release = not performed
+```
