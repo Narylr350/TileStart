@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -75,11 +76,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        PositionOnCurrentMonitor();
         Show();
         UpdateLayout();
-        PositionOnCurrentMonitor();
         Activate();
         Focus();
+        PositionOnCurrentMonitor();
     }
 
     public void AllowClose()
@@ -150,13 +152,53 @@ public partial class MainWindow : Window
         }
 
         var dpi = GetMonitorDpi(monitor);
-        var width = Math.Min((int)Math.Round(ActualWidth * dpi / 96.0), monitorInfo.WorkArea.Right - monitorInfo.WorkArea.Left);
-        var height = Math.Min((int)Math.Round(ActualHeight * dpi / 96.0), monitorInfo.WorkArea.Bottom - monitorInfo.WorkArea.Top);
-        var left = monitorInfo.WorkArea.Left;
-        var top = monitorInfo.WorkArea.Bottom - height;
+        var monitorRect = ToPixelRect(monitorInfo.Monitor);
+        var taskbarRect = FindTaskbarRect(monitor);
+        var edge = StartWindowPlacement.InferTaskbarEdge(monitorRect, taskbarRect);
+        var logicalWidth = ActualWidth > 0 ? ActualWidth : Width;
+        var logicalHeight = ActualHeight > 0 ? ActualHeight : Height;
+        var placement = StartWindowPlacement.Calculate(
+            ToPixelRect(monitorInfo.WorkArea),
+            edge,
+            (int)Math.Round(logicalWidth * dpi / 96.0),
+            (int)Math.Round(logicalHeight * dpi / 96.0));
+        var scale = 96.0 / dpi;
+        Left = placement.Left * scale;
+        Top = placement.Top * scale;
+        Width = placement.Width * scale;
+        Height = placement.Height * scale;
+
         var handle = new WindowInteropHelper(this).Handle;
-        SetWindowPos(handle, HwndTopmost, left, top, width, height, SwpShowWindow);
+        if (handle == 0)
+        {
+            return;
+        }
+
+        var positioned = SetWindowPos(handle, HwndTopmost, placement.Left, placement.Top, placement.Width, placement.Height, SwpShowWindow);
+        DiagnosticLog.Write($"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, taskbar={taskbarRect}, edge={edge}, target={placement}, positioned={positioned}, error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
     }
+
+    private static PixelRect? FindTaskbarRect(nint monitor)
+    {
+        PixelRect? result = null;
+        EnumWindows((window, _) =>
+        {
+            var className = new StringBuilder(64);
+            GetClassNameW(window, className, className.Capacity);
+            if (className.ToString() is not ("Shell_TrayWnd" or "Shell_SecondaryTrayWnd")
+                || MonitorFromWindow(window, MonitorDefaultToNearest) != monitor
+                || !GetWindowRect(window, out var rect))
+            {
+                return true;
+            }
+
+            result = ToPixelRect(rect);
+            return false;
+        }, 0);
+        return result;
+    }
+
+    private static PixelRect ToPixelRect(Rect rect) => new(rect.Left, rect.Top, rect.Right, rect.Bottom);
 
     private static uint GetMonitorDpi(nint monitor)
     {
@@ -829,6 +871,20 @@ public partial class MainWindow : Window
         public uint Flags;
     }
 
+    private delegate bool EnumWindowsProcedure(nint window, nint parameter);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProcedure callback, nint parameter);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassNameW(nint window, StringBuilder className, int maxCount);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(nint window, out Rect rect);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromWindow(nint window, uint flags);
+
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out Point point);
 
@@ -841,7 +897,7 @@ public partial class MainWindow : Window
     [DllImport("shcore.dll")]
     private static extern int GetDpiForMonitor(nint monitor, int dpiType, out uint dpiX, out uint dpiY);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
 
     [DllImport("user32.dll")]
