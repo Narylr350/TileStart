@@ -280,7 +280,10 @@ int Watch(const std::filesystem::path& dll_path, DWORD host_process_id, const wc
     const auto shell_process_id = FindShellExplorerProcessId();
     if (shell_process_id && *shell_process_id == injected_process_id)
     {
-        Stop(dll_path, *shell_process_id);
+        for (int attempt = 0; attempt < 3 && Stop(dll_path, *shell_process_id) != 0; ++attempt)
+        {
+            Sleep(250);
+        }
     }
 
     return 0;
