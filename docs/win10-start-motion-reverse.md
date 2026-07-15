@@ -660,7 +660,88 @@ Duration = 300 + pivotRow * trunc(150 / (R - 1))
 
 `UpdateExpandedState` 设置 animation-running flag；`OnTileFallAnimationCompleted` 清除该 flag。如果动画期间收到待处理的磁贴更新，完成回调再调用 `UpdateAppTiles`。因此文件夹内容刷新不能在移动过程中直接重建子项，否则会破坏原版的视觉连续性。
 
-## 17. 开源实现调研
+## 17. 字母索引与 SemanticZoom
+
+| 地址 | 符号 |
+|---|---|
+| `0x18033A9C8` | `AllAppsPane::SetSemanticZoomView` |
+| `0x18033C0C0` | `AllAppsPane::ZoomControl_OnViewChangeStarted` |
+| `0x180336AB0` | `AllAppsPane::AppsList_HeaderActivate` |
+| `0x180336D90` | `AllAppsPane::AppsList_OnKeyDown` |
+| `0x180414CA8` | `AllAppsZoomListViewItem::SetSemanticZoomTargetItem` |
+| `0x1804D8804` | `AllAppsViewModel::FindGroupByFirstLetter` |
+| `0x1804D8E4C` | `AllAppsViewModel::FindItemByFirstLetter` |
+
+原版字母索引不是单独弹出的字符面板，而是 `SemanticZoom` 的 zoomed-out view。已确认默认 dependency property：
+
+```text
+ZoomedOutHeaderWidthAndHeight = 48 DIP
+ZoomedOutHeaderFontSize = 20 DIP
+```
+
+### 17.1 进入与退出索引
+
+应用列表 group header 激活时调用：
+
+```text
+SetSemanticZoomView(false, group)
+```
+
+即进入 zoomed-out 字母索引，并把当前 group 作为定位目标。
+
+键盘行为：
+
+```text
+Escape          : zoomed-out -> zoomed-in
+Ctrl + -        : zoomed-in -> zoomed-out，保留当前 focus item
+Ctrl + = / +    : zoomed-out -> zoomed-in，保留当前 focus item
+```
+
+事件被处理后会显式设置 `Handled=true`。
+
+### 17.2 目标字母的传递
+
+`AllAppsZoomListViewItem` 在以下入口先执行 `SetSemanticZoomTargetItem`，再调用基类处理：
+
+```text
+PointerPressed
+KeyDown
+AutomationPeer.Invoke
+```
+
+该函数：
+
+1. 向上查找父 `SemanticZoom`。
+2. 通过 `ItemsControlFromItemContainer` 找到所属 ItemsControl。
+3. 将当前 container 映射回数据 item。
+4. 临时写入 `SemanticZoom.Tag`。
+
+`ZoomControl_OnViewChangeStarted` 读取这个 Tag，把它传给 SemanticZoom view-change event 的目标 item，然后立即清空 Tag。视图切换后会对目标执行 `ScrollIntoView` 和 `FocusItem`；首次进入相关 view 时还会 `UpdateLayout` 并重新获取内部 `ScrollViewer`。
+
+这意味着 TileStart 的字母索引选择必须保持“按下的字母 -> 目标 group -> 返回列表后的滚动与焦点”这条链路，不能只切换页面再粗略设置 ScrollOffset。
+
+### 17.3 直接键入字母
+
+`AppsList_OnKeyDown` 使用当前按键文本执行 type-to-jump：
+
+```text
+当前为 zoomed-out : FindGroupByFirstLetter
+当前为 zoomed-in  : FindItemByFirstLetter
+```
+
+找到结果后依次执行：
+
+```text
+ScrollIntoView
+FocusItem
+递增 type-to-jump telemetry counter
+```
+
+因此字母键在两个 view 中语义不同：索引视图按 group 跳转，普通应用列表按具体 app item 跳转。
+
+本轮确认了尺寸、输入状态机、目标传递和焦点恢复；`SemanticZoom` 自身的视觉切换 Storyboard 仍由系统 XAML 控件与编译资源提供，具体缩放/淡入参数尚未提取。
+
+## 18. 开源实现调研
 
 ### 10SM
 
@@ -734,7 +815,7 @@ ExplorerPatcher 曾通过下载并接回旧版系统组件，在部分 Windows 1
 
 它展示了自定义磁贴背景、图片切割和原生通知队列动态磁贴思路，但不是开始菜单替代 UI。没有明确许可证时，不复制其源码；仅把功能方向作为外部观察。
 
-## 18. 对 TileStart 的直接影响
+## 19. 对 TileStart 的直接影响
 
 后续实现不能再采用“给 MainWindow 加一个 200 ms EaseOut”作为 Win10 Motion 阶段。最低重建顺序应为：
 
@@ -747,13 +828,13 @@ ExplorerPatcher 曾通过下载并接回旧版系统组件，在部分 Windows 1
 
 WPF 3D Transform 与 UWP `CompositeTransform3D` 并非一一对应。实现前应先制作最小 Motion prototype，验证 WPF 透视投影、Z 位移和逐元素动画的渲染成本；如果 WPF 无法稳定复现，再评估 Windows Composition interop，而不是先整体迁移技术栈。
 
-## 19. 仍需继续逆向
+## 20. 仍需继续逆向
 
 - `TileGridView::CreateStoryboard` 中磁贴、文件夹和根元素分别传入哪一种 `EntranceAnimationType`。
 - `EDGEUI_TRAYSTUCKPLACE` 数值与四边任务栏的准确映射。
 - 页面翻转分支的 `CompositeTransform3D` 旋转中心、透视深度和角度。
 - `ReorderThemeTransition` 的完整 `ThemeTransitionContext -> target -> additional delay` 分支矩阵。
-- 导航轨编译 XAML 中的实际宽度 Storyboard、字母索引和上下文菜单的独立 VisualState/Storyboard。
+- 导航轨编译 XAML 中的实际宽度 Storyboard、SemanticZoom 视觉切换参数和上下文菜单的独立 VisualState/Storyboard。
 - `TileViewControl` 抬升 Scale target 对应的 TileViewModel 属性，以及两个 `StoryboardWrapper` 的完整时序。
 - 系统“关闭动画效果”时各分支的精确降级行为。
 
