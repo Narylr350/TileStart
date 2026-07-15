@@ -29,12 +29,14 @@ public sealed class WinKeyHook : IDisposable
         _callback = Callback;
     }
 
-    public void Start()
+    public bool Start()
     {
         if (_hook == 0)
         {
             _hook = SetWindowsHookExW(WhKeyboardLl, _callback, GetModuleHandleW(null), 0);
         }
+
+        return _hook != 0;
     }
 
     public static void OpenNativeStartMenu()
@@ -74,52 +76,69 @@ public sealed class WinKeyHook : IDisposable
             return CallNextHookEx(_hook, code, message, data);
         }
 
-        var keyDown = message is WmKeyDown or WmSysKeyDown;
-        var keyUp = message is WmKeyUp or WmSysKeyUp;
-        var winKey = key.VirtualKey is VkLwin or VkRwin;
+        var action = ProcessKey(
+            key.VirtualKey,
+            message is WmKeyDown or WmSysKeyDown,
+            message is WmKeyUp or WmSysKeyUp);
+        if (action.HasFlag(WinKeyAction.InjectWinDown))
+        {
+            InjectKey((ushort)_winVirtualKey, 0, KeyEventExtendedKey);
+        }
 
+        if (action.HasFlag(WinKeyAction.InjectCurrentKeyDown))
+        {
+            InjectKey((ushort)key.VirtualKey, (ushort)key.ScanCode,
+                (key.Flags & LlkhfExtended) != 0 ? KeyEventExtendedKey : 0);
+        }
+
+        if (action.HasFlag(WinKeyAction.InjectWinUp))
+        {
+            InjectKey((ushort)key.VirtualKey, 0, KeyEventExtendedKey | KeyEventKeyUp);
+        }
+
+        if (action.HasFlag(WinKeyAction.OpenTileStart))
+        {
+            _onStandaloneWinKey();
+        }
+
+        return action.HasFlag(WinKeyAction.Suppress)
+            ? 1
+            : CallNextHookEx(_hook, code, message, data);
+    }
+
+    internal WinKeyAction ProcessKey(uint virtualKey, bool keyDown, bool keyUp)
+    {
+        var winKey = virtualKey is VkLwin or VkRwin;
         if (keyDown && winKey)
         {
             if (!_winKeyDown)
             {
                 _winKeyDown = true;
                 _winKeyChord = false;
-                _winVirtualKey = key.VirtualKey;
+                _winVirtualKey = virtualKey;
             }
 
-            return 1;
+            return WinKeyAction.Suppress;
         }
 
         if (keyDown && _winKeyDown && !_winKeyChord)
         {
             _winKeyChord = true;
-            InjectKey((ushort)_winVirtualKey, 0, KeyEventExtendedKey);
-            InjectKey((ushort)key.VirtualKey, (ushort)key.ScanCode,
-                (key.Flags & LlkhfExtended) != 0 ? KeyEventExtendedKey : 0);
-            return 1;
+            return WinKeyAction.Suppress | WinKeyAction.InjectWinDown | WinKeyAction.InjectCurrentKeyDown;
         }
 
-        if (keyUp && winKey && _winKeyDown && key.VirtualKey == _winVirtualKey)
+        if (keyUp && winKey && _winKeyDown && virtualKey == _winVirtualKey)
         {
             var chord = _winKeyChord;
-            var winVirtualKey = _winVirtualKey;
             _winKeyDown = false;
             _winKeyChord = false;
             _winVirtualKey = 0;
-
-            if (chord)
-            {
-                InjectKey((ushort)winVirtualKey, 0, KeyEventExtendedKey | KeyEventKeyUp);
-            }
-            else
-            {
-                _onStandaloneWinKey();
-            }
-
-            return 1;
+            return chord
+                ? WinKeyAction.Suppress | WinKeyAction.InjectWinUp
+                : WinKeyAction.Suppress | WinKeyAction.OpenTileStart;
         }
 
-        return CallNextHookEx(_hook, code, message, data);
+        return WinKeyAction.None;
     }
 
     private static void InjectKey(ushort virtualKey, ushort scanCode, uint flags)

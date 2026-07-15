@@ -43,9 +43,16 @@ public partial class App : System.Windows.Application
         _server = new OpenRequestServer(((MainWindow)MainWindow).ShowFromShell, ExitApplication, Dispatcher);
         _server.Start();
         _winKeyHook = new WinKeyHook(() => Dispatcher.BeginInvoke(((MainWindow)MainWindow).ShowFromShell));
-        _winKeyHook.Start();
+        if (!_winKeyHook.Start())
+        {
+            DiagnosticLog.Write("Win-key hook could not be installed; native Win-key behavior remains active.");
+        }
+
         _shellIntegration = new ShellIntegrationManager();
-        _shellIntegration.Start();
+        if (!_shellIntegration.Start())
+        {
+            DiagnosticLog.Write("Shell integration could not be started; native Start-button behavior remains active.");
+        }
         _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
                                  SetPaused,
                                  WinKeyHook.OpenNativeStartMenu,
@@ -68,8 +75,15 @@ public partial class App : System.Windows.Application
         }
         else
         {
-            _winKeyHook?.Start();
-            _shellIntegration?.Start();
+            if (_winKeyHook?.Start() == false)
+            {
+                DiagnosticLog.Write("Win-key hook could not be resumed.");
+            }
+
+            if (_shellIntegration?.Start() == false)
+            {
+                DiagnosticLog.Write("Shell integration could not be resumed.");
+            }
         }
     }
 
