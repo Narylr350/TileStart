@@ -473,6 +473,21 @@ DispatcherTimer interval = 1,200,000 × 100 ns = 120 ms
 
 使用 `QuadraticEase`；Frame 分支显式设置 `EasingMode = 0`。这些函数属于 LauncherFrame 的退出包装层，不应与第 7 节逐元素 Dismiss 动画混成一条整窗动画。
 
+### 12.1 TileStart 的 WPF 实测降级
+
+在当前 Acrylic 大型视觉树上，直接把第 7 节参数翻译成 WPF 逐元素 `Opacity` 动画，每次退出只有 1 个 `CompositionTarget.Rendering` 帧，主渲染停顿约 `213–361 ms`。改为给 `MainSurface` 或 `Window.Opacity` 做单一 WPF 动画仍只有 1 帧，停顿约 `211–404 ms`。这两条方案均已否决，不能把 UWP Composition 的低成本动画等同为 WPF 元素透明度动画。
+
+当前生产降级使用顶层 Win32 `AnimateWindow`：
+
+```text
+Duration = 150 ms
+Flags = AW_BLEND | AW_HIDE
+```
+
+它复用本节已恢复的 LauncherFrame 退出包装层时长，并让系统窗口合成路径完成淡出，不再触发 WPF 对数百个元素的逐帧重绘。Win10 实机已确认淡出流畅、失焦时会先取消置顶、快速反复开关不会残留窗口。逐元素 Dismiss 的 Z/Opacity 参数继续作为未来 Windows Composition interop 的证据保留，不在 WPF 后端强行直译。
+
+快速开关测试还暴露了磁贴拖动的嵌套消息循环重入：`DragDrop.DoDragDrop` 期间另一次鼠标移动可能改写 `_dragTransaction`。生产实现禁止嵌套拖动，并由局部事务对象负责释放，避免外层 `finally` 对已清空字段调用 `Dispose()`。
+
 ## 13. 导航轨悬停展开
 
 | 地址 | 符号 |
@@ -1118,7 +1133,7 @@ ExplorerPatcher 曾通过下载并接回旧版系统组件，在部分 Windows 1
 
 WPF 3D Transform 与 UWP `CompositeTransform3D` 并非一一对应。MVP 先实现实机已观察到的 Y 轴 fallback；完整深度路径若要加入，优先评估 Windows Composition interop 复用同类矩阵，而不是再次用普通 WPF ScaleTransform 猜测视觉结果。
 
-TileStart 的 WPF fallback 实现经实机观感校准为 550 ms，比原始 500 ms 放慢 10%；这是渲染后端补偿，不改写上文记录的原版参数。首次显示前在隐藏状态批量装载应用并预创建 Motion transform，避免首帧创建数百个视觉对象造成卡顿。
+TileStart 的 WPF fallback 实现使用原始 `500 ms`；关键差异不是额外放慢，而是在 `Window.Show()` 前预置逐元素起始位移，使第一个合成帧保留完整运动起点。首次显示前还会在隐藏状态批量装载应用并预创建 Motion transform，避免首帧创建数百个视觉对象造成卡顿。该实现已在 Win10 实机通过 Win/A 双入口逐次对照。
 
 ## 21. 研究阶段结论与实现边界
 

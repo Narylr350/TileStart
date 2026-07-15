@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     private const uint MonitorDefaultToNearest = 2;
     private const int MdtEffectiveDpi = 0;
     private const uint SwpShowWindow = 0x0040;
+    private const uint AwHide = 0x00010000;
+    private const uint AwBlend = 0x00080000;
+    private const int DismissDurationMilliseconds = 150;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
     private const int WmNcLButtonDown = 0x00A1;
@@ -31,6 +34,7 @@ public partial class MainWindow : Window
     private static readonly nint HwndTopmost = new(-1);
     private readonly RangeObservableCollection<AppEntry> _apps = [];
     private bool _allowClose;
+    private bool _isDismissing;
     private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private System.Windows.Point _dragStart;
     private TileItem? _dragTile;
@@ -72,9 +76,7 @@ public partial class MainWindow : Window
     {
         if (IsVisible)
         {
-            SaveCurrentSize();
-            ClearSearch();
-            Hide();
+            DismissWindow();
             return;
         }
 
@@ -260,6 +262,49 @@ public partial class MainWindow : Window
         }
     }
 
+    private void DismissWindow(bool yieldTopmost = false)
+    {
+        if (!IsVisible)
+        {
+            return;
+        }
+
+        if (_isDismissing)
+        {
+            if (yieldTopmost)
+            {
+                Topmost = false;
+            }
+
+            return;
+        }
+
+        _isDismissing = true;
+        SaveCurrentSize();
+        ClearSearch();
+        var wasTopmost = Topmost;
+        if (yieldTopmost)
+        {
+            Topmost = false;
+        }
+
+        try
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            if (SystemParameters.ClientAreaAnimation && handle != 0)
+            {
+                AnimateWindow(handle, DismissDurationMilliseconds, AwHide | AwBlend);
+            }
+
+            Hide();
+        }
+        finally
+        {
+            Topmost = wasTopmost;
+            _isDismissing = false;
+        }
+    }
+
     private async void Window_Deactivated(object? sender, EventArgs e)
     {
         SaveCurrentSize();
@@ -272,7 +317,7 @@ public partial class MainWindow : Window
         var hasActiveOwnedWindow = OwnedWindows.Cast<Window>().Any(window => window.IsActive);
         if (StartWindowLifecycle.ShouldHideAfterDeactivation(IsActive, hasActiveOwnedWindow))
         {
-            Hide();
+            DismissWindow(yieldTopmost: true);
         }
     }
 
@@ -297,8 +342,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                SaveCurrentSize();
-                Hide();
+                DismissWindow();
             }
             e.Handled = true;
         }
@@ -399,8 +443,7 @@ public partial class MainWindow : Window
 
         if (AppLauncher.Launch(app))
         {
-            ClearSearch();
-            Hide();
+            DismissWindow(yieldTopmost: true);
         }
     }
 
@@ -436,7 +479,7 @@ public partial class MainWindow : Window
 
         if (sender is Button { Tag: TileItem tile } && AppLauncher.Launch(tile))
         {
-            Hide();
+            DismissWindow(yieldTopmost: true);
         }
     }
 
@@ -498,7 +541,7 @@ public partial class MainWindow : Window
         var tile = GetContextTile(sender);
         if (tile is not null && AppLauncher.LaunchAsAdministrator(tile))
         {
-            Hide();
+            DismissWindow(yieldTopmost: true);
         }
     }
 
@@ -653,7 +696,10 @@ public partial class MainWindow : Window
 
     private void TileButton_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        if (e.LeftButton != MouseButtonState.Pressed || _dragTile is null || _dragSource is null)
+        if (e.LeftButton != MouseButtonState.Pressed
+            || _dragTile is null
+            || _dragSource is null
+            || _dragTransaction is not null)
         {
             return;
         }
@@ -667,15 +713,20 @@ public partial class MainWindow : Window
 
         var tile = _dragTile;
         _dragCompleted = true;
-        _dragTransaction = new TileDragTransaction(TileLayout, _dragSource, tile);
+        var transaction = new TileDragTransaction(TileLayout, _dragSource, tile);
+        _dragTransaction = transaction;
         try
         {
             DragDrop.DoDragDrop((DependencyObject)sender, new DataObject(typeof(TileItem), tile), DragDropEffects.Move);
         }
         finally
         {
-            _dragTransaction.Dispose();
-            _dragTransaction = null;
+            transaction.Dispose();
+            if (ReferenceEquals(_dragTransaction, transaction))
+            {
+                _dragTransaction = null;
+            }
+
             _dragTile = null;
             _dragSource = null;
         }
@@ -941,6 +992,9 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern nint SendMessage(nint window, int message, nint wParam, nint lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool AnimateWindow(nint window, int durationMilliseconds, uint flags);
 
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(nint window, ref WindowCompositionAttributeData data);
