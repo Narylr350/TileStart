@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using Button = System.Windows.Controls.Button;
 using ContextMenu = System.Windows.Controls.ContextMenu;
 using DataFormats = System.Windows.DataFormats;
@@ -28,8 +29,9 @@ public partial class MainWindow : Window
     private const int HtTop = 12;
     private const int HtTopRight = 14;
     private static readonly nint HwndTopmost = new(-1);
-    private readonly ObservableCollection<AppEntry> _apps = [];
+    private readonly RangeObservableCollection<AppEntry> _apps = [];
     private bool _allowClose;
+    private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private System.Windows.Point _dragStart;
     private TileItem? _dragTile;
     private TileGroup? _dragSource;
@@ -77,11 +79,16 @@ public partial class MainWindow : Window
         }
 
         PositionOnCurrentMonitor();
+        PrepareMotionElements();
+        var motionElements = FindMotionElements(MainSurface).ToArray();
+        var animationsEnabled = SystemParameters.ClientAreaAnimation;
+        StartMotion.StageEntrance(MainSurface, motionElements, _taskbarEdge == TaskbarEdge.Bottom, animationsEnabled);
         Show();
         UpdateLayout();
+        PositionOnCurrentMonitor();
+        StartMotion.PlayEntrance(motionElements, animationsEnabled);
         Activate();
         Focus();
-        PositionOnCurrentMonitor();
     }
 
     public void AllowClose()
@@ -106,10 +113,7 @@ public partial class MainWindow : Window
         try
         {
             var apps = await StartAppScanner.ScanAsync();
-            foreach (var app in apps)
-            {
-                _apps.Add(app);
-            }
+            _apps.AddRange(apps);
 
             var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
             foreach (var app in launchableApps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
@@ -130,11 +134,27 @@ public partial class MainWindow : Window
             {
                 TileLayoutStore.Save(TileLayout);
             }
+
+            PrepareMotionElements();
         }
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Application list load failed: {exception}");
         }
+    }
+
+    private void PrepareMotionElements()
+    {
+        if (IsVisible)
+        {
+            return;
+        }
+
+        var size = new System.Windows.Size(Math.Max(MinWidth, Width), Math.Max(MinHeight, Height));
+        MainSurface.Measure(size);
+        MainSurface.Arrange(new System.Windows.Rect(new System.Windows.Point(), size));
+        MainSurface.UpdateLayout();
+        StartMotion.Prepare(FindMotionElements(MainSurface));
     }
 
     private void PositionOnCurrentMonitor()
@@ -155,6 +175,7 @@ public partial class MainWindow : Window
         var monitorRect = ToPixelRect(monitorInfo.Monitor);
         var taskbarRect = FindTaskbarRect(monitor);
         var edge = StartWindowPlacement.InferTaskbarEdge(monitorRect, taskbarRect);
+        _taskbarEdge = edge;
         var logicalWidth = ActualWidth > 0 ? ActualWidth : Width;
         var logicalHeight = ActualHeight > 0 ? ActualHeight : Height;
         var placement = StartWindowPlacement.Calculate(
@@ -803,6 +824,23 @@ public partial class MainWindow : Window
             else
             {
                 tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
+            }
+        }
+    }
+
+    private static IEnumerable<FrameworkElement> FindMotionElements(DependencyObject parent)
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, index);
+            if (child is FrameworkElement element && StartMotion.GetIsEntranceTarget(element))
+            {
+                yield return element;
+            }
+
+            foreach (var descendant in FindMotionElements(child))
+            {
+                yield return descendant;
             }
         }
     }

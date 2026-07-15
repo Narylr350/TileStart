@@ -38,6 +38,8 @@
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
 
         <Style x:Key="RailButtonStyle" TargetType="Button">
+            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
+            <Setter Property="local:StartMotion.EntrancePosition" Value="0" />
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
             <Setter Property="Padding" Value="0" />
@@ -67,6 +69,7 @@
         </Style>
 
         <Style x:Key="AppRowStyle" TargetType="Button">
+            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Height" Value="32" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="White" />
@@ -95,6 +98,7 @@
         </Style>
 
         <Style x:Key="TileStyle" TargetType="Button">
+            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Padding" Value="8" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -143,6 +147,7 @@
         </Style>
 
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
+            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Height" Value="30" />
             <Setter Property="Padding" Value="8,0,0,0" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -270,7 +275,7 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid Background="{StaticResource MenuBackground}">
+    <Grid x:Name="MainSurface" Background="{StaticResource MenuBackground}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="48" />
             <ColumnDefinition Width="204" />
@@ -334,13 +339,18 @@
                           VerticalScrollBarVisibility="Hidden">
                 <StackPanel Margin="8,20,8,16">
                     <StackPanel x:Name="RecentPanel">
-                        <TextBlock Height="28" Margin="8,0,0,0" FontSize="14" Text="最近添加" />
+                        <TextBlock Height="28"
+                                   Margin="8,0,0,0"
+                                   FontSize="14"
+                                   Text="最近添加"
+                                   local:StartMotion.IsEntranceTarget="True" />
                         <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
                         <TextBlock Height="32"
                                    Margin="8,4,0,0"
                                    Foreground="{StaticResource SubtleText}"
                                    FontSize="13"
-                                   Text="展开⌄" />
+                                   Text="展开⌄"
+                                   local:StartMotion.IsEntranceTarget="True" />
                     </StackPanel>
 
                     <ItemsControl x:Name="AppsList"
@@ -433,6 +443,7 @@
                                 </StackPanel.ContextMenu>
                                 <TextBox Height="28"
                                          Margin="4,0,0,0"
+                                         local:StartMotion.IsEntranceTarget="True"
                                          Padding="0,4,0,0"
                                          Foreground="White"
                                          Background="Transparent"

@@ -174,54 +174,41 @@ t = Delay + Duration          -> To（Spline）
 |---|---|
 | `0x1803B2F80` | `AppendEntranceAnimationForElement` |
 
-对启用全局动画的普通元素，`p` 为元素在可用高度中的归一化纵向位置，范围约为 `[0, 1]`。
+`p` 为元素在可用高度中的归一化纵向位置，范围约为 `[0, 1]`。此前把函数最后一个 bool 误写成全局“动画启用”开关；重新检查调用点后确认，它是调用方从每个项目的 `ICollectionTile.CuratedTileInfo` 对象 vtable `+0x168` 读取的逐项目条件。公开符号没有恢复该属性的正式名称，因此本文不擅自命名。
 
-### 6.1 Z 轴位移
+该 bool 控制两条**互斥**路径，不是同时叠加 Z 和 Y 动画。
 
-目标属性已从二进制字符串指针确认：
-
-```text
-(UIElement.Transform3D).(CompositeTransform3D.TranslateZ)
-```
-
-错峰延迟：
-
-```text
-translationDelay = max(0, trunc((1 - p) * 133)) ms
-```
-
-两种进入方向：
-
-| 类型分支 | From | To | Duration | KeySpline |
-|---:|---:|---:|---:|---|
-| `0` | `-900` | `0` | `493 ms` | `(0.1,0.9) (0.2,1.0)` |
-| 非 `0` | `+900` | `0` | `667 ms` | `(0.1,0.9) (0.2,1.0)` |
-
-这说明原版的主体进入效果是从 Z 轴深处/近处运动到平面，而不是把整个开始菜单从任务栏下方推上来。
-
-### 6.2 透明度
+### 6.1 完整深度路径（bool = true）
 
 目标属性：
 
 ```text
+(UIElement.Transform3D).(CompositeTransform3D.TranslateZ)
 UIElement.Opacity
 ```
 
-参数：
-
 ```text
+translationDelay = max(0, trunc((1 - p) * 133)) ms
+
+类型 0:
+  TranslateZ -900 -> 0
+  Duration = 493 ms
+
+非 0:
+  TranslateZ +900 -> 0
+  Duration = 667 ms
+
+TranslateZ spline = cubic-bezier(0.1,0.9,0.2,1)
+
 opacityDelay = translationDelay + max(26, trunc((1 - p) * 57 + 26)) ms
-From = 0.01
-To = 1.0
+Opacity 0.01 -> 1
 Duration = 94 ms
-KeySpline = (0.33,0.0) (0.67,1.0)
+Opacity spline = cubic-bezier(0.33,0,0.67,1)
 ```
 
-每个项目的透明度动画晚于其 Z 轴动画开始，而且项目纵向位置不同会产生不同延迟。
+### 6.2 底部任务栏 fallback（bool = false）
 
-### 6.3 特定任务栏边缘的补充分支
-
-函数中还存在一个只在 `EDGEUI_TRAYSTUCKPLACE == 3` 时执行的 Y 轴动画：
+false 分支不创建 Z 或 Opacity Storyboard。只有任务栏枚举为 `EUITSP_BOTTOM = 3` 时创建 Y 轴动画：
 
 ```text
 目标属性：(UIElement.Transform3D).(CompositeTransform3D.TranslateY)
@@ -229,10 +216,12 @@ From = p * 110 + 60
 To = 0
 Delay = 17 ms
 Duration = 500 ms
-KeySpline = (0.1,0.9) (0.2,1.0)
+KeySpline = cubic-bezier(0.1,0.9,0.2,1)
 ```
 
-ExplorerPatcher 公开的系统接口定义确认：
+之后该分支把 `TranslateZ` 直接重置为 `0`、把 `Opacity` 直接设为 `1`。因此当前 Win10 实机观察到的“从下方向上弹出、没有透视展开”对应 fallback 路径，不能用完整深度路径的 Z 数值自行换算 WPF 缩放。
+
+ExplorerPatcher 公开接口确认枚举映射为：
 
 ```text
 EUITSP_LEFT = 0
@@ -241,7 +230,28 @@ EUITSP_RIGHT = 2
 EUITSP_BOTTOM = 3
 ```
 
-因此该分支就是底部任务栏的补充 Y 轴动画，不再把数值 `3` 保留为未知边缘。
+### 6.3 Win10 实机逐帧核验（2026-07-15）
+
+在首个实机环境 `2560×1600 / 150% DPI / 底部任务栏` 录制原版开始菜单，以约 48 fps 的原始帧逐帧检查。录像包含多次一致的打开过程；其中三次可清晰定位为：
+
+```text
+38.647 s -> 39.095 s
+61.416 s -> 61.902 s
+67.988 s -> 68.454 s
+```
+
+这些区间是从菜单背景首次变化到元素位移进入亚像素尾段的观测范围，约 `448–486 ms`，与二进制恢复的 `17 ms delay + 500 ms duration` 一致。样条前段移动很快、后段保留较长的低速尾巴，因此不能仅凭肉眼把可见主位移误判成 200 ms 左右。
+
+逐帧画面同时确认：
+
+- 菜单背景直接以最终窗口边界出现，没有整窗缩放或从任务栏展开。
+- 背景出现的第一批画面中，应用项和磁贴已经位于最终位置下方；内容在窗口边界内受裁剪并向上归位。
+- 导航轨按钮也会向上运动，但各按钮共享同一轨迹。以汉堡按钮、用户、文档和设置按钮交叉跟踪，帧间偏移完全一致，不按按钮自身屏幕 Y 坐标分别放大。
+- “最近添加”、`展开`、`#`、应用项和不同高度的磁贴具有不同起始位移，继续按逐元素位置计算。
+
+因此 WPF 实现必须在 `Window.Show()` **之前**给目标元素写入起始 `TranslateY`，让第一个合成帧就是已下移并受裁剪的内容；先显示最终布局、再调用 `BeginAnimation` 会丢失原版动画的起始段，产生“时长虽长但观感过快”的错误。导航轨使用 fallback 的固定最小位置参数 `p = 0`，其他内容继续按元素位置计算。
+
+本次录像和逐帧 PNG 仅作为本机临时研究材料，不进入仓库。
 
 ## 7. 菜单退出动画
 
@@ -395,6 +405,19 @@ TranslateY:
 ```
 
 三组 spline 常量已从映像地址 `0x1805EA610`、`0x1806225D0` 和 `0x180622600` 直接读取。
+
+`StartUI::Animations::UpdateFramePerspective` 位于 `0x1800B2154`，由 `SplitViewFrame::OnSizeChanged` 等 frame size-change 入口调用。它不使用 XAML 默认 `PerspectiveTransform3D.Depth=1000`，而是直接给根元素的 Composition Visual 设置矩阵：
+
+```text
+D = 1931.8199462890625
+
+[ 1, 0, 0, 0 ]
+[ 0, 1, 0, 0 ]
+[ -(ActualWidth/2)/D, -(CompactPaneLength/2)/D, 1, -1/D ]
+[ 0, 0, 0, 1 ]
+```
+
+因此完整深度路径的透视原点与深度由 frame Composition 矩阵决定；此前使用 `Depth=1000` 和窗口中心作为 WPF 缩放中心没有二进制依据，已否决。
 
 ## 11. 磁贴重排与拖动让位
 
@@ -1086,14 +1109,16 @@ ExplorerPatcher 曾通过下载并接回旧版系统组件，在部分 Windows 1
 
 后续实现不能再采用“给 MainWindow 加一个 200 ms EaseOut”作为 Win10 Motion 阶段。最低重建顺序应为：
 
-1. 为可见应用项和磁贴建立独立 Motion visual，支持 Z/Y 位移和透明度。
-2. 实现 `StaggeredSplineAnimation` 等价构造器，参数直接来自本文，不散落魔法数。
-3. 接入 Entrance、Dismiss、AppLaunch、ViewSwitch 四种状态机。
+1. 先按当前 Win10 实机使用的 fallback 路径，为可见应用项、磁贴、导航按钮和标题实现逐元素 Y 位移。
+2. 完整深度路径必须使用 `UpdateFramePerspective` 的 Composition 矩阵，不能把 TranslateZ 直接等价成元素中心缩放。
+3. 实现 `StaggeredSplineAnimation` 等价构造器，并接入 Entrance、Dismiss、AppLaunch、ViewSwitch 状态机。
 4. 拖动 reflow 增加 120 ms timer 与 3 DIP 抖动阈值。
 5. 重排容器增加与 `ReorderThemeTransition`/`AddDeleteThemeTransition` 对应的位移动画。
 6. 最后才处理 LauncherFrame 150 ms 整体退出包装层和页面翻转。
 
-WPF 3D Transform 与 UWP `CompositeTransform3D` 并非一一对应。实现前应先制作最小 Motion prototype，验证 WPF 透视投影、Z 位移和逐元素动画的渲染成本；如果 WPF 无法稳定复现，再评估 Windows Composition interop，而不是先整体迁移技术栈。
+WPF 3D Transform 与 UWP `CompositeTransform3D` 并非一一对应。MVP 先实现实机已观察到的 Y 轴 fallback；完整深度路径若要加入，优先评估 Windows Composition interop 复用同类矩阵，而不是再次用普通 WPF ScaleTransform 猜测视觉结果。
+
+TileStart 的 WPF fallback 实现经实机观感校准为 550 ms，比原始 500 ms 放慢 10%；这是渲染后端补偿，不改写上文记录的原版参数。首次显示前在隐藏状态批量装载应用并预创建 Motion transform，避免首帧创建数百个视觉对象造成卡顿。
 
 ## 21. 研究阶段结论与实现边界
 
