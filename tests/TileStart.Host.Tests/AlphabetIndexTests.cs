@@ -5,14 +5,18 @@ namespace TileStart.Host.Tests;
 public sealed class AlphabetIndexTests
 {
     [Fact]
-    public void CreateReturnsHashAndAlphabetInWin10Order()
+    public void CreateReturnsWin10SemanticZoomOrder()
     {
         var entries = AlphabetIndex.Create();
 
-        Assert.Equal(27, entries.Count);
-        Assert.Equal("#", entries[0].Label);
-        Assert.Equal("A", entries[1].Label);
-        Assert.Equal("Z", entries[^1].Label);
+        Assert.Equal(30, entries.Count);
+        Assert.True(entries[0].IsRecent);
+        Assert.True(entries[0].IsGlyph);
+        Assert.Equal("&", entries[1].Label);
+        Assert.Equal("#", entries[2].TargetLetter);
+        Assert.Equal("A", entries[3].TargetLetter);
+        Assert.Equal("Z", entries[^2].TargetLetter);
+        Assert.True(entries[^1].IsGlyph);
     }
 
     [Fact]
@@ -26,13 +30,26 @@ public sealed class AlphabetIndexTests
             App("Visual Studio", "V"),
         };
 
-        AlphabetIndex.UpdateAvailability(entries, apps);
+        AlphabetIndex.UpdateAvailability(entries, apps, hasRecentApps: true);
 
-        Assert.True(entries.Single(entry => entry.Label == "#").IsAvailable);
-        Assert.True(entries.Single(entry => entry.Label == "D").IsAvailable);
-        Assert.True(entries.Single(entry => entry.Label == "V").IsAvailable);
-        Assert.False(entries.Single(entry => entry.Label == "A").IsAvailable);
-        Assert.False(entries.Single(entry => entry.Label == "Z").IsAvailable);
+        Assert.True(entries.Single(entry => entry.IsRecent).IsAvailable);
+        Assert.False(entries.Single(entry => entry.Label == "&").IsAvailable);
+        Assert.True(entries.Single(entry => entry.TargetLetter == "#").IsAvailable);
+        Assert.True(entries.Single(entry => entry.TargetLetter == "D").IsAvailable);
+        Assert.True(entries.Single(entry => entry.TargetLetter == "V").IsAvailable);
+        Assert.False(entries.Single(entry => entry.TargetLetter == "A").IsAvailable);
+        Assert.False(entries.Single(entry => entry.TargetLetter == "Z").IsAvailable);
+        Assert.False(entries[^1].IsAvailable);
+    }
+
+    [Fact]
+    public void RecentEntryIsDisabledWhenRecentListIsEmpty()
+    {
+        var entries = AlphabetIndex.Create();
+
+        AlphabetIndex.UpdateAvailability(entries, [], hasRecentApps: false);
+
+        Assert.False(entries.Single(entry => entry.IsRecent).IsAvailable);
     }
 
     private static AppEntry App(string name, string sortLetter) => new()

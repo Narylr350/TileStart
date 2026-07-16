@@ -28,6 +28,9 @@
     <Content Include="..\..\docs\reference\win10-start\native-layout.xml"
              Link="TestData\native-layout.xml"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\docs\reference\win10-start\specs\*.json"
+             Link="TestData\win10-start-specs\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

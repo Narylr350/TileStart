@@ -648,3 +648,18 @@ Windows Search 的结果页不属于 TileStart 的视觉复刻范围。
 3. 第一批改动只处理容器几何、列表/索引模板、搜索转交边界和图标资源，不改入口或退出动画。
 
 静态验收顺序固定为：窗口与 pane 几何 → 应用列表/索引 → 磁贴组和内容模板 → 图标与字体 → Acrylic/Reveal → 同尺度截图验收 → 剩余 Motion。
+
+### 18.7 可复现证据闭环（2026-07-16）
+
+逆向结果不再只保存在本说明中。仓库现已保留以下可执行链路：
+
+```powershell
+tools\reverse\Get-StartUiIdentity.ps1
+tools\reverse\Get-StartUiPdb.ps1
+tools\reverse\Export-StartUiXbf.ps1 -Recreate
+tools\reverse\Export-StartUiVisualSpec.ps1
+```
+
+流水线从当前系统文件重新计算 `StartUI.dll` / PRI 身份，下载精确匹配的公开 PDB，在 `%TEMP%\TileStart` 中提取并转换 StartUI XBF，再生成 `docs/reference/win10-start/specs/*.json`。每个已确认值都带 PRI、XBF、转换后 XAML 哈希以及资源键或控件锚点；`Win10VisualMetrics.cs` 和 `Win10VisualSpecTests.cs` 将生产常量与这些规格绑定。
+
+微软二进制、PDB、XBF、转换 XAML、第三方工具源码/二进制和 Ghidra 工程仍只存在于临时目录，不进入 Git。图标选择链路目前在 `icon-resolution.json` 中明确标记为 `partial-unresolved`，在 Ghidra 符号证据跑通前不得把推测规则写入生产实现。

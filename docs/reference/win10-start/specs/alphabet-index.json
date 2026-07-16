@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "kind": "alphabet-index",
+  "status": "verified",
+  "target": {
+    "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
+    "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
+  },
+  "metrics": {
+    "cellSize": {
+      "value": 48.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.ZoomedOutHeaderWidthAndHeight",
+      "source": {
+        "file": "AllAppsFrame.xaml",
+        "xbfResource": "AllAppsFrame.xbf",
+        "xbfSha256": "128ED329715A3F25DB444C7A6C67057E3AC0E66DA7C6712399153A75BF087C61",
+        "xamlSha256": "3B4AAC4D71DFA66BFAF3F494A19B2C7B51AFDE58DEA55C53BBB0CE25B16396DC",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "fontSize": {
+      "value": 20.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.ZoomedOutHeaderFontSize",
+      "source": {
+        "file": "AllAppsFrame.xaml",
+        "xbfResource": "AllAppsFrame.xbf",
+        "xbfSha256": "128ED329715A3F25DB444C7A6C67057E3AC0E66DA7C6712399153A75BF087C61",
+        "xamlSha256": "3B4AAC4D71DFA66BFAF3F494A19B2C7B51AFDE58DEA55C53BBB0CE25B16396DC",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "kind": "icon-resolution",
+  "status": "partial-unresolved",
+  "target": {
+    "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
+    "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d",
+    "startUiSha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "startUiFileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
+    "pdbSymbolKey": "7B21D1C19038D36FDA43F1BBFF31EC031"
+  },
+  "symbolAnchors": [
+    "TileViewModel::UpdateDisplayNameAndSmallLogoVisibility",
+    "TileViewModel::LoadSmallLogo",
+    "TileViewModel::GetDisplayNameToUse",
+    "TileViewModel::SmallLogoHeight",
+    "TileViewModel::SmallLogoWidth",
+    "TileViewModel::SmallLogoMargin",
+    "TileViewModel::SmallLogoStretch",
+    "TileViewControl::UpdateVisualState",
+    "AppItemViewModel::SetLogoType",
+    "AppItemViewModel::Logo",
+    "AppItemViewModel::LogoBackground",
+    "AppItemViewModel::ResolvedLogoInfo",
+    "AppItemViewModel::OnRealization"
+  ],
+  "unresolved": [
+    "logo source selection precedence",
+    "background color selection",
+    "small-logo visibility conditions",
+    "stretch and margin state mapping"
+  ]
+}

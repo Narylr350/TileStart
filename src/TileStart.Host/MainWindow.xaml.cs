@@ -25,6 +25,8 @@ public partial class MainWindow : Window
     private const uint AwHide = 0x00010000;
     private const uint AwBlend = 0x00080000;
     private const int DismissDurationMilliseconds = 150;
+    private const int CollapsedRecentAppCount = 3;
+    private const int ExpandedRecentAppCount = 6;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
     private const int WmNcLButtonDown = 0x00A1;
@@ -33,7 +35,9 @@ public partial class MainWindow : Window
     private const int HtTopRight = 14;
     private static readonly nint HwndTopmost = new(-1);
     private readonly RangeObservableCollection<AppEntry> _apps = [];
+    private AppEntry[] _recentAppCandidates = [];
     private bool _allowClose;
+    private bool _recentAppsExpanded;
     private bool _isDismissing;
     private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private System.Windows.Point _dragStart;
@@ -118,12 +122,17 @@ public partial class MainWindow : Window
             _apps.AddRange(apps);
 
             var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
-            foreach (var app in launchableApps.Where(app => app.AddedAt > DateTime.MinValue).OrderByDescending(app => app.AddedAt).Take(3))
-            {
-                RecentApps.Add(app);
-            }
+            _recentAppCandidates = launchableApps
+                .Where(app => app.AddedAt > DateTime.MinValue)
+                .OrderByDescending(app => app.AddedAt)
+                .Take(ExpandedRecentAppCount)
+                .ToArray();
+            RefreshRecentApps();
+            RecentExpandButton.Visibility = _recentAppCandidates.Length > CollapsedRecentAppCount
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
-            AlphabetIndex.UpdateAvailability(AlphabetLetters, apps);
+            AlphabetIndex.UpdateAvailability(AlphabetLetters, apps, RecentApps.Count > 0);
             var savedLayout = TileLayoutStore.Load();
             var layout = savedLayout ?? DefaultTileLayout.Create(launchableApps);
             RestoreTileIcons(layout, launchableApps);
@@ -382,6 +391,26 @@ public partial class MainWindow : Window
         SearchBox.Focus();
     }
 
+    private void RecentExpandButton_Click(object sender, RoutedEventArgs e)
+    {
+        _recentAppsExpanded = !_recentAppsExpanded;
+        RefreshRecentApps();
+    }
+
+    private void RefreshRecentApps()
+    {
+        RecentApps.Clear();
+        foreach (var app in _recentAppCandidates.Take(_recentAppsExpanded
+                     ? ExpandedRecentAppCount
+                     : CollapsedRecentAppCount))
+        {
+            RecentApps.Add(app);
+        }
+
+        RecentExpandText.Text = _recentAppsExpanded ? "折叠" : "展开";
+        RecentExpandGlyph.Text = _recentAppsExpanded ? "\uE70E" : "\uE70D";
+    }
+
     private void LetterHeader_Click(object sender, RoutedEventArgs e)
     {
         if (SearchPanel.Visibility == Visibility.Visible)
@@ -389,6 +418,7 @@ public partial class MainWindow : Window
             return;
         }
 
+        AppsScrollViewer.Visibility = Visibility.Collapsed;
         LetterIndexPanel.Visibility = Visibility.Visible;
     }
 
@@ -400,22 +430,32 @@ public partial class MainWindow : Window
         }
 
         HideLetterIndex();
-        var app = _apps.FirstOrDefault(candidate => candidate.SortLetter.Equals(entry.Label, StringComparison.OrdinalIgnoreCase));
+        if (entry.IsRecent)
+        {
+            AppsScrollViewer.ScrollToTop();
+            RecentPanel.BringIntoView();
+            return;
+        }
+
+        var app = _apps.FirstOrDefault(candidate => candidate.SortLetter.Equals(entry.TargetLetter, StringComparison.OrdinalIgnoreCase));
         if (app is null)
         {
             return;
         }
 
-        AppsList.UpdateLayout();
+        AppsScrollViewer.UpdateLayout();
         if (AppsList.ItemContainerGenerator.ContainerFromItem(app) is FrameworkElement container)
         {
-            container.BringIntoView();
+            var itemTop = container.TranslatePoint(new System.Windows.Point(), AppsScrollViewer).Y;
+            AppsScrollViewer.ScrollToVerticalOffset(Math.Max(0, AppsScrollViewer.VerticalOffset + itemTop - 36));
+            container.Focus();
         }
     }
 
     private void HideLetterIndex()
     {
         LetterIndexPanel.Visibility = Visibility.Collapsed;
+        AppsScrollViewer.Visibility = Visibility.Visible;
     }
 
     private void ClearSearch()

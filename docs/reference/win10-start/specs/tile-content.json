@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "tile-content",
+  "status": "verified-layout-only",
+  "target": {
+    "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
+    "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
+  },
+  "metrics": {
+    "reservedBrandingSpace": {
+      "value": 28.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileReservedBrandingSpace",
+      "source": {
+        "file": "TileStyles.xaml",
+        "xbfResource": "TileStyles.xbf",
+        "xbfSha256": "27EAA1206414863D1691B374106DC0D102C227C28A110EEB5068FEF24A8546F4",
+        "xamlSha256": "604015D8D09A87865A808596630B697C72E8E3616EA175386DB2E36E5D41084B",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "bottomAlignedTextMargin": {
+      "value": [
+        0.0,
+        0.0,
+        0.0,
+        5.0
+      ],
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "Metrics_Tile_TextBottomLeftAlignedElement_Margin",
+      "source": {
+        "file": "TileStyles.xaml",
+        "xbfResource": "TileStyles.xbf",
+        "xbfSha256": "27EAA1206414863D1691B374106DC0D102C227C28A110EEB5068FEF24A8546F4",
+        "xamlSha256": "604015D8D09A87865A808596630B697C72E8E3616EA175386DB2E36E5D41084B",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "nestedPanelMargin": {
+      "value": [
+        4.0,
+        0.0,
+        4.0,
+        4.0
+      ],
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileGridNestedPanel[NestedPanel].Margin",
+      "source": {
+        "file": "TileGridItemDataTemplates.xaml",
+        "xbfResource": "TileGridItemDataTemplates.xbf",
+        "xbfSha256": "E78259278AD982FEFF86AEF6869AA5339766A4B08E831F3F702E43B8DC807F7E",
+        "xamlSha256": "C812ADF41FBE59DC80F94111572F294938F385CB5DFC8515F654CD484E30A3CB",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "groupHeaderHeight": {
+      "value": 32.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "GroupHeaderControl.ContentFrame.Height",
+      "source": {
+        "file": "GroupHeaderControl.xaml",
+        "xbfResource": "GroupHeaderControl.xbf",
+        "xbfSha256": "82ED11A7D758027141275E743939AD530E838E4A84E6688194D53D397950D04F",
+        "xamlSha256": "1E5BE4293266DAD89880EB615D997B687545FC66E9BF6E1B42B05ED2CF21FC02",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "groupTitleWrapping": {
+      "value": "NoWrap",
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "GroupHeaderControl.NameTextBlock.TextWrapping",
+      "source": {
+        "file": "GroupHeaderControl.xaml",
+        "xbfResource": "GroupHeaderControl.xbf",
+        "xbfSha256": "82ED11A7D758027141275E743939AD530E838E4A84E6688194D53D397950D04F",
+        "xamlSha256": "1E5BE4293266DAD89880EB615D997B687545FC66E9BF6E1B42B05ED2CF21FC02",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    }
+  },
+  "notes": [
+    "This spec confirms compiled layout resources only. Tile logo selection and rendering remain unresolved."
+  ]
+}

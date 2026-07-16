@@ -37,11 +37,58 @@
         <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
 
+        <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
+            <Setter Property="Width" Value="6" />
+            <Setter Property="Margin" Value="0,2,2,2" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                  Opacity="0"
+                                                  Focusable="False" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="ScrollThumb"
+                                           Width="2"
+                                           MinHeight="24"
+                                           HorizontalAlignment="Right"
+                                           Background="#70FFFFFF"
+                                           Opacity="0.72">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                  Opacity="0"
+                                                  Focusable="False" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ScrollThumb" Property="Width" Value="6" />
+                                <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
+                                <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="RailButtonStyle" TargetType="Button">
             <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="local:StartMotion.EntrancePosition" Value="0" />
-            <Setter Property="Width" Value="48" />
-            <Setter Property="Height" Value="48" />
+            <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}" />
+            <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.NavigationItemHeight}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
@@ -70,12 +117,13 @@
 
         <Style x:Key="AppRowStyle" TargetType="Button">
             <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
-            <Setter Property="Height" Value="32" />
+            <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AllAppsRowHeight}" />
+            <Setter Property="Margin" Value="14,0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8,0,6,0" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -148,8 +196,9 @@
 
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
             <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Padding" Value="8,0,0,0" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="14,0" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
@@ -175,13 +224,13 @@
         </Style>
 
         <Style x:Key="AlphabetButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="42" />
-            <Setter Property="Height" Value="42" />
-            <Setter Property="Margin" Value="2" />
+            <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.AlphabetCellSize}" />
+            <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AlphabetCellSize}" />
+            <Setter Property="Margin" Value="0,0,4,4" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.AlphabetFontSize}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -197,6 +246,9 @@
                                 <Setter Property="Opacity" Value="0.28" />
                                 <Setter Property="Cursor" Value="Arrow" />
                             </Trigger>
+                            <DataTrigger Binding="{Binding IsGlyph}" Value="True">
+                                <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -277,14 +329,14 @@
 
     <Grid x:Name="MainSurface" Background="{StaticResource MenuBackground}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="48" />
-            <ColumnDefinition Width="204" />
+            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}" />
+            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsWidth}" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="48" />
+                <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemHeight}" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -336,21 +388,36 @@
             <ScrollViewer x:Name="AppsScrollViewer"
                           Grid.Row="1"
                           HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Hidden">
-                <StackPanel Margin="8,20,8,16">
+                          VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
+                </ScrollViewer.Resources>
+                <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
                     <StackPanel x:Name="RecentPanel">
-                        <TextBlock Height="28"
-                                   Margin="8,0,0,0"
-                                   FontSize="14"
+                        <TextBlock Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
+                                   Margin="14,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
                                    Text="最近添加"
                                    local:StartMotion.IsEntranceTarget="True" />
                         <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
-                        <TextBlock Height="32"
-                                   Margin="8,4,0,0"
-                                   Foreground="{StaticResource SubtleText}"
-                                   FontSize="13"
-                                   Text="展开⌄"
-                                   local:StartMotion.IsEntranceTarget="True" />
+                        <Button x:Name="RecentExpandButton"
+                                Style="{StaticResource AppRowStyle}"
+                                HorizontalContentAlignment="Left"
+                                Click="RecentExpandButton_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="RecentExpandText"
+                                           VerticalAlignment="Center"
+                                           FontSize="14"
+                                           Text="展开" />
+                                <TextBlock x:Name="RecentExpandGlyph"
+                                           Margin="4,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="8"
+                                           Text="&#xE70D;" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <ItemsControl x:Name="AppsList"
@@ -374,37 +441,28 @@
 
             <Border x:Name="LetterIndexPanel"
                     Grid.RowSpan="2"
-                    Margin="8"
-                    Padding="8"
-                    Background="#F02A2A2A"
+                    Background="Transparent"
                     Visibility="Collapsed"
                     Panel.ZIndex="5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="36" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Margin="8,0,0,0"
-                               VerticalAlignment="Center"
-                               FontSize="14"
-                               Text="选择字母" />
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding AlphabetLetters}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="6" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
-                                <Button Style="{StaticResource AlphabetButtonStyle}"
-                                        Tag="{Binding}"
-                                        Content="{Binding Label}"
-                                        IsEnabled="{Binding IsAvailable}"
-                                        Click="AlphabetLetter_Click" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Grid>
+                <ItemsControl Width="208"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              ItemsSource="{Binding AlphabetLetters}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Width="208" Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
+                            <Button Style="{StaticResource AlphabetButtonStyle}"
+                                    Tag="{Binding}"
+                                    Content="{Binding Label}"
+                                    IsEnabled="{Binding IsAvailable}"
+                                    Click="AlphabetLetter_Click" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </Border>
         </Grid>
 
@@ -419,9 +477,13 @@
                     <MenuItem Header="新建组" Click="AddGroup_Click" />
                 </ContextMenu>
             </Border.ContextMenu>
-            <ScrollViewer Margin="28,28,0,0"
+            <ScrollViewer x:Name="TileScrollViewer"
+                          Margin="28,28,0,0"
                           HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Hidden">
+                          VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
+                </ScrollViewer.Resources>
                 <ItemsControl Margin="0,0,12,20" ItemsSource="{Binding TileLayout.Groups}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -441,7 +503,7 @@
                                         <MenuItem Header="删除组" Click="DeleteGroup_Click" />
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
-                                <TextBox Height="28"
+                                <TextBox Height="{x:Static local:Win10VisualMetrics.TileGroupHeaderHeight}"
                                          Margin="4,0,0,0"
                                          local:StartMotion.IsEntranceTarget="True"
                                          Padding="0,4,0,0"
@@ -456,6 +518,7 @@
                                          LostKeyboardFocus="GroupName_LostKeyboardFocus" />
                                 <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                               Height="{Binding PixelHeight}"
+                                              Margin="{x:Static local:Win10VisualMetrics.TileNestedPanelMargin}"
                                               AllowDrop="True"
                                               ItemsSource="{Binding Tiles}"
                                               Tag="{Binding}"
