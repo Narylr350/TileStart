@@ -571,4 +571,80 @@ Win10 拖动转场：未实现
 高度还原：不成立
 ```
 
-此前保存的 TileStart 截图只证明同分辨率、同 DPI 的对照证据存在，不能作为视觉一致或 Motion 完成的验收结论。后续必须把视觉细节、全局 Motion 和拖动手感恢复为 MVP 的正式开放项；在这些项目通过原版对照前，不再把构建称为 Win10 高度还原版本。
+此前保存的 TileStart 截图不能作为视觉一致或 Motion 完成的验收结论。2026-07-16 核验发现该文件实际为 1707×1067，而原版总览为 2560×1600，文件名中的分辨率声明不成立。后续必须重新采集同物理尺度证据；在视觉细节和剩余 Motion 通过原版对照前，不再把构建称为 Win10 高度还原版本。
+
+## 18. 2026-07-16 静态视觉与 All Apps 结构复核
+
+用户实机指出当前界面粗糙、三栏和磁贴没有对齐、图标质感差，尤其字母索引与原版不同。因此暂停新增 Motion，先以当前系统精确匹配的 StartUI 编译 XAML、符号和同尺度截图建立静态视觉规格。本节只记录原版证据和当前差异，不把待实现方案写成已经还原。
+
+### 18.1 原版 Classic 模式结构
+
+从当前 build 的 `SplitViewFrame.xaml` 与 `TileStyles.xaml` 已确认：
+
+- 导航轨折叠宽度为 48 DIP，导航项高度为 48 DIP。
+- Classic 模式 `AllAppsPanel` 宽度为 260 DIP。
+- 磁贴内容 pane 相对 All Apps 使用 `12,0,0,0` margin，而不是把整个左区简化为固定的 `48 + 204` 两列。
+- All Apps 列表菜单模式行高为 36 DIP；普通分组标题高度同为 36 DIP。
+- All Apps 列表 padding 为 `0,7,0,54`，菜单模式不是当前 TileStart 的 `8,20,8,16`。
+- 磁贴列表菜单模式底部 padding 为 50 DIP。
+- 原版窗口背景通过 Acrylic VisualState 和主题资源切换；当前 TileStart 的固定纯色背景不等价。
+
+当前 TileStart 虽然左侧总宽约为 252 DIP，与截图初测接近，但内部使用 `48 + 204` 的简化列、额外 StackPanel margin 和独立 ScrollViewer，因此文字、图标、分组标题与磁贴 pane 的实际锚点仍会错位。后续应按原版容器关系重建，不再只调总宽度。
+
+### 18.2 应用列表与图标
+
+原版 All Apps 项目由独立的 logo plate、logo image、名称和文件夹 glyph 组成；名称使用单行省略，正常文本 margin 为 `8,0,0,0`。菜单模式行高固定为 36 DIP，hover/pressed 使用系统 ListViewItem Reveal 状态。
+
+当前 TileStart 的差异：
+
+- 将所有应用统一放入手写 Button 模板，缺少原版 ListViewItem 的 Reveal border/state。
+- 每个图标后固定绘制 `#343434` 底板，原版并非所有图标都有统一灰色方块。
+- `SHGetFileInfo` 只取 32×32 legacy icon，再缩放进应用列表和磁贴，无法匹配 UWP/MSIX 包资源及高清 Win32 图标。
+- 图标失败时显示首字母方块，属于占位实现，不是原版视觉。
+
+静态视觉阶段必须分离应用列表图标与磁贴图标资源链路，并分别处理 Win32 Shell image、快捷方式图标和 UWP/MSIX manifest 资产。
+
+### 18.3 字母索引不是弹出卡片
+
+原版字母索引是 `SemanticZoom` 的 zoomed-out view，而不是覆盖在列表上的自定义弹窗。当前编译 XAML和符号确认：
+
+```text
+菜单模式单元：48 × 48 DIP
+字体大小：20 DIP
+单元步长：52 DIP（48 DIP 内容 + 4 DIP 间距）
+ItemsWrapGrid：4 列，按列形成最多 8 行
+无“选择字母”标题
+无独立卡片 margin、padding 或实色外框
+```
+
+进入索引时，zoomed-in 应用列表与 zoomed-out 索引共享同一数据分组；点击字母后把目标 group 传入 view change，返回列表后执行 `ScrollIntoView` 和 `FocusItem`。`Escape` 返回 zoomed-in view，普通列表和索引视图中的字母键分别执行 app 和 group 的 type-to-jump。
+
+当前 TileStart 使用带 `Margin=8`、`Padding=8`、`#F02A2A2A` 背景和“选择字母”标题的 Border，内部是 6 列 UniformGrid 和 42 DIP 按钮。这一结构与原版不相似，不能通过改颜色补救，应按 SemanticZoom 的双视图关系重做。
+
+### 18.4 搜索转交 Windows Search
+
+当前 StartUI 的 Classic frame 没有在 All Apps 列表顶部声明 SearchBox。All Apps 自身的字母键处理是 type-to-jump；用户确认直接搜索会离开开始菜单并进入 Windows Search，TileStart 不实现独立搜索结果页。
+
+当前 TileStart 把直接输入转换成应用列表顶部的 36 DIP TextBox，并原地过滤 AppsView，这属于功能占位，也改变了原版页面边界。后续应：
+
+1. 保留 All Apps 内按字母跳转的 type-to-jump；
+2. 将明确的搜索输入转交 Windows Search；
+3. 删除 TileStart 自己的顶部 SearchPanel、结果过滤和搜索层级返回逻辑。
+
+Windows Search 的结果页不属于 TileStart 的视觉复刻范围。
+
+### 18.5 磁贴模板与对齐
+
+原版磁贴模板保留 28 DIP branding 区域，标题位于左下且不换行，底部 margin 为 5 DIP；普通磁贴的左右 branding 列为 8 DIP。分组内容由 `GroupHeaderControl` 和 `TileGridNestedPanel` 组成，组标题容器高 32 DIP，内部磁贴 panel 使用四周 4 DIP margin。
+
+当前 TileStart 的磁贴 Button 整体 padding 为 8 DIP，标题允许两行并额外显示 subtitle；空名称组仍使用 28 DIP TextBox 占位。即使 `Win10TileMetrics` 的 48/4/52 DIP 网格常量正确，内容 padding、标题占位和组容器关系仍会让磁贴看起来大小不一、首排下移且视觉基线不齐。
+
+### 18.6 编码前门槛
+
+恢复 UI 编码前必须具备：
+
+1. 原版主菜单与 TileStart 的同物理尺度静态截图。
+2. 由本节 XAML 和原版字母索引截图生成的 DIP 规格表。
+3. 第一批改动只处理容器几何、列表/索引模板、搜索转交边界和图标资源，不改入口或退出动画。
+
+静态验收顺序固定为：窗口与 pane 几何 → 应用列表/索引 → 磁贴组和内容模板 → 图标与字体 → Acrylic/Reveal → 同尺度截图验收 → 剩余 Motion。
