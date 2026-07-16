@@ -1,5 +1,5 @@
 param(
-    [string]$EvidenceManifestPath = (Join-Path $env:TEMP 'TileStart\reverse\startui-evidence.txt.manifest.json'),
+    [string]$EvidenceManifestPath = (Join-Path $env:TEMP 'TileStart\reverse\startui-icon-deep-evidence.txt.manifest.json'),
     [string]$OutputPath = (Join-Path $PSScriptRoot '..\..\docs\reference\win10-start\specs\icon-resolution.json')
 )
 $ErrorActionPreference = 'Stop'
@@ -21,7 +21,11 @@ $wanted = @(
  'StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get','StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get',
  'StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get','StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get',
  'StartUI::TileViewControl::UpdateVisualState','StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get',
- 'StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get')
+ 'StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get',
+ 'StartUI::GetImageResolverForTileItem','StartUI::TileData::GetTileImageResource','StartUI::AppItemMetrics::ToLogoType',
+ 'StartUI::AppItemViewModel::[StartUI::IAppItemLogoSource]::SetLogoType','StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization',
+ 'StartUI::ThemeManager::GetLogoOptionsForTileBranding','StartUI::ThemeManager::GetLogoOptionsForAppList',
+ 'StartUI::AppItemMetrics::GetAppItemLogoWidthAndHeight','StartUI::LogoLoaderUTM::LogoLoaderUTM','StartUI::LogoLoaderUTM::CacheTypeFromLogoType')
 $matched = @($functions | Where-Object { $_.name -in $wanted } | Sort-Object name)
 $result = [ordered]@{
  schemaVersion = 2; kind = 'icon-resolution'; status = 'partial-symbol-verified'
@@ -33,9 +37,12 @@ $result = [ordered]@{
   [ordered]@{ fact='The theme-aware path requests tile image resource kind raw value 5, obtains branding options from ThemeManager, and loads a bitmap asynchronously through LogoLoader.'; anchors=@('StartUI::TileViewModel::LoadSmallLogo'); confidence='high-enum-name-unresolved' },
   [ordered]@{ fact='The alternate path asks GetImageResolverForTileItem for a resolver, attempts a cached image first, then falls back to asynchronous cached-image loading.'; anchors=@('StartUI::TileViewModel::LoadSmallLogo'); confidence='high' },
   [ordered]@{ fact='SmallLogo height, width, margin, and stretch delegate to per-frame metrics/state objects rather than literal TileViewModel constants.'; anchors=@('StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get','StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get','StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get','StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get'); confidence='high-values-unresolved' },
-  [ordered]@{ fact='App-list logo and logo-background getters return independently stored ImageSource and Brush properties; a universal fixed gray backplate is not implied.'; anchors=@('StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get','StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get'); confidence='high-selection-source-unresolved' })
+  [ordered]@{ fact='App-list logo and logo-background getters return independently stored ImageSource and Brush properties; a universal fixed gray backplate is not implied.'; anchors=@('StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get','StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get'); confidence='high-selection-source-unresolved' },
+  [ordered]@{ fact='Changing AppItemLogoType triggers realization only when the requested type differs; raw values 1, 2, and 3 map to internal LogoType values 2, 3, and 4.'; anchors=@('StartUI::AppItemViewModel::[StartUI::IAppItemLogoSource]::SetLogoType','StartUI::AppItemMetrics::ToLogoType'); confidence='high-enum-names-unresolved' },
+  [ordered]@{ fact='App-list realization has a theme-aware UnifiedTile/LogoLoader path and a legacy LogoLoaderUTM path; the theme-aware path uses ThemeManager app-list options and AppItemMetrics dimensions.'; anchors=@('StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization','StartUI::ThemeManager::GetLogoOptionsForAppList','StartUI::AppItemMetrics::GetAppItemLogoWidthAndHeight','StartUI::LogoLoaderUTM::LogoLoaderUTM'); confidence='high' },
+  [ordered]@{ fact='GetImageResolverForTileItem constructs LogoLoaderUTM unless a process-global resolver override is installed; asset precedence is therefore inside LogoLoaderUTM rather than this factory.'; anchors=@('StartUI::GetImageResolverForTileItem'); confidence='high' })
  missingRequestedSymbols = @($wanted | Where-Object { $_ -notin $matched.name })
- unresolved = @('semantic name of tile image resource kind raw value 5','exact asset-source precedence','per-state small-logo dimensions/margin/stretch','logo-background selection and transparent conditions','AppItemViewModel realization/logo-type symbols under their requested names')
+ unresolved = @('semantic names of raw AppItemLogoType/LogoType values and tile image resource kind 5','asset precedence inside LogoLoaderUTM','per-state small-logo dimensions/margin/stretch','logo-background selection and transparent conditions')
 }
 $result | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $OutputPath -Encoding utf8
 Get-Item -LiteralPath $OutputPath

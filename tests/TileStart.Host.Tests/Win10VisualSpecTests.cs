@@ -54,6 +54,7 @@ public sealed class Win10VisualSpecTests
         if (spec.RootElement.GetProperty("schemaVersion").GetInt32() >= 2)
         {
             Assert.NotEmpty(spec.RootElement.GetProperty("functions").EnumerateArray());
+            Assert.Empty(spec.RootElement.GetProperty("missingRequestedSymbols").EnumerateArray());
         }
     }
 

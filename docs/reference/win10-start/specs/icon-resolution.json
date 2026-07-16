@@ -10,7 +10,7 @@
   },
   "evidence": {
     "kind": "symbol-guided-decompilation",
-    "outputSha256": "DE8C7923D94FA50B2DAC7CA341F5D876E1218D955C4C2A0FBF75DAB838070CEE",
+    "outputSha256": "B28A26B35799B3A3065B25D9B6B621B72036193F364AD6204D79948226FD13BE",
     "script": "tools/reverse/ghidra/TargetDecompile.java",
     "ghidraVersion": "12.1.2",
     "ghidraBuildDate": "2026-Jun-05 1317 EDT",
@@ -18,44 +18,29 @@
   },
   "functions": [
     {
-      "name": "StartUI::TileViewModel::UpdateDisplayNameAndSmallLogoVisibility",
-      "rva": "0x7D894",
-      "signature": "void __thiscall UpdateDisplayNameAndSmallLogoVisibility(TileViewModel * this)"
+      "name": "StartUI::AppItemMetrics::ToLogoType",
+      "rva": "0x31CE8",
+      "signature": "LogoType __cdecl ToLogoType(AppItemLogoType param_1)"
     },
     {
-      "name": "StartUI::TileViewModel::GetDisplayNameToUse",
-      "rva": "0x7DBA8",
-      "signature": "String * __thiscall GetDisplayNameToUse(TileViewModel * this)"
+      "name": "StartUI::TileViewModel::LoadSmallLogo",
+      "rva": "0x202C60",
+      "signature": "void __thiscall LoadSmallLogo(TileViewModel * this)"
     },
     {
-      "name": "StartUI::TileViewControl::UpdateVisualState",
-      "rva": "0xAD13C",
-      "signature": "void __thiscall UpdateVisualState(TileViewControl * this)"
+      "name": "StartUI::AppItemMetrics::GetAppItemLogoWidthAndHeight",
+      "rva": "0x1D94A4",
+      "signature": "float __cdecl GetAppItemLogoWidthAndHeight(AppItemLogoType param_1, bool param_2)"
     },
     {
-      "name": "StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get",
-      "rva": "0x104128",
-      "signature": "Thickness __thiscall get([StartUI::ITileViewModel] * this)"
+      "name": "StartUI::ThemeManager::GetLogoOptionsForTileBranding",
+      "rva": "0x1D819C",
+      "signature": "LogoOptions * __thiscall GetLogoOptionsForTileBranding(ThemeManager * this, bool param_1, Size * param_2)"
     },
     {
-      "name": "StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get",
-      "rva": "0x104650",
-      "signature": "Stretch __thiscall get([StartUI::ITileViewModel] * this)"
-    },
-    {
-      "name": "StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get",
-      "rva": "0x10484C",
-      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
-    },
-    {
-      "name": "StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get",
-      "rva": "0x104A5C",
-      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
-    },
-    {
-      "name": "StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get",
-      "rva": "0x107A24",
-      "signature": "ImageSource * __thiscall get([StartUI::IAppItemViewModel] * this)"
+      "name": "StartUI::ThemeManager::GetLogoOptionsForAppList",
+      "rva": "0x1D7FC8",
+      "signature": "LogoOptions * __thiscall GetLogoOptionsForAppList(ThemeManager * this, AppItemLogoType param_1)"
     },
     {
       "name": "StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get",
@@ -63,9 +48,74 @@
       "signature": "Brush * __thiscall get([StartUI::IAppItemViewModel] * this)"
     },
     {
-      "name": "StartUI::TileViewModel::LoadSmallLogo",
-      "rva": "0x202C60",
-      "signature": "void __thiscall LoadSmallLogo(TileViewModel * this)"
+      "name": "StartUI::TileData::GetTileImageResource",
+      "rva": "0x10BF8C",
+      "signature": "TileImageResource * __cdecl GetTileImageResource(UnifiedTile * param_1, TileAssetImageSize param_2)"
+    },
+    {
+      "name": "StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get",
+      "rva": "0x107A24",
+      "signature": "ImageSource * __thiscall get([StartUI::IAppItemViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get",
+      "rva": "0x104A5C",
+      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get",
+      "rva": "0x10484C",
+      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get",
+      "rva": "0x104650",
+      "signature": "Stretch __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get",
+      "rva": "0x104128",
+      "signature": "Thickness __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewControl::UpdateVisualState",
+      "rva": "0xAD13C",
+      "signature": "void __thiscall UpdateVisualState(TileViewControl * this)"
+    },
+    {
+      "name": "StartUI::LogoLoaderUTM::LogoLoaderUTM",
+      "rva": "0x9E5D0",
+      "signature": "undefined __thiscall LogoLoaderUTM(LogoLoaderUTM * this, ITileData * param_1, StartVisualCacheManager * param_2, bool param_3)"
+    },
+    {
+      "name": "StartUI::GetImageResolverForTileItem",
+      "rva": "0x9E508",
+      "signature": "IImageResolver * __cdecl GetImageResolverForTileItem(ITileData * param_1, StartVisualCacheManager * param_2, bool param_3)"
+    },
+    {
+      "name": "StartUI::TileViewModel::GetDisplayNameToUse",
+      "rva": "0x7DBA8",
+      "signature": "String * __thiscall GetDisplayNameToUse(TileViewModel * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::UpdateDisplayNameAndSmallLogoVisibility",
+      "rva": "0x7D894",
+      "signature": "void __thiscall UpdateDisplayNameAndSmallLogoVisibility(TileViewModel * this)"
+    },
+    {
+      "name": "StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization",
+      "rva": "0x50778",
+      "signature": "void __thiscall OnRealization([StartUI::IAppItemViewModel] * this)"
+    },
+    {
+      "name": "StartUI::LogoLoaderUTM::CacheTypeFromLogoType",
+      "rva": "0x20D7E0",
+      "signature": "VisualCacheContentType __cdecl CacheTypeFromLogoType(LogoType param_1)"
+    },
+    {
+      "name": "StartUI::AppItemViewModel::[StartUI::IAppItemLogoSource]::SetLogoType",
+      "rva": "0x4D4544",
+      "signature": "void __thiscall SetLogoType([StartUI::IAppItemLogoSource] * this, AppItemLogoType param_1)"
     }
   ],
   "verifiedObservations": [
@@ -108,14 +158,38 @@
         "StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get"
       ],
       "confidence": "high-selection-source-unresolved"
+    },
+    {
+      "fact": "Changing AppItemLogoType triggers realization only when the requested type differs; raw values 1, 2, and 3 map to internal LogoType values 2, 3, and 4.",
+      "anchors": [
+        "StartUI::AppItemViewModel::[StartUI::IAppItemLogoSource]::SetLogoType",
+        "StartUI::AppItemMetrics::ToLogoType"
+      ],
+      "confidence": "high-enum-names-unresolved"
+    },
+    {
+      "fact": "App-list realization has a theme-aware UnifiedTile/LogoLoader path and a legacy LogoLoaderUTM path; the theme-aware path uses ThemeManager app-list options and AppItemMetrics dimensions.",
+      "anchors": [
+        "StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization",
+        "StartUI::ThemeManager::GetLogoOptionsForAppList",
+        "StartUI::AppItemMetrics::GetAppItemLogoWidthAndHeight",
+        "StartUI::LogoLoaderUTM::LogoLoaderUTM"
+      ],
+      "confidence": "high"
+    },
+    {
+      "fact": "GetImageResolverForTileItem constructs LogoLoaderUTM unless a process-global resolver override is installed; asset precedence is therefore inside LogoLoaderUTM rather than this factory.",
+      "anchors": [
+        "StartUI::GetImageResolverForTileItem"
+      ],
+      "confidence": "high"
     }
   ],
   "missingRequestedSymbols": [],
   "unresolved": [
-    "semantic name of tile image resource kind raw value 5",
-    "exact asset-source precedence",
+    "semantic names of raw AppItemLogoType/LogoType values and tile image resource kind 5",
+    "asset precedence inside LogoLoaderUTM",
     "per-state small-logo dimensions/margin/stretch",
-    "logo-background selection and transparent conditions",
-    "AppItemViewModel realization/logo-type symbols under their requested names"
+    "logo-background selection and transparent conditions"
   ]
 }

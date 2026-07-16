@@ -656,6 +656,7 @@ Windows Search 的结果页不属于 TileStart 的视觉复刻范围。
 ```powershell
 tools\reverse\Get-StartUiIdentity.ps1
 tools\reverse\Get-StartUiPdb.ps1
+tools\reverse\Invoke-StartUiIconResearch.ps1 -GhidraHome <ghidra_12.1.2_PUBLIC>
 tools\reverse\Export-StartUiXbf.ps1 -Recreate
 tools\reverse\Export-StartUiVisualSpec.ps1
 ```

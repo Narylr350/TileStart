@@ -124,7 +124,8 @@ $icon.unresolved = @('logo source selection precedence', 'background color selec
     $_.Value | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $OutputRoot $_.Key) -Encoding utf8
 }
 
-$symbolManifest = Join-Path $env:TEMP 'TileStart\reverse\startui-evidence.txt.manifest.json'
+$symbolManifest = Join-Path $env:TEMP 'TileStart\reverse\startui-icon-deep-evidence.txt.manifest.json'
+if (-not (Test-Path -LiteralPath $symbolManifest)) { $symbolManifest = Join-Path $env:TEMP 'TileStart\reverse\startui-evidence.txt.manifest.json' }
 if (Test-Path -LiteralPath $symbolManifest) {
     & (Join-Path $PSScriptRoot 'Export-StartUiSymbolSpec.ps1') -EvidenceManifestPath $symbolManifest -OutputPath (Join-Path $OutputRoot 'icon-resolution.json') | Out-Null
 }
