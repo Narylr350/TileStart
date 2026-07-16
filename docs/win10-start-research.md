@@ -662,4 +662,4 @@ tools\reverse\Export-StartUiVisualSpec.ps1
 
 流水线从当前系统文件重新计算 `StartUI.dll` / PRI 身份，下载精确匹配的公开 PDB，在 `%TEMP%\TileStart` 中提取并转换 StartUI XBF，再生成 `docs/reference/win10-start/specs/*.json`。每个已确认值都带 PRI、XBF、转换后 XAML 哈希以及资源键或控件锚点；`Win10VisualMetrics.cs` 和 `Win10VisualSpecTests.cs` 将生产常量与这些规格绑定。
 
-微软二进制、PDB、XBF、转换 XAML、第三方工具源码/二进制和 Ghidra 工程仍只存在于临时目录，不进入 Git。图标选择链路目前在 `icon-resolution.json` 中明确标记为 `partial-unresolved`，在 Ghidra 符号证据跑通前不得把推测规则写入生产实现。
+微软二进制、PDB、XBF、转换 XAML、第三方工具源码/二进制和 Ghidra 工程仍只存在于临时目录，不进入 Git。Ghidra 12.1.2 符号流水线已在当前 `StartUI.dll` 上跑通，并将函数 RVA、签名、工具哈希和不含原始伪代码的派生观察写入 `icon-resolution.json`。该规格仍标记为 `partial-symbol-verified`：资源类型 raw value 5 的语义名、资产来源优先级、各状态尺寸与背景选择尚未闭环，不得把这些未知项写成已还原实现。

@@ -1,33 +1,121 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "icon-resolution",
-  "status": "partial-unresolved",
+  "status": "partial-symbol-verified",
   "target": {
-    "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
-    "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d",
     "startUiSha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
     "startUiFileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
-    "pdbSymbolKey": "7B21D1C19038D36FDA43F1BBFF31EC031"
+    "pdbSymbolKey": "7B21D1C19038D36FDA43F1BBFF31EC031",
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404"
   },
-  "symbolAnchors": [
-    "TileViewModel::UpdateDisplayNameAndSmallLogoVisibility",
-    "TileViewModel::LoadSmallLogo",
-    "TileViewModel::GetDisplayNameToUse",
-    "TileViewModel::SmallLogoHeight",
-    "TileViewModel::SmallLogoWidth",
-    "TileViewModel::SmallLogoMargin",
-    "TileViewModel::SmallLogoStretch",
-    "TileViewControl::UpdateVisualState",
-    "AppItemViewModel::SetLogoType",
-    "AppItemViewModel::Logo",
-    "AppItemViewModel::LogoBackground",
-    "AppItemViewModel::ResolvedLogoInfo",
-    "AppItemViewModel::OnRealization"
+  "evidence": {
+    "kind": "symbol-guided-decompilation",
+    "outputSha256": "DE8C7923D94FA50B2DAC7CA341F5D876E1218D955C4C2A0FBF75DAB838070CEE",
+    "script": "tools/reverse/ghidra/TargetDecompile.java",
+    "ghidraVersion": "12.1.2",
+    "ghidraBuildDate": "2026-Jun-05 1317 EDT",
+    "ghidraAnalyzeHeadlessSha256": "DD7B9D17D32ED70A71DF82A43A21CDAED6C4CE67064E30F8642C149F81C2AE07"
+  },
+  "functions": [
+    {
+      "name": "StartUI::TileViewModel::UpdateDisplayNameAndSmallLogoVisibility",
+      "rva": "0x7D894",
+      "signature": "void __thiscall UpdateDisplayNameAndSmallLogoVisibility(TileViewModel * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::GetDisplayNameToUse",
+      "rva": "0x7DBA8",
+      "signature": "String * __thiscall GetDisplayNameToUse(TileViewModel * this)"
+    },
+    {
+      "name": "StartUI::TileViewControl::UpdateVisualState",
+      "rva": "0xAD13C",
+      "signature": "void __thiscall UpdateVisualState(TileViewControl * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get",
+      "rva": "0x104128",
+      "signature": "Thickness __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get",
+      "rva": "0x104650",
+      "signature": "Stretch __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get",
+      "rva": "0x10484C",
+      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get",
+      "rva": "0x104A5C",
+      "signature": "float __thiscall get([StartUI::ITileViewModel] * this)"
+    },
+    {
+      "name": "StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get",
+      "rva": "0x107A24",
+      "signature": "ImageSource * __thiscall get([StartUI::IAppItemViewModel] * this)"
+    },
+    {
+      "name": "StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get",
+      "rva": "0x116820",
+      "signature": "Brush * __thiscall get([StartUI::IAppItemViewModel] * this)"
+    },
+    {
+      "name": "StartUI::TileViewModel::LoadSmallLogo",
+      "rva": "0x202C60",
+      "signature": "void __thiscall LoadSmallLogo(TileViewModel * this)"
+    }
   ],
+  "verifiedObservations": [
+    {
+      "fact": "Small-logo loading is invoked during realization, theme changes, and display-name/small-logo visibility refresh.",
+      "anchors": [
+        "StartUI::TileViewModel::LoadSmallLogo",
+        "StartUI::TileViewModel::UpdateDisplayNameAndSmallLogoVisibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "fact": "The theme-aware path requests tile image resource kind raw value 5, obtains branding options from ThemeManager, and loads a bitmap asynchronously through LogoLoader.",
+      "anchors": [
+        "StartUI::TileViewModel::LoadSmallLogo"
+      ],
+      "confidence": "high-enum-name-unresolved"
+    },
+    {
+      "fact": "The alternate path asks GetImageResolverForTileItem for a resolver, attempts a cached image first, then falls back to asynchronous cached-image loading.",
+      "anchors": [
+        "StartUI::TileViewModel::LoadSmallLogo"
+      ],
+      "confidence": "high"
+    },
+    {
+      "fact": "SmallLogo height, width, margin, and stretch delegate to per-frame metrics/state objects rather than literal TileViewModel constants.",
+      "anchors": [
+        "StartUI::TileViewModel::SmallLogoHeight::[StartUI::ITileViewModel]::get",
+        "StartUI::TileViewModel::SmallLogoWidth::[StartUI::ITileViewModel]::get",
+        "StartUI::TileViewModel::SmallLogoMargin::[StartUI::ITileViewModel]::get",
+        "StartUI::TileViewModel::SmallLogoStretch::[StartUI::ITileViewModel]::get"
+      ],
+      "confidence": "high-values-unresolved"
+    },
+    {
+      "fact": "App-list logo and logo-background getters return independently stored ImageSource and Brush properties; a universal fixed gray backplate is not implied.",
+      "anchors": [
+        "StartUI::AppItemViewModel::Logo::[StartUI::IAppItemViewModel]::get",
+        "StartUI::AppItemViewModel::LogoBackground::[StartUI::IAppItemViewModel]::get"
+      ],
+      "confidence": "high-selection-source-unresolved"
+    }
+  ],
+  "missingRequestedSymbols": [],
   "unresolved": [
-    "logo source selection precedence",
-    "background color selection",
-    "small-logo visibility conditions",
-    "stretch and margin state mapping"
+    "semantic name of tile image resource kind raw value 5",
+    "exact asset-source precedence",
+    "per-state small-logo dimensions/margin/stretch",
+    "logo-background selection and transparent conditions",
+    "AppItemViewModel realization/logo-type symbols under their requested names"
   ]
 }

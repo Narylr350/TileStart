@@ -75,7 +75,12 @@ $manifest = [ordered]@{
         sizeBytes = (Get-Item -LiteralPath $PdbPath).Length
         sha256 = (Get-FileHash -LiteralPath $PdbPath -Algorithm SHA256).Hash
     }
-    ghidraHome = (Resolve-Path -LiteralPath $GhidraHome).Path
+    ghidra = [ordered]@{
+        home = (Resolve-Path -LiteralPath $GhidraHome).Path
+        version = ((Select-String -LiteralPath (Join-Path $GhidraHome 'Ghidra\application.properties') -Pattern '^application.version=(.+)$').Matches[0].Groups[1].Value)
+        buildDate = ((Select-String -LiteralPath (Join-Path $GhidraHome 'Ghidra\application.properties') -Pattern '^application.build.date=(.+)$').Matches[0].Groups[1].Value)
+        analyzeHeadlessSha256 = (Get-FileHash -LiteralPath $headless -Algorithm SHA256).Hash
+    }
     projectName = $projectName
     script = 'tools/reverse/ghidra/TargetDecompile.java'
     needles = $Needle

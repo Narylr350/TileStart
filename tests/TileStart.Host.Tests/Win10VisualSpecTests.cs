@@ -49,8 +49,12 @@ public sealed class Win10VisualSpecTests
     {
         using var spec = ReadSpec("icon-resolution.json");
 
-        Assert.Equal("partial-unresolved", spec.RootElement.GetProperty("status").GetString());
+        Assert.StartsWith("partial-", spec.RootElement.GetProperty("status").GetString());
         Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
+        if (spec.RootElement.GetProperty("schemaVersion").GetInt32() >= 2)
+        {
+            Assert.NotEmpty(spec.RootElement.GetProperty("functions").EnumerateArray());
+        }
     }
 
     private static JsonDocument ReadSpec(string fileName) =>
