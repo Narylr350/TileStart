@@ -264,16 +264,19 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="18" />
                         </Grid.ColumnDefinitions>
-                        <Grid Width="24" Height="24" HorizontalAlignment="Left">
-                            <Border Background="#343434" />
+                        <Grid Width="{x:Static local:Win10IconMetrics.ClassicAppLogoLayoutSize}"
+                              Height="{x:Static local:Win10IconMetrics.ClassicAppLogoLayoutSize}"
+                              HorizontalAlignment="Left">
                             <TextBlock x:Name="AppInitial"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontSize="12"
-                                       Text="{Binding Initial}" />
+                                       Text="{Binding Initial}"
+                                       Visibility="Collapsed" />
                             <Image x:Name="AppIcon"
-                                   Width="24"
-                                   Height="24"
+                                   Width="{x:Static local:Win10IconMetrics.ClassicAppLogoImageSize}"
+                                   Height="{x:Static local:Win10IconMetrics.ClassicAppLogoImageSize}"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
                                    Source="{Binding Icon}"
                                    Stretch="Uniform" />
                             <TextBlock x:Name="FolderIcon"
@@ -317,6 +320,9 @@
                 </ItemsControl>
             </StackPanel>
             <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                    <Setter TargetName="AppInitial" Property="Visibility" Value="Visible" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding IsFolder}" Value="True">
                     <Setter TargetName="AppInitial" Property="Visibility" Value="Collapsed" />
                     <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed" />

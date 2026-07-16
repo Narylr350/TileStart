@@ -45,6 +45,32 @@ public sealed class Win10VisualSpecTests
     }
 
     [Fact]
+    public void AppListIconMetricsMatchSymbolDerivedSpec()
+    {
+        using var spec = ReadSpec("icon-resolution.json");
+        var mappings = spec.RootElement.GetProperty("derivedMappings");
+        var themeAware = mappings.GetProperty("appListLogoSizeDip").GetProperty("themeAware").EnumerateArray().ToArray();
+        var legacy = mappings.GetProperty("appListLogoSizeDip").GetProperty("legacy").EnumerateArray().ToArray();
+
+        foreach (var item in themeAware)
+        {
+            var type = item.GetProperty("appItemLogoType").GetInt32();
+            Assert.Equal(Win10IconMetrics.GetAppListImageSize(type, themeAware: true), item.GetProperty("image").GetDouble());
+            Assert.Equal(Win10IconMetrics.GetAppListLayoutSize(type), item.GetProperty("layout").GetDouble());
+        }
+
+        foreach (var item in legacy)
+        {
+            var type = item.GetProperty("appItemLogoType").GetInt32();
+            Assert.Equal(Win10IconMetrics.GetAppListImageSize(type, themeAware: false), item.GetProperty("image").GetDouble());
+            Assert.Equal(Win10IconMetrics.GetAppListLayoutSize(type), item.GetProperty("layout").GetDouble());
+        }
+
+        Assert.Equal(Win10IconMetrics.ClassicAppLogoImageSize, themeAware[0].GetProperty("image").GetDouble());
+        Assert.Equal(Win10IconMetrics.ClassicAppLogoLayoutSize, themeAware[0].GetProperty("layout").GetDouble());
+    }
+
+    [Fact]
     public void UnresolvedIconRulesCannotBeMistakenForVerifiedMetrics()
     {
         using var spec = ReadSpec("icon-resolution.json");
@@ -70,5 +96,4 @@ public sealed class Win10VisualSpecTests
         Assert.Equal([expected.Left, expected.Top, expected.Right, expected.Bottom], actual);
     }
 }
-
 

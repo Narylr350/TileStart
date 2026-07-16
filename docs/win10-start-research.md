@@ -664,3 +664,15 @@ tools\reverse\Export-StartUiVisualSpec.ps1
 流水线从当前系统文件重新计算 `StartUI.dll` / PRI 身份，下载精确匹配的公开 PDB，在 `%TEMP%\TileStart` 中提取并转换 StartUI XBF，再生成 `docs/reference/win10-start/specs/*.json`。每个已确认值都带 PRI、XBF、转换后 XAML 哈希以及资源键或控件锚点；`Win10VisualMetrics.cs` 和 `Win10VisualSpecTests.cs` 将生产常量与这些规格绑定。
 
 微软二进制、PDB、XBF、转换 XAML、第三方工具源码/二进制和 Ghidra 工程仍只存在于临时目录，不进入 Git。Ghidra 12.1.2 符号流水线已在当前 `StartUI.dll` 上跑通，并将函数 RVA、签名、工具哈希和不含原始伪代码的派生观察写入 `icon-resolution.json`。该规格仍标记为 `partial-symbol-verified`：资源类型 raw value 5 的语义名、资产来源优先级、各状态尺寸与背景选择尚未闭环，不得把这些未知项写成已还原实现。
+
+### 18.8 应用列表图标尺寸与缓存链路（2026-07-16）
+
+当前匹配 PDB 与 Ghidra 证据进一步确认：
+
+- Classic/Stack 应用项使用 `AppItemLogoType` raw value 1。
+- Theme-aware 路径的实际图像为 16 DIP，布局框为 24 DIP；legacy 路径为 24 DIP 图像和布局框。
+- raw value 2/3 在 theme-aware 路径中使用 24 DIP 图像和 32 DIP 布局框，在 legacy 路径中使用 32 DIP。
+- `LogoLoaderUTM` 先按 LogoType、目标像素尺寸和 DPI 查询 `StartVisualCache`；有效命中直接复用，未命中才调用 `ITileDataVisual.GetLogoAsync`，随后写回缓存。
+- App list theme-aware realization 请求 `TileAssetImageSize` raw value 0，磁贴 branding 小图标请求 raw value 5；PDB 中存在枚举类型名但没有导出枚举成员名，因此暂不猜测这两个 raw value 的正式名称。
+
+TileStart 的应用列表已据此把图标改为 16 DIP、24 DIP 布局框，删除所有应用统一使用的固定灰色底板，并通过 `IShellItemImageFactory` 优先取得高分辨率 Shell 图标；获取失败时才回退到旧的 `SHGetFileInfo` 路径。该 Shell 路径是对原版资源目标的独立实现，不声称等同于内部 UnifiedTile 缓存。

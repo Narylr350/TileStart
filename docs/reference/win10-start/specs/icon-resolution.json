@@ -10,7 +10,7 @@
   },
   "evidence": {
     "kind": "symbol-guided-decompilation",
-    "outputSha256": "B28A26B35799B3A3065B25D9B6B621B72036193F364AD6204D79948226FD13BE",
+    "outputSha256": "0C5067C0DB8C6E77BDD15B3232302441942D320C2500BB9494BE32813758BF1A",
     "script": "tools/reverse/ghidra/TargetDecompile.java",
     "ghidraVersion": "12.1.2",
     "ghidraBuildDate": "2026-Jun-05 1317 EDT",
@@ -31,6 +31,11 @@
       "name": "StartUI::AppItemMetrics::GetAppItemLogoWidthAndHeight",
       "rva": "0x1D94A4",
       "signature": "float __cdecl GetAppItemLogoWidthAndHeight(AppItemLogoType param_1, bool param_2)"
+    },
+    {
+      "name": "StartUI::ThemeManager::GetLogoOptionsForTileGrid",
+      "rva": "0x1D8268",
+      "signature": "LogoOptions * __thiscall GetLogoOptionsForTileGrid(ThemeManager * this, VisualCacheContentType param_1, Size * param_2, bool param_3)"
     },
     {
       "name": "StartUI::ThemeManager::GetLogoOptionsForTileBranding",
@@ -93,6 +98,21 @@
       "signature": "IImageResolver * __cdecl GetImageResolverForTileItem(ITileData * param_1, StartVisualCacheManager * param_2, bool param_3)"
     },
     {
+      "name": "StartUI::LogoLoaderUTM::CachedEntryExistsAndIsValid",
+      "rva": "0x92060",
+      "signature": "bool __thiscall CachedEntryExistsAndIsValid(LogoLoaderUTM * this, IStartVisualCache * param_1, VisualCacheContentType param_2, uint param_3, uint param_4, uint * param_5)"
+    },
+    {
+      "name": "StartUI::LogoLoaderUTM::[StartUI::IImageResolver]::TryLoadCachedImage",
+      "rva": "0x919C0",
+      "signature": "ImageSource * __thiscall TryLoadCachedImage([StartUI::IImageResolver] * this, LogoType param_1, float param_2, float param_3)"
+    },
+    {
+      "name": "StartUI::LogoLoaderUTM::[StartUI::IImageResolver]::LoadCachedImageAsync",
+      "rva": "0x90240",
+      "signature": "IAsyncOperation<Windows::UI::Xaml::Media::ImageSource_^___ptr64> * __thiscall LoadCachedImageAsync([StartUI::IImageResolver] * this, LogoType param_1, float param_2, float param_3, TileAssetImageSize param_4)"
+    },
+    {
       "name": "StartUI::TileViewModel::GetDisplayNameToUse",
       "rva": "0x7DBA8",
       "signature": "String * __thiscall GetDisplayNameToUse(TileViewModel * this)"
@@ -103,9 +123,19 @@
       "signature": "void __thiscall UpdateDisplayNameAndSmallLogoVisibility(TileViewModel * this)"
     },
     {
+      "name": "StartUI::LogoLoaderUTM::LoadFromCache",
+      "rva": "0x51C4C",
+      "signature": "ImageSource * __thiscall LoadFromCache(LogoLoaderUTM * this, IStartVisualCache * param_1, uint param_2, uint param_3, uint param_4)"
+    },
+    {
       "name": "StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization",
       "rva": "0x50778",
       "signature": "void __thiscall OnRealization([StartUI::IAppItemViewModel] * this)"
+    },
+    {
+      "name": "StartUI::LogoLoaderUTM::RawLoadImageAndCacheAsyncUnifiedTile",
+      "rva": "0x39B70",
+      "signature": "task<Windows::UI::Xaml::Media::ImageSource_^___ptr64> __thiscall RawLoadImageAndCacheAsyncUnifiedTile(LogoLoaderUTM * this, VisualCacheContentType param_1, TileAssetImageSize param_2, uint param_3, uint param_4)"
     },
     {
       "name": "StartUI::LogoLoaderUTM::CacheTypeFromLogoType",
@@ -183,13 +213,114 @@
         "StartUI::GetImageResolverForTileItem"
       ],
       "confidence": "high"
+    },
+    {
+      "fact": "LogoLoaderUTM checks a size- and content-type-specific StartVisualCache entry first. A cache miss falls back to ITileDataVisual.GetLogoAsync and writes the resulting bitmap back to the visual cache.",
+      "anchors": [
+        "StartUI::LogoLoaderUTM::[StartUI::IImageResolver]::TryLoadCachedImage",
+        "StartUI::LogoLoaderUTM::[StartUI::IImageResolver]::LoadCachedImageAsync",
+        "StartUI::LogoLoaderUTM::CachedEntryExistsAndIsValid",
+        "StartUI::LogoLoaderUTM::RawLoadImageAndCacheAsyncUnifiedTile"
+      ],
+      "confidence": "high"
+    },
+    {
+      "fact": "App-list theme-aware realization requests TileAssetImageSize raw value 0; tile branding small-logo loading requests raw value 5.",
+      "anchors": [
+        "StartUI::AppItemViewModel::[StartUI::IAppItemViewModel]::OnRealization",
+        "StartUI::TileViewModel::LoadSmallLogo",
+        "StartUI::TileData::GetTileImageResource"
+      ],
+      "confidence": "high-enum-names-unresolved"
     }
   ],
+  "derivedMappings": {
+    "appItemLogoTypeToLogoType": [
+      {
+        "appItemLogoType": 1,
+        "logoType": 2
+      },
+      {
+        "appItemLogoType": 2,
+        "logoType": 3
+      },
+      {
+        "appItemLogoType": 3,
+        "logoType": 4
+      }
+    ],
+    "logoTypeToVisualCacheContentType": [
+      {
+        "logoType": 0,
+        "contentType": 1
+      },
+      {
+        "logoType": 1,
+        "contentType": 3
+      },
+      {
+        "logoType": 2,
+        "contentType": 5
+      },
+      {
+        "logoType": 3,
+        "contentType": 6
+      },
+      {
+        "logoType": 4,
+        "contentType": 6
+      },
+      {
+        "logoType": 5,
+        "contentType": 8
+      }
+    ],
+    "appListLogoSizeDip": {
+      "themeAware": [
+        {
+          "appItemLogoType": 1,
+          "image": 16,
+          "layout": 24
+        },
+        {
+          "appItemLogoType": 2,
+          "image": 24,
+          "layout": 32
+        },
+        {
+          "appItemLogoType": 3,
+          "image": 24,
+          "layout": 32
+        }
+      ],
+      "legacy": [
+        {
+          "appItemLogoType": 1,
+          "image": 24,
+          "layout": 24
+        },
+        {
+          "appItemLogoType": 2,
+          "image": 32,
+          "layout": 32
+        },
+        {
+          "appItemLogoType": 3,
+          "image": 32,
+          "layout": 32
+        }
+      ]
+    },
+    "tileAssetImageSizeRaw": {
+      "appList": 0,
+      "tileBrandingSmallLogo": 5
+    }
+  },
   "missingRequestedSymbols": [],
   "unresolved": [
-    "semantic names of raw AppItemLogoType/LogoType values and tile image resource kind 5",
-    "asset precedence inside LogoLoaderUTM",
-    "per-state small-logo dimensions/margin/stretch",
+    "semantic names of raw AppItemLogoType/LogoType/TileAssetImageSize values",
+    "source precedence inside ITileDataVisual.GetLogoAsync beyond cache-first behavior",
+    "tile small-logo per-state dimensions/margin/stretch",
     "logo-background selection and transparent conditions"
   ]
 }

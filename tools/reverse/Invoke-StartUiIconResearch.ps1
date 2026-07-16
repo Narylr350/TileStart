@@ -25,7 +25,12 @@ $needles = @(
     'AppItemMetrics::ToLogoType',
     'LogoType',
     'ResolvedLogoInfo',
-    'OnRealization'
+    'OnRealization',
+    'LogoLoaderUTM::',
+    'AppItemMetrics::',
+    'ThemeManager::GetLogoOptions',
+    'PerFrameMetrics',
+    'GetTileImageResource'
 )
 
 $invoke = Join-Path $PSScriptRoot 'Invoke-StartUiGhidra.ps1'
