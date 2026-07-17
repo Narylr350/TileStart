@@ -335,14 +335,14 @@
 
     <Grid x:Name="MainSurface" Background="{StaticResource MenuBackground}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}" />
-            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsWidth}" />
+            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
+            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemHeight}" />
+                <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemGridLength}" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>

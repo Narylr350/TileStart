@@ -13,6 +13,12 @@ public static class Win10VisualMetrics
     public const double AlphabetFontSize = 20;
     public const double TileGroupHeaderHeight = 32;
 
+    public static GridLength CollapsedNavigationGridLength { get; } = new(CollapsedNavigationWidth);
+
+    public static GridLength NavigationItemGridLength { get; } = new(NavigationItemHeight);
+
+    public static GridLength AllAppsGridLength { get; } = new(AllAppsWidth);
+
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);

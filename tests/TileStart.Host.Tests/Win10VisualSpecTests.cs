@@ -7,6 +7,14 @@ namespace TileStart.Host.Tests;
 public sealed class Win10VisualSpecTests
 {
     [Fact]
+    public void GridDefinitionsExposeGridLengthValuesForXaml()
+    {
+        Assert.Equal(Win10VisualMetrics.CollapsedNavigationWidth, Win10VisualMetrics.CollapsedNavigationGridLength.Value);
+        Assert.Equal(Win10VisualMetrics.NavigationItemHeight, Win10VisualMetrics.NavigationItemGridLength.Value);
+        Assert.Equal(Win10VisualMetrics.AllAppsWidth, Win10VisualMetrics.AllAppsGridLength.Value);
+    }
+
+    [Fact]
     public void FrameMetricsMatchExtractedStartUiSpec()
     {
         using var spec = ReadSpec("frame.json");
