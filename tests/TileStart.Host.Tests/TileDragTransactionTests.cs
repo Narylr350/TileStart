@@ -93,6 +93,24 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void RepeatedDragOverOnCreatedFolderKeepsFolderPreviewStable()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var target = Tile("target", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [target, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, moving);
+        Assert.True(transaction.PreviewFolder(group, target));
+        var previewFolder = Assert.Single(group.Tiles);
+
+        Assert.True(transaction.PreviewFolder(group, previewFolder));
+        Assert.Same(previewFolder, Assert.Single(group.Tiles));
+        Assert.Equal([target, moving], previewFolder.FolderTiles);
+        Assert.Equal(TileDropIntent.CreateFolder, transaction.Intent);
+    }
+
+    [Fact]
     public void RepositionAfterFolderPreviewRestoresOriginalTilesFirst()
     {
         var moving = Tile("moving", TileSize.Medium, 2, 0);
@@ -145,6 +163,88 @@ public sealed class TileDragTransactionTests
 
         Assert.Equal((0, 0), (stationary.Column, stationary.Row));
         Assert.Equal((6, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void FolderChildCanReorderWithinExpandedFolder()
+    {
+        var first = Tile("first", TileSize.Medium, 0, 0);
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var folder = Tile("folder", TileSize.Medium, 0, 0);
+        folder.IsTileFolder = true;
+        folder.IsFolderExpanded = true;
+        folder.FolderTiles = [first, moving];
+        var group = new TileGroup { Tiles = [folder] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, folder, moving);
+        Assert.True(transaction.PreviewInsideFolder(group, folder, 0, 0));
+        transaction.Commit();
+
+        Assert.Equal((0, 0), (moving.Column, moving.Row));
+        Assert.Equal((2, 0), (first.Column, first.Row));
+        Assert.Contains(folder, group.Tiles);
+    }
+
+    [Fact]
+    public void FolderChildCanMoveBackToParentGroupWithoutChangingRemainingFolder()
+    {
+        var remaining = Tile("remaining", TileSize.Small, 0, 0);
+        var moving = Tile("moving", TileSize.Medium, 1, 0);
+        var folder = Tile("folder", TileSize.Medium, 0, 0);
+        folder.IsTileFolder = true;
+        folder.FolderTiles = [remaining, moving];
+        var group = new TileGroup { Tiles = [folder] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, folder, moving);
+        Assert.True(transaction.Preview(group, 2, 0));
+        transaction.Commit();
+
+        Assert.Equal([remaining], folder.FolderTiles);
+        Assert.Contains(folder, group.Tiles);
+        Assert.Contains(moving, group.Tiles);
+    }
+
+    [Fact]
+    public void MovingLastFolderChildDeletesEmptyFolderOnCommit()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var folder = Tile("folder", TileSize.Medium, 0, 0);
+        folder.IsTileFolder = true;
+        folder.FolderTiles = [moving];
+        var source = new TileGroup { Tiles = [folder] };
+        var target = new TileGroup();
+        var layout = new TileLayout { Groups = [source, target] };
+
+        using var transaction = new TileDragTransaction(layout, source, folder, moving);
+        Assert.True(transaction.Preview(target, 0, 0));
+        transaction.Commit();
+
+        Assert.DoesNotContain(source, layout.Groups);
+        Assert.Same(moving, Assert.Single(target.Tiles));
+    }
+
+    [Fact]
+    public void FolderChildMoveRollbackRestoresNestedPositionsAndExpansion()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var folder = Tile("folder", TileSize.Medium, 0, 0);
+        folder.IsTileFolder = true;
+        folder.IsFolderExpanded = true;
+        folder.FolderTiles = [moving];
+        var group = new TileGroup { Tiles = [folder] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using (var transaction = new TileDragTransaction(layout, group, folder, moving))
+        {
+            Assert.True(transaction.Preview(group, 4, 0));
+        }
+
+        Assert.True(folder.IsFolderExpanded);
+        Assert.Same(moving, Assert.Single(folder.FolderTiles));
+        Assert.Equal((2, 0), (moving.Column, moving.Row));
+        Assert.Same(folder, Assert.Single(group.Tiles));
     }
 
     private static TileItem Tile(string name, TileSize size, int column, int row) => new()

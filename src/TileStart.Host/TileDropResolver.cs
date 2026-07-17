@@ -35,7 +35,7 @@ public static class TileDropResolver
             !ReferenceEquals(tile, moving)
             && centerX >= tile.Left
             && centerX < tile.Left + tile.PixelWidth
-            && centerY >= tile.Top
-            && centerY < tile.Top + tile.PixelHeight);
+            && centerY >= tile.DisplayTop
+            && centerY < tile.DisplayTop + tile.PixelHeight);
     }
 }

@@ -44,9 +44,8 @@ public sealed class TileGroup : INotifyPropertyChanged
             _tiles.CollectionChanged -= Tiles_CollectionChanged;
             _tiles = value ?? [];
             _tiles.CollectionChanged += Tiles_CollectionChanged;
-            TrackTiles();
+            RefreshLayout();
             OnPropertyChanged();
-            OnPropertyChanged(nameof(PixelHeight));
         }
     }
 
@@ -55,8 +54,14 @@ public sealed class TileGroup : INotifyPropertyChanged
     {
         get
         {
-            var rows = Tiles.Count == 0 ? 1 : Tiles.Max(tile => tile.Row + tile.Size.RowSpan());
-            return rows * Win10TileMetrics.CellPitch - Win10TileMetrics.Gap;
+            var tileBottom = Tiles.Count == 0
+                ? Win10TileMetrics.CellSize
+                : Tiles.Max(tile => tile.DisplayTop + tile.PixelHeight);
+            var regionBottom = Tiles.Where(tile => tile.IsFolderExpanded)
+                .Select(tile => tile.FolderRegionTop + tile.FolderRegionHeight)
+                .DefaultIfEmpty(0)
+                .Max();
+            return Math.Max(tileBottom, regionBottom);
         }
     }
 
@@ -65,13 +70,49 @@ public sealed class TileGroup : INotifyPropertyChanged
     public void RefreshLayout()
     {
         TrackTiles();
+        UpdateFolderRegions();
         OnPropertyChanged(nameof(PixelHeight));
+    }
+
+    private void UpdateFolderRegions()
+    {
+        var regions = Tiles
+            .Where(tile => tile.IsTileFolder && tile.IsFolderExpanded)
+            .Select(tile => new
+            {
+                Tile = tile,
+                InsertionRow = tile.Row + tile.Size.RowSpan(),
+                Height = TileFolderLayout.RegionHeight(tile),
+                ContentHeight = TileFolderLayout.ContentHeight(tile),
+            })
+            .OrderBy(region => region.InsertionRow)
+            .ThenBy(region => region.Tile.Column)
+            .ToArray();
+
+        foreach (var tile in Tiles)
+        {
+            var offset = regions
+                .Where(region => tile.Row >= region.InsertionRow)
+                .Sum(region => region.Height);
+            tile.SetLayoutOffset(offset);
+            if (!tile.IsFolderExpanded)
+            {
+                tile.SetFolderRegionLayout(0, 0, 0);
+            }
+        }
+
+        var precedingHeight = 0d;
+        foreach (var region in regions)
+        {
+            var top = Win10TileMetrics.Top(region.InsertionRow) + precedingHeight;
+            region.Tile.SetFolderRegionLayout(top, region.Height, region.ContentHeight);
+            precedingHeight += region.Height;
+        }
     }
 
     private void Tiles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        TrackTiles();
-        OnPropertyChanged(nameof(PixelHeight));
+        RefreshLayout();
     }
 
     private void TrackTiles()
@@ -90,9 +131,11 @@ public sealed class TileGroup : INotifyPropertyChanged
 
     private void Tile_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(TileItem.Row) or nameof(TileItem.Size))
+        if (e.PropertyName is nameof(TileItem.Row)
+            or nameof(TileItem.Size)
+            or nameof(TileItem.IsFolderExpanded))
         {
-            OnPropertyChanged(nameof(PixelHeight));
+            RefreshLayout();
         }
     }
 

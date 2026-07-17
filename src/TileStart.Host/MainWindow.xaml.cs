@@ -49,10 +49,12 @@ public partial class MainWindow : Window
     private System.Windows.Point _dragAnchor;
     private string? _pendingDropKey;
     private TileGroup? _pendingDropTarget;
+    private TileItem? _pendingDropFolder;
     private System.Windows.Point _pendingDropPosition;
     private TileItem? _pendingDropTile;
     private TileItem? _dragTile;
     private TileGroup? _dragSource;
+    private TileItem? _dragSourceFolder;
     private Button? _dragSourceElement;
     private TileDragTransaction? _dragTransaction;
     private bool _dragCompleted;
@@ -541,8 +543,24 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (sender is not Button { Tag: TileItem tile } || tile.IsTileFolder)
+        if (sender is not Button { Tag: TileItem tile })
         {
+            return;
+        }
+
+        if (tile.IsTileFolder)
+        {
+            var group = TileLayout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));
+            if (group is not null)
+            {
+                var previousTops = group.Tiles.ToDictionary(item => item, item => item.DisplayTop);
+                var expanding = !tile.IsFolderExpanded;
+                tile.IsFolderExpanded = expanding;
+                group.RefreshLayout();
+                UpdateLayout();
+                AnimateFolderLayoutChange(group, tile, previousTops, expanding);
+            }
+
             return;
         }
 
@@ -764,7 +782,12 @@ public partial class MainWindow : Window
         _pendingDropKey = null;
         _dragSourceElement = sender as Button;
         _dragTile = _dragSourceElement?.Tag as TileItem;
-        _dragSource = _dragTile is null ? null : TileLayout.Groups.FirstOrDefault(group => group.Tiles.Contains(_dragTile));
+        _dragSource = null;
+        _dragSourceFolder = null;
+        if (_dragTile is not null)
+        {
+            FindTileLocation(_dragTile, out _dragSource, out _dragSourceFolder);
+        }
     }
 
     private void Window_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -773,6 +796,7 @@ public partial class MainWindow : Window
         {
             _dragTile = null;
             _dragSource = null;
+            _dragSourceFolder = null;
             _dragSourceElement = null;
         }
     }
@@ -797,7 +821,7 @@ public partial class MainWindow : Window
 
         var tile = _dragTile;
         _dragCompleted = true;
-        var transaction = new TileDragTransaction(TileLayout, _dragSource, tile);
+        var transaction = new TileDragTransaction(TileLayout, _dragSource, _dragSourceFolder, tile);
         _dragTransaction = transaction;
         try
         {
@@ -814,6 +838,7 @@ public partial class MainWindow : Window
             _suppressTileActivationUntil = Environment.TickCount64 + 300;
             _dragTile = null;
             _dragSource = null;
+            _dragSourceFolder = null;
             _dragSourceElement = null;
             ResetPendingTileDrop();
         }
@@ -863,6 +888,41 @@ public partial class MainWindow : Window
         else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
         {
             AddDroppedTiles(target, paths, position);
+        }
+
+        e.Handled = true;
+    }
+
+    private void FolderRegion_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (sender is ItemsControl { Tag: TileItem folder } itemsControl
+            && e.Data.GetData(typeof(TileItem)) is TileItem tile
+            && _dragTransaction is not null
+            && FindTileLocation(folder, out var group, out _))
+        {
+            e.Effects = PreviewFolderRegionDrop(group, folder, e.GetPosition(itemsControl), tile, force: false)
+                ? DragDropEffects.Move
+                : DragDropEffects.None;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private void FolderRegion_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (sender is ItemsControl { Tag: TileItem folder } itemsControl
+            && e.Data.GetData(typeof(TileItem)) is TileItem tile
+            && _dragTransaction is not null
+            && FindTileLocation(folder, out var group, out _)
+            && PreviewFolderRegionDrop(group, folder, e.GetPosition(itemsControl), tile, force: true))
+        {
+            _dragTransaction.Commit();
+            TileLayoutStore.Save(TileLayout);
+            e.Effects = DragDropEffects.Move;
         }
 
         e.Handled = true;
@@ -958,13 +1018,45 @@ public partial class MainWindow : Window
         return target is not null;
     }
 
+    private bool PreviewFolderRegionDrop(
+        TileGroup target,
+        TileItem folder,
+        System.Windows.Point position,
+        TileItem tile,
+        bool force)
+    {
+        var (column, row) = TileDropResolver.GetCell(position, _dragAnchor, tile);
+        var key = $"folder:{target.Id}:{folder.Id}:{column}:{row}";
+        if (!force)
+        {
+            if (_pendingDropKey != key)
+            {
+                _pendingDropKey = key;
+                _pendingDropTarget = target;
+                _pendingDropFolder = folder;
+                _pendingDropPosition = position;
+                _pendingDropTile = tile;
+                _tileReflowTimer.Stop();
+                _tileReflowTimer.Start();
+            }
+
+            return true;
+        }
+
+        _pendingDropKey = key;
+        return _dragTransaction!.PreviewInsideFolder(target, folder, column, row);
+    }
+
     private bool PreviewTileDrop(
         TileGroup target,
         System.Windows.Point position,
         TileItem tile,
         bool force)
     {
-        var (column, row) = TileDropResolver.GetCell(position, _dragAnchor, tile);
+        var logicalPosition = new System.Windows.Point(
+            position.X,
+            TileFolderLayout.ToLogicalY(target, position.Y));
+        var (column, row) = TileDropResolver.GetCell(logicalPosition, _dragAnchor, tile);
         var folderTarget = TileDropResolver.FindFolderTarget(target, tile, position, _dragAnchor);
         var key = $"{target.Id}:{Math.Round(position.X, 1)}:{Math.Round(position.Y, 1)}:{column}:{row}:{folderTarget?.Id}";
         if (!force)
@@ -973,6 +1065,7 @@ public partial class MainWindow : Window
             {
                 _pendingDropKey = key;
                 _pendingDropTarget = target;
+                _pendingDropFolder = null;
                 _pendingDropPosition = position;
                 _pendingDropTile = tile;
                 _tileReflowTimer.Stop();
@@ -996,7 +1089,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        PreviewTileDrop(_pendingDropTarget, _pendingDropPosition, _pendingDropTile, force: true);
+        if (_pendingDropFolder is not null)
+        {
+            PreviewFolderRegionDrop(
+                _pendingDropTarget,
+                _pendingDropFolder,
+                _pendingDropPosition,
+                _pendingDropTile,
+                force: true);
+        }
+        else
+        {
+            PreviewTileDrop(_pendingDropTarget, _pendingDropPosition, _pendingDropTile, force: true);
+        }
     }
 
     private void ResetPendingTileDrop()
@@ -1004,6 +1109,7 @@ public partial class MainWindow : Window
         _tileReflowTimer.Stop();
         _pendingDropKey = null;
         _pendingDropTarget = null;
+        _pendingDropFolder = null;
         _pendingDropTile = null;
     }
 
@@ -1078,6 +1184,118 @@ public partial class MainWindow : Window
         }
 
         tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
+    }
+
+    private void AnimateFolderLayoutChange(
+        TileGroup group,
+        TileItem folder,
+        IReadOnlyDictionary<TileItem, double> previousTops,
+        bool expanding)
+    {
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            return;
+        }
+
+        var groupControl = FindVisualDescendants<ItemsControl>(TileGroupsControl)
+            .FirstOrDefault(control => ReferenceEquals(control.Tag, group));
+        if (groupControl is null)
+        {
+            return;
+        }
+
+        var duration = TimeSpan.FromMilliseconds(200);
+        foreach (var tile in group.Tiles)
+        {
+            if (!previousTops.TryGetValue(tile, out var previousTop))
+            {
+                continue;
+            }
+
+            var delta = previousTop - tile.DisplayTop;
+            if (Math.Abs(delta) < 0.1
+                || groupControl.ItemContainerGenerator.ContainerFromItem(tile) is not FrameworkElement container)
+            {
+                continue;
+            }
+
+            var transform = new TranslateTransform(0, delta);
+            container.RenderTransform = transform;
+            var animation = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = delta,
+                To = 0,
+                Duration = duration,
+                EasingFunction = new System.Windows.Media.Animation.CubicEase
+                {
+                    EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut,
+                },
+            };
+            animation.Completed += (_, _) =>
+            {
+                transform.BeginAnimation(TranslateTransform.YProperty, null);
+                transform.Y = 0;
+            };
+            transform.BeginAnimation(TranslateTransform.YProperty, animation);
+        }
+
+        if (!expanding)
+        {
+            return;
+        }
+
+        var region = FindVisualDescendants<System.Windows.Controls.Border>(TileGroupsControl)
+            .FirstOrDefault(border => border.Name == "FolderRegion" && ReferenceEquals(border.DataContext, folder));
+        if (region is null)
+        {
+            return;
+        }
+
+        var scale = new ScaleTransform(1, 0);
+        region.RenderTransformOrigin = new System.Windows.Point(0.5, 0);
+        region.RenderTransform = scale;
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new System.Windows.Media.Animation.DoubleAnimation
+        {
+            From = 0,
+            To = 1,
+            Duration = duration,
+            EasingFunction = new System.Windows.Media.Animation.CubicEase
+            {
+                EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut,
+            },
+        });
+        region.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation
+        {
+            From = 0,
+            To = 1,
+            Duration = TimeSpan.FromMilliseconds(120),
+        });
+    }
+
+    private bool FindTileLocation(TileItem tile, out TileGroup group, out TileItem? folder)
+    {
+        foreach (var candidate in TileLayout.Groups)
+        {
+            if (candidate.Tiles.Contains(tile))
+            {
+                group = candidate;
+                folder = null;
+                return true;
+            }
+
+            var parentFolder = candidate.Tiles.FirstOrDefault(item =>
+                item.IsTileFolder && item.FolderTiles.Contains(tile));
+            if (parentFolder is not null)
+            {
+                group = candidate;
+                folder = parentFolder;
+                return true;
+            }
+        }
+
+        group = null!;
+        folder = null;
+        return false;
     }
 
     private static IEnumerable<T> FindVisualDescendants<T>(DependencyObject parent)

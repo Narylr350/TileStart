@@ -27,6 +27,11 @@ public sealed class TileItem : INotifyPropertyChanged
     private bool _usesFullTileLogo;
     private bool _isTileFolder;
     private ObservableCollection<TileItem> _folderTiles = [];
+    private bool _isFolderExpanded;
+    private double _layoutOffsetY;
+    private double _folderRegionTop;
+    private double _folderRegionHeight;
+    private double _folderContentHeight;
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -71,6 +76,22 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _isTileFolder = value;
+            OnPropertyChanged();
+        }
+    }
+
+    [JsonIgnore]
+    public bool IsFolderExpanded
+    {
+        get => _isFolderExpanded;
+        set
+        {
+            if (_isFolderExpanded == value)
+            {
+                return;
+            }
+
+            _isFolderExpanded = value;
             OnPropertyChanged();
         }
     }
@@ -228,6 +249,18 @@ public sealed class TileItem : INotifyPropertyChanged
     public double Top => Win10TileMetrics.Top(Row);
 
     [JsonIgnore]
+    public double DisplayTop => Top + _layoutOffsetY;
+
+    [JsonIgnore]
+    public double FolderRegionTop => _folderRegionTop;
+
+    [JsonIgnore]
+    public double FolderRegionHeight => _folderRegionHeight;
+
+    [JsonIgnore]
+    public double FolderContentHeight => _folderContentHeight;
+
+    [JsonIgnore]
     public double PixelWidth => Win10TileMetrics.Width(Size);
 
     [JsonIgnore]
@@ -292,6 +325,38 @@ public sealed class TileItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    internal void SetLayoutOffset(double offsetY)
+    {
+        if (_layoutOffsetY == offsetY)
+        {
+            return;
+        }
+
+        _layoutOffsetY = offsetY;
+        OnPropertyChanged(nameof(DisplayTop));
+    }
+
+    internal void SetFolderRegionLayout(double top, double height, double contentHeight)
+    {
+        if (_folderRegionTop != top)
+        {
+            _folderRegionTop = top;
+            OnPropertyChanged(nameof(FolderRegionTop));
+        }
+
+        if (_folderRegionHeight != height)
+        {
+            _folderRegionHeight = height;
+            OnPropertyChanged(nameof(FolderRegionHeight));
+        }
+
+        if (_folderContentHeight != contentHeight)
+        {
+            _folderContentHeight = contentHeight;
+            OnPropertyChanged(nameof(FolderContentHeight));
+        }
+    }
+
     private static MediaBrush CreateFrozenBrush(string value)
     {
         var brush = (MediaBrush)new BrushConverter().ConvertFromString(value)!;
@@ -334,6 +399,7 @@ public sealed class TileItem : INotifyPropertyChanged
         OnPropertyChanged();
         OnPropertyChanged(nameof(Left));
         OnPropertyChanged(nameof(Top));
+        OnPropertyChanged(nameof(DisplayTop));
         OnPropertyChanged(nameof(PixelWidth));
         OnPropertyChanged(nameof(PixelHeight));
     }

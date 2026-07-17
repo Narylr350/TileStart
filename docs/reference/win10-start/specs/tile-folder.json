@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-17T13:20:00+08:00",
+  "capturedAt": "2026-07-17T16:23:00+08:00",
   "source": {
     "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
     "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
@@ -58,6 +58,39 @@
         "TopSeparator",
         "BottomSeparator"
       ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Activating a folder toggles ITileFolderViewModel.IsExpanded directly; the folder does not open a separate window.",
+      "evidence": [
+        "StartUI::TileFolderViewModel::OnActivated@0x180574900",
+        "StartUI::TileFolderViewModel::IsExpanded::set@0x18057ab84"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Expansion inserts a full-width folder-region placeholder at X=0 and Y=folder CellLocation.Y + CellSize.Y. Region bounds changes update the same placeholder, so later tiles are displaced without rewriting their persisted cell locations.",
+      "evidence": [
+        "StartUI::TileGroupViewModel::_ExpandFolder@0x180533f40",
+        "StartUI::TileGroupViewModel::OnFolderRegionBoundsChanged@0x1805306f0"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "The expanded region is appended as a dedicated TileGrid element and receives its own bounds-change subscription. Collapse removes the region and defers unhosting through the region timer.",
+      "evidence": [
+        "StartUI::TileGroupViewModel::_ExpandFolder@0x180533f40",
+        "StartUI::TileGroupViewModel::_CollapseFolder@0x18053389c"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Folder child rearrangement is owned by TileFolderRegionViewModel, including move, insert, remove, rollback-related event handling, and deletion when the child collection reaches zero.",
+      "evidence": [
+        "StartUI::TileFolderRegionViewModel::_MoveTile@0x1805814d8",
+        "StartUI::TileFolderRegionViewModel::_OnRearrangeEvent@0x180581680",
+        "StartUI::TileFolderRegionViewModel::_RemoveTileElementAt@0x180582d38"
+      ]
     }
   ],
   "implementationContract": {
@@ -66,11 +99,17 @@
     "addByDroppingOnExistingFolder": true,
     "childrenPersistInLayout": true,
     "folderDeleteWhenEmpty": true,
-    "oneChildAutoDissolve": false
+    "oneChildAutoDissolve": false,
+    "activationTogglesInlineExpansion": true,
+    "regionStartsAfterFolderCellBottom": true,
+    "regionSpansGroupWidth": true,
+    "expansionDoesNotRewriteTopLevelCellRows": true,
+    "folderChildrenCanReorderAndDragOut": true
   },
   "unresolved": [
     "The exact native center-target tolerance beyond the verified bounds hit test.",
     "The maximum folder child count, if any.",
-    "Inline expansion geometry and child drag-out are deferred until a runtime sample is captured; the first implementation batch covers creation, add-to-folder, persistence, rollback, and folder preview rendering."
+    "The exact duration and easing curve of the platform RepositionThemeTransition/ContentThemeTransition used during folder expansion and collapse; TileStart currently uses a separately testable WPF approximation while preserving the verified geometry and state transitions.",
+    "Whether the stock menu permits more than one expanded folder in every presentation mode; the inspected group model stores a vector of active folder regions and does not collapse another folder inside UpdateFolderExpanded."
   ]
 }
