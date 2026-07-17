@@ -41,7 +41,10 @@ public class TargetDecompile extends GhidraScript {
             Function function = iterator.next();
             String name = function.getName(true);
             for (String needle : needles) {
-                if (name.contains(needle)) {
+                boolean matches = needle.startsWith("exact:")
+                    ? name.equals(needle.substring("exact:".length()))
+                    : name.contains(needle);
+                if (matches) {
                     functions.add(function);
                     break;
                 }

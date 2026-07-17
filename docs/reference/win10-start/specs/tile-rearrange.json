@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-17T13:20:00+08:00",
+  "source": {
+    "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
+    "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404"
+  },
+  "verifiedBehavior": [
+    {
+      "status": "binary-verified",
+      "fact": "DragDropEventType 3 is drop and 4 is drag-leave; both clear the active drag view models.",
+      "evidence": [
+        "StartUI::StartDropTarget::OnDrop@0x1805684a4",
+        "StartUI::StartDropTarget::OnDragLeave@0x180568130"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Rearrangement resolves an anchor-adjusted tile hit point, converts it to group-relative cells, and delegates collision placement to the layout resolver instead of using the raw cursor as the tile origin.",
+      "evidence": [
+        "StartUI::TileRearrangeEngine::FindRearrangeTarget@0x180559a68",
+        "StartUI::TileRearrangeEngine::GetTileHitPointFromAnchorPoint@0x18055c3d8",
+        "StartUI::GetCellFromGroupRelativePixelLocation@0x18055c1bc"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "The reflow timer interval is 1200000 100-ns ticks (120 ms). Moving to a new drag point restarts the timer; a stable point emits one reflow and records that point.",
+      "evidence": [
+        "StartUI::DragDropReflowTimer::DragDropReflowTimer@0x1800b10bc",
+        "StartUI::DragDropReflowTimer::OnDrag@0x1803736a8",
+        "StartUI::DragDropReflowTimer::OnReflowTimerTick@0x180374de0"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "The drag engine maintains a placeholder tile and only converts the placeholder model to the final model after the placeholder visual has loaded.",
+      "evidence": [
+        "StartUI::ProgrammaticDragHandler::OnPlaceholderTileLoaded@0x1803ddd50",
+        "StartUI::TileViewModel::UpdatePlaceholderModelToFinalModel@0x18054b6f4",
+        "StartUI::TileDragDropRearrangeEngine::OnDragDropEvent@0x180568994"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "A tile move is transactional: rearrange event 0 begins the move operation; terminal event 2 or 3 ends it, and event 3 is recorded as a successful completion.",
+      "evidence": [
+        "StartUI::StartViewModel::OnRearrangeEvent@0x1804f4100",
+        "StartUI::StartViewModel::OnTileRearrangeEvent@0x1804f4ff8"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Cross-group movement removes the tile from its old host before adding it to the destination host at the resolved cell.",
+      "evidence": [
+        "StartUI::StartViewModel::MoveTileBetweenGroups@0x1804f2d08"
+      ]
+    }
+  ],
+  "implementationContract": {
+    "gridColumns": 8,
+    "preservePointerAnchor": true,
+    "reflowDelayMilliseconds": 120,
+    "previewIsRollbackable": true,
+    "commitOnlyOnDrop": true,
+    "cancelRestoresAllGroups": true,
+    "crossGroupMoveRemovesEmptySourceGroup": true
+  },
+  "unresolved": [
+    "The native resolver's exact tie-breaking order when several mixed-size tiles can satisfy the same collision.",
+    "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries."
+  ]
+}

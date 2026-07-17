@@ -25,6 +25,8 @@
         WindowStyle="None"
         Deactivated="Window_Deactivated"
         PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewMouseLeftButtonUp="Window_PreviewMouseLeftButtonUp"
+        PreviewMouseMove="Window_PreviewMouseMove"
         PreviewTextInput="Window_PreviewTextInput">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
@@ -88,8 +90,6 @@
         </Style>
 
         <Style x:Key="RailButtonStyle" TargetType="Button">
-            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
-            <Setter Property="local:StartMotion.EntrancePosition" Value="0" />
             <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}" />
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.NavigationItemHeight}" />
             <Setter Property="Padding" Value="0" />
@@ -119,7 +119,6 @@
         </Style>
 
         <Style x:Key="AppRowStyle" TargetType="Button">
-            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AllAppsRowHeight}" />
             <Setter Property="Margin" Value="14,0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -149,7 +148,6 @@
         </Style>
 
         <Style x:Key="TileStyle" TargetType="Button">
-            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -198,7 +196,6 @@
         </Style>
 
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
-            <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="14,0" />
             <Setter Property="Padding" Value="0" />
@@ -396,8 +393,7 @@
                                    Margin="14,0"
                                    VerticalAlignment="Center"
                                    FontSize="12"
-                                   Text="最近添加"
-                                   local:StartMotion.IsEntranceTarget="True" />
+                                   Text="最近添加" />
                         <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
                         <Button x:Name="RecentExpandButton"
                                 Style="{StaticResource AppRowStyle}"
@@ -482,17 +478,18 @@
                 <ScrollViewer.Resources>
                     <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
                 </ScrollViewer.Resources>
-                <ItemsControl Margin="0,0,12,20" ItemsSource="{Binding TileLayout.Groups}">
+                <ItemsControl x:Name="TileGroupsControl"
+                              Margin="0,0,0,20"
+                              ItemsSource="{Binding TileLayout.Groups}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel ItemWidth="{x:Static local:Win10TileMetrics.GroupPitch}"
-                                       Orientation="Horizontal" />
+                            <local:Win10GroupWrapPanel />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:TileGroup}">
                             <StackPanel Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                        Margin="0,0,16,24">
+                                        Margin="0,0,0,24">
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="向左移动" Click="MoveGroupLeft_Click" />
@@ -503,7 +500,6 @@
                                 </StackPanel.ContextMenu>
                                 <TextBox Height="{x:Static local:Win10VisualMetrics.TileGroupHeaderHeight}"
                                          Margin="4,0,0,0"
-                                         local:StartMotion.IsEntranceTarget="True"
                                          Padding="0,4,0,0"
                                          Foreground="White"
                                          Background="Transparent"
@@ -542,8 +538,7 @@
                                                     Style="{StaticResource TileStyle}"
                                                     Tag="{Binding}"
                                                     Click="TileButton_Click"
-                                                    PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown"
-                                                    PreviewMouseMove="TileButton_PreviewMouseMove">
+                                                    PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
                                                 <Button.ContextMenu>
                                                     <ContextMenu Style="{StaticResource StartContextMenuStyle}">
                                                         <ContextMenu.Resources>
@@ -619,6 +614,32 @@
                                                             <TranslateTransform Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                         </Image.RenderTransform>
                                                     </Image>
+                                                    <ItemsControl x:Name="FolderPreview"
+                                                                  Grid.Row="0"
+                                                                  Grid.RowSpan="2"
+                                                                  Width="52"
+                                                                  Height="52"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
+                                                                  ClipToBounds="True"
+                                                                  ItemsSource="{Binding FolderTiles}"
+                                                                  Visibility="Collapsed">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <UniformGrid Columns="2" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Margin="1" Background="{Binding BackgroundBrush}">
+                                                                    <Image Margin="3"
+                                                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                                                           Source="{Binding Icon}"
+                                                                           Stretch="Uniform" />
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                     <Grid x:Name="TileBranding"
                                                           Grid.Row="1"
                                                           Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
@@ -638,6 +659,11 @@
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
                                                     <Setter TargetName="TileInitial" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                    <Setter TargetName="TileInitial" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="TileIcon" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="FolderPreview" Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
                                                     <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />

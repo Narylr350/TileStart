@@ -71,6 +71,67 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void PreviewFolderCreatesDedicatedFolderAndRollbackRestoresTiles()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var target = Tile("target", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [target, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using (var transaction = new TileDragTransaction(layout, group, moving))
+        {
+            Assert.True(transaction.PreviewFolder(group, target));
+            Assert.Equal(TileDropIntent.CreateFolder, transaction.Intent);
+            var folder = Assert.Single(group.Tiles);
+            Assert.True(folder.IsTileFolder);
+            Assert.Equal([target, moving], folder.FolderTiles);
+        }
+
+        Assert.Equal([target, moving], group.Tiles);
+        Assert.False(target.IsTileFolder);
+        Assert.Empty(target.FolderTiles);
+    }
+
+    [Fact]
+    public void RepositionAfterFolderPreviewRestoresOriginalTilesFirst()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var target = Tile("target", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [target, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, moving);
+        Assert.True(transaction.PreviewFolder(group, target));
+        Assert.True(transaction.Preview(group, 0, 0));
+
+        Assert.Equal(TileDropIntent.Reposition, transaction.Intent);
+        Assert.Contains(target, group.Tiles);
+        Assert.Contains(moving, group.Tiles);
+        Assert.DoesNotContain(group.Tiles, tile => tile.IsTileFolder);
+    }
+
+    [Fact]
+    public void PreviewFolderAddsTileToExistingFolderAndCommitPersistsIt()
+    {
+        var child = Tile("child", TileSize.Small, 0, 0);
+        var folder = Tile("folder", TileSize.Medium, 0, 0);
+        folder.IsTileFolder = true;
+        folder.FolderTiles.Add(child);
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var target = new TileGroup { Tiles = [folder] };
+        var layout = new TileLayout { Groups = [source, target] };
+
+        using var transaction = new TileDragTransaction(layout, source, moving);
+        Assert.True(transaction.PreviewFolder(target, folder));
+        Assert.Equal(TileDropIntent.AddToFolder, transaction.Intent);
+        transaction.Commit();
+
+        Assert.DoesNotContain(source, layout.Groups);
+        Assert.Equal([child, moving], folder.FolderTiles);
+    }
+
+    [Fact]
     public void RepeatedPreviewsAlwaysStartFromOriginalSnapshot()
     {
         var moving = Tile("moving", TileSize.Medium, 4, 0);

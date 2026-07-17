@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -24,6 +25,8 @@ public sealed class TileItem : INotifyPropertyChanged
     private ImageSource? _icon;
     private ImageSource? _backgroundImage;
     private bool _usesFullTileLogo;
+    private bool _isTileFolder;
+    private ObservableCollection<TileItem> _folderTiles = [];
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -56,6 +59,36 @@ public sealed class TileItem : INotifyPropertyChanged
     public string WorkingDirectory { get; set; } = string.Empty;
     public string IconPath { get; set; } = string.Empty;
     public bool RunAsAdministrator { get; set; }
+
+    public bool IsTileFolder
+    {
+        get => _isTileFolder;
+        set
+        {
+            if (_isTileFolder == value)
+            {
+                return;
+            }
+
+            _isTileFolder = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ObservableCollection<TileItem> FolderTiles
+    {
+        get => _folderTiles;
+        set
+        {
+            if (ReferenceEquals(_folderTiles, value))
+            {
+                return;
+            }
+
+            _folderTiles = value ?? [];
+            OnPropertyChanged();
+        }
+    }
 
     public string BackgroundColor
     {

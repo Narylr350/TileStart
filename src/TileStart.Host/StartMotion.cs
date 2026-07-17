@@ -13,18 +13,6 @@ public static class StartMotion
 {
     private static readonly KeySpline EntranceSpline = new(0.1, 0.9, 0.2, 1);
 
-    public static readonly DependencyProperty IsEntranceTargetProperty = DependencyProperty.RegisterAttached(
-        "IsEntranceTarget",
-        typeof(bool),
-        typeof(StartMotion),
-        new PropertyMetadata(false));
-
-    public static readonly DependencyProperty EntrancePositionProperty = DependencyProperty.RegisterAttached(
-        "EntrancePosition",
-        typeof(double),
-        typeof(StartMotion),
-        new PropertyMetadata(double.NaN));
-
     private static readonly DependencyProperty MotionTranslateProperty = DependencyProperty.RegisterAttached(
         "MotionTranslate",
         typeof(TranslateTransform),
@@ -35,18 +23,6 @@ public static class StartMotion
         typeof(double),
         typeof(StartMotion),
         new PropertyMetadata(double.NaN));
-
-    public static bool GetIsEntranceTarget(DependencyObject target) =>
-        (bool)target.GetValue(IsEntranceTargetProperty);
-
-    public static void SetIsEntranceTarget(DependencyObject target, bool value) =>
-        target.SetValue(IsEntranceTargetProperty, value);
-
-    public static double GetEntrancePosition(DependencyObject target) =>
-        (double)target.GetValue(EntrancePositionProperty);
-
-    public static void SetEntrancePosition(DependencyObject target, double value) =>
-        target.SetValue(EntrancePositionProperty, value);
 
     public static EntranceMotionParameters CalculateEntrance(double normalizedY, bool bottomTaskbar)
     {
@@ -81,19 +57,15 @@ public static class StartMotion
                 continue;
             }
 
-            var origin = element.TransformToAncestor(root).Transform(new System.Windows.Point());
+            var origin = ReferenceEquals(element, root)
+                ? new System.Windows.Point()
+                : element.TransformToAncestor(root).Transform(new System.Windows.Point());
             if (!rootBounds.IntersectsWith(new Rect(origin, element.RenderSize)))
             {
                 continue;
             }
 
-            var entrancePosition = GetEntrancePosition(element);
-            if (double.IsNaN(entrancePosition))
-            {
-                entrancePosition = origin.Y / root.ActualHeight;
-            }
-
-            var parameters = CalculateEntrance(entrancePosition, bottomTaskbar);
+            var parameters = CalculateEntrance(origin.Y / root.ActualHeight, bottomTaskbar);
             var fromY = animationsEnabled ? parameters.FromY : 0;
             element.SetValue(PreparedFromYProperty, fromY);
             translate.Y = fromY;

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-17T13:20:00+08:00",
+  "source": {
+    "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
+    "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404"
+  },
+  "verifiedBehavior": [
+    {
+      "status": "symbol-verified",
+      "fact": "Folders have dedicated TileFolderViewModel and TileFolderRegionViewModel types; they are not ordinary adjacent tiles.",
+      "evidence": [
+        "StartUI::TileFolderViewModel",
+        "StartUI::TileFolderRegionViewModel",
+        "TileGrid_FolderRegionTemplate in TileGridItemDataTemplates.xaml"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Creating a folder is a group-level rearrange branch gated by ITileViewModel::IsHostableByFolder. It creates a dedicated collection, moves the target and dragged tile models into it, and constructs a TileFolderViewModel at the resolved bounds.",
+      "evidence": [
+        "StartUI::TileGroupViewModel::_RearrangeWithinCurrentGroup@0x180536fb4",
+        "StartUI::TileGroupViewModel::CreateFolder@0x18052b018"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Dragging onto an existing folder uses a separate add-to-folder path and records TileAddedToFolder activity.",
+      "evidence": [
+        "StartUI::TileGroupViewModel::_RearrangeWithinCurrentGroup@0x180536fb4",
+        "StartUI::TileAddedToFolderActivity::CreateTileAddedToFolderActivity@0x18050df2c"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Folder children are hosted by a dedicated folder region. Insert and remove operations change hosted state and emit element-change notifications.",
+      "evidence": [
+        "StartUI::TileFolderRegionViewModel::_InsertTileElementAt@0x1805812d8",
+        "StartUI::TileFolderRegionViewModel::_RemoveTileElementAt@0x180582d38"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "An empty folder region is deleted. The inspected branch checks for zero children; no binary evidence was found for automatically dissolving a one-child folder.",
+      "evidence": [
+        "StartUI::TileFolderRegionViewModel::_OnRearrangeEvent@0x180581680",
+        "StartUI::LauncherTelemetryAdapter::LogFolderDeleted@0x180511bb8"
+      ]
+    },
+    {
+      "status": "xbf-verified",
+      "fact": "The expanded folder is an inline folder region with its own nested tile panel, separators, and editable folder name.",
+      "evidence": [
+        "TileGrid_FolderRegionTemplate",
+        "TileGridNestedPanel",
+        "TileFolderNameTextBox",
+        "TopSeparator",
+        "BottomSeparator"
+      ]
+    }
+  ],
+  "implementationContract": {
+    "folderIsDedicatedModel": true,
+    "createByDroppingTileCenterOnHostableTile": true,
+    "addByDroppingOnExistingFolder": true,
+    "childrenPersistInLayout": true,
+    "folderDeleteWhenEmpty": true,
+    "oneChildAutoDissolve": false
+  },
+  "unresolved": [
+    "The exact native center-target tolerance beyond the verified bounds hit test.",
+    "The maximum folder child count, if any.",
+    "Inline expansion geometry and child drag-out are deferred until a runtime sample is captured; the first implementation batch covers creation, add-to-folder, persistence, rollback, and folder preview rendering."
+  ]
+}

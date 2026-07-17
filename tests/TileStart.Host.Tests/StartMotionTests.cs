@@ -16,6 +16,35 @@ public sealed class StartMotionTests
     }
 
     [Fact]
+    public void StageEntranceSupportsAnimatingTheWholeSurfaceAsOneTarget()
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var surface = new System.Windows.Controls.Grid { Width = 100, Height = 100 };
+                surface.Measure(new System.Windows.Size(100, 100));
+                surface.Arrange(new System.Windows.Rect(0, 0, 100, 100));
+
+                StartMotion.StageEntrance(surface, [surface], bottomTaskbar: true, animationsEnabled: true);
+
+                var transform = Assert.IsType<System.Windows.Media.TranslateTransform>(surface.RenderTransform);
+                Assert.Equal(60, transform.Y);
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        Assert.Null(failure);
+    }
+
+    [Fact]
     public void CalculateEntrance_DoesNotInventVerticalMotionForOtherTaskbarEdges()
     {
         var result = StartMotion.CalculateEntrance(0.5, false);

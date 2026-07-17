@@ -205,6 +205,26 @@ public sealed class Win10GroupLayoutTests
         Assert.Equal((2, 3), (tile.Column, tile.Row));
     }
 
+    [Fact]
+    public void LayoutJsonRoundTripPreservesTileFolders()
+    {
+        var child = new TileItem { Name = "child", LaunchTarget = "child.exe", Size = TileSize.Small };
+        var folder = new TileItem
+        {
+            Name = "文件夹",
+            IsTileFolder = true,
+            Size = TileSize.Medium,
+            FolderTiles = [child],
+        };
+        var layout = new TileLayout { Groups = [new TileGroup { Tiles = [folder] }] };
+
+        var restored = TileLayoutStore.Deserialize(TileLayoutStore.Serialize(layout));
+
+        var restoredFolder = Assert.Single(Assert.Single(restored!.Groups).Tiles);
+        Assert.True(restoredFolder.IsTileFolder);
+        Assert.Equal("child.exe", Assert.Single(restoredFolder.FolderTiles).LaunchTarget);
+    }
+
     private static TileSize ParseNativeSize(string size) => size switch
     {
         "1x1" => TileSize.Small,
