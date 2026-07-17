@@ -12,6 +12,8 @@ public static class Win10VisualMetrics
     public const double AlphabetCellSize = 48;
     public const double AlphabetFontSize = 20;
     public const double TileGroupHeaderHeight = 32;
+    public const double TileReservedBrandingSpace = 28;
+    public const double TileLogoVerticalOffset = -2;
 
     public static GridLength CollapsedNavigationGridLength { get; } = new(CollapsedNavigationWidth);
 
@@ -19,9 +21,13 @@ public static class Win10VisualMetrics
 
     public static GridLength AllAppsGridLength { get; } = new(AllAppsWidth);
 
+    public static GridLength TileReservedBrandingGridLength { get; } = new(TileReservedBrandingSpace);
+
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
 
     public static Thickness TileNestedPanelMargin { get; } = new(4, 0, 4, 4);
+
+    public static Thickness TileBrandingMargin { get; } = new(8, 0, 8, 5);
 }

@@ -2,7 +2,9 @@ namespace TileStart.Host;
 
 public static class Win10IconMetrics
 {
-    public const double ClassicAppLogoImageSize = 16;
+    // The active Win10 installation visually matches the legacy 24-DIP branch.
+    // Keep both symbol-derived branches below until the runtime feature flag is identified.
+    public const double ClassicAppLogoImageSize = 24;
     public const double ClassicAppLogoLayoutSize = 24;
 
     public static double GetAppListImageSize(int appItemLogoType, bool themeAware) =>

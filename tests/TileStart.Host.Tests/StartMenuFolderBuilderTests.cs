@@ -47,6 +47,8 @@ public sealed class StartMenuFolderBuilderTests
         var folder = AppEntry.Folder("Utilities", [AppEntry.Application("Tool", "tool.lnk", DateTime.MinValue)]);
 
         Assert.True(folder.IsFolder);
+        Assert.NotNull(folder.Icon);
+        Assert.True(folder.Icon.IsFrozen);
         Assert.Equal("\uE76C", folder.FolderChevron);
 
         folder.IsExpanded = true;

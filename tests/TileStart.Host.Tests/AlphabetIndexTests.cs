@@ -52,6 +52,19 @@ public sealed class AlphabetIndexTests
         Assert.False(entries.Single(entry => entry.IsRecent).IsAvailable);
     }
 
+    [Theory]
+    [InlineData("微信", "W")]
+    [InlineData("计算器", "J")]
+    [InlineData("企业微信", "Q")]
+    [InlineData("Visual Studio Code", "V")]
+    [InlineData("3DMark", "#")]
+    public void ApplicationUsesWindowsCharacterGrouping(string name, string expectedGroup)
+    {
+        var app = AppEntry.Application(name, name, DateTime.MinValue);
+
+        Assert.Equal(expectedGroup, app.SortLetter);
+    }
+
     private static AppEntry App(string name, string sortLetter) => new()
     {
         Name = name,

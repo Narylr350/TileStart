@@ -8,15 +8,19 @@
         Height="768"
         MinWidth="680"
         MinHeight="480"
-        Background="#01000000"
+        Background="Transparent"
         FontFamily="Segoe UI"
         FontSize="14"
+        FontWeight="Normal"
         Foreground="White"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
         SnapsToDevicePixels="True"
         Topmost="True"
         UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextHintingMode="Fixed"
+        TextOptions.TextRenderingMode="Grayscale"
         WindowStartupLocation="Manual"
         WindowStyle="None"
         Deactivated="Window_Deactivated"
@@ -31,7 +35,6 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="MenuBackground" Color="#CC202020" />
         <SolidColorBrush x:Key="HoverBackground" Color="#22FFFFFF" />
         <SolidColorBrush x:Key="PressedBackground" Color="#32FFFFFF" />
         <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
@@ -147,7 +150,7 @@
 
         <Style x:Key="TileStyle" TargetType="Button">
             <Setter Property="local:StartMotion.IsEntranceTarget" Value="True" />
-            <Setter Property="Padding" Value="8" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="White" />
@@ -279,14 +282,6 @@
                                    RenderOptions.BitmapScalingMode="HighQuality"
                                    Source="{Binding Icon}"
                                    Stretch="Uniform" />
-                            <TextBlock x:Name="FolderIcon"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="18"
-                                       Foreground="#F4C242"
-                                       Text="&#xE8B7;"
-                                       Visibility="Collapsed" />
                         </Grid>
                         <TextBlock Grid.Column="1"
                                    Margin="8,0,0,0"
@@ -324,16 +319,13 @@
                     <Setter TargetName="AppInitial" Property="Visibility" Value="Visible" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                    <Setter TargetName="AppInitial" Property="Visibility" Value="Collapsed" />
-                    <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed" />
-                    <Setter TargetName="FolderIcon" Property="Visibility" Value="Visible" />
                     <Setter TargetName="FolderChevron" Property="Visibility" Value="Visible" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
 
-    <Grid x:Name="MainSurface" Background="{StaticResource MenuBackground}">
+    <Grid x:Name="MainSurface" Background="Transparent">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
             <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
@@ -595,43 +587,74 @@
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
                                                 <Grid ClipToBounds="True">
-                                                    <Image Source="{Binding BackgroundImage}"
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition />
+                                                        <RowDefinition Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
+                                                    </Grid.RowDefinitions>
+                                                    <Image Grid.RowSpan="2"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                                           Source="{Binding BackgroundImage}"
                                                            Stretch="UniformToFill" />
                                                     <TextBlock x:Name="TileInitial"
+                                                               Grid.Row="0"
+                                                               Grid.RowSpan="2"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
                                                                FontSize="24"
                                                                FontWeight="SemiBold"
-                                                               Text="{Binding Initial}" />
+                                                               Text="{Binding Initial}"
+                                                               Visibility="Collapsed" />
                                                     <Image x:Name="TileIcon"
+                                                           Grid.Row="0"
+                                                           Grid.RowSpan="2"
                                                            Width="{Binding IconSize}"
                                                            Height="{Binding IconSize}"
+                                                           Margin="8"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"
                                                            Source="{Binding Icon}"
-                                                           Stretch="Uniform" />
-                                                    <StackPanel x:Name="TileText"
-                                                                VerticalAlignment="Bottom">
+                                                           Stretch="Uniform">
+                                                        <Image.RenderTransform>
+                                                            <TranslateTransform Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
+                                                        </Image.RenderTransform>
+                                                    </Image>
+                                                    <Grid x:Name="TileBranding"
+                                                          Grid.Row="1"
+                                                          Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
                                                         <TextBlock x:Name="TileTitle"
+                                                                   HorizontalAlignment="Left"
+                                                                   VerticalAlignment="Bottom"
+                                                                   FontFamily="Segoe UI, Microsoft YaHei UI"
                                                                    FontSize="12"
-                                                                   LineHeight="14"
-                                                                   MaxHeight="30"
+                                                                   FontWeight="SemiBold"
                                                                    Text="{Binding Name}"
+                                                                   TextAlignment="Left"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   TextWrapping="Wrap" />
-                                                        <TextBlock FontSize="10"
-                                                                   Opacity="0.82"
-                                                                   Text="{Binding Subtitle}"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
+                                                                   TextWrapping="NoWrap" />
+                                                    </Grid>
                                                 </Grid>
                                             </Button>
                                             <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                    <Setter TargetName="TileInitial" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
-                                                    <Setter TargetName="TileText" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding ShowTitle}" Value="False">
                                                     <Setter TargetName="TileTitle" Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding UsesFullTileLogo}" Value="True">
+                                                    <Setter TargetName="TileIcon" Property="Width" Value="Auto" />
+                                                    <Setter TargetName="TileIcon" Property="Height" Value="Auto" />
+                                                    <Setter TargetName="TileIcon" Property="Margin" Value="0" />
+                                                    <Setter TargetName="TileIcon" Property="Stretch" Value="Fill" />
+                                                    <Setter TargetName="TileIcon" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <TranslateTransform Y="0" />
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
                                                     <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Left" />

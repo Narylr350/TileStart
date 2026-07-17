@@ -15,6 +15,8 @@ public sealed class AppEntry : INotifyPropertyChanged
     public required string Initial { get; init; }
     public required DateTime AddedAt { get; init; }
     public ImageSource? Icon { get; init; }
+    public string PackageInstallPath { get; init; } = string.Empty;
+    public string AppUserModelId { get; init; } = string.Empty;
     public ObservableCollection<AppEntry> Children { get; init; } = [];
 
     public bool IsFolder => Children.Count > 0;
@@ -39,7 +41,8 @@ public sealed class AppEntry : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public static AppEntry Application(string name, string launchTarget, DateTime addedAt, ImageSource? icon = null)
+    public static AppEntry Application(string name, string launchTarget, DateTime addedAt, ImageSource? icon = null,
+                                       string packageInstallPath = "", string appUserModelId = "")
     {
         var (initial, sortLetter) = GetIndex(name);
         return new AppEntry
@@ -50,6 +53,8 @@ public sealed class AppEntry : INotifyPropertyChanged
             Initial = initial,
             AddedAt = addedAt,
             Icon = icon,
+            PackageInstallPath = packageInstallPath,
+            AppUserModelId = appUserModelId,
         };
     }
 
@@ -63,6 +68,7 @@ public sealed class AppEntry : INotifyPropertyChanged
             SortLetter = sortLetter,
             Initial = initial,
             AddedAt = DateTime.MinValue,
+            Icon = Win10FolderIcon.Image,
             Children = new ObservableCollection<AppEntry>(children),
         };
     }
@@ -88,9 +94,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     {
         var first = name.Trim().FirstOrDefault();
         var initial = first == default ? "?" : char.ToUpper(first).ToString();
-        var sortLetter = first is >= 'A' and <= 'Z' or >= 'a' and <= 'z'
-            ? char.ToUpperInvariant(first).ToString()
-            : "#";
+        var sortLetter = Win10AppGrouping.GetGroupKey(name);
         return (initial, sortLetter);
     }
 

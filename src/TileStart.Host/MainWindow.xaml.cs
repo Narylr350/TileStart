@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private const int HtTopRight = 14;
     private static readonly nint HwndTopmost = new(-1);
     private readonly RangeObservableCollection<AppEntry> _apps = [];
+    private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _allowClose;
     private bool _recentAppsExpanded;
@@ -50,6 +51,8 @@ public partial class MainWindow : Window
     {
         AppsView = new ListCollectionView(_apps);
         AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AppEntry.SortLetter)));
+        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.SortLetter), ListSortDirection.Ascending));
+        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
         InitializeComponent();
         DataContext = this;
         var savedSize = WindowSizeStore.Load();
@@ -122,6 +125,7 @@ public partial class MainWindow : Window
             _apps.AddRange(apps);
 
             var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
+            _launchableApps = launchableApps;
             _recentAppCandidates = launchableApps
                 .Where(app => app.AddedAt > DateTime.MinValue)
                 .OrderByDescending(app => app.AddedAt)
@@ -239,6 +243,11 @@ public partial class MainWindow : Window
 
     private void EnableAcrylic()
     {
+        if (PresentationSource.FromVisual(this) is HwndSource source)
+        {
+            source.CompositionTarget.BackgroundColor = Colors.Transparent;
+        }
+
         var accent = new AccentPolicy
         {
             AccentState = AccentEnableAcrylicBlurBehind,
@@ -437,17 +446,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        var app = _apps.FirstOrDefault(candidate => candidate.SortLetter.Equals(entry.TargetLetter, StringComparison.OrdinalIgnoreCase));
-        if (app is null)
+        var group = AppsView.Groups?
+            .OfType<CollectionViewGroup>()
+            .FirstOrDefault(candidate => candidate.Name?.ToString()?.Equals(entry.TargetLetter, StringComparison.OrdinalIgnoreCase) == true);
+        if (group is null)
         {
             return;
         }
 
         AppsScrollViewer.UpdateLayout();
-        if (AppsList.ItemContainerGenerator.ContainerFromItem(app) is FrameworkElement container)
+        if (AppsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement container)
         {
-            var itemTop = container.TranslatePoint(new System.Windows.Point(), AppsScrollViewer).Y;
-            AppsScrollViewer.ScrollToVerticalOffset(Math.Max(0, AppsScrollViewer.VerticalOffset + itemTop - 36));
+            var groupTop = container.TranslatePoint(new System.Windows.Point(), AppsScrollViewer).Y;
+            AppsScrollViewer.ScrollToVerticalOffset(Math.Max(0, AppsScrollViewer.VerticalOffset + groupTop));
             container.Focus();
         }
     }
@@ -572,6 +583,7 @@ public partial class MainWindow : Window
             && Enum.TryParse<TileSize>(sizeName, out var size)
             && TileContextActions.Resize(TileLayout, tile, size))
         {
+            RestoreTileIcon(tile, _launchableApps);
             TileLayoutStore.Save(TileLayout);
         }
     }
@@ -706,7 +718,7 @@ public partial class MainWindow : Window
                 : null;
     }
 
-    private static void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
+    private void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
     {
         tile.Name = dialog.TileName;
         tile.Subtitle = dialog.Subtitle;
@@ -722,7 +734,7 @@ public partial class MainWindow : Window
         tile.IconPosition = dialog.IconPosition;
         tile.RunAsAdministrator = dialog.RunAsAdministrator;
         tile.Size = dialog.TileSize;
-        tile.Icon = ShellIconLoader.Load(string.IsNullOrWhiteSpace(tile.IconPath) ? tile.LaunchTarget : tile.IconPath);
+        RestoreTileIcon(tile, _launchableApps);
         tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
     }
 
@@ -898,25 +910,40 @@ public partial class MainWindow : Window
 
     private static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)
     {
-        var icons = apps
-            .GroupBy(app => app.LaunchTarget, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First().Icon, StringComparer.OrdinalIgnoreCase);
         foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
         {
             tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
-            if (!string.IsNullOrWhiteSpace(tile.IconPath))
-            {
-                tile.Icon = ShellIconLoader.Load(tile.IconPath);
-            }
-            else if (icons.TryGetValue(tile.LaunchTarget, out var icon))
-            {
-                tile.Icon = icon;
-            }
-            else
-            {
-                tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
-            }
+            RestoreTileIcon(tile, apps);
         }
+    }
+
+    private static void RestoreTileIcon(TileItem tile, IReadOnlyList<AppEntry> apps)
+    {
+        tile.UsesFullTileLogo = false;
+        if (!string.IsNullOrWhiteSpace(tile.IconPath))
+        {
+            tile.Icon = ShellIconLoader.Load(tile.IconPath);
+            return;
+        }
+
+        var app = apps.FirstOrDefault(candidate => candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
+        if (app is not null)
+        {
+            var tileLogo = tile.IconPosition == TileIconPosition.Center && tile.IconSize == 32
+                ? PackagedTileAssetLoader.Load(app.PackageInstallPath, app.AppUserModelId, tile.Size)
+                : null;
+            if (tileLogo is not null)
+            {
+                tile.Icon = tileLogo;
+                tile.UsesFullTileLogo = true;
+                return;
+            }
+
+            tile.Icon = app.Icon;
+            return;
+        }
+
+        tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
     }
 
     private static IEnumerable<FrameworkElement> FindMotionElements(DependencyObject parent)

@@ -103,9 +103,12 @@ public static class StartAppScanner
                         dynamic app = item!;
                         var name = (string?)app.Name;
                         var appUserModelId = (string?)app.Path;
+                        var packageInstallPath = (string?)app.ExtendedProperty("System.AppUserModel.PackageInstallPath");
                         if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(appUserModelId))
                         {
-                            apps.Add(CreateEntry(name, $"shell:AppsFolder\\{appUserModelId}", DateTime.MinValue));
+                            var launchTarget = $"shell:AppsFolder\\{appUserModelId}";
+                            apps.Add(AppEntry.Application(name, launchTarget, DateTime.MinValue,
+                                ShellIconLoader.Load(launchTarget), packageInstallPath ?? string.Empty, appUserModelId));
                         }
                     }
                     finally

@@ -23,6 +23,7 @@ public sealed class TileItem : INotifyPropertyChanged
     private TileIconPosition _iconPosition;
     private ImageSource? _icon;
     private ImageSource? _backgroundImage;
+    private bool _usesFullTileLogo;
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -220,6 +221,22 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _icon = value;
+            OnPropertyChanged();
+        }
+    }
+
+    [JsonIgnore]
+    public bool UsesFullTileLogo
+    {
+        get => _usesFullTileLogo;
+        set
+        {
+            if (_usesFullTileLogo == value)
+            {
+                return;
+            }
+
+            _usesFullTileLogo = value;
             OnPropertyChanged();
         }
     }

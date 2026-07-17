@@ -48,7 +48,10 @@ public sealed class Win10VisualSpecTests
         var metrics = spec.RootElement.GetProperty("metrics");
 
         Assert.Equal(Win10VisualMetrics.TileGroupHeaderHeight, Value(metrics, "groupHeaderHeight"));
+        Assert.Equal(Win10VisualMetrics.TileReservedBrandingSpace, Value(metrics, "reservedBrandingSpace"));
+        Assert.Equal(Win10VisualMetrics.TileReservedBrandingSpace, Win10VisualMetrics.TileReservedBrandingGridLength.Value);
         AssertThickness(Win10VisualMetrics.TileNestedPanelMargin, metrics.GetProperty("nestedPanelMargin").GetProperty("value"));
+        AssertThickness(Win10VisualMetrics.TileBrandingMargin, metrics.GetProperty("bottomAlignedTextMargin").GetProperty("value"), horizontalInset: 8);
         Assert.Equal("NoWrap", metrics.GetProperty("groupTitleWrapping").GetProperty("value").GetString());
     }
 
@@ -74,8 +77,8 @@ public sealed class Win10VisualSpecTests
             Assert.Equal(Win10IconMetrics.GetAppListLayoutSize(type), item.GetProperty("layout").GetDouble());
         }
 
-        Assert.Equal(Win10IconMetrics.ClassicAppLogoImageSize, themeAware[0].GetProperty("image").GetDouble());
-        Assert.Equal(Win10IconMetrics.ClassicAppLogoLayoutSize, themeAware[0].GetProperty("layout").GetDouble());
+        Assert.Equal(Win10IconMetrics.ClassicAppLogoImageSize, legacy[0].GetProperty("image").GetDouble());
+        Assert.Equal(Win10IconMetrics.ClassicAppLogoLayoutSize, legacy[0].GetProperty("layout").GetDouble());
     }
 
     [Fact]
@@ -98,10 +101,10 @@ public sealed class Win10VisualSpecTests
     private static double Value(JsonElement metrics, string name) =>
         metrics.GetProperty(name).GetProperty("value").GetDouble();
 
-    private static void AssertThickness(System.Windows.Thickness expected, JsonElement value)
+    private static void AssertThickness(System.Windows.Thickness expected, JsonElement value, double horizontalInset = 0)
     {
         var actual = value.EnumerateArray().Select(item => item.GetDouble()).ToArray();
-        Assert.Equal([expected.Left, expected.Top, expected.Right, expected.Bottom], actual);
+        Assert.Equal([expected.Left - horizontalInset, expected.Top, expected.Right - horizontalInset, expected.Bottom], actual);
     }
 }
 
