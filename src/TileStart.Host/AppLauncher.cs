@@ -20,6 +20,45 @@ public static class AppLauncher
             && Launch(app.Name, CreateOpenFileLocationStartInfo(app.LaunchTarget));
     }
 
+    public static bool CanOpenFileLocation(TileItem tile, IReadOnlyList<AppEntry> apps) =>
+        ResolveOpenFileLocationTarget(tile, apps) is not null;
+
+    public static bool OpenFileLocation(TileItem tile, IReadOnlyList<AppEntry> apps)
+    {
+        var target = ResolveOpenFileLocationTarget(tile, apps);
+        return target is not null && Launch(tile.Name, CreateOpenFileLocationStartInfo(target));
+    }
+
+    internal static string? ResolveOpenFileLocationTarget(TileItem tile, IReadOnlyList<AppEntry> apps)
+    {
+        if (tile.IsTileFolder)
+        {
+            return null;
+        }
+
+        const string appsFolderPrefix = @"shell:AppsFolder\";
+        var isAppsFolderTarget = tile.LaunchTarget.StartsWith(appsFolderPrefix, StringComparison.OrdinalIgnoreCase);
+        var localTarget = isAppsFolderTarget ? tile.LaunchTarget[appsFolderPrefix.Length..] : tile.LaunchTarget;
+        if (!isAppsFolderTarget && (File.Exists(localTarget) || Directory.Exists(localTarget)))
+        {
+            return localTarget;
+        }
+
+        if (tile.TargetType == TileTargetType.Application)
+        {
+            var shortcut = apps.FirstOrDefault(app =>
+                app.CanOpenFileLocation
+                && File.Exists(app.LaunchTarget)
+                && app.Name.Equals(tile.Name, StringComparison.CurrentCultureIgnoreCase));
+            if (shortcut is not null)
+            {
+                return shortcut.LaunchTarget;
+            }
+        }
+
+        return File.Exists(localTarget) || Directory.Exists(localTarget) ? localTarget : null;
+    }
+
     internal static ProcessStartInfo CreateOpenFileLocationStartInfo(string shortcutPath) =>
         new("explorer.exe")
         {

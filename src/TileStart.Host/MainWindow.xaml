@@ -210,18 +210,20 @@
         <Style x:Key="StartContextMenuStyle" TargetType="ContextMenu">
             <EventSetter Event="Opened" Handler="StartContextMenu_Opened" />
             <EventSetter Event="Closed" Handler="StartContextMenu_Closed" />
-            <Setter Property="Background" Value="#F22B2B2B" />
+            <Setter Property="MinWidth" Value="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}" />
+            <Setter Property="Background" Value="#FC232323" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#5A5A5A" />
+            <Setter Property="BorderBrush" Value="#171717" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="2" />
+            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}" />
             <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
             <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
             <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
-                        <Border Padding="{TemplateBinding Padding}"
+                        <Border MinWidth="{TemplateBinding MinWidth}"
+                                Padding="{TemplateBinding Padding}"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
@@ -235,12 +237,12 @@
 
         <Style x:Key="StartMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="12,5,10,5" />
+            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuItemPadding}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.ContextMenuFontSize}" />
+            <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
             <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
             <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
@@ -251,15 +253,30 @@
                               Height="{TemplateBinding Height}"
                               Background="{TemplateBinding Background}">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="CheckColumn" Width="0" />
+                                <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.ContextMenuIconPlaceholderGridLength}" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="24" />
                             </Grid.ColumnDefinitions>
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                            <TextBlock x:Name="CheckMark"
+                                       Grid.Column="0"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12"
+                                       Text="&#xE73E;"
+                                       Visibility="Collapsed" />
+                            <ContentPresenter Grid.Column="1"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding Icon}" />
+                            <ContentPresenter Grid.Column="2"
+                                              Margin="{TemplateBinding Padding}"
                                               VerticalAlignment="Center"
                                               ContentSource="Header"
                                               RecognizesAccessKey="True" />
                             <TextBlock x:Name="SubmenuArrow"
-                                       Grid.Column="1"
+                                       Grid.Column="3"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontFamily="Segoe MDL2 Assets"
@@ -272,21 +289,32 @@
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Right"
                                    PopupAnimation="None">
-                                <Border MinWidth="210"
-                                        Padding="2"
-                                        Background="#F22B2B2B"
-                                        BorderBrush="#5A5A5A"
+                                <Border MinWidth="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}"
+                                        Padding="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}"
+                                        Background="#FC232323"
+                                        BorderBrush="#171717"
                                         BorderThickness="1">
                                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
                                 </Border>
                             </Popup>
                         </Grid>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="IsCheckable" Value="True">
+                                <Setter TargetName="CheckColumn"
+                                        Property="Width"
+                                        Value="{x:Static local:Win10VisualMetrics.ContextMenuCheckPlaceholderGridLength}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                            </Trigger>
                             <Trigger Property="HasItems" Value="True">
                                 <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{StaticResource HoverBackground}" />
+                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSubmenuOpen" Value="True">
+                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.38" />
@@ -381,7 +409,14 @@
                                      Style="{StaticResource StartContextMenuStyle}">
                             <MenuItem Header="固定到“开始”屏幕"
                                       Style="{StaticResource StartMenuItemStyle}"
-                                      Click="PinAppToStart_Click" />
+                                      Click="PinAppToStart_Click">
+                                <MenuItem.Icon>
+                                    <TextBlock Foreground="White"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Text="&#xE718;" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <MenuItem Header="更多">
                                 <MenuItem.Style>
                                     <Style TargetType="MenuItem" BasedOn="{StaticResource StartMenuItemStyle}">
@@ -395,7 +430,14 @@
                                 </MenuItem.Style>
                                 <MenuItem Header="打开文件所在的位置"
                                           Style="{StaticResource StartMenuItemStyle}"
-                                          Click="OpenAppFileLocation_Click" />
+                                          Click="OpenAppFileLocation_Click">
+                                    <MenuItem.Icon>
+                                        <TextBlock Foreground="White"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16"
+                                                   Text="&#xE838;" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </MenuItem>
                         </ContextMenu>
                     </Button.ContextMenu>
@@ -694,36 +736,88 @@
                                                         </ContextMenu.Resources>
                                                         <MenuItem Header="从“开始”屏幕取消固定"
                                                                   Style="{StaticResource StartMenuItemStyle}"
-                                                                  Click="UnpinTile_Click" />
+                                                                  Click="UnpinTile_Click">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Foreground="White"
+                                                                           FontFamily="Segoe MDL2 Assets"
+                                                                           FontSize="16"
+                                                                           Text="&#xE77A;" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
                                                         <MenuItem Header="调整大小"
                                                                   Style="{StaticResource StartMenuItemStyle}">
                                                             <MenuItem Header="小"
                                                                       Tag="Small"
+                                                                      IsCheckable="True"
                                                                       Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click" />
+                                                                      Click="ResizeTile_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Border Width="13" Height="13" BorderBrush="White" BorderThickness="1.5" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                             <MenuItem Header="中"
                                                                       Tag="Medium"
+                                                                      IsCheckable="True"
                                                                       Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click" />
+                                                                      Click="ResizeTile_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Border Width="16" Height="16" BorderBrush="White" BorderThickness="1.5" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                             <MenuItem Header="宽"
                                                                       Tag="Wide"
+                                                                      IsCheckable="True"
                                                                       Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click" />
+                                                                      Click="ResizeTile_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Border Width="18" Height="10" BorderBrush="White" BorderThickness="1.5" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                             <MenuItem Header="大"
                                                                       Tag="Large"
+                                                                      IsCheckable="True"
                                                                       Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click" />
+                                                                      Click="ResizeTile_Click">
+                                                                <MenuItem.Icon>
+                                                                    <Border Width="16" Height="16" Background="White" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                         </MenuItem>
                                                         <MenuItem Header="更多"
                                                                   Style="{StaticResource StartMenuItemStyle}">
+                                                            <MenuItem Header="打开文件所在的位置"
+                                                                      Tag="OpenFileLocation"
+                                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                                      Click="OpenTileFileLocation_Click">
+                                                                <MenuItem.Icon>
+                                                                    <TextBlock Foreground="White"
+                                                                               FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="16"
+                                                                               Text="&#xE838;" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                             <MenuItem Header="以管理员身份运行"
                                                                       Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="RunTileAsAdministrator_Click" />
+                                                                      Click="RunTileAsAdministrator_Click">
+                                                                <MenuItem.Icon>
+                                                                    <TextBlock Foreground="White"
+                                                                               FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="16"
+                                                                               Text="&#xE83D;" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                         </MenuItem>
                                                         <Separator />
                                                         <MenuItem Header="TileStart 设置…"
                                                                   Style="{StaticResource StartMenuItemStyle}"
-                                                                  Click="TileSettings_Click" />
+                                                                  Click="TileSettings_Click">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Foreground="White"
+                                                                           FontFamily="Segoe MDL2 Assets"
+                                                                           FontSize="16"
+                                                                           Text="&#xE713;" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
                                                 <Grid ClipToBounds="True">

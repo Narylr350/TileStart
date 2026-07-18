@@ -2,6 +2,9 @@ namespace TileStart.Host;
 
 public static class TileContextActions
 {
+    public static bool IsSelectedSize(TileSize currentSize, string? sizeName) =>
+        Enum.TryParse<TileSize>(sizeName, out var size) && size == currentSize;
+
     public static bool Unpin(TileLayout layout, TileItem tile)
     {
         var group = layout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));

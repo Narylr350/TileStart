@@ -437,6 +437,32 @@ public partial class MainWindow : Window
     private void StartContextMenu_Opened(object sender, RoutedEventArgs e)
     {
         _openContextMenuCount++;
+        if (sender is ContextMenu { PlacementTarget: Button { Tag: TileItem tile } } menu)
+        {
+            foreach (var item in EnumerateMenuItems(menu))
+            {
+                if (item.Tag as string == "OpenFileLocation")
+                {
+                    item.Visibility = AppLauncher.CanOpenFileLocation(tile, _launchableApps) ? Visibility.Visible : Visibility.Collapsed;
+                }
+                else if (item.IsCheckable)
+                {
+                    item.IsChecked = TileContextActions.IsSelectedSize(tile.Size, item.Tag as string);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<MenuItem> EnumerateMenuItems(ItemsControl owner)
+    {
+        foreach (var item in owner.Items.OfType<MenuItem>())
+        {
+            yield return item;
+            foreach (var child in EnumerateMenuItems(item))
+            {
+                yield return child;
+            }
+        }
     }
 
     private void StartContextMenu_Closed(object sender, RoutedEventArgs e)
@@ -913,6 +939,15 @@ public partial class MainWindow : Window
         {
             RestoreTileIcon(tile, _launchableApps);
             TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private void OpenTileFileLocation_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is not null)
+        {
+            AppLauncher.OpenFileLocation(tile, _launchableApps);
         }
     }
 

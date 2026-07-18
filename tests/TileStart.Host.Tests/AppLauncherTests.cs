@@ -1,3 +1,4 @@
+using System.IO;
 using TileStart.Host;
 
 namespace TileStart.Host.Tests;
@@ -48,6 +49,49 @@ public sealed class AppLauncherTests
         Assert.Equal("explorer.exe", startInfo.FileName);
         Assert.Equal("/select,\"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Tool.lnk\"", startInfo.Arguments);
         Assert.True(startInfo.UseShellExecute);
+    }
+
+    [Fact]
+    public void TileFileLocationResolvesLocalAndAppsFolderTargets()
+    {
+        var directory = Directory.CreateTempSubdirectory("TileStart-");
+        var executable = Path.Combine(directory.FullName, "Tool.exe");
+        var shortcut = Path.Combine(directory.FullName, "Tool.lnk");
+        File.WriteAllText(executable, string.Empty);
+        File.WriteAllText(shortcut, string.Empty);
+        var apps = new[] { AppEntry.Application("Tool", shortcut, DateTime.MinValue) };
+
+        try
+        {
+            Assert.Equal(executable, AppLauncher.ResolveOpenFileLocationTarget(
+                new TileItem { LaunchTarget = executable }, []));
+            Assert.Equal(shortcut, AppLauncher.ResolveOpenFileLocationTarget(
+                new TileItem
+                {
+                    Name = "Tool",
+                    TargetType = TileTargetType.Application,
+                    LaunchTarget = $@"shell:AppsFolder\{executable}",
+                },
+                apps));
+            Assert.Equal(executable, AppLauncher.ResolveOpenFileLocationTarget(
+                new TileItem
+                {
+                    Name = "Unlisted Tool",
+                    TargetType = TileTargetType.Application,
+                    LaunchTarget = $@"shell:AppsFolder\{executable}",
+                },
+                []));
+            Assert.Null(AppLauncher.ResolveOpenFileLocationTarget(
+                new TileItem { TargetType = TileTargetType.Application, LaunchTarget = @"shell:AppsFolder\Package!App" },
+                []));
+            Assert.Null(AppLauncher.ResolveOpenFileLocationTarget(
+                new TileItem { LaunchTarget = executable, IsTileFolder = true },
+                apps));
+        }
+        finally
+        {
+            directory.Delete(true);
+        }
     }
 
     [Fact]

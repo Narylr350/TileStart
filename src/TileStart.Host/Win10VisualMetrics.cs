@@ -11,6 +11,10 @@ public static class Win10VisualMetrics
     public const double AllAppsGroupHeaderHeight = 36;
     public const double AlphabetCellSize = 48;
     public const double AlphabetFontSize = 20;
+    public const double ContextMenuFontSize = 12;
+    public const double ContextMenuMinWidth = 256;
+    public const double ContextMenuCheckPlaceholderWidth = 24;
+    public const double ContextMenuIconPlaceholderWidth = 32;
     public const double TileGroupHeaderHeight = 32;
     public const double TileReservedBrandingSpace = 28;
     public const double TileLogoVerticalOffset = -2;
@@ -24,11 +28,19 @@ public static class Win10VisualMetrics
 
     public static GridLength AllAppsGridLength { get; } = new(AllAppsWidth);
 
+    public static GridLength ContextMenuCheckPlaceholderGridLength { get; } = new(ContextMenuCheckPlaceholderWidth);
+
+    public static GridLength ContextMenuIconPlaceholderGridLength { get; } = new(ContextMenuIconPlaceholderWidth);
+
     public static GridLength TileReservedBrandingGridLength { get; } = new(TileReservedBrandingSpace);
 
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
+
+    public static Thickness ContextMenuItemPadding { get; } = new(12, 7, 12, 7);
+
+    public static Thickness ContextMenuPresenterPadding { get; } = new(0, 4, 0, 4);
 
     public static Thickness TileNestedPanelMargin { get; } = new(4, 0, 4, 4);
 

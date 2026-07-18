@@ -5,6 +5,16 @@ namespace TileStart.Host.Tests;
 public sealed class TileContextActionsTests
 {
     [Theory]
+    [InlineData(TileSize.Small, "Small", true)]
+    [InlineData(TileSize.Medium, "Small", false)]
+    [InlineData(TileSize.Wide, "invalid", false)]
+    [InlineData(TileSize.Large, null, false)]
+    public void SelectedSizeMatchesMenuTag(TileSize current, string? tag, bool expected)
+    {
+        Assert.Equal(expected, TileContextActions.IsSelectedSize(current, tag));
+    }
+
+    [Theory]
     [InlineData(TileSize.Small, 48, 48)]
     [InlineData(TileSize.Medium, 100, 100)]
     [InlineData(TileSize.Wide, 204, 100)]

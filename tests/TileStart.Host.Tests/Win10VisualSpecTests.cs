@@ -42,6 +42,21 @@ public sealed class Win10VisualSpecTests
     }
 
     [Fact]
+    public void ContextMenuMetricsMatchExtractedStartUiSpec()
+    {
+        using var spec = ReadSpec("context-menu.json");
+        var metrics = spec.RootElement.GetProperty("metrics");
+
+        Assert.Equal(Win10VisualMetrics.ContextMenuFontSize, Value(metrics, "fontSize"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuMinWidth, Value(metrics, "minimumWidth"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuCheckPlaceholderWidth, Value(metrics, "checkPlaceholderWidth"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuIconPlaceholderWidth, Value(metrics, "iconPlaceholderWidth"));
+        AssertThickness(Win10VisualMetrics.ContextMenuItemPadding, metrics.GetProperty("itemPaddingMouse").GetProperty("value"));
+        AssertThickness(Win10VisualMetrics.ContextMenuPresenterPadding, metrics.GetProperty("presenterPadding").GetProperty("value"));
+        Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
+    }
+
+    [Fact]
     public void TileLayoutMetricsMatchExtractedStartUiSpec()
     {
         using var spec = ReadSpec("tile-content.json");
