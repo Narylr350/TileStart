@@ -40,6 +40,17 @@ public sealed class AppLauncherTests
     }
 
     [Fact]
+    public void CreateOpenFileLocationStartInfoSelectsStartMenuShortcut()
+    {
+        var startInfo = AppLauncher.CreateOpenFileLocationStartInfo(
+            @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tool.lnk");
+
+        Assert.Equal("explorer.exe", startInfo.FileName);
+        Assert.Equal("/select,\"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Tool.lnk\"", startInfo.Arguments);
+        Assert.True(startInfo.UseShellExecute);
+    }
+
+    [Fact]
     public void CreateStartInfoSupportsCustomCommand()
     {
         var tile = new TileItem

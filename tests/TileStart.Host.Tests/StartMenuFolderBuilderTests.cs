@@ -42,6 +42,18 @@ public sealed class StartMenuFolderBuilderTests
     }
 
     [Fact]
+    public void OnlyStartMenuShortcutEntriesExposeOpenFileLocation()
+    {
+        var shortcut = AppEntry.Application("Tool", @"C:\Start Menu\Tool.LNK", DateTime.MinValue);
+        var packaged = AppEntry.Application("Calculator", @"shell:AppsFolder\Microsoft.WindowsCalculator!App", DateTime.MinValue);
+        var folder = AppEntry.Folder("Utilities", [shortcut]);
+
+        Assert.True(shortcut.CanOpenFileLocation);
+        Assert.False(packaged.CanOpenFileLocation);
+        Assert.False(folder.CanOpenFileLocation);
+    }
+
+    [Fact]
     public void FolderExpansionUpdatesChevron()
     {
         var folder = AppEntry.Folder("Utilities", [AppEntry.Application("Tool", "tool.lnk", DateTime.MinValue)]);

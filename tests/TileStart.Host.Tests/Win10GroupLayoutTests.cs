@@ -147,6 +147,32 @@ public sealed class Win10GroupLayoutTests
     }
 
     [Fact]
+    public void CrossGroupMoveCannotFloatBelowTheLastOccupiedRowInItsColumns()
+    {
+        var moving = Tile(TileSize.Medium, 0, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var support = Tile(TileSize.Medium, 0, 0);
+        var target = new TileGroup { Tiles = [support] };
+
+        Assert.True(Win10GroupLayout.Move(source, target, moving, 0, 10));
+
+        Assert.Equal((0, 2), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void CrossGroupMoveCannotFloatBelowAnEmptyColumn()
+    {
+        var moving = Tile(TileSize.Medium, 0, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var supportInAnotherColumn = Tile(TileSize.Medium, 0, 0);
+        var target = new TileGroup { Tiles = [supportInAnotherColumn] };
+
+        Assert.True(Win10GroupLayout.Move(source, target, moving, 4, 10));
+
+        Assert.Equal((4, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
     public void InvalidCrossGroupMoveLeavesSourceUnchanged()
     {
         var moving = Tile(TileSize.Large, 0, 0);

@@ -2,6 +2,7 @@ namespace TileStart.Host;
 
 public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
 {
+    private const double LayoutRoundingAllowance = 1;
     internal static int ColumnsForWidth(double availableWidth)
     {
         if (!double.IsFinite(availableWidth))
@@ -10,7 +11,10 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
         }
 
         return Math.Max(1, (int)Math.Floor(
-            (availableWidth + Win10TileMetrics.GroupGap + 1) / Win10TileMetrics.GroupPitch));
+            (availableWidth
+             + Win10TileMetrics.GroupGap
+             + LayoutRoundingAllowance)
+            / Win10TileMetrics.GroupPitch));
     }
 
     internal static double RequiredWidth(int columns)

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
@@ -20,6 +21,18 @@ public sealed class AppEntry : INotifyPropertyChanged
     public ObservableCollection<AppEntry> Children { get; init; } = [];
 
     public bool IsFolder => Children.Count > 0;
+
+    public bool CanOpenFileLocation
+    {
+        get
+        {
+            var extension = Path.GetExtension(LaunchTarget);
+            return !IsFolder
+                && (extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+                    || extension.Equals(".url", StringComparison.OrdinalIgnoreCase)
+                    || extension.Equals(".appref-ms", StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     public bool IsExpanded
     {

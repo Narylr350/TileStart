@@ -28,6 +28,7 @@ public sealed class TileItem : INotifyPropertyChanged
     private bool _isTileFolder;
     private ObservableCollection<TileItem> _folderTiles = [];
     private bool _isFolderExpanded;
+    private bool _isDragging;
     private double _layoutOffsetY;
     private double _folderRegionTop;
     private double _folderRegionHeight;
@@ -76,6 +77,22 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _isTileFolder = value;
+            OnPropertyChanged();
+        }
+    }
+
+    [JsonIgnore]
+    public bool IsDragging
+    {
+        get => _isDragging;
+        set
+        {
+            if (_isDragging == value)
+            {
+                return;
+            }
+
+            _isDragging = value;
             OnPropertyChanged();
         }
     }

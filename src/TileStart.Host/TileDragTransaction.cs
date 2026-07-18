@@ -40,6 +40,11 @@ public sealed class TileDragTransaction : IDisposable
 
     public bool Preview(TileGroup target, int column, int row)
     {
+        if (Intent == TileDropIntent.NewGroup && ReferenceEquals(_previewTarget, target))
+        {
+            return true;
+        }
+
         if (Intent == TileDropIntent.Reposition
             && _previewTarget == target
             && (!_snapshots.Any(snapshot => snapshot.Group == target)

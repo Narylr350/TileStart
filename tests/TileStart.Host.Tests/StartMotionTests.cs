@@ -45,6 +45,32 @@ public sealed class StartMotionTests
     }
 
     [Fact]
+    public void PlayEntranceCompletesImmediatelyWhenNoAnimationIsPrepared()
+    {
+        Exception? failure = null;
+        var completed = false;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var surface = new System.Windows.Controls.Grid();
+
+                StartMotion.PlayEntrance([surface], animationsEnabled: true, () => completed = true);
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        Assert.Null(failure);
+        Assert.True(completed);
+    }
+
+    [Fact]
     public void CalculateEntrance_DoesNotInventVerticalMotionForOtherTaskbarEdges()
     {
         var result = StartMotion.CalculateEntrance(0.5, false);

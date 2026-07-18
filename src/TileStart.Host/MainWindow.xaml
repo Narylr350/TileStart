@@ -11,7 +11,7 @@
         Background="Transparent"
         FontFamily="Segoe UI"
         FontSize="14"
-        FontWeight="Normal"
+        FontWeight="Medium"
         Foreground="White"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
@@ -20,7 +20,7 @@
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextHintingMode="Fixed"
-        TextOptions.TextRenderingMode="Grayscale"
+        TextOptions.TextRenderingMode="ClearType"
         WindowStartupLocation="Manual"
         WindowStyle="None"
         Deactivated="Window_Deactivated"
@@ -84,6 +84,35 @@
                                 <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TileScrollViewerStyle" TargetType="ScrollViewer">
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid>
+                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                    CanContentScroll="{TemplateBinding CanContentScroll}"
+                                                    Content="{TemplateBinding Content}"
+                                                    ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                    Margin="{TemplateBinding Padding}"
+                                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                       HorizontalAlignment="Right"
+                                       Panel.ZIndex="1"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       Orientation="Vertical"
+                                       Style="{StaticResource StartVerticalScrollBarStyle}"
+                                       Value="{TemplateBinding VerticalOffset}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -179,20 +208,105 @@
         </Style>
 
         <Style x:Key="StartContextMenuStyle" TargetType="ContextMenu">
+            <EventSetter Event="Opened" Handler="StartContextMenu_Opened" />
+            <EventSetter Event="Closed" Handler="StartContextMenu_Closed" />
             <Setter Property="Background" Value="#F22B2B2B" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderBrush" Value="#5A5A5A" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="2" />
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+            <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
+            <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="StartMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="12,5,18,5" />
+            <Setter Property="Padding" Value="12,5,10,5" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+            <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
+            <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Grid x:Name="MenuItemRoot"
+                              Height="{TemplateBinding Height}"
+                              Background="{TemplateBinding Background}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"
+                                              ContentSource="Header"
+                                              RecognizesAccessKey="True" />
+                            <TextBlock x:Name="SubmenuArrow"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="10"
+                                       Text="&#xE76C;"
+                                       Visibility="Collapsed" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Placement="Right"
+                                   PopupAnimation="None">
+                                <Border MinWidth="210"
+                                        Padding="2"
+                                        Background="#F22B2B2B"
+                                        BorderBrush="#5A5A5A"
+                                        BorderThickness="1">
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="True">
+                                <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{StaticResource HoverBackground}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.38" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Separator">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="8,3" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Background="#70FFFFFF" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
@@ -257,7 +371,34 @@
 
         <DataTemplate x:Key="AppEntryTemplate">
             <StackPanel>
-                <Button Style="{StaticResource AppRowStyle}" Tag="{Binding}" Click="AppButton_Click">
+                <Button Style="{StaticResource AppRowStyle}"
+                        Tag="{Binding}"
+                        Click="AppButton_Click"
+                        PreviewMouseLeftButtonDown="AppButton_PreviewMouseLeftButtonDown"
+                        PreviewMouseMove="AppButton_PreviewMouseMove">
+                    <Button.ContextMenu>
+                        <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}"
+                                     Style="{StaticResource StartContextMenuStyle}">
+                            <MenuItem Header="固定到“开始”屏幕"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="PinAppToStart_Click" />
+                            <MenuItem Header="更多">
+                                <MenuItem.Style>
+                                    <Style TargetType="MenuItem" BasedOn="{StaticResource StartMenuItemStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CanOpenFileLocation}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </MenuItem.Style>
+                                <MenuItem Header="打开文件所在的位置"
+                                          Style="{StaticResource StartMenuItemStyle}"
+                                          Click="OpenAppFileLocation_Click" />
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="28" />
@@ -283,7 +424,9 @@
                         <TextBlock Grid.Column="1"
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"
+                                   FontFamily="Segoe UI, Microsoft YaHei UI"
                                    FontSize="14"
+                                   FontWeight="Medium"
                                    Text="{Binding Name}"
                                    TextTrimming="CharacterEllipsis" />
                         <TextBlock x:Name="FolderChevron"
@@ -322,7 +465,8 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid x:Name="MainSurface" Background="Transparent">
+    <Grid x:Name="WindowRoot" Background="Transparent">
+        <Grid x:Name="MainSurface" Background="Transparent">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
             <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
@@ -460,12 +604,14 @@
             </Border>
         </Grid>
 
-        <Border Grid.Column="2"
+        <Border x:Name="TilePane"
+                Grid.Column="2"
+                Background="Transparent"
                 AllowDrop="True"
                 DragOver="TileArea_DragOver"
                 Drop="TileArea_Drop">
             <Border.ContextMenu>
-                <ContextMenu>
+                <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
                     <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />
                     <Separator />
                     <MenuItem Header="新建组" Click="AddGroup_Click" />
@@ -473,11 +619,7 @@
             </Border.ContextMenu>
             <ScrollViewer x:Name="TileScrollViewer"
                           Margin="28,28,0,0"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
-                <ScrollViewer.Resources>
-                    <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
-                </ScrollViewer.Resources>
+                          Style="{StaticResource TileScrollViewerStyle}">
                 <ItemsControl x:Name="TileGroupsControl"
                               Margin="0,0,0,20"
                               ItemsSource="{Binding TileLayout.Groups}">
@@ -491,7 +633,7 @@
                             <StackPanel Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                         Margin="0,0,0,24">
                                 <StackPanel.ContextMenu>
-                                    <ContextMenu>
+                                    <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
                                         <MenuItem Header="向左移动" Click="MoveGroupLeft_Click" />
                                         <MenuItem Header="向右移动" Click="MoveGroupRight_Click" />
                                         <Separator />
@@ -533,7 +675,8 @@
                                     </ItemsControl.ItemContainerStyle>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type local:TileItem}">
-                                            <Button Width="{Binding PixelWidth}"
+                                            <Button x:Name="TileButton"
+                                                    Width="{Binding PixelWidth}"
                                                     Height="{Binding PixelHeight}"
                                                     Background="{Binding BackgroundBrush}"
                                                     Foreground="{Binding ForegroundBrush}"
@@ -666,6 +809,9 @@
                                                     <Setter TargetName="TileInitial" Property="Visibility" Value="Collapsed" />
                                                     <Setter TargetName="TileIcon" Property="Visibility" Value="Collapsed" />
                                                     <Setter TargetName="FolderPreview" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                                    <Setter TargetName="TileButton" Property="Opacity" Value="0" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
                                                     <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />
@@ -816,6 +962,16 @@
             </ScrollViewer>
         </Border>
 
+        <Canvas x:Name="InternalDragOverlay"
+                Grid.ColumnSpan="3"
+                IsHitTestVisible="False"
+                Panel.ZIndex="20">
+            <Image x:Name="InternalDragPreview"
+                   Opacity="0.96"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   Visibility="Collapsed" />
+        </Canvas>
+
         <Border Height="7"
                 VerticalAlignment="Top"
                 Background="Transparent"
@@ -836,5 +992,14 @@
                 Cursor="SizeNESW"
                 Panel.ZIndex="11"
                 MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
+        </Grid>
+
+        <Image x:Name="EntrancePreview"
+               IsHitTestVisible="False"
+               Panel.ZIndex="100"
+               RenderOptions.BitmapScalingMode="HighQuality"
+               SnapsToDevicePixels="True"
+               Stretch="Fill"
+               Visibility="Collapsed" />
     </Grid>
 </Window>

@@ -31,4 +31,26 @@ public sealed class TileAreaDropResolverTests
 
         Assert.Equal("lower", TileAreaDropResolver.FindTarget([upper, lower], 200, 430)?.GroupId);
     }
+    [Fact]
+    public void PointerInsideThirdExistingGroupTargetsThatGroup()
+    {
+        var first = new TileGroupDropZone("first", 0, 0, 412, 200);
+        var second = new TileGroupDropZone("second", 428, 0, 412, 200);
+        var third = new TileGroupDropZone("third", 856, 0, 412, 200);
+
+        Assert.Equal("third", TileAreaDropResolver.FindTarget([first, second, third], 900, 100)?.GroupId);
+    }
+
+    [Theory]
+    [InlineData(412, "first")]
+    [InlineData(420, "second")]
+    [InlineData(427.9, "second")]
+    public void GapBetweenGroupsBelongsToAnAdjacentGroup(double pointerX, string expected)
+    {
+        var first = new TileGroupDropZone("first", 0, 0, 412, 200);
+        var second = new TileGroupDropZone("second", 428, 0, 412, 200);
+
+        Assert.Equal(expected, TileAreaDropResolver.FindTarget([first, second], pointerX, 100)?.GroupId);
+    }
+
 }

@@ -17,4 +17,12 @@ public sealed class Win10GroupWrapPanelTests
         Assert.Equal(2, Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(2)));
         Assert.Equal(3, Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(3)));
     }
+    [Fact]
+    public void TrulyNarrowerViewportWrapsInsteadOfClippingTheThirdGroup()
+    {
+        Assert.Equal(
+            2,
+            Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(3) - 8));
+    }
+
 }

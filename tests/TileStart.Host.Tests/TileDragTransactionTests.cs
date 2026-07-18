@@ -71,6 +71,24 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void ResolvingTheProvisionalNewGroupOnMouseUpDoesNotDetachTheTile()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var layout = new TileLayout { Groups = [source] };
+
+        using var transaction = new TileDragTransaction(layout, source, moving);
+        var provisional = transaction.PreviewNewGroup();
+
+        Assert.True(transaction.Preview(provisional, 0, 0));
+        transaction.Commit();
+
+        Assert.Contains(provisional, layout.Groups);
+        Assert.Same(moving, Assert.Single(provisional.Tiles));
+        Assert.DoesNotContain(source, layout.Groups);
+    }
+
+    [Fact]
     public void PreviewFolderCreatesDedicatedFolderAndRollbackRestoresTiles()
     {
         var moving = Tile("moving", TileSize.Medium, 2, 0);

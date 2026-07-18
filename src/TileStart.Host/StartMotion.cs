@@ -11,6 +11,7 @@ public readonly record struct EntranceMotionParameters(
 
 public static class StartMotion
 {
+    public const int DesiredFrameRate = 240;
     private static readonly KeySpline EntranceSpline = new(0.1, 0.9, 0.2, 1);
 
     private static readonly DependencyProperty MotionTranslateProperty = DependencyProperty.RegisterAttached(
@@ -72,8 +73,12 @@ public static class StartMotion
         }
     }
 
-    public static void PlayEntrance(IEnumerable<FrameworkElement> elements, bool animationsEnabled)
+    public static void PlayEntrance(
+        IEnumerable<FrameworkElement> elements,
+        bool animationsEnabled,
+        Action? completed = null)
     {
+        var remainingAnimations = 0;
         foreach (var element in elements)
         {
             var fromY = (double)element.GetValue(PreparedFromYProperty);
@@ -97,7 +102,21 @@ public static class StartMotion
                 parameters.DelayMilliseconds,
                 parameters.DurationMilliseconds,
                 EntranceSpline);
+            remainingAnimations++;
+            animation.Completed += (_, _) =>
+            {
+                remainingAnimations--;
+                if (remainingAnimations == 0)
+                {
+                    completed?.Invoke();
+                }
+            };
             translate.BeginAnimation(TranslateTransform.YProperty, animation, HandoffBehavior.SnapshotAndReplace);
+        }
+
+        if (remainingAnimations == 0)
+        {
+            completed?.Invoke();
         }
     }
 
@@ -136,6 +155,7 @@ public static class StartMotion
             Duration = end,
             FillBehavior = FillBehavior.Stop,
         };
+        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(TimeSpan.Zero)));
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(delay)));
         animation.KeyFrames.Add(new SplineDoubleKeyFrame(to, KeyTime.FromTimeSpan(end), spline));

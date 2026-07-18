@@ -104,7 +104,10 @@ public static class StartAppScanner
                         var name = (string?)app.Name;
                         var appUserModelId = (string?)app.Path;
                         var packageInstallPath = (string?)app.ExtendedProperty("System.AppUserModel.PackageInstallPath");
-                        if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(appUserModelId))
+                        var packageFamilyName = (string?)app.ExtendedProperty("System.AppUserModel.PackageFamilyName");
+                        if (!string.IsNullOrWhiteSpace(name) &&
+                            !string.IsNullOrWhiteSpace(appUserModelId) &&
+                            IsPackagedAppsFolderItem(packageFamilyName))
                         {
                             var launchTarget = $"shell:AppsFolder\\{appUserModelId}";
                             apps.Add(AppEntry.Application(name, launchTarget, DateTime.MinValue,
@@ -139,6 +142,9 @@ public static class StartAppScanner
         thread.Start();
         return completion.Task;
     }
+
+    internal static bool IsPackagedAppsFolderItem(string? packageFamilyName) =>
+        !string.IsNullOrWhiteSpace(packageFamilyName);
 
     private static AppEntry CreateEntry(string name, string launchTarget, DateTime addedAt) =>
         AppEntry.Application(name, launchTarget, addedAt, ShellIconLoader.Load(launchTarget));

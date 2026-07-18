@@ -14,6 +14,19 @@ public static class AppLauncher
         return Launch(tile.Name, CreateStartInfo(tile, true));
     }
 
+    public static bool OpenFileLocation(AppEntry app)
+    {
+        return app.CanOpenFileLocation && File.Exists(app.LaunchTarget)
+            && Launch(app.Name, CreateOpenFileLocationStartInfo(app.LaunchTarget));
+    }
+
+    internal static ProcessStartInfo CreateOpenFileLocationStartInfo(string shortcutPath) =>
+        new("explorer.exe")
+        {
+            Arguments = $"/select,\"{shortcutPath}\"",
+            UseShellExecute = true,
+        };
+
     internal static ProcessStartInfo CreateStartInfo(TileItem tile, bool forceAdministrator = false)
     {
         var isPowerShellScript = Path.GetExtension(tile.LaunchTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);

@@ -29,6 +29,7 @@ public static class Win10GroupLayout
             return false;
         }
 
+        row = ConstrainDropRow(target, tile, column, row);
         tile.Column = column;
         tile.Row = row;
         target.Tiles.Insert(0, tile);
@@ -46,6 +47,7 @@ public static class Win10GroupLayout
             return false;
         }
 
+        row = ConstrainDropRow(target, tile, column, row);
         source.Tiles.Remove(tile);
         tile.Column = column;
         tile.Row = row;
@@ -100,6 +102,19 @@ public static class Win10GroupLayout
                 }
             }
         }
+    }
+
+    private static int ConstrainDropRow(TileGroup group, TileItem tile, int column, int requestedRow)
+    {
+        var right = column + tile.Size.ColumnSpan();
+        var supportedRow = group.Tiles
+            .Where(other => !ReferenceEquals(other, tile)
+                            && column < other.Column + other.Size.ColumnSpan()
+                            && right > other.Column)
+            .Select(other => other.Row + other.Size.RowSpan())
+            .DefaultIfEmpty(0)
+            .Max();
+        return Math.Min(requestedRow, supportedRow);
     }
 
     private static bool CanFit(TileItem tile, int column, int row, HashSet<(int Column, int Row)> occupied)
