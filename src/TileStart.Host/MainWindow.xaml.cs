@@ -138,10 +138,12 @@ public partial class MainWindow : Window
         Activate();
         Focus();
         var handle = new WindowInteropHelper(this).Handle;
-        if (handle != 0)
-        {
-            SetForegroundWindow(handle);
-        }
+        var setForegroundSucceeded = handle != 0 && SetForegroundWindow(handle);
+        var foreground = GetForegroundWindow();
+        _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
+            _foregroundAcquiredSinceShow,
+            setForegroundSucceeded,
+            foreground != 0 && ForegroundBelongsToStart(foreground));
 
         _foregroundWatchdogTimer.Start();
         var generation = _entranceSnapshotGeneration;
@@ -497,9 +499,12 @@ public partial class MainWindow : Window
         var foreground = GetForegroundWindow();
         var foregroundKnown = foreground != 0;
         var foregroundBelongsToStart = foregroundKnown && ForegroundBelongsToStart(foreground);
+        _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
+            _foregroundAcquiredSinceShow,
+            setForegroundSucceeded: false,
+            foregroundBelongsToStart);
         if (foregroundBelongsToStart)
         {
-            _foregroundAcquiredSinceShow = true;
             return;
         }
 

@@ -3,6 +3,23 @@ namespace TileStart.Host.Tests;
 public sealed class StartWindowLifecycleTests
 {
     [Theory]
+    [InlineData(false, false, false, false)]
+    [InlineData(true, false, false, true)]
+    [InlineData(false, true, false, true)]
+    [InlineData(false, false, true, true)]
+    public void HasAcquiredForegroundAcceptsSuccessfulRequestOrObservedOwnership(
+        bool alreadyAcquired,
+        bool setForegroundSucceeded,
+        bool foregroundBelongsToStart,
+        bool expected)
+    {
+        Assert.Equal(expected, StartWindowLifecycle.HasAcquiredForeground(
+            alreadyAcquired,
+            setForegroundSucceeded,
+            foregroundBelongsToStart));
+    }
+
+    [Theory]
     [InlineData(true, true, false, false, false, true)]
     [InlineData(false, true, false, false, false, false)]
     [InlineData(true, false, false, false, false, false)]
