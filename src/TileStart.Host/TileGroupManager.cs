@@ -4,26 +4,45 @@ public static class TileGroupManager
 {
     public static TileGroup Add(TileLayout layout, string name = "")
     {
+        return Add(layout, InferColumns(layout), name);
+    }
+
+    public static TileGroup Add(TileLayout layout, int columns, string name = "")
+    {
+        var cell = Win10GroupGridLayout.FindAppendCell(layout, columns);
         var group = new TileGroup { Name = name };
         layout.Groups.Add(group);
+        Win10GroupGridLayout.Insert(layout, group, cell, columns);
         return group;
     }
 
     public static bool Remove(TileLayout layout, TileGroup group)
     {
-        return layout.Groups.Remove(group);
+        return Win10GroupGridLayout.Remove(layout, group);
     }
 
     public static bool Move(TileLayout layout, TileGroup group, int offset)
     {
-        var index = layout.Groups.IndexOf(group);
-        var target = index + offset;
-        if (index < 0 || target < 0 || target >= layout.Groups.Count)
+        return Move(layout, group, offset, InferColumns(layout));
+    }
+
+    public static bool Move(TileLayout layout, TileGroup group, int offset, int columns)
+    {
+        if (!layout.Groups.Contains(group))
         {
             return false;
         }
 
-        layout.Groups.Move(index, target);
-        return true;
+        var targetColumn = group.GroupColumn + offset;
+        return targetColumn >= 0
+               && targetColumn < columns
+               && Win10GroupGridLayout.Move(
+                   layout,
+                   group,
+                   new TileGroupCell(targetColumn, group.GroupRow),
+                   columns);
     }
+
+    private static int InferColumns(TileLayout layout) =>
+        Math.Max(1, layout.Groups.Select(group => group.GroupColumn + 1).DefaultIfEmpty(1).Max());
 }

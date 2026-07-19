@@ -42,6 +42,72 @@ public sealed class TileAreaDropResolverTests
     }
 
     [Fact]
+    public void DraggedTileUsesThePreDragHeightWhenItsPreviewExpandedTheLiveGroup()
+    {
+        var originalHeight = 204d;
+        var expandedPreviewHeight = 308d;
+        var group = new TileGroupDropZone(
+            "first",
+            0,
+            0,
+            412,
+            expandedPreviewHeight,
+            originalHeight);
+        var draggedCenter = originalHeight + TileAreaDropResolver.NewGroupCreationBand + 1;
+
+        Assert.Null(TileAreaDropResolver.FindTargetForDraggedTile(
+            [group],
+            156,
+            draggedCenter - 50,
+            100,
+            100));
+    }
+
+    [Fact]
+    public void DetachedGapBetweenVisualRowsCreatesANewGroupTarget()
+    {
+        var upper = new TileGroupDropZone("upper", 0, 0, 412, 204, 204, 0, 0);
+        var lower = new TileGroupDropZone("lower", 0, 300, 412, 204, 204, 0, 1);
+
+        Assert.Null(TileAreaDropResolver.FindTargetForDraggedTile([upper, lower], 156, 212, 100, 100));
+    }
+
+    [Fact]
+    public void NewGroupTargetPreservesTheHorizontalCellAndInsertsBeforeTheFollowingRow()
+    {
+        var upper = new TileGroupDropZone("upper", 0, 0, 412, 204, 204, 0, 0);
+        var lower = new TileGroupDropZone("lower", 0, 300, 412, 204, 204, 0, 1);
+
+        var target = TileAreaDropResolver.FindNewGroupTargetForDraggedTile(
+            [upper, lower],
+            Win10TileMetrics.Left(6),
+            212,
+            100,
+            columnSpan: 2,
+            groupColumns: 3);
+
+        Assert.Equal(new TileNewGroupDropTarget(0, 1, 6, 0), target);
+    }
+
+    [Fact]
+    public void NewGroupTargetUsesTheMatchingOuterColumnWithoutTouchingItsNeighbors()
+    {
+        var upperLeft = new TileGroupDropZone("upper-left", 0, 0, 412, 204, 204, 0, 0);
+        var lowerLeft = new TileGroupDropZone("lower-left", 0, 300, 412, 204, 204, 0, 1);
+        var upperMiddle = new TileGroupDropZone("upper-middle", 428, 0, 412, 404, 404, 1, 0);
+
+        var target = TileAreaDropResolver.FindNewGroupTargetForDraggedTile(
+            [upperLeft, lowerLeft, upperMiddle],
+            Win10TileMetrics.GroupPitch + Win10TileMetrics.Left(2),
+            430,
+            100,
+            columnSpan: 2,
+            groupColumns: 3);
+
+        Assert.Equal(new TileNewGroupDropTarget(1, 1, 2, 0), target);
+    }
+
+    [Fact]
     public void SpaceOutsideExistingGroupColumnsCreatesNoGroupTarget()
     {
         var group = new TileGroupDropZone("first", 0, 0, 412, 100);

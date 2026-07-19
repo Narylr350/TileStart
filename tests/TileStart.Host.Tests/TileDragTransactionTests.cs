@@ -71,6 +71,48 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void PreviewNewGroupShiftsOnlyItsOuterColumnAndPreservesTheTileCell()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var source = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles = [moving, Tile("remaining", TileSize.Medium, 2, 0)],
+        };
+        var following = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 1,
+            Tiles = [Tile("following", TileSize.Medium, 0, 0)],
+        };
+        var layout = new TileLayout { Groups = [source, following] };
+
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        var created = transaction.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 6, 0));
+
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(created));
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(following));
+        Assert.Equal((6, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void ProvisionalNewGroupCanMoveItsPlaceholderWithoutBeingRecreated()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var source = new TileGroup { Tiles = [moving] };
+        var layout = new TileLayout { Groups = [source] };
+
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        var created = transaction.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 2, 0));
+
+        Assert.True(transaction.Preview(created, 6, 0));
+        Assert.Same(created, transaction.PreviewTarget);
+        Assert.Equal((6, 0), (moving.Column, moving.Row));
+        Assert.Equal(2, layout.Groups.Count);
+    }
+
+    [Fact]
     public void ResolvingTheProvisionalNewGroupOnMouseUpDoesNotDetachTheTile()
     {
         var moving = Tile("moving", TileSize.Medium, 0, 0);
@@ -181,6 +223,39 @@ public sealed class TileDragTransactionTests
 
         Assert.Equal((0, 0), (stationary.Column, stationary.Row));
         Assert.Equal((6, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void SwitchingPreviewTargetsDoesNotRebuildUnrelatedGroups()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var source = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles = [moving],
+        };
+        var target = new TileGroup
+        {
+            GroupColumn = 1,
+            GroupRow = 0,
+            Tiles = [Tile("target", TileSize.Medium, 0, 0)],
+        };
+        var unrelated = new TileGroup
+        {
+            GroupColumn = 2,
+            GroupRow = 0,
+            Tiles = [Tile("unrelated", TileSize.Medium, 0, 0)],
+        };
+        var layout = new TileLayout { Groups = [source, target, unrelated] };
+        var unrelatedChanges = 0;
+        unrelated.Tiles.CollectionChanged += (_, _) => unrelatedChanges++;
+
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        Assert.True(transaction.Preview(target, 2, 0));
+        Assert.True(transaction.Preview(source, 4, 0));
+
+        Assert.Equal(0, unrelatedChanges);
     }
 
     [Fact]

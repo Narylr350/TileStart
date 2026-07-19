@@ -83,6 +83,7 @@ public partial class MainWindow : Window
     private TileItem? _dragSourceFolder;
     private Button? _dragSourceElement;
     private TileDragTransaction? _dragTransaction;
+    private Dictionary<string, double> _tileDragDetachmentHeights = [];
     private bool _dragCompleted;
     private bool _isInternalTileDrag;
     private bool _isInternalAppDrag;
@@ -98,7 +99,7 @@ public partial class MainWindow : Window
     private FrameworkElement? _groupDragContainer;
     private TranslateTransform? _groupDragTransform;
     private TileGroupDropTarget[] _groupDragTargets = [];
-    private int? _groupDragTargetIndex;
+    private TileGroupCell? _groupDragTargetCell;
     private bool _isInternalGroupDrag;
     private bool _isCompletingGroupDrag;
 
@@ -248,7 +249,9 @@ public partial class MainWindow : Window
                 TileLayout.Groups.Add(group);
             }
 
-            if (savedLayout is null)
+            UpdateLayout();
+            var migratedGroupCoordinates = EnsureGroupGridCoordinates();
+            if (savedLayout is null || migratedGroupCoordinates)
             {
                 TileLayoutStore.Save(TileLayout);
             }
@@ -1096,8 +1099,7 @@ public partial class MainWindow : Window
         var group = TileLayout.Groups.LastOrDefault();
         if (group is null)
         {
-            group = new TileGroup();
-            TileLayout.Groups.Add(group);
+            group = TileGroupManager.Add(TileLayout, CurrentGroupColumnCount());
         }
 
         var location = Win10GroupLayout.FindFirstAvailable(group, tile);
@@ -1107,7 +1109,7 @@ public partial class MainWindow : Window
 
     private void AddGroup_Click(object sender, RoutedEventArgs e)
     {
-        TileGroupManager.Add(TileLayout);
+        TileGroupManager.Add(TileLayout, CurrentGroupColumnCount());
         TileLayoutStore.Save(TileLayout);
     }
 
@@ -1217,6 +1219,13 @@ public partial class MainWindow : Window
             return false;
         }
 
+        var groupColumns = CurrentGroupColumnCount();
+        if (EnsureGroupGridCoordinates())
+        {
+            UpdateLayout();
+            TileLayoutStore.Save(TileLayout);
+        }
+
         var layoutOrigin = GetGroupLayoutPosition(container);
         var visibleOrigin = container.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
         _groupDragAnchor = _groupDragStart - visibleOrigin;
@@ -1227,15 +1236,16 @@ public partial class MainWindow : Window
         // Keep hit testing anchored to the pre-drag slots. If these bounds follow each
         // preview reorder, a stationary pointer can alternate between two insertion targets.
         _groupDragTargets = TileLayout.Groups
-            .Select((group, index) => (index, container: GetGroupContainer(group)))
+            .Select(group => (group, container: GetGroupContainer(group)))
             .Where(item => item.container is not null)
             .Select(item => new TileGroupDropTarget(
-                item.index,
+                item.group.GroupColumn,
+                item.group.GroupRow,
                 new System.Windows.Rect(
                     GetGroupLayoutPosition(item.container!),
                     new System.Windows.Size(item.container!.ActualWidth, item.container.ActualHeight))))
             .ToArray();
-        _groupDragTransaction = new TileGroupDragTransaction(TileLayout, _groupDragGroup);
+        _groupDragTransaction = new TileGroupDragTransaction(TileLayout, _groupDragGroup, groupColumns);
         _isInternalGroupDrag = true;
         _groupDragHeader.SetDragging(true);
         _groupDragContainer.RenderTransform = _groupDragTransform;
@@ -1256,12 +1266,12 @@ public partial class MainWindow : Window
 
         if (_groupDragTargets.Length > 0)
         {
-            var targetIndex = TileGroupDropResolver.ResolveTargetIndex(position, _groupDragTargets);
-            if (_groupDragTargetIndex != targetIndex)
+            var targetCell = TileGroupDropResolver.ResolveTargetCell(position, _groupDragTargets);
+            if (_groupDragTargetCell != targetCell)
             {
-                _groupDragTargetIndex = targetIndex;
+                _groupDragTargetCell = targetCell;
                 var previousPositions = CaptureGroupReorderPositions();
-                if (_groupDragTransaction.Preview(targetIndex))
+                if (_groupDragTransaction.Preview(targetCell))
                 {
                     UpdateLayout();
                     AnimateGroupReorderFrom(previousPositions);
@@ -1358,20 +1368,29 @@ public partial class MainWindow : Window
                 item => item.container!.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point()));
     }
 
-    private void AnimateGroupReorderFrom(IReadOnlyDictionary<TileGroup, System.Windows.Point> previousPositions)
+    private HashSet<TileGroup> AnimateGroupReorderFrom(
+        IReadOnlyDictionary<TileGroup, System.Windows.Point> previousPositions)
     {
+        var movedGroups = new HashSet<TileGroup>();
         if (!SystemParameters.ClientAreaAnimation)
         {
-            return;
+            return movedGroups;
         }
 
         foreach (var (group, previous) in previousPositions)
         {
             if (GetGroupContainer(group) is { } container)
             {
-                Win10ReorderMotion.AnimateFrom(container, previous - GetGroupLayoutPosition(container));
+                var delta = previous - GetGroupLayoutPosition(container);
+                if (Math.Abs(delta.X) >= 0.1 || Math.Abs(delta.Y) >= 0.1)
+                {
+                    movedGroups.Add(group);
+                    Win10ReorderMotion.AnimateFrom(container, delta);
+                }
             }
         }
+
+        return movedGroups;
     }
 
     private FrameworkElement? GetGroupContainer(TileGroup group)
@@ -1395,7 +1414,7 @@ public partial class MainWindow : Window
         _groupDragContainer = null;
         _groupDragTransform = null;
         _groupDragTargets = [];
-        _groupDragTargetIndex = null;
+        _groupDragTargetCell = null;
         _isInternalGroupDrag = false;
     }
 
@@ -1412,7 +1431,8 @@ public partial class MainWindow : Window
     private void MoveGroup(object sender, int offset)
     {
         var group = GetContextGroup(sender);
-        if (group is not null && TileGroupManager.Move(TileLayout, group, offset))
+        if (group is not null
+            && TileGroupManager.Move(TileLayout, group, offset, CurrentGroupColumnCount()))
         {
             TileLayoutStore.Save(TileLayout);
         }
@@ -1570,12 +1590,26 @@ public partial class MainWindow : Window
             return;
         }
 
+        var groupColumns = CurrentGroupColumnCount();
+        if (EnsureGroupGridCoordinates())
+        {
+            UpdateLayout();
+            TileLayoutStore.Save(TileLayout);
+        }
+
         InternalDragPreview.Source = CaptureElement(_dragSourceElement);
         InternalDragPreview.Width = _dragSourceElement.ActualWidth;
         InternalDragPreview.Height = _dragSourceElement.ActualHeight;
         InternalDragPreview.Visibility = Visibility.Visible;
         MoveInternalDragPreview(position);
-        _dragTransaction = new TileDragTransaction(TileLayout, _dragSource, _dragSourceFolder, _dragTile);
+        _tileDragDetachmentHeights = CaptureTileAreaDropZones()
+            .ToDictionary(zone => zone.GroupId, zone => zone.Height);
+        _dragTransaction = new TileDragTransaction(
+            TileLayout,
+            _dragSource,
+            _dragSourceFolder,
+            _dragTile,
+            groupColumns);
         _dragTile.IsDragging = true;
         _dragCompleted = true;
         _isInternalTileDrag = true;
@@ -1706,12 +1740,20 @@ public partial class MainWindow : Window
         }
 
         ResetPendingTileDrop();
-        if (_dragTransaction.Intent != TileDropIntent.NewGroup)
+        var newGroupTarget = ResolveNewTileGroupTarget(draggedBounds);
+        if (_dragTransaction.Intent != TileDropIntent.NewGroup
+            || _dragTransaction.PreviewTarget is null
+            || Win10GroupGridLayout.GetCell(_dragTransaction.PreviewTarget)
+            != new TileGroupCell(newGroupTarget.GroupColumn, newGroupTarget.GroupRow)
+            || _dragTile.Column != newGroupTarget.TileColumn
+            || _dragTile.Row != newGroupTarget.TileRow)
         {
             var previousPositions = CaptureReorderPositions();
-            _dragTransaction.PreviewNewGroup();
+            var previousGroupPositions = CaptureGroupReorderPositions();
+            _dragTransaction.PreviewNewGroup(newGroupTarget);
             UpdateLayout();
-            AnimateReorderFrom(previousPositions);
+            var movedGroups = AnimateGroupReorderFrom(previousGroupPositions);
+            AnimateReorderFrom(previousPositions, movedGroups);
         }
 
         return true;
@@ -1768,6 +1810,7 @@ public partial class MainWindow : Window
         InternalDragPreview.Source = null;
         InternalDragPreview.Visibility = Visibility.Collapsed;
         _dragTransaction = null;
+        _tileDragDetachmentHeights.Clear();
         _isInternalTileDrag = false;
         _internalDropIsValid = false;
         StopTileDragAutoScroll();
@@ -1967,13 +2010,17 @@ public partial class MainWindow : Window
             .ToArray();
         var zones = controls.Select(control =>
         {
+            var group = (TileGroup)control.Tag;
             var origin = control.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
             return new TileGroupDropZone(
-                ((TileGroup)control.Tag).Id,
+                group.Id,
                 origin.X,
                 origin.Y,
                 control.ActualWidth,
-                control.ActualHeight);
+                control.ActualHeight,
+                _tileDragDetachmentHeights.GetValueOrDefault(group.Id, double.NaN),
+                group.GroupColumn,
+                group.GroupRow);
         });
         var resolved = draggedBounds is { } bounds
             ? TileAreaDropResolver.FindTargetForDraggedTile(
@@ -1987,6 +2034,73 @@ public partial class MainWindow : Window
         target = groupControl?.Tag as TileGroup ?? null!;
         return target is not null;
     }
+
+    private TileGroupDropZone[] CaptureTileAreaDropZones()
+    {
+        return FindVisualDescendants<ItemsControl>(TileGroupsControl)
+            .Where(control => control.Tag is TileGroup)
+            .Select(control =>
+            {
+                var group = (TileGroup)control.Tag;
+                var origin = control.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
+                return new TileGroupDropZone(
+                    group.Id,
+                    origin.X,
+                    origin.Y,
+                    control.ActualWidth,
+                    control.ActualHeight,
+                    _tileDragDetachmentHeights.GetValueOrDefault(group.Id, double.NaN),
+                    group.GroupColumn,
+                    group.GroupRow);
+            })
+            .ToArray();
+    }
+
+    private TileNewGroupDropTarget ResolveNewTileGroupTarget(System.Windows.Rect draggedBounds)
+    {
+        var zones = CaptureTileAreaDropZones();
+        if (_dragTransaction is { Intent: TileDropIntent.NewGroup, PreviewTarget: { } provisional })
+        {
+            zones = zones
+                .Where(zone => zone.GroupId != provisional.Id)
+                .ToArray();
+        }
+
+        return TileAreaDropResolver.FindNewGroupTargetForDraggedTile(
+            zones,
+            draggedBounds.Left,
+            draggedBounds.Top,
+            draggedBounds.Height,
+            _dragTile!.Size.ColumnSpan(),
+            CurrentGroupColumnCount());
+    }
+
+    private int CurrentGroupColumnCount()
+    {
+        var availableWidth = TileScrollViewer.ViewportWidth;
+        if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+        {
+            availableWidth = TilePane.ActualWidth - TileScrollViewer.Margin.Left;
+        }
+
+        if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+        {
+            availableWidth = Math.Max(Win10TileMetrics.GroupWidth, Width - 340);
+        }
+
+        var widthColumns = Win10GroupWrapPanel.ColumnsForWidth(availableWidth);
+        var visualColumns = TileLayout.Groups
+            .Select(GetGroupContainer)
+            .Where(container => container is not null)
+            .Select(container => (int)Math.Round(
+                GetGroupLayoutPosition(container!).X / Win10TileMetrics.GroupPitch) + 1)
+            .DefaultIfEmpty(0)
+            .Max();
+        return Math.Max(1, Math.Max(widthColumns, visualColumns));
+    }
+
+    private bool EnsureGroupGridCoordinates() =>
+        Win10GroupGridLayout.EnsureCoordinates(TileLayout, CurrentGroupColumnCount());
 
     private bool PreviewFolderRegionDrop(
         TileGroup target,
@@ -2248,7 +2362,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AnimateReorderFrom(IReadOnlyDictionary<TileItem, System.Windows.Point> previousPositions)
+    private void AnimateReorderFrom(
+        IReadOnlyDictionary<TileItem, System.Windows.Point> previousPositions,
+        IReadOnlySet<TileGroup>? groupsAnimatedAsContainers = null)
     {
         if (!SystemParameters.ClientAreaAnimation)
         {
@@ -2257,7 +2373,14 @@ public partial class MainWindow : Window
 
         foreach (var (tile, previous) in previousPositions)
         {
-            if (ReferenceEquals(tile, _dragTile) || FindReorderElement(tile) is not { } element)
+            if (groupsAnimatedAsContainers is not null
+                && FindTileLocation(tile, out var group, out _)
+                && groupsAnimatedAsContainers.Contains(group))
+            {
+                continue;
+            }
+
+            if (FindReorderElement(tile) is not { } element)
             {
                 continue;
             }

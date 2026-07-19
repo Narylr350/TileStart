@@ -899,7 +899,7 @@
                                                     <Setter TargetName="FolderPreview" Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                                    <Setter TargetName="TileButton" Property="Opacity" Value="0" />
+                                                    <Setter TargetName="TileButton" Property="Opacity" Value="0.24" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
                                                     <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />

@@ -167,12 +167,15 @@
     "commitOnlyOnDrop": true,
     "cancelRestoresGroupOrder": true,
     "targetResolution": "two-dimensional-cell-through-layout-resolver",
-    "tileStartPackedPanelApproximation": "frozen-nearest-slot"
+    "tileStartOuterGroupCoordinatesPersisted": true,
+    "tileStartOuterLayout": "independent-column-stacks",
+    "tileStartNewGroupInsertion": "shift-target-column-only",
+    "tileStartOccupiedCellGroupMove": "swap-two-cells"
   },
   "unresolved": [
     "The exact desktop mouse drag threshold is encapsulated by the native MouseGestureProvider. TileStart uses the Windows system drag distance until runtime tracing provides the internal value.",
     "The exact native brush colors for placeholder hover, pressed, and drag depend on theme resources. The same-scale pointer-over reference shows no visible full-width hover fill, so TileStart keeps the ordinary pointer-over surface transparent while retaining accent feedback for pressed and drag states.",
     "The exact group displacement easing is not yet isolated from the native theme transition. TileStart initially reuses the already calibrated Win10 reorder spline and requires Win10 runtime comparison.",
-    "TileStart's current Win10GroupWrapPanel still packs groups by collection order and does not persist the native two-dimensional group CellLocation. The frozen nearest-slot mapping is an interim compatibility layer, not a complete native outer layout resolver."
+    "The native vertical group CellLocation quantum and empty-cell persistence rules are not yet isolated. TileStart persists column/row order and stacks each column by the measured group height, so inserting a group shifts only later groups in that column without claiming the native layout uses the same height accumulator."
   ]
 }

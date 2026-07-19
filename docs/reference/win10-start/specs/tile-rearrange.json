@@ -67,6 +67,13 @@
         "StartUI::StartViewModel::_GetNewGroupLocation@0x1804f7fd8",
         "StartUI::StartViewModel::OnTileRearrangeEvent@0x1804f4ff8"
       ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "A medium tile detached into the vertical gap between two groups creates a new intervening group. The tile retains the horizontal drop cell within that group rather than compacting to column zero, and the following group moves below it.",
+      "evidence": [
+        "native-tile-detach-between-groups-660x865-150pct.png"
+      ]
     }
   ],
   "implementationContract": {
@@ -80,8 +87,23 @@
     "newGroupCreationUsesExplicitContainerLocation": true,
     "newGroupLocations": ["before", "after", "empty-column"],
     "newGroupPreviewIsTransactional": true,
+    "newGroupBetweenRowsInsertsBeforeFollowingVisualRow": true,
+    "newGroupPreservesDraggedTileColumn": true,
+    "newGroupShiftsOnlyFollowingGroupsInTargetOuterColumn": true,
+    "outerGroupCoordinatesPersisted": true,
+    "tileStartDraggedTilePlaceholderOpacity": 0.24,
+    "tileStartPreviewSnapshotStrategy": "lazy-source-and-target",
+    "tileStartPreviewRestoreScope": "previously-affected-groups-only",
+    "tileStartUnrelatedGroupCollectionChangesPerPreview": 0,
     "tileStartInternalNewGroupHitGeometry": "anchor-adjusted-tile-center",
     "tileStartInternalNewGroupCreationBandDip": 16,
+    "tileStartDetachmentBoundary": {
+      "status": "tile-start-regression-derived-independent-implementation",
+      "heightSource": "pre-drag group visual height",
+      "behavior": "An internal tile drag snapshots each existing group's height before the rollbackable preview transaction starts. Dragged-tile new-group detection compares against that snapshot, while current Left, Top, Width, and live Height remain available for scrolling, ordinary hit testing, and newly created provisional groups.",
+      "reason": "A preview that moves a tile into a lower supported row can expand TileGroup.PixelHeight. Reusing that live height for detachment makes the group bottom follow the dragged tile and prevents non-final-row tiles from reaching the new-group creation band.",
+      "evidence": "TileAreaDropResolverTests.DraggedTileUsesThePreDragHeightWhenItsPreviewExpandedTheLiveGroup"
+    },
     "tileStartDragAutoScroll": {
       "status": "third-party-pattern-plus-independent-implementation",
       "edgeZoneDip": 52,
@@ -94,6 +116,7 @@
   },
   "unresolved": [
     "The native resolver's exact tie-breaking order when several mixed-size tiles can satisfy the same collision.",
+    "The native Windows 10 Start implementation's exact source of the detachment bottom boundary has not been isolated. TileStart snapshots the pre-drag group height because its own rollbackable preview can expand live PixelHeight; this is a regression-backed compatibility strategy, not evidence that StartUI stores the same field.",
     "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries.",
     "The exact native Windows 10 Start drag auto-scroll edge size, acceleration curve, and maximum velocity are not yet isolated. TileStart uses one CellPitch as the edge zone and frame-time-based velocity so the behavior remains continuous across 60/120/240 Hz displays.",
     "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path now follows the verified anchor-adjusted tile geometry and uses half the 32-DIP group-header height as a provisional center-point creation band; the exact threshold still requires native runtime tracing. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."

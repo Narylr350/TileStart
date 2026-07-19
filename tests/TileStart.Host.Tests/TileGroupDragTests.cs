@@ -6,114 +6,122 @@ namespace TileStart.Host.Tests;
 public sealed class TileGroupDragTests
 {
     [Fact]
-    public void ResolverChoosesNearestPackedSlotWithinColumn()
+    public void ResolverChoosesATwoDimensionalCellWithinTheNearestColumn()
     {
         var targets = new[]
         {
-            new TileGroupDropTarget(0, new Rect(0, 0, 412, 232)),
-            new TileGroupDropTarget(1, new Rect(424, 0, 412, 432)),
-            new TileGroupDropTarget(2, new Rect(0, 256, 412, 232)),
-            new TileGroupDropTarget(3, new Rect(424, 456, 412, 232)),
+            new TileGroupDropTarget(0, 0, new Rect(0, 0, 412, 232)),
+            new TileGroupDropTarget(1, 0, new Rect(424, 0, 412, 432)),
+            new TileGroupDropTarget(0, 1, new Rect(0, 232, 412, 232)),
+            new TileGroupDropTarget(1, 1, new Rect(424, 432, 412, 232)),
         };
 
-        Assert.Equal(0, TileGroupDropResolver.ResolveTargetIndex(new Point(100, 40), targets));
-        Assert.Equal(0, TileGroupDropResolver.ResolveTargetIndex(new Point(100, 220), targets));
-        Assert.Equal(2, TileGroupDropResolver.ResolveTargetIndex(new Point(100, 300), targets));
-        Assert.Equal(2, TileGroupDropResolver.ResolveTargetIndex(new Point(100, 440), targets));
-        Assert.Equal(1, TileGroupDropResolver.ResolveTargetIndex(new Point(700, 40), targets));
-        Assert.Equal(1, TileGroupDropResolver.ResolveTargetIndex(new Point(700, 300), targets));
-        Assert.Equal(3, TileGroupDropResolver.ResolveTargetIndex(new Point(700, 440), targets));
-        Assert.Equal(3, TileGroupDropResolver.ResolveTargetIndex(new Point(700, 700), targets));
+        Assert.Equal(new TileGroupCell(0, 0), TileGroupDropResolver.ResolveTargetCell(new Point(100, 40), targets));
+        Assert.Equal(new TileGroupCell(0, 1), TileGroupDropResolver.ResolveTargetCell(new Point(100, 220), targets));
+        Assert.Equal(new TileGroupCell(0, 2), TileGroupDropResolver.ResolveTargetCell(new Point(100, 700), targets));
+        Assert.Equal(new TileGroupCell(1, 0), TileGroupDropResolver.ResolveTargetCell(new Point(700, 40), targets));
+        Assert.Equal(new TileGroupCell(1, 1), TileGroupDropResolver.ResolveTargetCell(new Point(700, 440), targets));
+        Assert.Equal(new TileGroupCell(1, 2), TileGroupDropResolver.ResolveTargetCell(new Point(700, 700), targets));
     }
 
     [Fact]
-    public void PreviewCanMoveAcrossThreeSlotsWithoutDuplicatingGroups()
+    public void PreviewCanMoveAcrossThreeCellsWithoutDuplicatingGroups()
     {
-        var first = new TileGroup { Name = "一" };
-        var second = new TileGroup { Name = "二" };
-        var third = new TileGroup { Name = "三" };
+        var first = Group("一", 0, 0);
+        var second = Group("二", 1, 0);
+        var third = Group("三", 2, 0);
         var layout = new TileLayout { Groups = [first, second, third] };
-        var transaction = new TileGroupDragTransaction(layout, first);
+        var transaction = new TileGroupDragTransaction(layout, first, columns: 3);
 
-        Assert.True(transaction.Preview(2));
-        Assert.Equal([second, third, first], layout.Groups);
-        Assert.True(transaction.Preview(1));
-        Assert.Equal([second, first, third], layout.Groups);
-        Assert.False(transaction.Preview(1));
+        Assert.True(transaction.Preview(new TileGroupCell(2, 0)));
+        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(first));
+        Assert.Equal(new TileGroupCell(0, 0), Win10GroupGridLayout.GetCell(third));
+        Assert.True(transaction.Preview(new TileGroupCell(1, 0)));
+        Assert.Equal(new TileGroupCell(1, 0), Win10GroupGridLayout.GetCell(first));
+        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(second));
+        Assert.False(transaction.Preview(new TileGroupCell(1, 0)));
         Assert.Equal(3, layout.Groups.Distinct().Count());
         Assert.True(transaction.Commit());
     }
 
     [Fact]
-    public void FrozenTargetsKeepAStationaryPointerStableAfterPreviewReorder()
+    public void FrozenTargetsKeepAStationaryPointerStableAfterPreview()
     {
-        var first = new TileGroup { Name = "一" };
-        var second = new TileGroup { Name = "二" };
-        var third = new TileGroup { Name = "三" };
+        var first = Group("一", 0, 0);
+        var second = Group("二", 1, 0);
+        var third = Group("三", 2, 0);
         var layout = new TileLayout { Groups = [first, second, third] };
-        var transaction = new TileGroupDragTransaction(layout, first);
+        var transaction = new TileGroupDragTransaction(layout, first, columns: 3);
         var frozenTargets = new[]
         {
-            new TileGroupDropTarget(0, new Rect(0, 0, 412, 232)),
-            new TileGroupDropTarget(1, new Rect(424, 0, 412, 232)),
-            new TileGroupDropTarget(2, new Rect(848, 0, 412, 232)),
+            new TileGroupDropTarget(0, 0, new Rect(0, 0, 412, 232)),
+            new TileGroupDropTarget(1, 0, new Rect(424, 0, 412, 232)),
+            new TileGroupDropTarget(2, 0, new Rect(848, 0, 412, 232)),
         };
         var stationaryPointer = new Point(1100, 180);
 
-        var firstTarget = TileGroupDropResolver.ResolveTargetIndex(stationaryPointer, frozenTargets);
+        var firstTarget = TileGroupDropResolver.ResolveTargetCell(stationaryPointer, frozenTargets);
         Assert.True(transaction.Preview(firstTarget));
-        Assert.Equal([second, third, first], layout.Groups);
 
-        var repeatedTarget = TileGroupDropResolver.ResolveTargetIndex(stationaryPointer, frozenTargets);
+        var repeatedTarget = TileGroupDropResolver.ResolveTargetCell(stationaryPointer, frozenTargets);
         Assert.Equal(firstTarget, repeatedTarget);
         Assert.False(transaction.Preview(repeatedTarget));
-        Assert.Equal([second, third, first], layout.Groups);
     }
 
     [Fact]
     public void AdjacentGroupsCanExchangeInBothDirections()
     {
-        var first = new TileGroup { Name = "一" };
-        var second = new TileGroup { Name = "二" };
-        var third = new TileGroup { Name = "三" };
+        var first = Group("一", 0, 0);
+        var second = Group("二", 1, 0);
+        var third = Group("三", 2, 0);
         var layout = new TileLayout { Groups = [first, second, third] };
 
-        var moveSecondRight = new TileGroupDragTransaction(layout, second);
-        Assert.True(moveSecondRight.Preview(2));
-        Assert.Equal([first, third, second], layout.Groups);
+        var moveSecondRight = new TileGroupDragTransaction(layout, second, columns: 3);
+        Assert.True(moveSecondRight.Preview(new TileGroupCell(2, 0)));
         Assert.True(moveSecondRight.Commit());
+        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(second));
+        Assert.Equal(new TileGroupCell(1, 0), Win10GroupGridLayout.GetCell(third));
 
-        var moveSecondLeft = new TileGroupDragTransaction(layout, second);
-        Assert.True(moveSecondLeft.Preview(1));
-        Assert.Equal([first, second, third], layout.Groups);
+        var moveSecondLeft = new TileGroupDragTransaction(layout, second, columns: 3);
+        Assert.True(moveSecondLeft.Preview(new TileGroupCell(1, 0)));
         Assert.True(moveSecondLeft.Commit());
+        Assert.Equal(new TileGroupCell(1, 0), Win10GroupGridLayout.GetCell(second));
+        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(third));
     }
 
     [Fact]
-    public void CancelRestoresOriginalOrderAfterSeveralPreviews()
+    public void CancelRestoresOriginalCellsAfterSeveralPreviews()
     {
-        var first = new TileGroup { Name = "一" };
-        var second = new TileGroup { Name = "二" };
-        var third = new TileGroup { Name = "三" };
-        var fourth = new TileGroup { Name = "四" };
+        var first = Group("一", 0, 0);
+        var second = Group("二", 1, 0);
+        var third = Group("三", 0, 1);
+        var fourth = Group("四", 1, 1);
         var layout = new TileLayout { Groups = [first, second, third, fourth] };
-        var transaction = new TileGroupDragTransaction(layout, third);
+        var original = layout.Groups.ToDictionary(group => group, Win10GroupGridLayout.GetCell);
+        var transaction = new TileGroupDragTransaction(layout, third, columns: 2);
 
-        Assert.True(transaction.Preview(0));
-        Assert.True(transaction.Preview(3));
+        Assert.True(transaction.Preview(new TileGroupCell(1, 0)));
+        Assert.True(transaction.Preview(new TileGroupCell(0, 2)));
         Assert.True(transaction.Cancel());
-        Assert.Equal([first, second, third, fourth], layout.Groups);
+        Assert.All(layout.Groups, group => Assert.Equal(original[group], Win10GroupGridLayout.GetCell(group)));
     }
 
     [Fact]
     public void NoOpCommitDoesNotReportLayoutChange()
     {
-        var first = new TileGroup();
-        var second = new TileGroup();
+        var first = Group("一", 0, 0);
+        var second = Group("二", 1, 0);
         var layout = new TileLayout { Groups = [first, second] };
-        var transaction = new TileGroupDragTransaction(layout, first);
+        var transaction = new TileGroupDragTransaction(layout, first, columns: 2);
 
-        Assert.False(transaction.Preview(0));
+        Assert.False(transaction.Preview(new TileGroupCell(0, 0)));
         Assert.False(transaction.Commit());
     }
+
+    private static TileGroup Group(string name, int column, int row) => new()
+    {
+        Name = name,
+        GroupColumn = column,
+        GroupRow = row,
+    };
 }

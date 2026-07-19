@@ -25,4 +25,20 @@ public sealed class Win10GroupWrapPanelTests
             Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(3) - 8));
     }
 
+    [Fact]
+    public void EachColumnAccumulatesItsOwnGroupHeights()
+    {
+        var slots = Win10GroupWrapPanel.CalculateSlots(
+            [
+                new Win10GroupPanelItem(0, 0, 0, 232),
+                new Win10GroupPanelItem(1, 1, 0, 432),
+                new Win10GroupPanelItem(2, 0, 1, 232),
+                new Win10GroupPanelItem(3, 1, 1, 232),
+            ],
+            columns: 2);
+
+        Assert.Equal(232, slots[2].Top);
+        Assert.Equal(432, slots[3].Top);
+    }
+
 }

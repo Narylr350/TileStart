@@ -6,19 +6,29 @@ public sealed class TileDragTransaction : IDisposable
     private readonly TileGroup _source;
     private readonly TileItem? _sourceFolder;
     private readonly TileItem _tile;
-    private readonly GroupSnapshot[] _snapshots;
+    private readonly int _groupColumns;
+    private readonly TileGroup[] _originalGroups;
+    private readonly Dictionary<TileGroup, TileGroupCell> _originalCells;
+    private readonly Dictionary<TileGroup, GroupSnapshot> _snapshots = [];
+    private readonly HashSet<TileGroup> _affectedGroups = [];
     private TileGroup? _previewTarget;
     private int _previewColumn = -1;
     private int _previewRow = -1;
+    private TileGroupCell? _previewGroupCell;
     private string? _previewFolderTargetId;
     private bool _committed;
 
-    public TileDragTransaction(TileLayout layout, TileGroup source, TileItem tile)
-        : this(layout, source, null, tile)
+    public TileDragTransaction(TileLayout layout, TileGroup source, TileItem tile, int groupColumns = 0)
+        : this(layout, source, null, tile, groupColumns)
     {
     }
 
-    public TileDragTransaction(TileLayout layout, TileGroup source, TileItem? sourceFolder, TileItem tile)
+    public TileDragTransaction(
+        TileLayout layout,
+        TileGroup source,
+        TileItem? sourceFolder,
+        TileItem tile,
+        int groupColumns = 0)
     {
         var sourceContainsTile = sourceFolder is null
             ? source.Tiles.Contains(tile)
@@ -32,7 +42,12 @@ public sealed class TileDragTransaction : IDisposable
         _source = source;
         _sourceFolder = sourceFolder;
         _tile = tile;
-        _snapshots = layout.Groups.Select(GroupSnapshot.Capture).ToArray();
+        _groupColumns = groupColumns > 0
+            ? groupColumns
+            : Math.Max(1, layout.Groups.Select(group => group.GroupColumn + 1).DefaultIfEmpty(1).Max());
+        Win10GroupGridLayout.EnsureCoordinates(layout, _groupColumns);
+        _originalGroups = layout.Groups.ToArray();
+        _originalCells = layout.Groups.ToDictionary(group => group, Win10GroupGridLayout.GetCell);
     }
 
     public TileGroup? PreviewTarget => _previewTarget;
@@ -42,23 +57,36 @@ public sealed class TileDragTransaction : IDisposable
     {
         if (Intent == TileDropIntent.NewGroup && ReferenceEquals(_previewTarget, target))
         {
+            if (_previewColumn == column && _previewRow == row)
+            {
+                return true;
+            }
+
+            if (!Win10GroupLayout.TryMove(target, _tile, column, row))
+            {
+                return false;
+            }
+
+            _previewColumn = column;
+            _previewRow = row;
             return true;
         }
 
         if (Intent == TileDropIntent.Reposition
             && _previewTarget == target
-            && (!_snapshots.Any(snapshot => snapshot.Group == target)
+            && (!_originalCells.ContainsKey(target)
                 || _previewColumn == column && _previewRow == row))
         {
             return true;
         }
 
-        Restore();
+        PreparePreview(target);
         var moved = _sourceFolder is null
             ? Win10GroupLayout.Move(_source, target, _tile, column, row)
             : MoveFolderChildToGroup(target, column, row);
         if (!moved)
         {
+            RestorePreview();
             return false;
         }
 
@@ -94,9 +122,10 @@ public sealed class TileDragTransaction : IDisposable
             return true;
         }
 
-        Restore();
+        PreparePreview(target);
         if (!target.Tiles.Contains(folderTarget))
         {
+            RestorePreview();
             return false;
         }
 
@@ -166,10 +195,11 @@ public sealed class TileDragTransaction : IDisposable
             return true;
         }
 
-        Restore();
+        PreparePreview(target);
         RemoveFromSource();
         if (!TileFolderLayout.AddOrMove(folderTarget, _tile, column, row))
         {
+            RestorePreview();
             return false;
         }
 
@@ -184,24 +214,40 @@ public sealed class TileDragTransaction : IDisposable
 
     public TileGroup PreviewNewGroup()
     {
-        if (_previewTarget is { } current && !_snapshots.Any(snapshot => snapshot.Group == current))
+        var cell = Win10GroupGridLayout.FindAppendCell(_layout, _groupColumns);
+        return PreviewNewGroup(new TileNewGroupDropTarget(cell.Column, cell.Row, 0, 0));
+    }
+
+    public TileGroup PreviewNewGroup(TileNewGroupDropTarget target)
+    {
+        var groupCell = new TileGroupCell(target.GroupColumn, target.GroupRow);
+        if (_previewTarget is { } current
+            && !_originalCells.ContainsKey(current)
+            && _previewGroupCell == groupCell
+            && _previewColumn == target.TileColumn
+            && _previewRow == target.TileRow)
         {
             return current;
         }
 
-        Restore();
-        var group = TileGroupManager.Add(_layout);
+        RestorePreview();
+        CaptureSnapshot(_source);
+        _affectedGroups.Add(_source);
+        var group = new TileGroup();
+        _layout.Groups.Add(group);
+        Win10GroupGridLayout.Insert(_layout, group, groupCell, _groupColumns);
         var moved = _sourceFolder is null
-            ? Win10GroupLayout.Move(_source, group, _tile, 0, 0)
-            : MoveFolderChildToGroup(group, 0, 0);
+            ? Win10GroupLayout.Move(_source, group, _tile, target.TileColumn, target.TileRow)
+            : MoveFolderChildToGroup(group, target.TileColumn, target.TileRow);
         if (!moved)
         {
             throw new InvalidOperationException("Unable to preview the tile in a new group.");
         }
 
         _previewTarget = group;
-        _previewColumn = 0;
-        _previewRow = 0;
+        _previewColumn = target.TileColumn;
+        _previewRow = target.TileRow;
+        _previewGroupCell = groupCell;
         _previewFolderTargetId = null;
         Intent = TileDropIntent.NewGroup;
         return group;
@@ -216,7 +262,7 @@ public sealed class TileDragTransaction : IDisposable
 
         if (_previewTarget is not null && _previewTarget != _source && _source.Tiles.Count == 0)
         {
-            _layout.Groups.Remove(_source);
+            Win10GroupGridLayout.Remove(_layout, _source);
         }
 
         foreach (var group in _layout.Groups)
@@ -231,7 +277,7 @@ public sealed class TileDragTransaction : IDisposable
     {
         if (!_committed)
         {
-            Restore();
+            RestorePreview();
         }
     }
 
@@ -282,40 +328,71 @@ public sealed class TileDragTransaction : IDisposable
     private static (int Column, int Row) FindFolderAppendPosition(TileItem folder, TileItem tile) =>
         TileFolderLayout.FindFirstAvailable(folder, tile);
 
-    private void Restore()
+    private void PreparePreview(TileGroup target)
     {
-        foreach (var group in _layout.Groups.Where(group => !_snapshots.Any(snapshot => snapshot.Group == group)).ToArray())
+        RestorePreview();
+        CaptureSnapshot(_source);
+        CaptureSnapshot(target);
+        _affectedGroups.Add(_source);
+        _affectedGroups.Add(target);
+    }
+
+    private void CaptureSnapshot(TileGroup group)
+    {
+        if (_originalCells.ContainsKey(group) && !_snapshots.ContainsKey(group))
+        {
+            _snapshots.Add(group, GroupSnapshot.Capture(group));
+        }
+    }
+
+    private void RestorePreview()
+    {
+        foreach (var group in _layout.Groups.Where(group => !_originalCells.ContainsKey(group)).ToArray())
         {
             _layout.Groups.Remove(group);
         }
 
-        for (var index = 0; index < _snapshots.Length; index++)
+        for (var index = 0; index < _originalGroups.Length; index++)
         {
-            var snapshot = _snapshots[index];
-            var currentIndex = _layout.Groups.IndexOf(snapshot.Group);
+            var group = _originalGroups[index];
+            var currentIndex = _layout.Groups.IndexOf(group);
             if (currentIndex < 0)
             {
-                _layout.Groups.Insert(index, snapshot.Group);
+                _layout.Groups.Insert(index, group);
             }
             else if (currentIndex != index)
             {
                 _layout.Groups.Move(currentIndex, index);
             }
 
-            snapshot.Restore();
+            Win10GroupGridLayout.SetCell(group, _originalCells[group]);
         }
 
+        foreach (var group in _affectedGroups)
+        {
+            if (_snapshots.TryGetValue(group, out var snapshot))
+            {
+                snapshot.Restore();
+            }
+        }
+
+        _affectedGroups.Clear();
         _previewTarget = null;
         _previewColumn = -1;
         _previewRow = -1;
+        _previewGroupCell = null;
         _previewFolderTargetId = null;
         Intent = TileDropIntent.None;
     }
 
-    private sealed record GroupSnapshot(TileGroup Group, TileSnapshot[] Tiles)
+    private sealed record GroupSnapshot(
+        TileGroup Group,
+        TileSnapshot[] Tiles)
     {
         public static GroupSnapshot Capture(TileGroup group) =>
-            new(group, group.Tiles.Select(TileSnapshot.Capture).ToArray());
+            new(
+                group,
+                group.Tiles.Select(TileSnapshot.Capture).ToArray());
 
         public void Restore()
         {

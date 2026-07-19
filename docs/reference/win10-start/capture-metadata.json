@@ -37,6 +37,7 @@
     "alphabetIndexScreenshot": "native-alphabet-index-2560x1600-150pct.png",
     "groupHeaderScreenshot": "native-group-header-654x242-150pct.png",
     "unnamedGroupsRestScreenshot": "native-unnamed-groups-rest-2396x670-150pct.png",
+    "tileDetachBetweenGroupsScreenshot": "native-tile-detach-between-groups-660x865-150pct.png",
     "exportedLayout": "native-layout.xml",
     "staticAnalysis": "startui-static-analysis.json",
     "reverseTooling": "startui-reverse-tooling.json"
@@ -47,6 +48,7 @@
     "Exported layout uses GroupCellWidth 8.",
     "Alphabet index screenshot captured on 2026-07-16 at 2560x1600 and 150% scale; it confirms a 4-column SemanticZoom layout.",
     "Group header screenshot captured on 2026-07-18 at 150% scale; it confirms a 32-DIP header, a 48-DIP gripper column, and four 100-DIP medium tiles with 4-DIP gaps.",
-    "Unnamed-group rest screenshot captured on 2026-07-18 at 150% scale; unnamed group headers show neither placeholder text nor the gripper until pointer interaction."
+    "Unnamed-group rest screenshot captured on 2026-07-18 at 150% scale; unnamed group headers show neither placeholder text nor the gripper until pointer interaction.",
+    "Tile detach screenshot captured on 2026-07-19 at 150% scale (SHA256 5A73FF9061CDD0CA4C61BBE28DE5BC7C022B527DCCC126041B0DA9A9029A1F4B). A medium Calculator tile detached from the first group creates a group between the surrounding groups and retains the fourth medium-tile column instead of compacting to the left."
   ]
 }

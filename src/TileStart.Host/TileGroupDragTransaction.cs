@@ -4,10 +4,11 @@ public sealed class TileGroupDragTransaction
 {
     private readonly TileLayout _layout;
     private readonly TileGroup _group;
-    private readonly TileGroup[] _originalOrder;
+    private readonly int _columns;
+    private readonly Dictionary<TileGroup, TileGroupCell> _originalCells;
     private bool _finished;
 
-    public TileGroupDragTransaction(TileLayout layout, TileGroup group)
+    public TileGroupDragTransaction(TileLayout layout, TileGroup group, int columns = 0)
     {
         if (!layout.Groups.Contains(group))
         {
@@ -16,23 +17,19 @@ public sealed class TileGroupDragTransaction
 
         _layout = layout;
         _group = group;
-        _originalOrder = layout.Groups.ToArray();
+        _columns = columns > 0
+            ? columns
+            : Math.Max(1, layout.Groups.Select(candidate => candidate.GroupColumn + 1).DefaultIfEmpty(1).Max());
+        Win10GroupGridLayout.EnsureCoordinates(layout, _columns);
+        _originalCells = layout.Groups.ToDictionary(candidate => candidate, Win10GroupGridLayout.GetCell);
     }
 
-    public bool HasChanged => !_layout.Groups.SequenceEqual(_originalOrder);
+    public bool HasChanged => _originalCells.Any(pair => Win10GroupGridLayout.GetCell(pair.Key) != pair.Value);
 
-    public bool Preview(int targetIndex)
+    public bool Preview(TileGroupCell target)
     {
         EnsureActive();
-        var currentIndex = _layout.Groups.IndexOf(_group);
-        targetIndex = Math.Clamp(targetIndex, 0, _layout.Groups.Count - 1);
-        if (targetIndex == currentIndex)
-        {
-            return false;
-        }
-
-        _layout.Groups.Move(currentIndex, targetIndex);
-        return true;
+        return Win10GroupGridLayout.Move(_layout, _group, target, _columns);
     }
 
     public bool Commit()
@@ -46,13 +43,9 @@ public sealed class TileGroupDragTransaction
     {
         EnsureActive();
         var changed = HasChanged;
-        for (var index = 0; index < _originalOrder.Length; index++)
+        foreach (var (group, cell) in _originalCells)
         {
-            var currentIndex = _layout.Groups.IndexOf(_originalOrder[index]);
-            if (currentIndex != index)
-            {
-                _layout.Groups.Move(currentIndex, index);
-            }
+            Win10GroupGridLayout.SetCell(group, cell);
         }
 
         _finished = true;
