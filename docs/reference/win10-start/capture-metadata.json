@@ -35,6 +35,8 @@
   "files": {
     "overviewScreenshot": "native-start-overview-2560x1600-150pct.png",
     "alphabetIndexScreenshot": "native-alphabet-index-2560x1600-150pct.png",
+    "groupHeaderScreenshot": "native-group-header-654x242-150pct.png",
+    "unnamedGroupsRestScreenshot": "native-unnamed-groups-rest-2396x670-150pct.png",
     "exportedLayout": "native-layout.xml",
     "staticAnalysis": "startui-static-analysis.json",
     "reverseTooling": "startui-reverse-tooling.json"
@@ -43,6 +45,8 @@
     "Geometry values are initial manual measurements and must be rechecked before pixel locking.",
     "The Start menu was user-resized before capture.",
     "Exported layout uses GroupCellWidth 8.",
-    "Alphabet index screenshot captured on 2026-07-16 at 2560x1600 and 150% scale; it confirms a 4-column SemanticZoom layout."
+    "Alphabet index screenshot captured on 2026-07-16 at 2560x1600 and 150% scale; it confirms a 4-column SemanticZoom layout.",
+    "Group header screenshot captured on 2026-07-18 at 150% scale; it confirms a 32-DIP header, a 48-DIP gripper column, and four 100-DIP medium tiles with 4-DIP gaps.",
+    "Unnamed-group rest screenshot captured on 2026-07-18 at 150% scale; unnamed group headers show neither placeholder text nor the gripper until pointer interaction."
   ]
 }

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-19T00:00:00+08:00",
+  "kind": "window-dismissal",
+  "status": "platform-and-third-party-source-derived",
+  "sources": [
+    {
+      "kind": "platform-documentation",
+      "name": "SetWinEventHook",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwineventhook",
+      "fact": "Out-of-context WinEvent hooks can observe ordered foreground changes on the registering message-loop thread."
+    },
+    {
+      "kind": "platform-documentation",
+      "name": "GetForegroundWindow",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow",
+      "fact": "The returned HWND is the system foreground window and may temporarily be null while activation changes."
+    },
+    {
+      "kind": "third-party-source-reference",
+      "repository": "Open-Shell/Open-Shell-Menu",
+      "commit": "95bbb17faf0f15e43e952ecba94dedca5b2b80c9",
+      "file": "Src/StartMenu/StartMenuDLL/MenuContainer.cpp",
+      "anchor": "CMenuContainer::OnActivate",
+      "fact": "The menu handles WM_ACTIVATE directly. WA_INACTIVE closes the menu unless the newly activated HWND belongs to another menu, the search box, or an allowed owner window."
+    }
+  ],
+  "observedTileStartFailures": [
+    {
+      "fact": "SetForegroundWindow returning true was treated as confirmed foreground ownership before GetForegroundWindow observed the TileStart HWND.",
+      "effect": "A transient taskbar or previous-application foreground HWND could trigger immediate dismissal after show."
+    },
+    {
+      "fact": "WPF IsActive was treated as both acquisition evidence and a dismissal veto.",
+      "effect": "A taskbar click could reach Window.Deactivated while the mouse button was still pressed, skip dismissal, then leave stale IsActive=true blocking the watchdog after the button was released."
+    }
+  ],
+  "implementationContract": {
+    "primaryActivationSignal": "WM_ACTIVATE through HwndSource hook",
+    "foregroundOwnershipCheck": "GetForegroundWindow plus GW_OWNER chain",
+    "acquisitionEvidence": [
+      "foreground HWND belongs to TileStart",
+      "WM_ACTIVATE reports a non-WA_INACTIVE state"
+    ],
+    "notAcquisitionEvidence": [
+      "SetForegroundWindow return value",
+      "WPF Window.IsActive"
+    ],
+    "dismissalDeferral": [
+      "mouse button is pressed",
+      "internal tile, app, or group drag is active",
+      "an owned window is active",
+      "a TileStart context menu is open"
+    ],
+    "fallback": "50 ms foreground watchdog retries after transient null foreground or mouse-button deferral"
+  },
+  "unresolved": [
+    "The current StartUI Ghidra export set targets tile and group layout functions and does not include the native Windows 10 visibility controller. This document does not claim that Windows 10 Start itself uses the same WM_ACTIVATE implementation as Open-Shell.",
+    "The 1000 ms acquisition timeout remains a fallback for a visible window that never receives native activation and never becomes the observed foreground HWND; Win10 runtime testing is still required."
+  ]
+}

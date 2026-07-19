@@ -71,6 +71,26 @@ public sealed class Win10VisualSpecTests
     }
 
     [Fact]
+    public void TileGroupMetricsMatchExtractedStartUiSpec()
+    {
+        using var spec = ReadSpec("tile-group.json");
+        var metrics = spec.RootElement.GetProperty("metrics");
+
+        Assert.Equal(Win10VisualMetrics.TileGroupHeaderHeight, Value(metrics, "headerHeight"));
+        Assert.Equal(Win10VisualMetrics.TileGroupHeaderFontSize, Value(metrics, "titleFontSize"));
+        Assert.Equal(Win10VisualMetrics.TileGroupGripperWidth, Value(metrics, "gripperColumnWidth"));
+        Assert.Equal(Win10VisualMetrics.TileGroupGripperFontSize, Value(metrics, "gripperFontSize"));
+        Assert.Equal(Win10VisualMetrics.TileGroupHeaderStrokeThickness, Value(metrics, "backgroundStrokeThickness"));
+        Assert.Equal(Win10VisualMetrics.TileGroupPrimaryFocusThickness, Value(metrics, "primaryFocusThickness"));
+        Assert.Equal(Win10VisualMetrics.TileGroupSecondaryFocusThickness, Value(metrics, "secondaryFocusThickness"));
+        Assert.Equal(Win10VisualMetrics.TileGroupGripperWidth, Win10VisualMetrics.TileGroupGripperGridLength.Value);
+        AssertThickness(Win10VisualMetrics.TileGroupTitleRestMargin, metrics.GetProperty("titleMarginRest").GetProperty("value"));
+        AssertThickness(Win10VisualMetrics.TileGroupTitleInteractiveMargin, metrics.GetProperty("titleMarginInteractive").GetProperty("value"));
+        AssertThickness(Win10VisualMetrics.TileGroupGripperMargin, metrics.GetProperty("gripperMargin").GetProperty("value"));
+        Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
+    }
+
+    [Fact]
     public void AppListIconMetricsMatchSymbolDerivedSpec()
     {
         using var spec = ReadSpec("icon-resolution.json");

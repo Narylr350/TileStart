@@ -5,14 +5,40 @@ namespace TileStart.Host.Tests;
 public sealed class TileAreaDropResolverTests
 {
     [Fact]
-    public void BlankSpaceBelowAGroupStillTargetsThatGroupColumn()
+    public void NearbyBlankSpaceBelowAGroupStillTargetsThatGroupColumn()
     {
         var first = new TileGroupDropZone("first", 0, 0, 412, 100);
         var second = new TileGroupDropZone("second", 428, 0, 412, 300);
 
-        var target = TileAreaDropResolver.FindTarget([first, second], 206, 260);
+        var target = TileAreaDropResolver.FindTarget([first, second], 206, 140);
 
         Assert.Equal("first", target?.GroupId);
+    }
+
+    [Fact]
+    public void FarBelowTheLastGroupCreatesANewGroupTarget()
+    {
+        var group = new TileGroupDropZone("first", 0, 0, 412, 100);
+
+        Assert.Null(TileAreaDropResolver.FindTarget([group], 206, 160));
+    }
+
+    [Fact]
+    public void DraggedTileCenterInsideTheBottomCreationBandStillTargetsTheGroup()
+    {
+        var group = new TileGroupDropZone("first", 0, 0, 412, 100);
+
+        var target = TileAreaDropResolver.FindTargetForDraggedTile([group], 156, 55, 100, 100);
+
+        Assert.Equal("first", target?.GroupId);
+    }
+
+    [Fact]
+    public void DraggedTileCenterPastTheBottomCreationBandCreatesANewGroupTarget()
+    {
+        var group = new TileGroupDropZone("first", 0, 0, 412, 100);
+
+        Assert.Null(TileAreaDropResolver.FindTargetForDraggedTile([group], 156, 80, 100, 100));
     }
 
     [Fact]
@@ -31,6 +57,7 @@ public sealed class TileAreaDropResolverTests
 
         Assert.Equal("lower", TileAreaDropResolver.FindTarget([upper, lower], 200, 430)?.GroupId);
     }
+
     [Fact]
     public void PointerInsideThirdExistingGroupTargetsThatGroup()
     {
@@ -52,5 +79,4 @@ public sealed class TileAreaDropResolverTests
 
         Assert.Equal(expected, TileAreaDropResolver.FindTarget([first, second], pointerX, 100)?.GroupId);
     }
-
 }

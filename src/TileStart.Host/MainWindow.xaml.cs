@@ -16,6 +16,7 @@ using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
 using ItemsControl = System.Windows.Controls.ItemsControl;
 using MenuItem = System.Windows.Controls.MenuItem;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace TileStart.Host;
 
@@ -32,6 +33,8 @@ public partial class MainWindow : Window
     private const int ExpandedRecentAppCount = 6;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
+    private const int WmActivate = 0x0006;
+    private const int WaInactive = 0;
     private const int WmNcLButtonDown = 0x00A1;
     private const int HtRight = 11;
     private const int HtTop = 12;
@@ -44,6 +47,7 @@ public partial class MainWindow : Window
     private bool _allowClose;
     private bool _recentAppsExpanded;
     private bool _isDismissing;
+    private HwndSource? _windowSource;
     private bool _foregroundAcquiredSinceShow;
     private long _foregroundAcquisitionDeadline;
     private int _openContextMenuCount;
@@ -51,15 +55,22 @@ public partial class MainWindow : Window
     private System.Windows.Point _dragStart;
     private System.Windows.Point _appDragStart;
     private System.Windows.Point _appDragAnchor;
+
     private readonly System.Windows.Threading.DispatcherTimer _tileReflowTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(TileDropResolver.ReflowDelayMilliseconds),
     };
+
     private readonly System.Windows.Threading.DispatcherTimer _foregroundWatchdogTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(50),
     };
+
     private readonly TileReflowStability _tileReflowStability = new();
+    private bool _tileDragAutoScrollSubscribed;
+    private double _tileDragAutoScrollVelocity;
+    private TimeSpan? _tileDragAutoScrollLastFrame;
+    private System.Windows.Point _lastInternalTileDragPosition;
     private System.Windows.Point _dragAnchor;
     private TileGroup? _pendingDropTarget;
     private TileItem? _pendingDropFolder;
@@ -79,6 +90,17 @@ public partial class MainWindow : Window
     private bool _entranceSnapshotActive;
     private int _entranceSnapshotGeneration;
     private long _suppressTileActivationUntil;
+    private System.Windows.Point _groupDragStart;
+    private System.Windows.Vector _groupDragAnchor;
+    private TileGroup? _groupDragGroup;
+    private TileGroupHeader? _groupDragHeader;
+    private TileGroupDragTransaction? _groupDragTransaction;
+    private FrameworkElement? _groupDragContainer;
+    private TranslateTransform? _groupDragTransform;
+    private TileGroupDropTarget[] _groupDragTargets = [];
+    private int? _groupDragTargetIndex;
+    private bool _isInternalGroupDrag;
+    private bool _isCompletingGroupDrag;
 
     public MainWindow()
     {
@@ -111,6 +133,8 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
+        _windowSource = PresentationSource.FromVisual(this) as HwndSource;
+        _windowSource?.AddHook(WindowMessageHook);
         EnableAcrylic();
     }
 
@@ -138,12 +162,16 @@ public partial class MainWindow : Window
         Activate();
         Focus();
         var handle = new WindowInteropHelper(this).Handle;
-        var setForegroundSucceeded = handle != 0 && SetForegroundWindow(handle);
+        if (handle != 0)
+        {
+            SetForegroundWindow(handle);
+        }
+
         var foreground = GetForegroundWindow();
         _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
             _foregroundAcquiredSinceShow,
-            setForegroundSucceeded,
-            foreground != 0 && ForegroundBelongsToStart(foreground));
+            foreground != 0 && ForegroundBelongsToStart(foreground),
+            receivedNativeActivation: false);
 
         _foregroundWatchdogTimer.Start();
         var generation = _entranceSnapshotGeneration;
@@ -169,6 +197,27 @@ public partial class MainWindow : Window
         }
 
         base.OnClosing(e);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        StopTileDragAutoScroll();
+        _foregroundWatchdogTimer.Stop();
+        _windowSource?.RemoveHook(WindowMessageHook);
+        _windowSource = null;
+        base.OnClosed(e);
+    }
+
+    protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && _groupDragTransaction is not null)
+        {
+            FinishGroupDrag(commit: false);
+            e.Handled = true;
+            return;
+        }
+
+        base.OnPreviewKeyDown(e);
     }
 
     private async Task LoadAppsAsync()
@@ -313,8 +362,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        var positioned = SetWindowPos(handle, HwndTopmost, placement.Left, placement.Top, placement.Width, placement.Height, SwpNoActivate);
-        DiagnosticLog.Write($"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, taskbar={taskbarRect}, edge={edge}, target={placement}, positioned={positioned}, error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
+        var positioned = SetWindowPos(handle, HwndTopmost, placement.Left, placement.Top, placement.Width,
+            placement.Height, SwpNoActivate);
+        DiagnosticLog.Write(
+            $"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, taskbar={taskbarRect}, edge={edge}, target={placement}, positioned={positioned}, error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
     }
 
     private static PixelRect? FindTaskbarRect(nint monitor)
@@ -430,10 +481,43 @@ public partial class MainWindow : Window
 
     private void Window_Deactivated(object? sender, EventArgs e)
     {
-        if (!IsAnyMouseButtonPressed())
+        RequestDismissAfterForegroundChange("deactivated");
+    }
+
+    private nint WindowMessageHook(
+        nint window,
+        int message,
+        nint wParam,
+        nint lParam,
+        ref bool handled)
+    {
+        if (message != WmActivate)
         {
-            TryDismissAfterForegroundChange("deactivated");
+            return 0;
         }
+
+        if ((wParam.ToInt64() & 0xffff) != WaInactive)
+        {
+            if (IsVisible)
+            {
+                _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
+                    _foregroundAcquiredSinceShow,
+                    foregroundBelongsToStart: false,
+                    receivedNativeActivation: true);
+            }
+
+            return 0;
+        }
+
+        RequestDismissAfterForegroundChange("wm-activate");
+        return 0;
+    }
+
+    private void RequestDismissAfterForegroundChange(string trigger)
+    {
+        Dispatcher.BeginInvoke(
+            () => TryDismissAfterForegroundChange(trigger),
+            System.Windows.Threading.DispatcherPriority.Input);
     }
 
     private void StartContextMenu_Opened(object sender, RoutedEventArgs e)
@@ -445,7 +529,9 @@ public partial class MainWindow : Window
             {
                 if (item.Tag as string == "OpenFileLocation")
                 {
-                    item.Visibility = AppLauncher.CanOpenFileLocation(tile, _launchableApps) ? Visibility.Visible : Visibility.Collapsed;
+                    item.Visibility = AppLauncher.CanOpenFileLocation(tile, _launchableApps)
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
                 }
                 else if (item.IsCheckable)
                 {
@@ -483,7 +569,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!IsAnyMouseButtonPressed() && !_isInternalTileDrag && !_isInternalAppDrag)
+        if (!IsAnyMouseButtonPressed() && !_isInternalTileDrag && !_isInternalAppDrag && !_isInternalGroupDrag)
         {
             TryDismissAfterForegroundChange("foreground-watchdog");
         }
@@ -491,7 +577,12 @@ public partial class MainWindow : Window
 
     private void TryDismissAfterForegroundChange(string trigger)
     {
-        if (!IsVisible || _isDismissing)
+        if (!IsVisible
+            || _isDismissing
+            || IsAnyMouseButtonPressed()
+            || _isInternalTileDrag
+            || _isInternalAppDrag
+            || _isInternalGroupDrag)
         {
             return;
         }
@@ -501,8 +592,8 @@ public partial class MainWindow : Window
         var foregroundBelongsToStart = foregroundKnown && ForegroundBelongsToStart(foreground);
         _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
             _foregroundAcquiredSinceShow,
-            setForegroundSucceeded: false,
-            foregroundBelongsToStart);
+            foregroundBelongsToStart,
+            receivedNativeActivation: false);
         if (foregroundBelongsToStart)
         {
             return;
@@ -516,14 +607,16 @@ public partial class MainWindow : Window
                 hasActiveOwnedWindow,
                 _openContextMenuCount > 0))
         {
-            DiagnosticLog.Write($"Window dismissal: trigger={trigger}, foreground=0x{foreground.ToInt64():X}, active={IsActive}, ownedActive={hasActiveOwnedWindow}, contextMenus={_openContextMenuCount}.");
+            DiagnosticLog.Write(
+                $"Window dismissal: trigger={trigger}, foreground=0x{foreground.ToInt64():X}, active={IsActive}, ownedActive={hasActiveOwnedWindow}, contextMenus={_openContextMenuCount}.");
             DismissWindow(yieldTopmost: true);
         }
         else if (!_foregroundAcquiredSinceShow
                  && foregroundKnown
                  && Environment.TickCount64 > _foregroundAcquisitionDeadline)
         {
-            DiagnosticLog.Write($"Window dismissal: trigger=foreground-acquisition-timeout, foreground=0x{foreground.ToInt64():X}, active={IsActive}.");
+            DiagnosticLog.Write(
+                $"Window dismissal: trigger=foreground-acquisition-timeout, foreground=0x{foreground.ToInt64():X}, active={IsActive}.");
             DismissWindow(yieldTopmost: true);
         }
     }
@@ -583,6 +676,7 @@ public partial class MainWindow : Window
             {
                 DismissWindow();
             }
+
             e.Handled = true;
         }
     }
@@ -669,7 +763,8 @@ public partial class MainWindow : Window
 
         var group = AppsView.Groups?
             .OfType<CollectionViewGroup>()
-            .FirstOrDefault(candidate => candidate.Name?.ToString()?.Equals(entry.TargetLetter, StringComparison.OrdinalIgnoreCase) == true);
+            .FirstOrDefault(candidate =>
+                candidate.Name?.ToString()?.Equals(entry.TargetLetter, StringComparison.OrdinalIgnoreCase) == true);
         if (group is null)
         {
             return;
@@ -1016,20 +1111,292 @@ public partial class MainWindow : Window
         TileLayoutStore.Save(TileLayout);
     }
 
-    private void GroupName_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    private void GroupHeader_NameCommitted(object sender, EventArgs e)
     {
-        if (e.Key is not (Key.Enter or Key.Escape))
+        TileLayoutStore.Save(TileLayout);
+    }
+
+    private void GroupHeader_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left
+            || sender is not TileGroupHeader { DataContext: TileGroup group } header
+            || header.IsEditing
+            || _isInternalTileDrag
+            || _isInternalAppDrag)
         {
             return;
         }
 
-        Keyboard.ClearFocus();
+        _groupDragGroup = group;
+        _groupDragHeader = header;
+        _groupDragStart = e.GetPosition(TileGroupsControl);
+        header.CaptureMouse();
         e.Handled = true;
     }
 
-    private void GroupName_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    private void GroupHeader_PreviewMouseMove(object sender, MouseEventArgs e)
     {
-        TileLayoutStore.Save(TileLayout);
+        if (!ReferenceEquals(sender, _groupDragHeader) || _groupDragGroup is null)
+        {
+            return;
+        }
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            CancelPendingGroupDrag();
+            return;
+        }
+
+        var position = e.GetPosition(TileGroupsControl);
+        if (_groupDragTransaction is null)
+        {
+            var distance = position - _groupDragStart;
+            if (Math.Abs(distance.X) < SystemParameters.MinimumHorizontalDragDistance
+                && Math.Abs(distance.Y) < SystemParameters.MinimumVerticalDragDistance)
+            {
+                return;
+            }
+
+            if (!BeginGroupDrag())
+            {
+                return;
+            }
+        }
+
+        UpdateGroupDrag(position);
+        e.Handled = true;
+    }
+
+    private void GroupHeader_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left || !ReferenceEquals(sender, _groupDragHeader))
+        {
+            return;
+        }
+
+        if (_groupDragTransaction is null)
+        {
+            var header = _groupDragHeader;
+            _isCompletingGroupDrag = true;
+            ClearGroupDragState();
+            header?.ReleaseMouseCapture();
+            _isCompletingGroupDrag = false;
+            header?.BeginEdit();
+        }
+        else
+        {
+            FinishGroupDrag(commit: true);
+        }
+
+        e.Handled = true;
+    }
+
+    private void GroupHeader_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        if (_isCompletingGroupDrag || !ReferenceEquals(sender, _groupDragHeader))
+        {
+            return;
+        }
+
+        if (_groupDragTransaction is null)
+        {
+            ClearGroupDragState();
+        }
+        else
+        {
+            FinishGroupDrag(commit: false);
+        }
+    }
+
+    private bool BeginGroupDrag()
+    {
+        if (_groupDragGroup is null
+            || _groupDragHeader is null
+            || GetGroupContainer(_groupDragGroup) is not { } container)
+        {
+            return false;
+        }
+
+        var layoutOrigin = GetGroupLayoutPosition(container);
+        var visibleOrigin = container.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
+        _groupDragAnchor = _groupDragStart - visibleOrigin;
+        _groupDragContainer = container;
+        _groupDragTransform = new TranslateTransform(
+            visibleOrigin.X - layoutOrigin.X,
+            visibleOrigin.Y - layoutOrigin.Y);
+        // Keep hit testing anchored to the pre-drag slots. If these bounds follow each
+        // preview reorder, a stationary pointer can alternate between two insertion targets.
+        _groupDragTargets = TileLayout.Groups
+            .Select((group, index) => (index, container: GetGroupContainer(group)))
+            .Where(item => item.container is not null)
+            .Select(item => new TileGroupDropTarget(
+                item.index,
+                new System.Windows.Rect(
+                    GetGroupLayoutPosition(item.container!),
+                    new System.Windows.Size(item.container!.ActualWidth, item.container.ActualHeight))))
+            .ToArray();
+        _groupDragTransaction = new TileGroupDragTransaction(TileLayout, _groupDragGroup);
+        _isInternalGroupDrag = true;
+        _groupDragHeader.SetDragging(true);
+        _groupDragContainer.RenderTransform = _groupDragTransform;
+        _groupDragContainer.Opacity = 0.96;
+        System.Windows.Controls.Panel.SetZIndex(_groupDragContainer, 1000);
+        return true;
+    }
+
+    private void UpdateGroupDrag(System.Windows.Point position)
+    {
+        if (_groupDragGroup is null
+            || _groupDragTransaction is null
+            || _groupDragContainer is null
+            || _groupDragTransform is null)
+        {
+            return;
+        }
+
+        if (_groupDragTargets.Length > 0)
+        {
+            var targetIndex = TileGroupDropResolver.ResolveTargetIndex(position, _groupDragTargets);
+            if (_groupDragTargetIndex != targetIndex)
+            {
+                _groupDragTargetIndex = targetIndex;
+                var previousPositions = CaptureGroupReorderPositions();
+                if (_groupDragTransaction.Preview(targetIndex))
+                {
+                    UpdateLayout();
+                    AnimateGroupReorderFrom(previousPositions);
+                }
+            }
+        }
+
+        var origin = GetGroupLayoutPosition(_groupDragContainer);
+        var offset = position - _groupDragAnchor - origin;
+        _groupDragTransform.X = offset.X;
+        _groupDragTransform.Y = offset.Y;
+    }
+
+    private void FinishGroupDrag(bool commit)
+    {
+        if (_isCompletingGroupDrag)
+        {
+            return;
+        }
+
+        _isCompletingGroupDrag = true;
+        var header = _groupDragHeader;
+        var container = _groupDragContainer;
+        var transaction = _groupDragTransaction;
+        var visiblePosition = container is null
+            ? new System.Windows.Point()
+            : container.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
+        var changed = false;
+
+        if (transaction is not null)
+        {
+            if (commit)
+            {
+                changed = transaction.Commit();
+            }
+            else
+            {
+                var previousPositions = CaptureGroupReorderPositions();
+                changed = transaction.Cancel();
+                if (changed)
+                {
+                    UpdateLayout();
+                    AnimateGroupReorderFrom(previousPositions);
+                }
+            }
+        }
+
+        header?.SetDragging(false);
+        if (container is not null)
+        {
+            container.Opacity = 1;
+            System.Windows.Controls.Panel.SetZIndex(container, 0);
+            container.RenderTransform = null;
+            var finalPosition = GetGroupLayoutPosition(container);
+            if (SystemParameters.ClientAreaAnimation)
+            {
+                Win10ReorderMotion.AnimateFrom(container, visiblePosition - finalPosition);
+            }
+        }
+
+        ClearGroupDragState();
+        header?.ReleaseMouseCapture();
+        if (commit && changed)
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+
+        _isCompletingGroupDrag = false;
+    }
+
+    private void CancelPendingGroupDrag()
+    {
+        if (_groupDragTransaction is not null)
+        {
+            FinishGroupDrag(commit: false);
+            return;
+        }
+
+        var header = _groupDragHeader;
+        _isCompletingGroupDrag = true;
+        ClearGroupDragState();
+        header?.ReleaseMouseCapture();
+        _isCompletingGroupDrag = false;
+    }
+
+    private Dictionary<TileGroup, System.Windows.Point> CaptureGroupReorderPositions()
+    {
+        return TileLayout.Groups
+            .Where(group => !ReferenceEquals(group, _groupDragGroup))
+            .Select(group => (group, container: GetGroupContainer(group)))
+            .Where(item => item.container is not null)
+            .ToDictionary(
+                item => item.group,
+                item => item.container!.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point()));
+    }
+
+    private void AnimateGroupReorderFrom(IReadOnlyDictionary<TileGroup, System.Windows.Point> previousPositions)
+    {
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            return;
+        }
+
+        foreach (var (group, previous) in previousPositions)
+        {
+            if (GetGroupContainer(group) is { } container)
+            {
+                Win10ReorderMotion.AnimateFrom(container, previous - GetGroupLayoutPosition(container));
+            }
+        }
+    }
+
+    private FrameworkElement? GetGroupContainer(TileGroup group)
+    {
+        return TileGroupsControl.ItemContainerGenerator.ContainerFromItem(group) as FrameworkElement;
+    }
+
+    private System.Windows.Point GetGroupLayoutPosition(FrameworkElement container)
+    {
+        var offset = VisualTreeHelper.GetOffset(container);
+        return VisualTreeHelper.GetParent(container) is Visual parent
+            ? parent.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point()) + offset
+            : new System.Windows.Point(offset.X, offset.Y);
+    }
+
+    private void ClearGroupDragState()
+    {
+        _groupDragGroup = null;
+        _groupDragHeader = null;
+        _groupDragTransaction = null;
+        _groupDragContainer = null;
+        _groupDragTransform = null;
+        _groupDragTargets = [];
+        _groupDragTargetIndex = null;
+        _isInternalGroupDrag = false;
     }
 
     private void MoveGroupLeft_Click(object sender, RoutedEventArgs e)
@@ -1061,10 +1428,10 @@ public partial class MainWindow : Window
 
         if (group.Tiles.Count > 0
             && System.Windows.MessageBox.Show(this,
-                               "删除该组会同时取消固定其中的全部磁贴。是否继续？",
-                               "删除组",
-                               MessageBoxButton.YesNo,
-                               MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                "删除该组会同时取消固定其中的全部磁贴。是否继续？",
+                "删除组",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
         {
             return;
         }
@@ -1078,12 +1445,12 @@ public partial class MainWindow : Window
     private static TileGroup? GetContextGroup(object sender)
     {
         return sender is MenuItem menuItem
-            && ItemsControl.ItemsControlFromItemContainer(menuItem) is ContextMenu
-            {
-                PlacementTarget: FrameworkElement { DataContext: TileGroup group },
-            }
-                ? group
-                : null;
+               && ItemsControl.ItemsControlFromItemContainer(menuItem) is ContextMenu
+               {
+                   PlacementTarget: FrameworkElement { DataContext: TileGroup group },
+               }
+            ? group
+            : null;
     }
 
     private void ApplyTileSettings(TileItem tile, TileSettingsWindow dialog)
@@ -1171,6 +1538,7 @@ public partial class MainWindow : Window
             var position = e.GetPosition(MainSurface);
             MoveInternalDragPreview(position);
             _internalDropIsValid = UpdateInternalTileDrag(position, force: false);
+            UpdateTileDragAutoScroll(position);
             e.Handled = true;
             return;
         }
@@ -1212,6 +1580,7 @@ public partial class MainWindow : Window
         _dragCompleted = true;
         _isInternalTileDrag = true;
         _internalDropIsValid = UpdateInternalTileDrag(position, force: false);
+        UpdateTileDragAutoScroll(position);
         Mouse.Capture(this, CaptureMode.SubTree);
     }
 
@@ -1219,6 +1588,79 @@ public partial class MainWindow : Window
     {
         Canvas.SetLeft(InternalDragPreview, position.X - _dragAnchor.X);
         Canvas.SetTop(InternalDragPreview, position.Y - _dragAnchor.Y);
+    }
+
+    private void UpdateTileDragAutoScroll(System.Windows.Point position)
+    {
+        _lastInternalTileDragPosition = position;
+        var pointer = MainSurface.TranslatePoint(position, TileScrollViewer);
+        _tileDragAutoScrollVelocity = pointer.X >= 0 && pointer.X < TileScrollViewer.ActualWidth
+            ? TileDragAutoScroll.GetVelocity(
+                pointer.Y,
+                TileScrollViewer.ActualHeight,
+                TileScrollViewer.VerticalOffset,
+                TileScrollViewer.ScrollableHeight)
+            : 0;
+
+        if (Math.Abs(_tileDragAutoScrollVelocity) < 0.1)
+        {
+            StopTileDragAutoScroll();
+        }
+        else if (!_tileDragAutoScrollSubscribed)
+        {
+            _tileDragAutoScrollLastFrame = null;
+            CompositionTarget.Rendering += TileDragAutoScroll_Rendering;
+            _tileDragAutoScrollSubscribed = true;
+        }
+    }
+
+    private void TileDragAutoScroll_Rendering(object? sender, EventArgs e)
+    {
+        if (!_isInternalTileDrag
+            || _dragTransaction is null
+            || _dragTile is null
+            || e is not RenderingEventArgs rendering)
+        {
+            StopTileDragAutoScroll();
+            return;
+        }
+
+        if (_tileDragAutoScrollLastFrame is not { } previousFrame)
+        {
+            _tileDragAutoScrollLastFrame = rendering.RenderingTime;
+            return;
+        }
+
+        var elapsedSeconds = Math.Clamp((rendering.RenderingTime - previousFrame).TotalSeconds, 0, 0.05);
+        _tileDragAutoScrollLastFrame = rendering.RenderingTime;
+        var nextOffset = TileDragAutoScroll.GetNextOffset(
+            TileScrollViewer.VerticalOffset,
+            TileScrollViewer.ScrollableHeight,
+            _tileDragAutoScrollVelocity,
+            elapsedSeconds);
+        if (Math.Abs(nextOffset - TileScrollViewer.VerticalOffset) < 0.1)
+        {
+            UpdateTileDragAutoScroll(_lastInternalTileDragPosition);
+            return;
+        }
+
+        TileScrollViewer.ScrollToVerticalOffset(nextOffset);
+        TileScrollViewer.UpdateLayout();
+        _internalDropIsValid = UpdateInternalTileDrag(_lastInternalTileDragPosition, force: false);
+        UpdateTileDragAutoScroll(_lastInternalTileDragPosition);
+    }
+
+    private void StopTileDragAutoScroll()
+    {
+        _tileDragAutoScrollVelocity = 0;
+        _tileDragAutoScrollLastFrame = null;
+        if (!_tileDragAutoScrollSubscribed)
+        {
+            return;
+        }
+
+        CompositionTarget.Rendering -= TileDragAutoScroll_Rendering;
+        _tileDragAutoScrollSubscribed = false;
     }
 
     private bool UpdateInternalTileDrag(System.Windows.Point position, bool force)
@@ -1249,7 +1691,12 @@ public partial class MainWindow : Window
                 force);
         }
 
-        if (TryResolveTileAreaGroup(groupsPosition, out var target, out var groupControl))
+        var draggedBounds = new System.Windows.Rect(
+            groupsPosition.X - _dragAnchor.X,
+            groupsPosition.Y - _dragAnchor.Y,
+            _dragTile.PixelWidth,
+            _dragTile.PixelHeight);
+        if (TryResolveTileAreaGroup(groupsPosition, out var target, out var groupControl, draggedBounds))
         {
             return PreviewTileDrop(
                 target,
@@ -1323,6 +1770,7 @@ public partial class MainWindow : Window
         _dragTransaction = null;
         _isInternalTileDrag = false;
         _internalDropIsValid = false;
+        StopTileDragAutoScroll();
         _suppressTileActivationUntil = Environment.TickCount64 + 300;
         ResetPendingTileDrop();
         ClearTileDragState();
@@ -1384,8 +1832,9 @@ public partial class MainWindow : Window
         {
             var currentFolderTarget = TileDropResolver.FindFolderTarget(target, tile, position, _dragAnchor);
             var canCommitCurrentFolderPreview = _dragTransaction.PreviewTarget == target
-                && _dragTransaction.Intent is TileDropIntent.CreateFolder or TileDropIntent.AddToFolder
-                && currentFolderTarget?.IsTileFolder == true;
+                                                && _dragTransaction.Intent is TileDropIntent.CreateFolder
+                                                    or TileDropIntent.AddToFolder
+                                                && currentFolderTarget?.IsTileFolder == true;
             if (canCommitCurrentFolderPreview || PreviewTileDrop(target, position, tile, force: true))
             {
                 _dragTransaction.Commit();
@@ -1449,7 +1898,13 @@ public partial class MainWindow : Window
             else
             {
                 ResetPendingTileDrop();
-                _dragTransaction.PreviewNewGroup();
+                var previousTarget = _dragTransaction.PreviewTarget;
+                var newGroup = _dragTransaction.PreviewNewGroup();
+                if (!ReferenceEquals(previousTarget, newGroup))
+                {
+                    UpdateLayout();
+                }
+
                 e.Effects = DragDropEffects.Move;
             }
         }
@@ -1504,7 +1959,8 @@ public partial class MainWindow : Window
     private bool TryResolveTileAreaGroup(
         System.Windows.Point pointer,
         out TileGroup target,
-        out ItemsControl groupControl)
+        out ItemsControl groupControl,
+        System.Windows.Rect? draggedBounds = null)
     {
         var controls = FindVisualDescendants<ItemsControl>(TileGroupsControl)
             .Where(control => control.Tag is TileGroup)
@@ -1519,7 +1975,14 @@ public partial class MainWindow : Window
                 control.ActualWidth,
                 control.ActualHeight);
         });
-        var resolved = TileAreaDropResolver.FindTarget(zones, pointer.X, pointer.Y);
+        var resolved = draggedBounds is { } bounds
+            ? TileAreaDropResolver.FindTargetForDraggedTile(
+                zones,
+                bounds.Left,
+                bounds.Top,
+                bounds.Width,
+                bounds.Height)
+            : TileAreaDropResolver.FindTarget(zones, pointer.X, pointer.Y);
         groupControl = controls.FirstOrDefault(control => ((TileGroup)control.Tag).Id == resolved?.GroupId)!;
         target = groupControl?.Tag as TileGroup ?? null!;
         return target is not null;
@@ -1672,8 +2135,10 @@ public partial class MainWindow : Window
 
             (int Column, int Row) location = added
                 ? Win10GroupLayout.FindFirstAvailable(target, tile)
-                : (Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0, Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan()),
-                   Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch)));
+                : (
+                    Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0,
+                        Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan()),
+                    Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch)));
             added |= Win10GroupLayout.Add(target, tile, location.Column, location.Row);
         }
 
@@ -1712,7 +2177,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var app = apps.FirstOrDefault(candidate => candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
+        var app = apps.FirstOrDefault(candidate =>
+            candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
         if (app is not null)
         {
             var tileLogo = tile.IconPosition == TileIconPosition.Center && tile.IconSize == 32
@@ -1761,7 +2227,8 @@ public partial class MainWindow : Window
 
                 foreach (var child in tile.FolderTiles)
                 {
-                    CaptureReorderPosition(child, folderControl.ItemContainerGenerator.ContainerFromItem(child), positions);
+                    CaptureReorderPosition(child, folderControl.ItemContainerGenerator.ContainerFromItem(child),
+                        positions);
                 }
             }
         }
@@ -2046,7 +2513,8 @@ public partial class MainWindow : Window
     private static extern int GetDpiForMonitor(nint monitor, int dpiType, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
+    private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height,
+        uint flags);
 
     [DllImport("user32.dll")]
     private static extern nint SendMessage(nint window, int message, nint wParam, nint lParam);

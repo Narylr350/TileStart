@@ -1,0 +1,85 @@
+<UserControl x:Class="TileStart.Host.TileGroupHeader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TileStart.Host"
+             Height="{x:Static local:Win10VisualMetrics.TileGroupHeaderHeight}"
+             Focusable="True"
+             FocusVisualStyle="{x:Null}"
+             Cursor="Arrow"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+    <Grid x:Name="MainGrid" Background="Transparent">
+        <Border x:Name="InteractionBorder"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="{x:Static local:Win10VisualMetrics.TileGroupHeaderBorderThickness}"
+                IsHitTestVisible="False" />
+
+        <Grid x:Name="ContentFrame"
+              Height="{x:Static local:Win10VisualMetrics.TileGroupHeaderHeight}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.TileGroupGripperGridLength}" />
+            </Grid.ColumnDefinitions>
+
+            <Border x:Name="NameTextBlockHost"
+                    Grid.Column="1"
+                    IsHitTestVisible="False">
+                <TextBlock x:Name="NameTextBlock"
+                           Margin="{x:Static local:Win10VisualMetrics.TileGroupTitleRestMargin}"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           FontFamily="Segoe UI, Microsoft YaHei UI"
+                           FontSize="{x:Static local:Win10VisualMetrics.TileGroupHeaderFontSize}"
+                           FontWeight="Normal"
+                           TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap" />
+            </Border>
+
+            <Border x:Name="NameTextBoxHost"
+                    Grid.Column="1"
+                    IsHitTestVisible="False">
+                <TextBox x:Name="NameTextBox"
+                         Visibility="Collapsed"
+                         Padding="0"
+                         VerticalContentAlignment="Center"
+                         Foreground="White"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         CaretBrush="White"
+                         FontFamily="Segoe UI, Microsoft YaHei UI"
+                         FontSize="{x:Static local:Win10VisualMetrics.TileGroupHeaderFontSize}"
+                         FontWeight="Normal"
+                         TextOptions.TextFormattingMode="Display"
+                         TextOptions.TextRenderingMode="ClearType"
+                         PreviewKeyDown="NameTextBox_PreviewKeyDown"
+                         LostKeyboardFocus="NameTextBox_LostKeyboardFocus" />
+            </Border>
+
+            <TextBlock x:Name="Gripper"
+                       Grid.Column="2"
+                       Margin="{x:Static local:Win10VisualMetrics.TileGroupGripperMargin}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="White"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="{x:Static local:Win10VisualMetrics.TileGroupGripperFontSize}"
+                       Text="&#xE76F;"
+                       Visibility="Collapsed"
+                       IsHitTestVisible="False" />
+        </Grid>
+
+        <Border x:Name="PrimaryFocusVisual"
+                Margin="-2"
+                BorderBrush="White"
+                BorderThickness="{x:Static local:Win10VisualMetrics.TileGroupPrimaryFocusBorderThickness}"
+                Visibility="Collapsed"
+                IsHitTestVisible="False" />
+        <Border x:Name="SecondaryFocusVisual"
+                BorderBrush="#FF000000"
+                BorderThickness="{x:Static local:Win10VisualMetrics.TileGroupSecondaryFocusBorderThickness}"
+                Visibility="Collapsed"
+                IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

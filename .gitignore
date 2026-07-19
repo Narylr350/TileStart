@@ -1,4 +1,6 @@
 /artifacts/
+/.idea/
+/*.sln.DotSettings.user
 /src/**/bin/
 /src/**/obj/
 /tests/**/bin/

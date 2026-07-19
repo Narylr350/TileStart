@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-17T13:20:00+08:00",
+  "capturedAt": "2026-07-19T00:00:00+08:00",
   "source": {
     "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
     "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
@@ -56,6 +56,17 @@
       "evidence": [
         "StartUI::StartViewModel::MoveTileBetweenGroups@0x1804f2d08"
       ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Dragging a tile out of an existing group uses an explicit new-container path. FindTargetGroup returns RearrangeNewContainerLocation before, after, or empty-column; UpdateNewGroupIndicator renders the provisional group boundary; OnTileRearrangeEvent creates the group model and then moves the tile into it.",
+      "evidence": [
+        "StartUI::TileRearrangeEngine::FindTargetGroup@0x18055ab38",
+        "StartUI::TileRearrangeEngine::FindTargetGroupInGridBounds@0x18055b574",
+        "StartUI::TileRearrangeEngine::UpdateNewGroupIndicator@0x18055dbd0",
+        "StartUI::StartViewModel::_GetNewGroupLocation@0x1804f7fd8",
+        "StartUI::StartViewModel::OnTileRearrangeEvent@0x1804f4ff8"
+      ]
     }
   ],
   "implementationContract": {
@@ -65,10 +76,26 @@
     "previewIsRollbackable": true,
     "commitOnlyOnDrop": true,
     "cancelRestoresAllGroups": true,
-    "crossGroupMoveRemovesEmptySourceGroup": true
+    "crossGroupMoveRemovesEmptySourceGroup": true,
+    "newGroupCreationUsesExplicitContainerLocation": true,
+    "newGroupLocations": ["before", "after", "empty-column"],
+    "newGroupPreviewIsTransactional": true,
+    "tileStartInternalNewGroupHitGeometry": "anchor-adjusted-tile-center",
+    "tileStartInternalNewGroupCreationBandDip": 16,
+    "tileStartDragAutoScroll": {
+      "status": "third-party-pattern-plus-independent-implementation",
+      "edgeZoneDip": 52,
+      "driver": "WPF CompositionTarget.Rendering",
+      "minimumSpeedDipPerSecond": 104,
+      "maximumSpeedDipPerSecond": 624,
+      "sourceReference": "Open-Shell/Open-Shell-Menu@95bbb17faf0f15e43e952ecba94dedca5b2b80c9 Src/StartMenu/StartMenuDLL/MenuContainer.cpp UpdateScroll/OnTimer and ProgramsTree.cpp DragOver",
+      "behavior": "Holding an internal tile drag inside the top or bottom edge zone continuously changes the ScrollViewer offset and reruns tile/group hit testing after each rendered scroll frame."
+    }
   },
   "unresolved": [
     "The native resolver's exact tie-breaking order when several mixed-size tiles can satisfy the same collision.",
-    "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries."
+    "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries.",
+    "The exact native Windows 10 Start drag auto-scroll edge size, acceleration curve, and maximum velocity are not yet isolated. TileStart uses one CellPitch as the edge zone and frame-time-based velocity so the behavior remains continuous across 60/120/240 Hz displays.",
+    "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path now follows the verified anchor-adjusted tile geometry and uses half the 32-DIP group-header height as a provisional center-point creation band; the exact threshold still requires native runtime tracing. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."
   ]
 }

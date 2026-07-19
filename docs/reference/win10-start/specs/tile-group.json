@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-19T00:00:00+08:00",
+  "source": {
+    "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
+    "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404",
+    "sameScaleScreenshot": "../native-group-header-654x242-150pct.png"
+  },
+  "metrics": {
+    "headerHeight": {
+      "value": 32,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml ContentFrame.Height"
+    },
+    "columns": {
+      "value": ["Auto", "*", 48],
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml ContentFrame.ColumnDefinitions"
+    },
+    "titleMarginRest": {
+      "value": [0, 0, 0, 0],
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "InteractionState_Rest"
+    },
+    "titleMarginInteractive": {
+      "value": [0, 0, 0, 0],
+      "compiledVisualStateValue": [8, 0, 0, 0],
+      "unit": "dip",
+      "status": "runtime-screenshot-verified",
+      "evidence": "The compiled visual state contains Metrics_GroupHeader_TextBlockMargin, but native-group-header-654x242-150pct.png aligns the interactive title with the tile left edge. Applying 8 DIP directly in TileStart's flatter WPF grid produced a measured 12 px offset at 150% DPI."
+    },
+    "titleFontSize": {
+      "value": 14,
+      "unit": "dip",
+      "status": "platform-default-approximation",
+      "evidence": "The compiled TextBlock inherits the platform text style; no explicit FontSize is present in GroupHeaderControl.xaml."
+    },
+    "titleVerticalAlignment": {
+      "value": "Center",
+      "status": "runtime-screenshot-verified",
+      "evidence": "At 150% DPI the native title and gripper both center at y=28 in native-group-header-654x242-150pct.png. The previous TileStart bottom alignment centered the title at y=61 while the gripper centered at y=50."
+    },
+    "gripperColumnWidth": {
+      "value": 48,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml third column"
+    },
+    "gripperFontSize": {
+      "value": 16,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml Gripper.FontSize"
+    },
+    "gripperMargin": {
+      "value": [16, 6, 16, 6],
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml Gripper.Margin"
+    },
+    "gripperGlyph": {
+      "value": "U+E76F",
+      "status": "compiled-xbf",
+      "evidence": "TileStyles.xaml GripperIcon"
+    },
+    "backgroundStrokeThickness": {
+      "value": 2,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml BackgroundElement.StrokeThickness"
+    },
+    "primaryFocusThickness": {
+      "value": 2,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupsFocusVisualPrimaryThickness"
+    },
+    "secondaryFocusThickness": {
+      "value": 1,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupsFocusVisualSecondaryThickness"
+    },
+    "tileStartHeaderToTilesSpacing": {
+      "value": 3,
+      "unit": "dip",
+      "status": "same-scale-screenshot-calibration",
+      "evidence": "At 150% DPI, native-group-header-654x242-150pct.png places the first tile row about 5 physical pixels below the previous TileStart rendering while preserving the verified 32-DIP header height and centered title baseline. This is a TileStart compensation, not a compiled XBF margin."
+    }
+  },
+  "verifiedBehavior": [
+    {
+      "status": "compiled-xbf",
+      "fact": "The resting header uses a TextBlock. A separate NameTextBoxHost is populated only while editing; the stock template does not use a permanently visible transparent TextBox.",
+      "evidence": [
+        "GroupHeaderControl.xaml NameTextBlockHost",
+        "GroupHeaderControl.xaml NameTextBoxHost",
+        "GroupHeaderControl::EnterEditMode@0x180385430",
+        "GroupHeaderControl::ExitEditMode@0x180386048"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Tapping the group header enters edit mode. Enter commits and exits; Escape exits without committing; lost focus commits and exits.",
+      "evidence": [
+        "GroupHeaderControl::MainGrid_Tapped@0x180386e00",
+        "GroupHeaderControl::TextBox_KeyUp@0x180388250",
+        "GroupHeaderControl::TextBox_LostFocus@0x180388410",
+        "GroupHeaderControl::CommitName@0x180384eb0"
+      ]
+    },
+    {
+      "status": "binary-and-runtime-verified",
+      "fact": "An unnamed customizable group is blank at rest. Pointer interaction selects FocusState_HoverPlaceholder and displays TileGrid_UnnamedGroupHint with the placeholder hover brush.",
+      "evidence": [
+        "GroupHeaderControl::ShouldShowPlaceholder@0x180116c5c",
+        "GroupHeaderControl::UpdateText@0x180116b98",
+        "GroupHeaderControl.xaml FocusState_HoverPlaceholder",
+        "native-unnamed-groups-rest-2396x670-150pct.png"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Pointer handlers and capture are registered on GroupHeaderControl itself. The 48-DIP gripper is a hover/pressed affordance, not the only drag hit target.",
+      "evidence": [
+        "GroupHeaderControl::GroupHeaderControl@0x18005fd10",
+        "GroupHeaderControl::OnPointerPressed@0x180387690",
+        "GroupHeaderControl::OnPointerReleased@0x1803879c0"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "Group rearrangement is transactional: begin creates TileGroupLayoutState, preview updates the group location, drop commits, and cancel reapplies the saved state.",
+      "evidence": [
+        "StartViewModel::OnGroupRearrangeEvent@0x1804f37f0",
+        "StartViewModel::TileGroupLayoutState::Apply@0x1804ef964"
+      ]
+    },
+    {
+      "status": "binary-verified",
+      "fact": "The native group resolver returns a two-dimensional target cell. It resolves a group column from X, uses the target group's vertical midpoint to choose its top or the cell after its bottom, and uses GetLastOccupiedCellInColumn to return lastRow + 1 when the pointer is in empty space at the end of a column.",
+      "evidence": [
+        "GroupRearrangeEngine::FindRearrangeTarget@0x18055e390",
+        "GroupRearrangeEngine::UpdateNewGroupIndicator@0x18055f7cc",
+        "ITileGroupViewModel::HeaderHeight::get@0x18055e23c"
+      ]
+    }
+  ],
+  "implementationContract": {
+    "restUsesTextBlock": true,
+    "editUsesTransientTextBox": true,
+    "tapHeaderToEdit": true,
+    "enterCommits": true,
+    "escapeCancels": true,
+    "lostFocusCommits": true,
+    "emptyNameShowsPlaceholderAtRest": false,
+    "emptyNamePlaceholderVisibility": "hover-pressed-drag-or-keyboard-focus",
+    "wholeHeaderStartsPointerGesture": true,
+    "hoverShowsGripper": true,
+    "pointerHoverSurface": "transparent-at-150-percent-reference",
+    "tileStartHeaderToTilesSpacingDip": 3,
+    "previewIsRollbackable": true,
+    "commitOnlyOnDrop": true,
+    "cancelRestoresGroupOrder": true,
+    "targetResolution": "two-dimensional-cell-through-layout-resolver",
+    "tileStartPackedPanelApproximation": "frozen-nearest-slot"
+  },
+  "unresolved": [
+    "The exact desktop mouse drag threshold is encapsulated by the native MouseGestureProvider. TileStart uses the Windows system drag distance until runtime tracing provides the internal value.",
+    "The exact native brush colors for placeholder hover, pressed, and drag depend on theme resources. The same-scale pointer-over reference shows no visible full-width hover fill, so TileStart keeps the ordinary pointer-over surface transparent while retaining accent feedback for pressed and drag states.",
+    "The exact group displacement easing is not yet isolated from the native theme transition. TileStart initially reuses the already calibrated Win10 reorder spline and requires Win10 runtime comparison.",
+    "TileStart's current Win10GroupWrapPanel still packs groups by collection order and does not persist the native two-dimensional group CellLocation. The frozen nearest-slot mapping is an interim compatibility layer, not a complete native outer layout resolver."
+  ]
+}

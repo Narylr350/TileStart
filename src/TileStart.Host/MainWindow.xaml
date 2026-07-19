@@ -682,21 +682,15 @@
                                         <MenuItem Header="删除组" Click="DeleteGroup_Click" />
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
-                                <TextBox Height="{x:Static local:Win10VisualMetrics.TileGroupHeaderHeight}"
-                                         Margin="4,0,0,0"
-                                         Padding="0,4,0,0"
-                                         Foreground="White"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         FontFamily="Segoe UI"
-                                         FontSize="14"
-                                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="单击命名组"
-                                         KeyDown="GroupName_KeyDown"
-                                         LostKeyboardFocus="GroupName_LostKeyboardFocus" />
-                                <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                        Height="{Binding PixelHeight}"
-                                        Margin="{x:Static local:Win10VisualMetrics.TileNestedPanelMargin}">
+                                <local:TileGroupHeader Margin="{x:Static local:Win10VisualMetrics.TileGroupHeaderMargin}"
+                                                       NameCommitted="GroupHeader_NameCommitted"
+                                                       PreviewMouseLeftButtonDown="GroupHeader_PreviewMouseLeftButtonDown"
+                                                       PreviewMouseMove="GroupHeader_PreviewMouseMove"
+                                                       PreviewMouseLeftButtonUp="GroupHeader_PreviewMouseLeftButtonUp"
+                                                       LostMouseCapture="GroupHeader_LostMouseCapture" />
+                                 <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                         Height="{Binding PixelHeight}"
+                                         Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
                                     <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                                   Height="{Binding PixelHeight}"
                                                   AllowDrop="True"

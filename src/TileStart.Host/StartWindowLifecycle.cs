@@ -4,9 +4,9 @@ public static class StartWindowLifecycle
 {
     public static bool HasAcquiredForeground(
         bool alreadyAcquired,
-        bool setForegroundSucceeded,
-        bool foregroundBelongsToStart) =>
-        alreadyAcquired || setForegroundSucceeded || foregroundBelongsToStart;
+        bool foregroundBelongsToStart,
+        bool receivedNativeActivation) =>
+        alreadyAcquired || foregroundBelongsToStart || receivedNativeActivation;
 
     public static bool ShouldHideForForegroundChange(
         bool hasAcquiredForeground,

@@ -7,16 +7,16 @@ public sealed class StartWindowLifecycleTests
     [InlineData(true, false, false, true)]
     [InlineData(false, true, false, true)]
     [InlineData(false, false, true, true)]
-    public void HasAcquiredForegroundAcceptsSuccessfulRequestOrObservedOwnership(
+    public void HasAcquiredForegroundRequiresObservedNativeOwnership(
         bool alreadyAcquired,
-        bool setForegroundSucceeded,
         bool foregroundBelongsToStart,
+        bool receivedNativeActivation,
         bool expected)
     {
         Assert.Equal(expected, StartWindowLifecycle.HasAcquiredForeground(
             alreadyAcquired,
-            setForegroundSucceeded,
-            foregroundBelongsToStart));
+            foregroundBelongsToStart,
+            receivedNativeActivation));
     }
 
     [Theory]
