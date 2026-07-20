@@ -17,6 +17,7 @@ using DragDropEffects = System.Windows.DragDropEffects;
 using ItemsControl = System.Windows.Controls.ItemsControl;
 using MenuItem = System.Windows.Controls.MenuItem;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using ScrollBar = System.Windows.Controls.Primitives.ScrollBar;
 
 namespace TileStart.Host;
 
@@ -159,7 +160,17 @@ public partial class MainWindow : Window
         StartMotion.StageEntrance(motionRoot, motionElements, _taskbarEdge == TaskbarEdge.Bottom, animationsEnabled);
         Show();
         UpdateLayout();
+        EnsureTileScrollBarClearance();
         PositionOnCurrentMonitor();
+        _ = Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Loaded,
+            () =>
+            {
+                if (EnsureTileScrollBarClearance())
+                {
+                    PositionOnCurrentMonitor();
+                }
+            });
         Activate();
         Focus();
         var handle = new WindowInteropHelper(this).Handle;
@@ -2118,6 +2129,34 @@ public partial class MainWindow : Window
             .DefaultIfEmpty(0)
             .Max();
         return Math.Max(1, Math.Max(widthColumns, visualColumns));
+    }
+
+    private bool EnsureTileScrollBarClearance()
+    {
+        if (TileScrollViewer.ComputedVerticalScrollBarVisibility != Visibility.Visible)
+        {
+            return false;
+        }
+
+        var scrollBar = FindVisualDescendants<ScrollBar>(TileScrollViewer)
+            .FirstOrDefault(candidate => candidate.Orientation == System.Windows.Controls.Orientation.Vertical);
+        if (scrollBar is null)
+        {
+            return false;
+        }
+
+        var footprint = scrollBar.ActualWidth + scrollBar.Margin.Left + scrollBar.Margin.Right;
+        var viewportWidth = TileScrollViewer.ViewportWidth;
+        var columns = Win10GroupWrapPanel.ColumnsForWidth(viewportWidth);
+        var deficit = Win10GroupWrapPanel.OverlayClearanceDeficit(viewportWidth, columns, footprint);
+        if (deficit < 0.1)
+        {
+            return false;
+        }
+
+        Width += deficit;
+        UpdateLayout();
+        return true;
     }
 
     private void RefreshGroupPanelLayout()

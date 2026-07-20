@@ -63,7 +63,7 @@ public static class TileGroupDropResolver
                 new Rect(
                     originLeft + column * Win10TileMetrics.GroupPitch,
                     0,
-                    Win10TileMetrics.GroupWidth,
+                    Win10VisualMetrics.TileGroupVisualWidth,
                     0),
                 IsEmptyColumn: true));
         }

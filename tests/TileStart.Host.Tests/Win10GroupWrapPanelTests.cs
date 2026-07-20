@@ -7,8 +7,8 @@ public sealed class Win10GroupWrapPanelTests
     [Fact]
     public void ThreeGroupsFitAtCurrentSavedTilePaneWidth()
     {
-        Assert.Equal(3, Win10GroupWrapPanel.ColumnsForWidth(1267.33));
-        Assert.Equal(1268, Win10GroupWrapPanel.RequiredWidth(3));
+        Assert.Equal(3, Win10GroupWrapPanel.ColumnsForWidth(1275.33));
+        Assert.Equal(1276, Win10GroupWrapPanel.RequiredWidth(3));
     }
 
     [Fact]
@@ -17,6 +17,25 @@ public sealed class Win10GroupWrapPanelTests
         Assert.Equal(2, Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(2)));
         Assert.Equal(3, Win10GroupWrapPanel.ColumnsForWidth(Win10GroupWrapPanel.RequiredWidth(3)));
     }
+
+    [Fact]
+    public void OverlayClearanceUsesTheMeasuredRuntimeWidths()
+    {
+        Assert.Equal(
+            8.67,
+            Win10GroupWrapPanel.OverlayClearanceDeficit(
+                viewportWidth: 1275.33,
+                columns: 3,
+                scrollBarFootprint: 8),
+            precision: 2);
+        Assert.Equal(
+            0,
+            Win10GroupWrapPanel.OverlayClearanceDeficit(
+                viewportWidth: 1284,
+                columns: 3,
+                scrollBarFootprint: 8));
+    }
+
     [Fact]
     public void TrulyNarrowerViewportWrapsInsteadOfClippingTheThirdGroup()
     {
@@ -40,5 +59,4 @@ public sealed class Win10GroupWrapPanelTests
         Assert.Equal(232, slots[2].Top);
         Assert.Equal(432, slots[3].Top);
     }
-
 }

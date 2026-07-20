@@ -31,9 +31,14 @@ public sealed class Win10VisualSpecTests
     {
         using var allApps = ReadSpec("all-apps.json");
         var allAppsMetrics = allApps.RootElement.GetProperty("metrics");
+        Assert.Equal(Win10VisualMetrics.AllAppsGridItemWidth, Value(allAppsMetrics, "gridItemWidth"));
         Assert.Equal(Win10VisualMetrics.AllAppsRowHeight, Value(allAppsMetrics, "rowHeight"));
         Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderHeight, Value(allAppsMetrics, "groupHeaderHeight"));
         AssertThickness(Win10VisualMetrics.AllAppsListPadding, allAppsMetrics.GetProperty("listPadding").GetProperty("value"));
+        Assert.Equal(
+            (Win10VisualMetrics.AllAppsWidth - Win10VisualMetrics.AllAppsGridItemWidth) / 2,
+            Win10VisualMetrics.AllAppsItemMargin.Left);
+        Assert.Equal(Win10VisualMetrics.AllAppsItemMargin.Left, Win10VisualMetrics.AllAppsItemMargin.Right);
 
         using var alphabet = ReadSpec("alphabet-index.json");
         var alphabetMetrics = alphabet.RootElement.GetProperty("metrics");
@@ -64,6 +69,13 @@ public sealed class Win10VisualSpecTests
 
         Assert.Equal(Win10VisualMetrics.TileGroupHeaderHeight, Value(metrics, "groupHeaderHeight"));
         Assert.Equal(Win10VisualMetrics.TileReservedBrandingSpace, Value(metrics, "reservedBrandingSpace"));
+        Assert.Equal(
+            Win10VisualMetrics.TileGroupVisualWidth,
+            Win10TileMetrics.GroupWidth + Win10VisualMetrics.TileNestedPanelMargin.Left +
+            Win10VisualMetrics.TileNestedPanelMargin.Right);
+        Assert.Equal(
+            Win10VisualMetrics.TileGroupVisualGap,
+            Win10TileMetrics.GroupPitch - Win10VisualMetrics.TileGroupVisualWidth);
         Assert.Equal(Win10VisualMetrics.TileReservedBrandingSpace, Win10VisualMetrics.TileReservedBrandingGridLength.Value);
         AssertThickness(Win10VisualMetrics.TileNestedPanelMargin, metrics.GetProperty("nestedPanelMargin").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.TileBrandingMargin, metrics.GetProperty("bottomAlignedTextMargin").GetProperty("value"), horizontalInset: 8);

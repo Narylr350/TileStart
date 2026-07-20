@@ -7,6 +7,19 @@
     "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
   },
   "metrics": {
+    "gridItemWidth": {
+      "value": 244.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "Metrics_AllAppsGridItem_Width_Grid",
+      "source": {
+        "file": "TileStyles.xaml",
+        "xbfResource": "TileStyles.xbf",
+        "xbfSha256": "27EAA1206414863D1691B374106DC0D102C227C28A110EEB5068FEF24A8546F4",
+        "xamlSha256": "604015D8D09A87865A808596630B697C72E8E3616EA175386DB2E36E5D41084B",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
     "rowHeight": {
       "value": 36.0,
       "unit": "DIP",

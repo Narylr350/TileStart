@@ -7,6 +7,8 @@ public static class Win10VisualMetrics
     public const double CollapsedNavigationWidth = 48;
     public const double NavigationItemHeight = 48;
     public const double AllAppsWidth = 260;
+    public const double AllAppsGridItemWidth = 244;
+    public const double AllAppsHorizontalInset = (AllAppsWidth - AllAppsGridItemWidth) / 2;
     public const double AllAppsRowHeight = 36;
     public const double AllAppsGroupHeaderHeight = 36;
     public const double AlphabetCellSize = 48;
@@ -23,6 +25,12 @@ public static class Win10VisualMetrics
     public const double TileGroupPrimaryFocusThickness = 2;
     public const double TileGroupSecondaryFocusThickness = 1;
     public const double TileGroupHeaderToTilesSpacing = 3;
+    public const double TileNestedPanelHorizontalMargin = 4;
+
+    public const double TileGroupVisualWidth =
+        Win10TileMetrics.GroupWidth + TileNestedPanelHorizontalMargin * 2;
+
+    public const double TileGroupVisualGap = Win10TileMetrics.GroupPitch - TileGroupVisualWidth;
     public const double TileReservedBrandingSpace = 28;
     public const double TileLogoVerticalOffset = -2;
     public const double TileFolderHeaderHeight = 32;
@@ -51,6 +59,8 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
 
+    public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);
+
     public static Thickness ContextMenuItemPadding { get; } = new(12, 7, 12, 7);
 
     public static Thickness ContextMenuPresenterPadding { get; } = new(0, 4, 0, 4);
@@ -69,9 +79,15 @@ public static class Win10VisualMetrics
 
     public static Thickness TileGroupGripperMargin { get; } = new(16, 6, 16, 6);
 
-    public static Thickness TileNestedPanelMargin { get; } = new(4, 0, 4, 4);
+    public static Thickness TileNestedPanelMargin { get; } =
+        new(TileNestedPanelHorizontalMargin, 0, TileNestedPanelHorizontalMargin, 4);
 
-    public static Thickness TileGroupTilesMargin { get; } = new(4, TileGroupHeaderToTilesSpacing, 4, 4);
+    public static Thickness TileGroupTilesMargin { get; } =
+        new(
+            TileNestedPanelHorizontalMargin,
+            TileGroupHeaderToTilesSpacing,
+            TileNestedPanelHorizontalMargin,
+            4);
 
     public static Thickness TileBrandingMargin { get; } = new(8, 0, 8, 5);
 

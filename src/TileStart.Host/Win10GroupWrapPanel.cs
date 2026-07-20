@@ -28,7 +28,7 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
 
         return Math.Max(1, (int)Math.Floor(
             (availableWidth
-             + Win10TileMetrics.GroupGap
+             + Win10VisualMetrics.TileGroupVisualGap
              + LayoutRoundingAllowance)
             / Win10TileMetrics.GroupPitch));
     }
@@ -37,7 +37,20 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
     {
         return columns <= 0
             ? 0
-            : columns * Win10TileMetrics.GroupWidth + (columns - 1) * Win10TileMetrics.GroupGap;
+            : (columns - 1) * Win10TileMetrics.GroupPitch + Win10VisualMetrics.TileGroupVisualWidth;
+    }
+
+    internal static double OverlayClearanceDeficit(
+        double viewportWidth,
+        int columns,
+        double scrollBarFootprint)
+    {
+        if (!double.IsFinite(viewportWidth) || !double.IsFinite(scrollBarFootprint))
+        {
+            return 0;
+        }
+
+        return Math.Max(0, RequiredWidth(columns) + Math.Max(0, scrollBarFootprint) - viewportWidth);
     }
 
     internal static Win10GroupPanelSlot[] CalculateSlots(
@@ -88,7 +101,7 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
 
         foreach (System.Windows.UIElement child in InternalChildren)
         {
-            child.Measure(new System.Windows.Size(Win10TileMetrics.GroupWidth, double.PositiveInfinity));
+            child.Measure(new System.Windows.Size(Win10VisualMetrics.TileGroupVisualWidth, double.PositiveInfinity));
         }
 
         var columns = GetColumnCount(availableSize.Width);
@@ -114,7 +127,7 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
             InternalChildren[slot.Index].Arrange(new System.Windows.Rect(
                 slot.Column * Win10TileMetrics.GroupPitch,
                 slot.Top,
-                Win10TileMetrics.GroupWidth,
+                Win10VisualMetrics.TileGroupVisualWidth,
                 slot.Height));
         }
 

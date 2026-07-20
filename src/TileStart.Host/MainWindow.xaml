@@ -149,7 +149,7 @@
 
         <Style x:Key="AppRowStyle" TargetType="Button">
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AllAppsRowHeight}" />
-            <Setter Property="Margin" Value="14,0" />
+            <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
@@ -161,6 +161,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Background" Background="{TemplateBinding Background}">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -339,7 +340,7 @@
 
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
             <Setter Property="Height" Value="36" />
-            <Setter Property="Margin" Value="14,0" />
+            <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Foreground" Value="White" />
@@ -576,7 +577,7 @@
                 <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
                     <StackPanel x:Name="RecentPanel">
                         <TextBlock Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
-                                   Margin="14,0"
+                                   Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
                                    VerticalAlignment="Center"
                                    FontSize="12"
                                    Text="最近添加" />
@@ -672,7 +673,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:TileGroup}">
-                            <StackPanel Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                            <StackPanel Width="{x:Static local:Win10VisualMetrics.TileGroupVisualWidth}"
                                         Margin="0,0,0,24">
                                 <StackPanel.ContextMenu>
                                     <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
