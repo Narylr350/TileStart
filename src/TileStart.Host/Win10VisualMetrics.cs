@@ -28,6 +28,10 @@ public static class Win10VisualMetrics
     public const double TileFolderHeaderHeight = 32;
     public const double TileFolderSeparatorHeight = 1;
     public const double TileFolderBottomMargin = 4;
+    public const double TileScrollBarWidth = 6;
+    public const double TileScrollBarRightMargin = 2;
+    public const double TileScrollBarLayoutWidth = TileScrollBarWidth + TileScrollBarRightMargin;
+    public const double TileScrollViewerLeftMargin = 28;
 
     public static GridLength CollapsedNavigationGridLength { get; } = new(CollapsedNavigationWidth);
 
@@ -70,4 +74,8 @@ public static class Win10VisualMetrics
     public static Thickness TileGroupTilesMargin { get; } = new(4, TileGroupHeaderToTilesSpacing, 4, 4);
 
     public static Thickness TileBrandingMargin { get; } = new(8, 0, 8, 5);
+
+    public static Thickness TileScrollBarMargin { get; } = new(0, 2, TileScrollBarRightMargin, 2);
+
+    public static Thickness TileScrollViewerMargin { get; } = new(TileScrollViewerLeftMargin, 28, 0, 0);
 }

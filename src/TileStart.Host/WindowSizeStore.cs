@@ -5,7 +5,11 @@ namespace TileStart.Host;
 
 public static class WindowSizeStore
 {
-    private static readonly string DirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+    internal const int CurrentFormatVersion = 1;
+
+    private static readonly string DirectoryPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+
     private static readonly string FilePath = Path.Combine(DirectoryPath, "window.json");
 
     public static (double Width, double Height)? Load()
@@ -20,7 +24,7 @@ public static class WindowSizeStore
             var size = JsonSerializer.Deserialize<SavedSize>(File.ReadAllText(FilePath));
             return size is null || !double.IsFinite(size.Width) || !double.IsFinite(size.Height)
                 ? null
-                : (size.Width, size.Height);
+                : (MigrateWidth(size.Width, size.Version), size.Height);
         }
         catch (IOException)
         {
@@ -41,7 +45,12 @@ public static class WindowSizeStore
         try
         {
             Directory.CreateDirectory(DirectoryPath);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(new SavedSize(width, height)));
+            File.WriteAllText(FilePath, JsonSerializer.Serialize(new SavedSize
+            {
+                Width = width,
+                Height = height,
+                Version = CurrentFormatVersion,
+            }));
         }
         catch (IOException)
         {
@@ -51,5 +60,15 @@ public static class WindowSizeStore
         }
     }
 
-    private sealed record SavedSize(double Width, double Height);
+    internal static double MigrateWidth(double width, int version) =>
+        version < CurrentFormatVersion
+            ? width + Win10VisualMetrics.TileScrollBarLayoutWidth
+            : width;
+
+    private sealed class SavedSize
+    {
+        public double Width { get; init; }
+        public double Height { get; init; }
+        public int Version { get; init; }
+    }
 }

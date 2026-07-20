@@ -69,6 +69,22 @@ public sealed class TileGroupDragTests
     }
 
     [Fact]
+    public void ResolverCanMoveAGroupIntoAnEmptyThirdColumn()
+    {
+        var targets = TileGroupDropResolver.IncludeEmptyColumns(
+            [
+                new TileGroupDropTarget(0, 0, new Rect(0, 0, 412, 232)),
+                new TileGroupDropTarget(1, 0, new Rect(428, 0, 412, 232)),
+            ],
+            columns: 3);
+
+        Assert.Contains(targets, target => target.Column == 2 && target.IsEmptyColumn);
+        Assert.Equal(
+            new TileGroupCell(2, 0),
+            TileGroupDropResolver.ResolveTargetCell(new Point(1062, 700), targets));
+    }
+
+    [Fact]
     public void AdjacentGroupsCanExchangeInBothDirections()
     {
         var first = Group("一", 0, 0);

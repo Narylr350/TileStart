@@ -43,8 +43,8 @@
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
 
         <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
-            <Setter Property="Width" Value="6" />
-            <Setter Property="Margin" Value="0,2,2,2" />
+            <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.TileScrollBarWidth}" />
+            <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileScrollBarMargin}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -660,7 +660,7 @@
                 </ContextMenu>
             </Border.ContextMenu>
             <ScrollViewer x:Name="TileScrollViewer"
-                          Margin="28,28,0,0"
+                          Margin="{x:Static local:Win10VisualMetrics.TileScrollViewerMargin}"
                           Style="{StaticResource TileScrollViewerStyle}">
                 <ItemsControl x:Name="TileGroupsControl"
                               Margin="0,0,0,20"

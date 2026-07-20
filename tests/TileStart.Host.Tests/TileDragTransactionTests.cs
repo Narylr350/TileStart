@@ -97,6 +97,56 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void EmptyThirdOuterColumnCanReceiveAndArrangeANewGroup()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var source = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles = [moving, Tile("remaining", TileSize.Medium, 2, 0)],
+        };
+        var second = new TileGroup
+        {
+            GroupColumn = 1,
+            GroupRow = 0,
+            Tiles = [Tile("second", TileSize.Medium, 0, 0)],
+        };
+        var zones = new[]
+        {
+            new TileGroupDropZone(source.Id, 0, 0, 412, 204, GroupColumn: 0, GroupRow: 0),
+            new TileGroupDropZone(
+                second.Id,
+                Win10TileMetrics.GroupPitch,
+                0,
+                412,
+                204,
+                GroupColumn: 1,
+                GroupRow: 0),
+        };
+        var geometry = new TileDragHitGeometry(zones);
+        var layout = new TileLayout { Groups = [source, second] };
+        var target = geometry.FindNewGroupTarget(
+            draggedLeft: Win10TileMetrics.GroupPitch * 2,
+            draggedTop: 0,
+            draggedHeight: Win10TileMetrics.Height(TileSize.Medium),
+            columnSpan: TileSize.Medium.ColumnSpan(),
+            groupColumns: 3);
+
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        var created = transaction.PreviewNewGroup(target);
+        var slots = Win10GroupWrapPanel.CalculateSlots(
+            layout.Groups
+                .Select((group, index) => new Win10GroupPanelItem(index, group.GroupColumn, group.GroupRow, 232))
+                .ToArray(),
+            columns: 3);
+
+        Assert.Equal(new TileNewGroupDropTarget(2, 0, 0, 0), target);
+        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(created));
+        Assert.Equal(2, slots.Single(slot => slot.Index == layout.Groups.IndexOf(created)).Column);
+    }
+
+    [Fact]
     public void ProvisionalNewGroupCanMoveItsPlaceholderWithoutBeingRecreated()
     {
         var moving = Tile("moving", TileSize.Medium, 0, 0);

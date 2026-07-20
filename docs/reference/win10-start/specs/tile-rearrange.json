@@ -69,6 +69,15 @@
       ]
     },
     {
+      "status": "binary-verified",
+      "fact": "New-container hit testing first maps the anchor-adjusted horizontal point through GroupColumnFromPixels, sorts candidate groups by ITileGroupViewModel.CellLocation, and compares the vertical hit against HeaderHeight and GroupHeightFromCells midpoint bands. _GetNewGroupLocation resolves before, after, and empty-column results from model cell coordinates rather than animated visual Top positions.",
+      "evidence": [
+        "StartUI::TileRearrangeEngine::FindTargetGroup@0x18055ab38",
+        "StartUI::TileRearrangeEngine::FindTargetGroupInGridBounds@0x18055b574",
+        "StartUI::StartViewModel::_GetNewGroupLocation@0x1804f7fd8"
+      ]
+    },
+    {
       "status": "runtime-verified",
       "fact": "A medium tile detached into the vertical gap between two groups creates a new intervening group. The tile retains the horizontal drop cell within that group rather than compacting to column zero, and the following group moves below it.",
       "evidence": [
@@ -91,6 +100,17 @@
     "newGroupPreservesDraggedTileColumn": true,
     "newGroupShiftsOnlyFollowingGroupsInTargetOuterColumn": true,
     "outerGroupCoordinatesPersisted": true,
+    "tileStartInternalDropGeometry": {
+      "status": "binary-backed-independent-implementation",
+      "source": "pre-drag TileGroupDropZone snapshot",
+      "behavior": "Existing-group and new-group hit testing use one immutable set of outer group bounds and CellLocation coordinates for the duration of an internal tile drag. Reflow animations may move visuals but cannot move the logical hit boundaries until the transaction ends.",
+      "reason": "Using live visual Top values after a provisional group insertion creates a feedback loop: the preview moves the following group, the next hit test changes from the intended row to the following row, and the preview repeatedly recreates itself. StartUI resolves the new-container path from model CellLocation and grid metrics instead of animated visual coordinates.",
+      "evidence": [
+        "StartUI::TileRearrangeEngine::FindTargetGroup@0x18055ab38",
+        "StartUI::StartViewModel::_GetNewGroupLocation@0x1804f7fd8",
+        "TileDragHitGeometryTests.SnapshotKeepsInsertionAtTheOriginalFollowingRow"
+      ]
+    },
     "tileStartDraggedTilePlaceholderOpacity": 0.24,
     "tileStartPreviewSnapshotStrategy": "lazy-source-and-target",
     "tileStartPreviewRestoreScope": "previously-affected-groups-only",
@@ -119,6 +139,6 @@
     "The native Windows 10 Start implementation's exact source of the detachment bottom boundary has not been isolated. TileStart snapshots the pre-drag group height because its own rollbackable preview can expand live PixelHeight; this is a regression-backed compatibility strategy, not evidence that StartUI stores the same field.",
     "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries.",
     "The exact native Windows 10 Start drag auto-scroll edge size, acceleration curve, and maximum velocity are not yet isolated. TileStart uses one CellPitch as the edge zone and frame-time-based velocity so the behavior remains continuous across 60/120/240 Hz displays.",
-    "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path now follows the verified anchor-adjusted tile geometry and uses half the 32-DIP group-header height as a provisional center-point creation band; the exact threshold still requires native runtime tracing. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."
+    "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path follows the verified anchor-adjusted tile geometry and now keeps model-like outer hit boundaries stable for the drag transaction, but still uses half the 32-DIP group-header height as a provisional center-point creation band. The exact native entry threshold, exit threshold, and any hysteresis still require runtime tracing or controlled original-menu video measurement. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."
   ]
 }
