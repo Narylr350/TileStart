@@ -26,6 +26,46 @@ public static class TileContextActions
         return true;
     }
 
+    public static bool DissolveFolder(TileLayout layout, TileItem folder)
+    {
+        var group = layout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(folder));
+        if (group is null || !folder.IsTileFolder)
+        {
+            return false;
+        }
+
+        var originColumn = folder.Column;
+        var originRow = folder.Row;
+        var children = folder.FolderTiles
+            .OrderBy(child => child.Row)
+            .ThenBy(child => child.Column)
+            .ToArray();
+
+        group.Tiles.Remove(folder);
+        folder.IsFolderExpanded = false;
+        folder.FolderTiles.Clear();
+        foreach (var child in children)
+        {
+            child.Column = Math.Clamp(
+                originColumn + child.Column,
+                0,
+                Win10TileMetrics.GroupColumns - child.Size.ColumnSpan());
+            child.Row = Math.Max(0, originRow + child.Row);
+            group.Tiles.Add(child);
+        }
+
+        if (group.Tiles.Count == 0)
+        {
+            TileGroupManager.Remove(layout, group);
+        }
+        else
+        {
+            Win10GroupLayout.Normalize(group);
+        }
+
+        return true;
+    }
+
     public static bool Resize(TileLayout layout, TileItem tile, TileSize size)
     {
         var group = layout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));

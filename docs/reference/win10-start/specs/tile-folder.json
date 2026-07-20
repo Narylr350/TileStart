@@ -100,6 +100,8 @@
     "childrenPersistInLayout": true,
     "folderDeleteWhenEmpty": true,
     "oneChildAutoDissolve": false,
+    "tileStartManualDissolveFromContextMenu": true,
+    "tileStartManualDissolvePlacement": "Restore children to the containing group using folder origin plus folder-local child coordinates, then normalize collisions without discarding children.",
     "activationTogglesInlineExpansion": true,
     "regionStartsAfterFolderCellBottom": true,
     "regionSpansGroupWidth": true,

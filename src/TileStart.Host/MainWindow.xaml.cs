@@ -574,6 +574,10 @@ public partial class MainWindow : Window
                         ? Visibility.Visible
                         : Visibility.Collapsed;
                 }
+                else if (item.Tag as string == "DissolveFolder")
+                {
+                    item.Visibility = tile.IsTileFolder ? Visibility.Visible : Visibility.Collapsed;
+                }
                 else if (item.IsCheckable)
                 {
                     item.IsChecked = TileContextActions.IsSelectedSize(tile.Size, item.Tag as string);
@@ -1072,6 +1076,25 @@ public partial class MainWindow : Window
         {
             TileLayoutStore.Save(TileLayout);
         }
+    }
+
+    private void DissolveFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is null)
+        {
+            return;
+        }
+
+        var previousPositions = CaptureReorderPositions();
+        if (!TileContextActions.DissolveFolder(TileLayout, tile))
+        {
+            return;
+        }
+
+        UpdateLayout();
+        AnimateReorderFrom(previousPositions);
+        TileLayoutStore.Save(TileLayout);
     }
 
     private void ResizeTile_Click(object sender, RoutedEventArgs e)

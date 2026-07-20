@@ -79,7 +79,6 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         if (!_isEditing)
         {
             _isPressed = true;
-            Focus();
             ApplyVisualState();
         }
 
@@ -198,9 +197,9 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         _isEditing = false;
         NameTextBoxHost.IsHitTestVisible = false;
         NameTextBox.Visibility = Visibility.Collapsed;
+        Keyboard.ClearFocus();
         UpdateText();
         ApplyVisualState();
-        Focus();
         _endingEdit = false;
     }
 
@@ -222,11 +221,17 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         Gripper.Visibility = interactive ? Visibility.Visible : Visibility.Collapsed;
         UpdateTitleVisibility();
 
-        if (_isEditing || _isDragging || _isPressed)
+        if (_isEditing)
         {
             var accent = SystemParameters.WindowGlassColor;
             InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
             InteractionBorder.BorderBrush = CreateBrush(0xd0, accent.R, accent.G, accent.B);
+        }
+        else if (_isDragging || _isPressed)
+        {
+            var accent = SystemParameters.WindowGlassColor;
+            InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
+            InteractionBorder.BorderBrush = TransparentBrush;
         }
         else
         {
@@ -234,7 +239,7 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
             InteractionBorder.BorderBrush = TransparentBrush;
         }
 
-        var keyboardFocus = IsKeyboardFocusWithin && !_isEditing;
+        var keyboardFocus = IsKeyboardFocusWithin && !_isEditing && !_isPressed && !_isDragging;
         PrimaryFocusVisual.Visibility = keyboardFocus ? Visibility.Visible : Visibility.Collapsed;
         SecondaryFocusVisual.Visibility = keyboardFocus ? Visibility.Visible : Visibility.Collapsed;
     }

@@ -51,6 +51,24 @@ public sealed class TileGroupHeaderTests
     }
 
     [Fact]
+    public void PointerDragDoesNotDrawAGroupHeaderBorder()
+    {
+        RunOnSta(() =>
+        {
+            var header = new TileGroupHeader
+            {
+                DataContext = new TileGroup { Name = "工具" },
+            };
+
+            header.SetDragging(true);
+
+            var border = Assert.IsType<System.Windows.Controls.Border>(header.FindName("InteractionBorder"));
+            var brush = Assert.IsType<System.Windows.Media.SolidColorBrush>(border.BorderBrush);
+            Assert.Equal(0, brush.Color.A);
+        });
+    }
+
+    [Fact]
     public void ScreenshotCalibrationKeepsAThreeDipGapBetweenHeaderAndTiles()
     {
         Assert.Equal(3, Win10VisualMetrics.TileGroupTilesMargin.Top);

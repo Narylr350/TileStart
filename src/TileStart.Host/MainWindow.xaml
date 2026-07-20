@@ -805,18 +805,23 @@
                                                             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#505050" />
                                                             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
                                                         </ContextMenu.Resources>
-                                                        <MenuItem Header="从“开始”屏幕取消固定"
-                                                                  Style="{StaticResource StartMenuItemStyle}"
-                                                                  Click="UnpinTile_Click">
+                                                         <MenuItem Header="从“开始”屏幕取消固定"
+                                                                   Style="{StaticResource StartMenuItemStyle}"
+                                                                   Click="UnpinTile_Click">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Foreground="White"
                                                                            FontFamily="Segoe MDL2 Assets"
                                                                            FontSize="16"
                                                                            Text="&#xE77A;" />
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="调整大小"
-                                                                  Style="{StaticResource StartMenuItemStyle}">
+                                                             </MenuItem.Icon>
+                                                         </MenuItem>
+                                                         <MenuItem Header="解散文件夹"
+                                                                   Tag="DissolveFolder"
+                                                                   Visibility="Collapsed"
+                                                                   Style="{StaticResource StartMenuItemStyle}"
+                                                                   Click="DissolveFolder_Click" />
+                                                         <MenuItem Header="调整大小"
+                                                                   Style="{StaticResource StartMenuItemStyle}">
                                                             <MenuItem Header="小"
                                                                       Tag="Small"
                                                                       IsCheckable="True"
