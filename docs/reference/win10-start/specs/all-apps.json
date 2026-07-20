@@ -46,6 +46,28 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     },
+    "groupHeaderFontSize": {
+      "value": 12.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.xaml Header.FontSize"
+    },
+    "groupHeaderPadding": {
+      "value": [
+        4.0,
+        0.0,
+        0.0,
+        10.0
+      ],
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.xaml GroupHeaderPadding fallback"
+    },
+    "groupHeaderVerticalContentAlignment": {
+      "value": "Bottom",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.xaml Header.VerticalContentAlignment"
+    },
     "listPadding": {
       "value": [
         0.0,

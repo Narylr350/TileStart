@@ -5,12 +5,14 @@ namespace TileStart.Host;
 public static class Win10VisualMetrics
 {
     public const double CollapsedNavigationWidth = 48;
+    public const double ExpandedNavigationWidth = 256;
     public const double NavigationItemHeight = 48;
     public const double AllAppsWidth = 260;
     public const double AllAppsGridItemWidth = 244;
     public const double AllAppsHorizontalInset = (AllAppsWidth - AllAppsGridItemWidth) / 2;
     public const double AllAppsRowHeight = 36;
     public const double AllAppsGroupHeaderHeight = 36;
+    public const double AllAppsGroupHeaderFontSize = 12;
     public const double AlphabetCellSize = 48;
     public const double AlphabetFontSize = 20;
     public const double ContextMenuFontSize = 12;
@@ -65,7 +67,10 @@ public static class Win10VisualMetrics
 
     public static Thickness ContextMenuPresenterPadding { get; } = new(0, 4, 0, 4);
 
-    public static Thickness TileGroupHeaderMargin { get; } = new(4, 0, 0, 0);
+    public static Thickness TileGroupHeaderMargin { get; } =
+        new(TileNestedPanelHorizontalMargin, 0, TileNestedPanelHorizontalMargin, 0);
+
+    public static Thickness AllAppsGroupHeaderPadding { get; } = new(4, 0, 0, 10);
 
     public static Thickness TileGroupHeaderBorderThickness { get; } = new(TileGroupHeaderStrokeThickness);
 

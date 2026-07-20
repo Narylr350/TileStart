@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-resize",
+  "capturedAt": "2026-07-20T00:00:00+08:00",
+  "environment": {
+    "os": "Windows 10 22H2 build 19045",
+    "dpi": "150%",
+    "refreshRateHz": 240,
+    "taskbarEdge": "Bottom"
+  },
+  "verifiedBehavior": [
+    {
+      "status": "native-user-observation",
+      "fact": "The native Start menu horizontal size resolves to capacities for one, two, or three tile-group columns rather than persisting an arbitrary width.",
+      "evidence": "User comparison against the native Win10 Start menu on 2026-07-20."
+    },
+    {
+      "status": "native-user-observation",
+      "fact": "The native Start menu vertical size follows the pointer continuously within a bounded range.",
+      "evidence": "User comparison against the native Win10 Start menu on 2026-07-20."
+    },
+    {
+      "status": "tilestart-runtime-verified",
+      "fact": "TileStart exposes top, right, and top-right resize hit targets across the full window surface; horizontal release snaps to one of three group-width targets while vertical size remains continuous.",
+      "evidence": "Win10 150% DPI manual validation accepted by the user on 2026-07-20."
+    },
+    {
+      "status": "tilestart-runtime-verified-approximation",
+      "fact": "TileStart lets the native resize loop track the pointer, then animates the released width to the nearest legal target from CompositionTarget.Rendering and applies the existing group-reorder motion after layout changes.",
+      "evidence": "Manual validation accepted as sufficiently close on 2026-07-20."
+    }
+  ],
+  "implementationContract": {
+    "minimumGroupColumns": 1,
+    "maximumGroupColumns": 3,
+    "horizontalTracking": "native-continuous-preview",
+    "horizontalCommit": "nearest-discrete-group-width-on-release",
+    "verticalTracking": "continuous-within-monitor-work-area",
+    "snapAnimationDriver": "CompositionTarget.Rendering",
+    "snapDurationMilliseconds": 180,
+    "groupReflowMotion": "Win10ReorderMotion"
+  },
+  "unresolved": [
+    "The native Start menu's exact horizontal transition thresholds have not been isolated from StartUI binaries.",
+    "The native window-edge easing and duration have not been isolated. TileStart's 180 ms cubic ease-out is an independently implemented runtime-calibrated approximation.",
+    "Resize behavior still requires separate validation for non-bottom taskbars, multiple monitors, and DPI values other than 150%."
+  ]
+}

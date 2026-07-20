@@ -41,6 +41,7 @@
         <SolidColorBrush x:Key="PressedBackground" Color="#32FFFFFF" />
         <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
+        <SolidColorBrush x:Key="ExpandedNavigationBackground" Color="#EE202020" />
 
         <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
             <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.TileScrollBarWidth}" />
@@ -119,20 +120,41 @@
         </Style>
 
         <Style x:Key="RailButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}" />
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.NavigationItemHeight}" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-            <Setter Property="FontSize" Value="16" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Background" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border x:Name="Background"
+                                Background="{TemplateBinding Background}"
+                                ClipToBounds="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Text="{TemplateBinding Content}" />
+                                <TextBlock Grid.Column="1"
+                                           Margin="12,0,16,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontFamily="Segoe UI, Microsoft YaHei UI"
+                                           FontSize="14"
+                                           Text="{TemplateBinding Tag}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -341,12 +363,13 @@
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
-            <Setter Property="Padding" Value="0" />
+            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPadding}" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Bottom" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderFontSize}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -354,7 +377,7 @@
                         <Border x:Name="Background" Background="{TemplateBinding Background}">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center" />
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -516,19 +539,72 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Column="0">
+        <Grid x:Name="NavigationPane"
+              Grid.Column="0"
+              Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
+              HorizontalAlignment="Left"
+              Background="Transparent"
+              Panel.ZIndex="30">
             <Grid.RowDefinitions>
                 <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemGridLength}" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <Button Grid.Row="0" Style="{StaticResource RailButtonStyle}" Content="&#xE700;" ToolTip="展开" />
+            <Button x:Name="NavigationToggleButton"
+                    Grid.Row="0"
+                    Style="{StaticResource RailButtonStyle}"
+                    Content="&#xE700;"
+                    Tag="开始"
+                    ToolTip="展开"
+                    Click="NavigationToggleButton_Click" />
             <StackPanel Grid.Row="2">
-                <Button Style="{StaticResource RailButtonStyle}" Content="&#xE77B;" ToolTip="用户" />
-                <Button Style="{StaticResource RailButtonStyle}" Content="&#xE8A5;" ToolTip="文档" />
-                <Button Style="{StaticResource RailButtonStyle}" Content="&#xEB9F;" ToolTip="图片" />
-                <Button Style="{StaticResource RailButtonStyle}" Content="&#xE713;" ToolTip="设置" />
-                <Button Style="{StaticResource RailButtonStyle}" Content="&#xE7E8;" ToolTip="电源" />
+                <Button x:Name="UserNavigationButton"
+                        Style="{StaticResource RailButtonStyle}"
+                        Content="&#xE77B;"
+                        Tag="{Binding CurrentUserName}"
+                        ToolTip="用户"
+                        Click="UserNavigationButton_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource StartContextMenuStyle}"
+                                     Opened="StartContextMenu_Opened"
+                                     Closed="StartContextMenu_Closed">
+                            <MenuItem Header="更改账户设置" Style="{StaticResource StartMenuItemStyle}" Click="AccountSettings_Click" />
+                            <MenuItem Header="锁定" Style="{StaticResource StartMenuItemStyle}" Click="LockSession_Click" />
+                            <MenuItem Header="注销" Style="{StaticResource StartMenuItemStyle}" Click="SignOut_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                <Button Style="{StaticResource RailButtonStyle}"
+                        Content="&#xE8A5;"
+                        Tag="文档"
+                        ToolTip="文档"
+                        Click="DocumentsNavigationButton_Click" />
+                <Button Style="{StaticResource RailButtonStyle}"
+                        Content="&#xEB9F;"
+                        Tag="图片"
+                        ToolTip="图片"
+                        Click="PicturesNavigationButton_Click" />
+                <Button Style="{StaticResource RailButtonStyle}"
+                        Content="&#xE713;"
+                        Tag="设置"
+                        ToolTip="设置"
+                        Click="SettingsNavigationButton_Click" />
+                <Button x:Name="PowerNavigationButton"
+                        Style="{StaticResource RailButtonStyle}"
+                        Content="&#xE7E8;"
+                        Tag="电源"
+                        ToolTip="电源"
+                        Click="PowerNavigationButton_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource StartContextMenuStyle}"
+                                     Opened="StartContextMenu_Opened"
+                                     Closed="StartContextMenu_Closed">
+                            <MenuItem Header="睡眠" Style="{StaticResource StartMenuItemStyle}" Click="Sleep_Click" />
+                            <MenuItem Header="关机" Style="{StaticResource StartMenuItemStyle}" Click="ShutDown_Click" />
+                            <MenuItem Header="重启" Style="{StaticResource StartMenuItemStyle}" Click="Restart_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
             </StackPanel>
         </Grid>
 
@@ -1062,24 +1138,27 @@
         </Canvas>
 
         <Border Height="7"
+                Grid.ColumnSpan="3"
                 VerticalAlignment="Top"
                 Background="Transparent"
                 Cursor="SizeNS"
-                Panel.ZIndex="10"
+                Panel.ZIndex="50"
                 MouseLeftButtonDown="TopResizeBorder_MouseLeftButtonDown" />
         <Border Width="7"
+                Grid.ColumnSpan="3"
                 HorizontalAlignment="Right"
                 Background="Transparent"
                 Cursor="SizeWE"
-                Panel.ZIndex="10"
+                Panel.ZIndex="50"
                 MouseLeftButtonDown="RightResizeBorder_MouseLeftButtonDown" />
         <Border Width="14"
                 Height="14"
+                Grid.ColumnSpan="3"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Background="Transparent"
                 Cursor="SizeNESW"
-                Panel.ZIndex="11"
+                Panel.ZIndex="51"
                 MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
         </Grid>
 

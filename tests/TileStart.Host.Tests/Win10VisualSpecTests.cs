@@ -34,6 +34,13 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.AllAppsGridItemWidth, Value(allAppsMetrics, "gridItemWidth"));
         Assert.Equal(Win10VisualMetrics.AllAppsRowHeight, Value(allAppsMetrics, "rowHeight"));
         Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderHeight, Value(allAppsMetrics, "groupHeaderHeight"));
+        Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderFontSize, Value(allAppsMetrics, "groupHeaderFontSize"));
+        AssertThickness(
+            Win10VisualMetrics.AllAppsGroupHeaderPadding,
+            allAppsMetrics.GetProperty("groupHeaderPadding").GetProperty("value"));
+        Assert.Equal(
+            "Bottom",
+            allAppsMetrics.GetProperty("groupHeaderVerticalContentAlignment").GetProperty("value").GetString());
         AssertThickness(Win10VisualMetrics.AllAppsListPadding, allAppsMetrics.GetProperty("listPadding").GetProperty("value"));
         Assert.Equal(
             (Win10VisualMetrics.AllAppsWidth - Win10VisualMetrics.AllAppsGridItemWidth) / 2,
@@ -154,4 +161,3 @@ public sealed class Win10VisualSpecTests
         Assert.Equal([expected.Left - horizontalInset, expected.Top, expected.Right - horizontalInset, expected.Bottom], actual);
     }
 }
-

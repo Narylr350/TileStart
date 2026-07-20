@@ -59,6 +59,18 @@ public sealed class TileGroupHeaderTests
         Assert.Equal(Win10VisualMetrics.TileNestedPanelMargin.Bottom, Win10VisualMetrics.TileGroupTilesMargin.Bottom);
     }
 
+    [Fact]
+    public void HeaderFocusFrameAlignsWithBothTileGridEdges()
+    {
+        Assert.Equal(Win10VisualMetrics.TileNestedPanelMargin.Left, Win10VisualMetrics.TileGroupHeaderMargin.Left);
+        Assert.Equal(Win10VisualMetrics.TileNestedPanelMargin.Right, Win10VisualMetrics.TileGroupHeaderMargin.Right);
+        Assert.Equal(
+            Win10TileMetrics.GroupWidth,
+            Win10VisualMetrics.TileGroupVisualWidth
+            - Win10VisualMetrics.TileGroupHeaderMargin.Left
+            - Win10VisualMetrics.TileGroupHeaderMargin.Right);
+    }
+
     private static void RunOnSta(Action action)
     {
         Exception? error = null;

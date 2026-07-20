@@ -9,6 +9,16 @@ public static class AppLauncher
 
     public static bool Launch(TileItem tile) => Launch(tile.Name, CreateStartInfo(tile));
 
+    public static bool LaunchShellTarget(string name, string target) =>
+        Launch(name, new ProcessStartInfo(target) { UseShellExecute = true });
+
+    public static bool LaunchProcess(string name, string fileName, string arguments) =>
+        Launch(name, new ProcessStartInfo(fileName)
+        {
+            Arguments = arguments,
+            UseShellExecute = true,
+        });
+
     public static bool LaunchAsAdministrator(TileItem tile)
     {
         return Launch(tile.Name, CreateStartInfo(tile, true));

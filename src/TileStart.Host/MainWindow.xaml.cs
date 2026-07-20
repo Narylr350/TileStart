@@ -103,6 +103,13 @@ public partial class MainWindow : Window
     private TileGroupCell? _groupDragTargetCell;
     private bool _isInternalGroupDrag;
     private bool _isCompletingGroupDrag;
+    private bool _navigationExpanded;
+    private bool _isWindowWidthSnapAnimating;
+    private long _windowWidthSnapStartedAt;
+    private double _windowWidthSnapFrom;
+    private double _windowWidthSnapTo;
+    private double _windowWidthSnapRight;
+    private Dictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
 
     public MainWindow()
     {
@@ -114,17 +121,25 @@ public partial class MainWindow : Window
         _tileReflowTimer.Tick += TileReflowTimer_Tick;
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
         DataContext = this;
+        MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
+        MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
         var savedSize = WindowSizeStore.Load();
         if (savedSize is not null)
         {
-            Width = Math.Max(MinWidth, savedSize.Value.Width);
+            Width = StartWindowSizing.SnapWidth(savedSize.Value.Width, MaxWidth);
             Height = Math.Max(MinHeight, savedSize.Value.Height);
+        }
+        else
+        {
+            Width = StartWindowSizing.WidthForColumns(2);
         }
 
         _ = LoadAppsAsync();
     }
 
     public ObservableCollection<AppEntry> RecentApps { get; } = [];
+
+    public string CurrentUserName { get; } = Environment.UserName;
 
     public ICollectionView AppsView { get; }
 
@@ -213,6 +228,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        StopWindowWidthSnapAnimation();
         StopTileDragAutoScroll();
         _foregroundWatchdogTimer.Stop();
         _windowSource?.RemoveHook(WindowMessageHook);
@@ -354,17 +370,26 @@ public partial class MainWindow : Window
 
         var dpi = GetMonitorDpi(monitor);
         var monitorRect = ToPixelRect(monitorInfo.Monitor);
+        var workArea = ToPixelRect(monitorInfo.WorkArea);
         var taskbarRect = FindTaskbarRect(monitor);
         var edge = StartWindowPlacement.InferTaskbarEdge(monitorRect, taskbarRect);
         _taskbarEdge = edge;
-        var logicalWidth = ActualWidth > 0 ? ActualWidth : Width;
-        var logicalHeight = ActualHeight > 0 ? ActualHeight : Height;
+        var scale = 96.0 / dpi;
+        var logicalWorkWidth = workArea.Width * scale;
+        var logicalWorkHeight = workArea.Height * scale;
+        MinWidth = Math.Min(StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns), logicalWorkWidth);
+        MaxWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
+        MaxHeight = Math.Max(MinHeight, logicalWorkHeight);
+        var logicalWidth = StartWindowSizing.SnapWidth(ActualWidth > 0 ? ActualWidth : Width, logicalWorkWidth);
+        var logicalHeight = StartWindowSizing.ClampHeight(
+            ActualHeight > 0 ? ActualHeight : Height,
+            MinHeight,
+            logicalWorkHeight);
         var placement = StartWindowPlacement.Calculate(
-            ToPixelRect(monitorInfo.WorkArea),
+            workArea,
             edge,
             (int)Math.Round(logicalWidth * dpi / 96.0),
             (int)Math.Round(logicalHeight * dpi / 96.0));
-        var scale = 96.0 / dpi;
         Left = placement.Left * scale;
         Top = placement.Top * scale;
         Width = placement.Width * scale;
@@ -2625,7 +2650,181 @@ public partial class MainWindow : Window
         e.Handled = true;
         ReleaseMouseCapture();
         SendMessage(new WindowInteropHelper(this).Handle, WmNcLButtonDown, hitTest, 0);
+        if (hitTest is HtRight or HtTopRight)
+        {
+            SnapWindowWidthAfterResize();
+        }
+        else
+        {
+            SaveCurrentSize();
+        }
+    }
+
+    private void SnapWindowWidthAfterResize()
+    {
+        var currentWidth = ActualWidth > 0 ? ActualWidth : Width;
+        var targetWidth = StartWindowSizing.SnapWidth(currentWidth, MaxWidth);
+        if (Math.Abs(currentWidth - targetWidth) < 0.5 || !SystemParameters.ClientAreaAnimation)
+        {
+            Width = targetWidth;
+            PositionOnCurrentMonitor();
+            SaveCurrentSize();
+            return;
+        }
+
+        StopWindowWidthSnapAnimation();
+        _isWindowWidthSnapAnimating = true;
+        _windowWidthSnapStartedAt = Environment.TickCount64;
+        _windowWidthSnapFrom = currentWidth;
+        _windowWidthSnapTo = targetWidth;
+        _windowWidthSnapRight = Left + currentWidth;
+        _windowWidthSnapGroupPositions = CaptureGroupReorderPositions();
+        CompositionTarget.Rendering += WindowWidthSnap_Rendering;
+    }
+
+    private void WindowWidthSnap_Rendering(object? sender, EventArgs e)
+    {
+        if (!_isWindowWidthSnapAnimating)
+        {
+            return;
+        }
+
+        var elapsed = Environment.TickCount64 - _windowWidthSnapStartedAt;
+        var progress = elapsed / (double)StartWindowResizeMotion.DurationMilliseconds;
+        var width = StartWindowResizeMotion.Interpolate(_windowWidthSnapFrom, _windowWidthSnapTo, progress);
+        Width = width;
+        if (_taskbarEdge == TaskbarEdge.Right)
+        {
+            Left = _windowWidthSnapRight - width;
+        }
+
+        if (progress < 1)
+        {
+            return;
+        }
+
+        var previousGroupPositions = _windowWidthSnapGroupPositions;
+        StopWindowWidthSnapAnimation();
+        Width = _windowWidthSnapTo;
+        PositionOnCurrentMonitor();
+        UpdateLayout();
+        if (previousGroupPositions is not null)
+        {
+            AnimateGroupReorderFrom(previousGroupPositions);
+        }
+
         SaveCurrentSize();
+    }
+
+    private void StopWindowWidthSnapAnimation()
+    {
+        if (_isWindowWidthSnapAnimating)
+        {
+            CompositionTarget.Rendering -= WindowWidthSnap_Rendering;
+        }
+
+        _isWindowWidthSnapAnimating = false;
+        _windowWidthSnapGroupPositions = null;
+    }
+
+    private void NavigationToggleButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationExpanded = !_navigationExpanded;
+        var targetWidth = _navigationExpanded
+            ? Win10VisualMetrics.ExpandedNavigationWidth
+            : Win10VisualMetrics.CollapsedNavigationWidth;
+        NavigationToggleButton.ToolTip = _navigationExpanded ? "收起" : "展开";
+        if (_navigationExpanded)
+        {
+            NavigationPane.Background = (System.Windows.Media.Brush)FindResource("ExpandedNavigationBackground");
+        }
+
+        var animation = new System.Windows.Media.Animation.DoubleAnimation
+        {
+            From = NavigationPane.ActualWidth,
+            To = targetWidth,
+            Duration = TimeSpan.FromMilliseconds(120),
+            EasingFunction = new System.Windows.Media.Animation.CubicEase
+            {
+                EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut,
+            },
+        };
+        animation.Completed += (_, _) =>
+        {
+            NavigationPane.BeginAnimation(WidthProperty, null);
+            NavigationPane.Width = targetWidth;
+            if (!_navigationExpanded)
+            {
+                NavigationPane.Background = System.Windows.Media.Brushes.Transparent;
+            }
+        };
+        NavigationPane.BeginAnimation(WidthProperty, animation);
+    }
+
+    private void UserNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        OpenButtonContextMenu(UserNavigationButton);
+
+    private void PowerNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        OpenButtonContextMenu(PowerNavigationButton);
+
+    private static void OpenButtonContextMenu(Button button)
+    {
+        if (button.ContextMenu is null)
+        {
+            return;
+        }
+
+        button.ContextMenu.PlacementTarget = button;
+        button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Right;
+        button.ContextMenu.IsOpen = true;
+    }
+
+    private void DocumentsNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("文档", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+
+    private void PicturesNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("图片", Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+
+    private void SettingsNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("设置", "ms-settings:");
+
+    private void AccountSettings_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("账户设置", "ms-settings:yourinfo");
+
+    private void LockSession_Click(object sender, RoutedEventArgs e)
+    {
+        DismissWindow(yieldTopmost: true);
+        LockWorkStation();
+    }
+
+    private void SignOut_Click(object sender, RoutedEventArgs e)
+    {
+        DismissWindow(yieldTopmost: true);
+        AppLauncher.LaunchProcess("注销", "shutdown.exe", "/l");
+    }
+
+    private void Sleep_Click(object sender, RoutedEventArgs e)
+    {
+        DismissWindow(yieldTopmost: true);
+        SetSuspendState(false, false, false);
+    }
+
+    private void ShutDown_Click(object sender, RoutedEventArgs e)
+    {
+        DismissWindow(yieldTopmost: true);
+        AppLauncher.LaunchProcess("关机", "shutdown.exe", "/s /t 0");
+    }
+
+    private void Restart_Click(object sender, RoutedEventArgs e)
+    {
+        DismissWindow(yieldTopmost: true);
+        AppLauncher.LaunchProcess("重启", "shutdown.exe", "/r /t 0");
+    }
+
+    private void LaunchNavigationTarget(string name, string target)
+    {
+        DismissWindow(yieldTopmost: true);
+        AppLauncher.LaunchShellTarget(name, target);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -2692,6 +2891,12 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern bool LockWorkStation();
+
+    [DllImport("powrprof.dll", SetLastError = true)]
+    private static extern bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent);
 
     [DllImport("user32.dll")]
     private static extern nint GetWindow(nint window, uint command);
