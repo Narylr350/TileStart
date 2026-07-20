@@ -1,10 +1,40 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-19T00:00:00+08:00",
+  "capturedAt": "2026-07-20T16:14:39+08:00",
   "source": {
     "fileVersion": "10.0.19041.6456 (WinBuild.160101.0800)",
     "sha256": "C6AF5A4E4B38F7DB883B6BB93A63A051F4A3EC46F71F763457CAD77E4D570F86",
-    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404"
+    "pdbSha256": "BA49EC7111A7E85E755DE22231B37505CDC41604C3F255D9AF8BA47D6DA4F404",
+    "runtimeRecordings": [
+      {
+        "file": "2026-07-20 16-12-27.mkv",
+        "sha256": "1CD6B01133FA2C6EA7ADCDB97EE68CD3E8F8C9116579B8F7875DD1C7A12DE2AF",
+        "durationSeconds": 12.125,
+        "frameRate": 120,
+        "scenario": "slow reflow, dwell, and retreat"
+      },
+      {
+        "file": "2026-07-20 16-12-55.mkv",
+        "sha256": "CDDA15BDE7204A8B96473235D59E3A5E24D9B461221C4CC8B8DD322E0FC8576C",
+        "durationSeconds": 9.941,
+        "frameRate": 120,
+        "scenario": "rapid repeated cross-cell retargeting"
+      },
+      {
+        "file": "2026-07-20 16-13-59.mkv",
+        "sha256": "A63E3F7FC670A3C4FBE0E2D5701AF4C9E283FED0D17272F48E7D7740AFCAEB91",
+        "durationSeconds": 8.021,
+        "frameRate": 120,
+        "scenario": "drop after reflow has settled"
+      },
+      {
+        "file": "2026-07-20 16-14-39.mkv",
+        "sha256": "8AE5DF266D9206DBC5FB459294FA1C71A901989FD65A53A90DCE2BCB10E9722F",
+        "durationSeconds": 6.997,
+        "frameRate": 120,
+        "scenario": "drop while reflow is still running"
+      }
+    ]
   },
   "verifiedBehavior": [
     {
@@ -83,6 +113,29 @@
       "evidence": [
         "native-tile-detach-between-groups-660x865-150pct.png"
       ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "A one-cell IntelliJ IDEA displacement measured at 120 FPS fits a 400 ms cubic-bezier(0.1, 0.9, 0.2, 1) reflow. A grid search over 120-500 ms produced its lowest mean squared position error at approximately 399 ms, so the existing recovered theme parameters are retained.",
+      "evidence": [
+        "2026-07-20 16-12-55.mkv SHA256 CDDA15BDE7204A8B96473235D59E3A5E24D9B461221C4CC8B8DD322E0FC8576C",
+        "120 FPS frames 112-142: tracked IntelliJ IDEA icon center from the current visible position to the next cell"
+      ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "For a settled drop, the composited drag preview is last visible at frame 60 and the destination tile has fully taken over by frame 66. At 120 FPS this is a six-frame, approximately 50 ms visual handoff, not a second long-distance landing translation.",
+      "evidence": [
+        "2026-07-20 16-13-59.mkv SHA256 A63E3F7FC670A3C4FBE0E2D5701AF4C9E283FED0D17272F48E7D7740AFCAEB91",
+        "120 FPS frames 60-66 in the 6.2-second analysis window"
+      ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "Dropping while a reflow is still active removes the drag preview without restarting affected tiles from their layout origins; the existing reflow continues toward its current destination.",
+      "evidence": [
+        "2026-07-20 16-14-39.mkv SHA256 8AE5DF266D9206DBC5FB459294FA1C71A901989FD65A53A90DCE2BCB10E9722F"
+      ]
     }
   ],
   "implementationContract": {
@@ -112,6 +165,19 @@
       ]
     },
     "tileStartDraggedTilePlaceholderOpacity": 0.24,
+    "tileStartReflowMotion": {
+      "status": "runtime-fitted-to-original-recording",
+      "durationMilliseconds": 400,
+      "spline": [0.1, 0.9, 0.2, 1.0],
+      "retargeting": "A new FLIP animation starts from the element's current composited visible position. The active TranslateTransform offset must be retained when the previous animation is replaced."
+    },
+    "tileStartDragPreviewMotion": {
+      "positionDriver": "RenderTransform TranslateTransform; pointer movement must not update Canvas.Left or Canvas.Top",
+      "dropHandoffMilliseconds": 50,
+      "dropHandoffStatus": "runtime-verified from six 120 FPS frames",
+      "cancelReturnMilliseconds": 200,
+      "cancelReturnStatus": "TileStart approximation; no isolated original Esc/cancel recording is available"
+    },
     "tileStartPreviewSnapshotStrategy": "lazy-source-and-target",
     "tileStartPreviewRestoreScope": "previously-affected-groups-only",
     "tileStartUnrelatedGroupCollectionChangesPerPreview": 0,
@@ -137,7 +203,8 @@
   "unresolved": [
     "The native resolver's exact tie-breaking order when several mixed-size tiles can satisfy the same collision.",
     "The native Windows 10 Start implementation's exact source of the detachment bottom boundary has not been isolated. TileStart snapshots the pre-drag group height because its own rollbackable preview can expand live PixelHeight; this is a regression-backed compatibility strategy, not evidence that StartUI stores the same field.",
-    "The exact visual easing and placeholder opacity during reflow; this batch preserves the existing visual layer and implements the verified state boundaries.",
+    "The exact native placeholder opacity during reflow is not isolated. TileStart retains its independently calibrated value of 0.24; the reflow duration and spline are now runtime-fitted from the 2026-07-20 120 FPS recording.",
+    "The exact original cancel/escape return duration and curve are not isolated. TileStart currently uses a clearly marked 200 ms approximation and requires a dedicated original-menu cancel recording before claiming parity.",
     "The exact native Windows 10 Start drag auto-scroll edge size, acceleration curve, and maximum velocity are not yet isolated. TileStart uses one CellPitch as the edge zone and frame-time-based velocity so the behavior remains continuous across 60/120/240 Hz displays.",
     "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path follows the verified anchor-adjusted tile geometry and now keeps model-like outer hit boundaries stable for the drag transaction, but still uses half the 32-DIP group-header height as a provisional center-point creation band. The exact native entry threshold, exit threshold, and any hysteresis still require runtime tracing or controlled original-menu video measurement. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."
   ]

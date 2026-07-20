@@ -1132,9 +1132,15 @@
                 IsHitTestVisible="False"
                 Panel.ZIndex="20">
             <Image x:Name="InternalDragPreview"
+                   Canvas.Left="0"
+                   Canvas.Top="0"
                    Opacity="0.96"
                    RenderOptions.BitmapScalingMode="HighQuality"
-                   Visibility="Collapsed" />
+                   Visibility="Collapsed">
+                <Image.RenderTransform>
+                    <TranslateTransform x:Name="InternalDragPreviewTransform" />
+                </Image.RenderTransform>
+            </Image>
         </Canvas>
 
         <Border Height="7"

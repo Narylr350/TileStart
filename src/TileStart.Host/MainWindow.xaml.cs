@@ -7,6 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Button = System.Windows.Controls.Button;
 using Canvas = System.Windows.Controls.Canvas;
@@ -87,6 +88,7 @@ public partial class MainWindow : Window
     private TileDragHitGeometry? _tileDragHitGeometry;
     private bool _dragCompleted;
     private bool _isInternalTileDrag;
+    private bool _isCompletingInternalTileDrag;
     private bool _isInternalAppDrag;
     private bool _internalDropIsValid;
     private bool _entranceSnapshotActive;
@@ -860,6 +862,12 @@ public partial class MainWindow : Window
 
     private void AppButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (_isCompletingInternalTileDrag)
+        {
+            e.Handled = true;
+            return;
+        }
+
         _appDragSourceElement = sender as Button;
         _appDragEntry = _appDragSourceElement?.Tag as AppEntry;
         if (_appDragEntry?.IsFolder == true)
@@ -892,10 +900,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        InternalDragPreview.Source = CaptureElement(_appDragSourceElement);
-        InternalDragPreview.Width = _appDragSourceElement.ActualWidth;
-        InternalDragPreview.Height = _appDragSourceElement.ActualHeight;
-        InternalDragPreview.Visibility = Visibility.Visible;
+        ShowInternalDragPreview(
+            CaptureElement(_appDragSourceElement),
+            _appDragSourceElement.ActualWidth,
+            _appDragSourceElement.ActualHeight);
         _isInternalAppDrag = true;
         MoveAppDragPreview(e.GetPosition(MainSurface));
         Mouse.Capture(this, CaptureMode.SubTree);
@@ -904,8 +912,7 @@ public partial class MainWindow : Window
 
     private void MoveAppDragPreview(System.Windows.Point position)
     {
-        Canvas.SetLeft(InternalDragPreview, position.X - _appDragAnchor.X);
-        Canvas.SetTop(InternalDragPreview, position.Y - _appDragAnchor.Y);
+        MoveInternalDragPreview(position, _appDragAnchor);
     }
 
     private void EndInternalAppDrag(bool commit, System.Windows.Point position)
@@ -932,8 +939,7 @@ public partial class MainWindow : Window
         }
 
         Mouse.Capture(null);
-        InternalDragPreview.Source = null;
-        InternalDragPreview.Visibility = Visibility.Collapsed;
+        HideInternalDragPreview();
         _isInternalAppDrag = false;
         _appDragEntry = null;
         _appDragSourceElement = null;
@@ -1532,6 +1538,12 @@ public partial class MainWindow : Window
 
     private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (_isCompletingInternalTileDrag)
+        {
+            e.Handled = true;
+            return;
+        }
+
         _dragCompleted = false;
         _dragStart = e.GetPosition(this);
         _dragAnchor = sender is Button button ? e.GetPosition(button) : new System.Windows.Point();
@@ -1634,10 +1646,10 @@ public partial class MainWindow : Window
             TileLayoutStore.Save(TileLayout);
         }
 
-        InternalDragPreview.Source = CaptureElement(_dragSourceElement);
-        InternalDragPreview.Width = _dragSourceElement.ActualWidth;
-        InternalDragPreview.Height = _dragSourceElement.ActualHeight;
-        InternalDragPreview.Visibility = Visibility.Visible;
+        ShowInternalDragPreview(
+            CaptureElement(_dragSourceElement),
+            _dragSourceElement.ActualWidth,
+            _dragSourceElement.ActualHeight);
         MoveInternalDragPreview(position);
         _tileDragHitGeometry = new TileDragHitGeometry(CaptureTileAreaDropZones());
         _dragTransaction = new TileDragTransaction(
@@ -1656,8 +1668,13 @@ public partial class MainWindow : Window
 
     private void MoveInternalDragPreview(System.Windows.Point position)
     {
-        Canvas.SetLeft(InternalDragPreview, position.X - _dragAnchor.X);
-        Canvas.SetTop(InternalDragPreview, position.Y - _dragAnchor.Y);
+        MoveInternalDragPreview(position, _dragAnchor);
+    }
+
+    private void MoveInternalDragPreview(System.Windows.Point position, System.Windows.Point anchor)
+    {
+        InternalDragPreviewTransform.X = position.X - anchor.X;
+        InternalDragPreviewTransform.Y = position.Y - anchor.Y;
     }
 
     private void UpdateTileDragAutoScroll(System.Windows.Point position)
@@ -1829,22 +1846,29 @@ public partial class MainWindow : Window
 
     private void EndInternalTileDrag(bool commit)
     {
-        var transaction = _dragTransaction;
-        if (transaction is not null && commit && transaction.PreviewTarget is not null)
+        if (_isCompletingInternalTileDrag)
         {
-            transaction.Commit();
+            return;
+        }
+
+        var transaction = _dragTransaction;
+        var tile = _dragTile;
+        var didCommit = transaction is not null && commit && transaction.PreviewTarget is not null;
+        var rollbackPositions = didCommit ? null : CaptureReorderPositions();
+        if (didCommit)
+        {
+            transaction!.Commit();
             TileLayoutStore.Save(TileLayout);
         }
 
         transaction?.Dispose();
-        if (_dragTile is not null)
+        if (!didCommit && rollbackPositions is not null)
         {
-            _dragTile.IsDragging = false;
+            UpdateLayout();
+            AnimateReorderFrom(rollbackPositions);
         }
 
         Mouse.Capture(null);
-        InternalDragPreview.Source = null;
-        InternalDragPreview.Visibility = Visibility.Collapsed;
         _dragTransaction = null;
         _tileDragHitGeometry = null;
         _isInternalTileDrag = false;
@@ -1853,6 +1877,89 @@ public partial class MainWindow : Window
         _suppressTileActivationUntil = Environment.TickCount64 + 300;
         ResetPendingTileDrop();
         ClearTileDragState();
+
+        if (tile is null
+            || InternalDragPreview.Visibility != Visibility.Visible
+            || !SystemParameters.ClientAreaAnimation)
+        {
+            CompleteInternalTileDragVisual(tile);
+            return;
+        }
+
+        _isCompletingInternalTileDrag = true;
+        if (didCommit)
+        {
+            AnimateInternalDragPreviewHandoff(tile);
+        }
+        else
+        {
+            AnimateInternalDragPreviewReturn(tile);
+        }
+    }
+
+    private void AnimateInternalDragPreviewHandoff(TileItem tile)
+    {
+        var duration = TimeSpan.FromMilliseconds(Win10ReorderMotion.DropHandoffDurationMilliseconds);
+        var animation = Win10ReorderMotion.Create(InternalDragPreview.Opacity, 0, duration);
+        animation.Completed += (_, _) => CompleteInternalTileDragVisual(tile);
+        InternalDragPreview.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void AnimateInternalDragPreviewReturn(TileItem tile)
+    {
+        UpdateLayout();
+        if (FindReorderElement(tile) is not { } target)
+        {
+            CompleteInternalTileDragVisual(tile);
+            return;
+        }
+
+        var targetPosition = target.TransformToAncestor(MainSurface).Transform(new System.Windows.Point());
+        var duration = TimeSpan.FromMilliseconds(Win10ReorderMotion.CancelReturnDurationMilliseconds);
+        var x = Win10ReorderMotion.Create(InternalDragPreviewTransform.X, targetPosition.X, duration);
+        var y = Win10ReorderMotion.Create(InternalDragPreviewTransform.Y, targetPosition.Y, duration);
+        y.Completed += (_, _) => CompleteInternalTileDragVisual(tile);
+        InternalDragPreviewTransform.BeginAnimation(
+            TranslateTransform.XProperty,
+            x,
+            HandoffBehavior.SnapshotAndReplace);
+        InternalDragPreviewTransform.BeginAnimation(
+            TranslateTransform.YProperty,
+            y,
+            HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void CompleteInternalTileDragVisual(TileItem? tile)
+    {
+        if (tile is not null)
+        {
+            tile.IsDragging = false;
+        }
+
+        HideInternalDragPreview();
+        _isCompletingInternalTileDrag = false;
+    }
+
+    private void ShowInternalDragPreview(BitmapSource source, double width, double height)
+    {
+        InternalDragPreview.BeginAnimation(OpacityProperty, null);
+        InternalDragPreviewTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        InternalDragPreviewTransform.BeginAnimation(TranslateTransform.YProperty, null);
+        InternalDragPreview.Opacity = 0.96;
+        InternalDragPreview.Source = source;
+        InternalDragPreview.Width = width;
+        InternalDragPreview.Height = height;
+        InternalDragPreview.Visibility = Visibility.Visible;
+    }
+
+    private void HideInternalDragPreview()
+    {
+        InternalDragPreview.BeginAnimation(OpacityProperty, null);
+        InternalDragPreviewTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        InternalDragPreviewTransform.BeginAnimation(TranslateTransform.YProperty, null);
+        InternalDragPreview.Opacity = 0.96;
+        InternalDragPreview.Source = null;
+        InternalDragPreview.Visibility = Visibility.Collapsed;
     }
 
     private void ClearTileDragState()
@@ -2481,7 +2588,11 @@ public partial class MainWindow : Window
             }
 
             var current = element.TransformToAncestor(TileGroupsControl).Transform(new System.Windows.Point());
-            Win10ReorderMotion.AnimateFrom(element, previous - current);
+            var activeTranslation = element.RenderTransform is TranslateTransform transform
+                ? new System.Windows.Vector(transform.X, transform.Y)
+                : new System.Windows.Vector();
+            var delta = Win10ReorderMotion.ResolveRetargetDelta(previous, current, activeTranslation);
+            Win10ReorderMotion.AnimateFrom(element, delta);
         }
     }
 
