@@ -64,5 +64,46 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     }
+  },
+  "material": {
+    "darkMenuAcrylic": {
+      "backgroundSource": "Backdrop",
+      "tintColor": "#FF101010",
+      "tintOpacity": 0.75,
+      "fallbackColor": "#FF1F1F1F",
+      "evidence": "compiled-xbf",
+      "anchor": "SystemControlAcrylicElementBrush",
+      "source": {
+        "file": "SharedThemeManagerBrushes.xaml",
+        "xbfResource": "SharedThemeManagerBrushes.xbf",
+        "xbfSha256": "16DC44B2ABB769AE1DE8DDFD83D1E7953319D743988E0F5014201D07B807B1D5",
+        "xamlSha256": "737AE5C7B3CFE74036EC8A9FD64CB78CE367989AB37055678ECECE768E790BF8",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "menuBackgroundOverlay": {
+      "defaultVisibility": "Collapsed",
+      "visibleStartModes": [
+        "FullScreen",
+        "Tablet"
+      ],
+      "evidence": "compiled-xbf",
+      "anchor": "SplitViewFrame.StartModes + BackgroundColorOverlay",
+      "source": {
+        "file": "SplitViewFrame.xaml",
+        "xbfResource": "SplitViewFrame.xbf",
+        "xbfSha256": "170E49B18B10DD32FD81859E507528B7C7B6227A84704926529C0290F7511F5D",
+        "xamlSha256": "2362F8F53F077B9FE51487F8DC7D3FAA8A2DA7342FA4248BAC9B68030537A752",
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
+    "tileStartWcaMapping": {
+      "gradientColor": "0xBF101010",
+      "fallbackColor": "#FF1F1F1F",
+      "evidence": "independent-wca-mapping + manual-win10-validation",
+      "validatedAt": "2026-07-21",
+      "result": "acceptable approximate match",
+      "notes": "The original UWP AcrylicBrush values are verified. Mapping TintOpacity directly to the undocumented WCA GradientColor alpha is an independent approximation, not an exact API-equivalent reconstruction."
+    }
   }
 }

@@ -170,7 +170,7 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         _windowSource = PresentationSource.FromVisual(this) as HwndSource;
         _windowSource?.AddHook(WindowMessageHook);
-        EnableAcrylic();
+        ApplyWindowMaterial();
     }
 
     public void ShowFromShell()
@@ -182,6 +182,7 @@ public partial class MainWindow : Window
         }
 
         CancelEntranceSnapshot();
+        ApplyWindowMaterial();
         _foregroundAcquiredSinceShow = false;
         _foregroundAcquisitionDeadline = Environment.TickCount64 + ForegroundAcquisitionTimeoutMilliseconds;
         PositionOnCurrentMonitor();
@@ -452,18 +453,30 @@ public partial class MainWindow : Window
         return GetDpiForMonitor(monitor, MdtEffectiveDpi, out var dpiX, out _) == 0 ? dpiX : 96;
     }
 
-    private void EnableAcrylic()
+    private void ApplyWindowMaterial()
     {
         if (PresentationSource.FromVisual(this) is HwndSource source)
         {
             source.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
 
+        var material = Win10Theme.ReadStartMaterial();
+        var acrylicApplied = SetAccentPolicy(
+            material.UseAcrylic ? AccentEnableAcrylicBlurBehind : 0,
+            material.UseAcrylic ? 2 : 0,
+            material.AcrylicGradientColor);
+        MainSurface.Background = material.UseAcrylic && acrylicApplied
+            ? System.Windows.Media.Brushes.Transparent
+            : new SolidColorBrush(material.FallbackColor);
+    }
+
+    private bool SetAccentPolicy(int accentState, int accentFlags, int gradientColor)
+    {
         var accent = new AccentPolicy
         {
-            AccentState = AccentEnableAcrylicBlurBehind,
-            AccentFlags = 2,
-            GradientColor = unchecked((int)0xCC202020),
+            AccentState = accentState,
+            AccentFlags = accentFlags,
+            GradientColor = gradientColor,
         };
         var accentPointer = Marshal.AllocHGlobal(Marshal.SizeOf<AccentPolicy>());
         try
@@ -475,7 +488,7 @@ public partial class MainWindow : Window
                 Data = accentPointer,
                 SizeOfData = Marshal.SizeOf<AccentPolicy>(),
             };
-            SetWindowCompositionAttribute(new WindowInteropHelper(this).Handle, ref data);
+            return SetWindowCompositionAttribute(new WindowInteropHelper(this).Handle, ref data) != 0;
         }
         finally
         {
