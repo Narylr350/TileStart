@@ -82,7 +82,9 @@ public sealed class TileDragTransaction : IDisposable
 
         PreparePreview(target);
         var moved = _sourceFolder is null
-            ? Win10GroupLayout.Move(_source, target, _tile, column, row)
+            ? ReferenceEquals(_source, target)
+                ? PreviewWithinSource(target, column, row)
+                : Win10GroupLayout.Move(_source, target, _tile, column, row)
             : MoveFolderChildToGroup(target, column, row);
         if (!moved)
         {
@@ -95,6 +97,42 @@ public sealed class TileDragTransaction : IDisposable
         _previewRow = row;
         _previewFolderTargetId = null;
         Intent = TileDropIntent.Reposition;
+        return true;
+    }
+
+    private bool PreviewWithinSource(TileGroup target, int column, int row)
+    {
+        var collisions = target.Tiles
+            .Where(other => !ReferenceEquals(other, _tile)
+                            && Overlaps(_tile, column, row, other, other.Column, other.Row))
+            .ToArray();
+        if (collisions.Length == 0)
+        {
+            _tile.Column = column;
+            _tile.Row = row;
+            target.RefreshLayout();
+            return true;
+        }
+
+        if (collisions.Length != 1)
+        {
+            return false;
+        }
+
+        var other = collisions[0];
+        var sourceColumn = _tile.Column;
+        var sourceRow = _tile.Row;
+        if (!CanPlace(target, _tile, other.Column, other.Row, _tile, other)
+            || !CanPlace(target, other, sourceColumn, sourceRow, _tile, other))
+        {
+            return false;
+        }
+
+        _tile.Column = other.Column;
+        _tile.Row = other.Row;
+        other.Column = sourceColumn;
+        other.Row = sourceRow;
+        target.RefreshLayout();
         return true;
     }
 
@@ -327,6 +365,30 @@ public sealed class TileDragTransaction : IDisposable
 
     private static (int Column, int Row) FindFolderAppendPosition(TileItem folder, TileItem tile) =>
         TileFolderLayout.FindFirstAvailable(folder, tile);
+
+    private static bool Overlaps(
+        TileItem first,
+        int firstColumn,
+        int firstRow,
+        TileItem second,
+        int secondColumn,
+        int secondRow) =>
+        firstColumn < secondColumn + second.Size.ColumnSpan()
+        && firstColumn + first.Size.ColumnSpan() > secondColumn
+        && firstRow < secondRow + second.Size.RowSpan()
+        && firstRow + first.Size.RowSpan() > secondRow;
+
+    private static bool CanPlace(
+        TileGroup group,
+        TileItem tile,
+        int column,
+        int row,
+        params TileItem[] ignored) =>
+        column >= 0
+        && row >= 0
+        && column + tile.Size.ColumnSpan() <= Win10TileMetrics.GroupColumns
+        && group.Tiles.All(other => ignored.Contains(other)
+                                    || !Overlaps(tile, column, row, other, other.Column, other.Row));
 
     private void PreparePreview(TileGroup target)
     {

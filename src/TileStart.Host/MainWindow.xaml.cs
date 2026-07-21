@@ -63,12 +63,18 @@ public partial class MainWindow : Window
         Interval = TimeSpan.FromMilliseconds(TileDropResolver.ReflowDelayMilliseconds),
     };
 
+    private readonly System.Windows.Threading.DispatcherTimer _folderActivationTimer = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(TileDropResolver.FolderActivationDelayMilliseconds),
+    };
+
     private readonly System.Windows.Threading.DispatcherTimer _foregroundWatchdogTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(50),
     };
 
     private readonly TileReflowStability _tileReflowStability = new();
+    private readonly TileReflowStability _folderActivationStability = new(TileDropResolver.FolderActivationDrift);
     private bool _tileDragAutoScrollSubscribed;
     private double _tileDragAutoScrollVelocity;
     private TimeSpan? _tileDragAutoScrollLastFrame;
@@ -78,6 +84,10 @@ public partial class MainWindow : Window
     private TileItem? _pendingDropFolder;
     private System.Windows.Point _pendingDropPosition;
     private TileItem? _pendingDropTile;
+    private TileGroup? _pendingFolderDropGroup;
+    private TileItem? _pendingFolderDropTarget;
+    private TileGroup? _armedFolderDropGroup;
+    private TileItem? _armedFolderDropTarget;
     private TileItem? _dragTile;
     private AppEntry? _appDragEntry;
     private Button? _appDragSourceElement;
@@ -112,6 +122,11 @@ public partial class MainWindow : Window
     private double _windowWidthSnapTo;
     private double _windowWidthSnapRight;
     private Dictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
+#if DEBUG
+    private string? _tileDropTraceCandidateKey;
+    private System.Windows.Point _tileDropTraceCandidatePosition;
+    private string? _tileDropGeometryTraceSignature;
+#endif
 
     public MainWindow()
     {
@@ -121,6 +136,7 @@ public partial class MainWindow : Window
         AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
         InitializeComponent();
         _tileReflowTimer.Tick += TileReflowTimer_Tick;
+        _folderActivationTimer.Tick += FolderActivationTimer_Tick;
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
         DataContext = this;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
@@ -1571,6 +1587,7 @@ public partial class MainWindow : Window
         _dragStart = e.GetPosition(this);
         _dragAnchor = sender is Button button ? e.GetPosition(button) : new System.Windows.Point();
         _tileReflowStability.Reset();
+        ResetFolderDropState();
         _dragSourceElement = sender as Button;
         _dragTile = _dragSourceElement?.Tag as TileItem;
         _dragSource = null;
@@ -1793,6 +1810,7 @@ public partial class MainWindow : Window
         var groupsPosition = MainSurface.TranslatePoint(position, TileGroupsControl);
         if (TryFindExpandedFolderAt(groupsPosition, out var folderControl, out var folder, out var group))
         {
+            ResetFolderDropState();
             return PreviewFolderRegionDrop(
                 group,
                 folder,
@@ -1877,6 +1895,15 @@ public partial class MainWindow : Window
         var transaction = _dragTransaction;
         var tile = _dragTile;
         var didCommit = transaction is not null && commit && transaction.PreviewTarget is not null;
+#if DEBUG
+        if (transaction is not null)
+        {
+            DiagnosticLog.Write(
+                $"tile-drop end commitRequested={commit} didCommit={didCommit} " +
+                $"tile={tile?.Name ?? "<null>"} intent={transaction.Intent} " +
+                $"target={transaction.PreviewTarget?.Name ?? "<null>"}");
+        }
+#endif
         var rollbackPositions = didCommit ? null : CaptureReorderPositions();
         if (didCommit)
         {
@@ -2344,8 +2371,7 @@ public partial class MainWindow : Window
             _pendingDropTile = tile;
             if (_tileReflowStability.Observe(key, position))
             {
-                _tileReflowTimer.Stop();
-                _tileReflowTimer.Start();
+                RestartTileReflowTimer();
             }
 
             return true;
@@ -2372,27 +2398,103 @@ public partial class MainWindow : Window
             position.X,
             TileFolderLayout.ToLogicalY(target, position.Y));
         var (column, row) = TileDropResolver.GetCell(logicalPosition, _dragAnchor, tile);
-        var folderTarget = TileDropResolver.FindFolderTarget(target, tile, position, _dragAnchor);
-        var key = $"{target.Id}:{column}:{row}:{folderTarget?.Id}";
+        var folderTarget = TileDropResolver.FindFolderTarget(
+            target,
+            tile,
+            position,
+            _dragAnchor,
+            _armedFolderDropTarget);
+#if DEBUG
+        TraceTileDropGeometry(target, logicalPosition, position, tile, column, row, folderTarget);
+#endif
+        var key = TileDropResolver.GetStabilityKey(target, column, row, folderTarget);
         if (!force)
         {
+            if (folderTarget is not null)
+            {
+                _tileReflowTimer.Stop();
+                _tileReflowStability.Reset();
+                if (ReferenceEquals(target, _armedFolderDropGroup)
+                    && ReferenceEquals(folderTarget, _armedFolderDropTarget))
+                {
+                    return true;
+                }
+
+                ClearArmedFolderDropTarget();
+                _pendingFolderDropGroup = target;
+                _pendingFolderDropTarget = folderTarget;
+                var restartFolderTimer = _folderActivationStability.Observe(key, position);
+#if DEBUG
+                if (restartFolderTimer)
+                {
+                    DiagnosticLog.Write(
+                        $"tile-drop folder-candidate pointer=({position.X:F1},{position.Y:F1}) " +
+                        $"target={target.Name} folderTarget={folderTarget.Name}");
+                }
+#endif
+                if (restartFolderTimer)
+                {
+                    _folderActivationTimer.Stop();
+                    _folderActivationTimer.Start();
+                }
+
+                return true;
+            }
+
+            ResetFolderDropState();
             _pendingDropTarget = target;
             _pendingDropFolder = null;
             _pendingDropPosition = position;
             _pendingDropTile = tile;
-            if (_tileReflowStability.Observe(key, position))
+            var restartTimer = _tileReflowStability.Observe(key, position);
+#if DEBUG
+            if (restartTimer)
             {
-                _tileReflowTimer.Stop();
-                _tileReflowTimer.Start();
+                var keyChanged = _tileDropTraceCandidateKey != key;
+                var distance = _tileDropTraceCandidateKey is null
+                    ? 0
+                    : (position - _tileDropTraceCandidatePosition).Length;
+                DiagnosticLog.Write(
+                    $"tile-drop candidate keyChanged={keyChanged} restartDistance={distance:F1} " +
+                    $"pointer=({position.X:F1},{position.Y:F1}) cell=({column},{row}) " +
+                    $"target={target.Name} folderTarget={folderTarget?.Name ?? "<null>"} " +
+                    $"folderKind={(folderTarget is null ? "none" : folderTarget.IsTileFolder ? "existing" : "tile")}");
+                _tileDropTraceCandidateKey = key;
+                _tileDropTraceCandidatePosition = position;
+            }
+#endif
+            if (restartTimer)
+            {
+                RestartTileReflowTimer();
             }
 
             return true;
         }
 
         var previousPositions = CaptureReorderPositions();
-        var previewed = folderTarget is not null
-            ? _dragTransaction!.PreviewFolder(target, folderTarget)
+        var commitFolderTarget = ReferenceEquals(target, _armedFolderDropGroup)
+                                 && ReferenceEquals(folderTarget, _armedFolderDropTarget)
+            ? folderTarget
+            : null;
+#if DEBUG
+        var requestedIntent = commitFolderTarget is null
+            ? TileDropIntent.Reposition
+            : commitFolderTarget.IsTileFolder
+                ? TileDropIntent.AddToFolder
+                : TileDropIntent.CreateFolder;
+        DiagnosticLog.Write(
+            $"tile-drop timer-force pointer=({position.X:F1},{position.Y:F1}) cell=({column},{row}) " +
+            $"target={target.Name} folderTarget={commitFolderTarget?.Name ?? "<null>"} requested={requestedIntent}");
+#endif
+        ClearArmedFolderDropTarget();
+        var previewed = commitFolderTarget is not null
+            ? _dragTransaction!.PreviewFolder(target, commitFolderTarget)
             : _dragTransaction!.Preview(target, column, row);
+#if DEBUG
+        DiagnosticLog.Write(
+            $"tile-drop preview-result success={previewed} actual={_dragTransaction!.Intent} " +
+            $"previewTarget={_dragTransaction.PreviewTarget?.Name ?? "<null>"}");
+#endif
         if (previewed)
         {
             UpdateLayout();
@@ -2400,6 +2502,55 @@ public partial class MainWindow : Window
         }
 
         return previewed;
+    }
+
+    private void RestartTileReflowTimer()
+    {
+        _tileReflowTimer.Stop();
+        _tileReflowTimer.Start();
+    }
+
+    private void FolderActivationTimer_Tick(object? sender, EventArgs e)
+    {
+        _folderActivationTimer.Stop();
+        if (_dragTransaction is null
+            || _pendingFolderDropGroup is null
+            || _pendingFolderDropTarget is null
+            || !_pendingFolderDropGroup.Tiles.Contains(_pendingFolderDropTarget))
+        {
+            ResetFolderDropState();
+            return;
+        }
+
+        ClearArmedFolderDropTarget();
+        _armedFolderDropGroup = _pendingFolderDropGroup;
+        _armedFolderDropTarget = _pendingFolderDropTarget;
+        _armedFolderDropTarget.IsFolderDropTarget = true;
+#if DEBUG
+        DiagnosticLog.Write(
+            $"tile-drop folder-armed target={_armedFolderDropGroup.Name} " +
+            $"folderTarget={_armedFolderDropTarget.Name}");
+#endif
+    }
+
+    private void ClearArmedFolderDropTarget()
+    {
+        if (_armedFolderDropTarget is not null)
+        {
+            _armedFolderDropTarget.IsFolderDropTarget = false;
+        }
+
+        _armedFolderDropGroup = null;
+        _armedFolderDropTarget = null;
+    }
+
+    private void ResetFolderDropState()
+    {
+        _folderActivationTimer.Stop();
+        _folderActivationStability.Reset();
+        _pendingFolderDropGroup = null;
+        _pendingFolderDropTarget = null;
+        ClearArmedFolderDropTarget();
     }
 
     private void TileReflowTimer_Tick(object? sender, EventArgs e)
@@ -2427,12 +2578,134 @@ public partial class MainWindow : Window
 
     private void ResetPendingTileDrop()
     {
+#if DEBUG
+        if (_tileDropTraceCandidateKey is not null)
+        {
+            DiagnosticLog.Write("tile-drop candidate-reset");
+            _tileDropTraceCandidateKey = null;
+            _tileDropTraceCandidatePosition = default;
+        }
+
+        _tileDropGeometryTraceSignature = null;
+#endif
         _tileReflowTimer.Stop();
         _tileReflowStability.Reset();
+        ResetFolderDropState();
         _pendingDropTarget = null;
         _pendingDropFolder = null;
         _pendingDropTile = null;
     }
+
+#if DEBUG
+    private void TraceTileDropGeometry(
+        TileGroup target,
+        System.Windows.Point logicalPosition,
+        System.Windows.Point displayPosition,
+        TileItem moving,
+        int column,
+        int row,
+        TileItem? folderTarget)
+    {
+        var draggedBounds = new System.Windows.Rect(
+            logicalPosition.X - _dragAnchor.X,
+            logicalPosition.Y - _dragAnchor.Y,
+            moving.PixelWidth,
+            moving.PixelHeight);
+        var draggedCenter = new System.Windows.Point(
+            draggedBounds.Left + draggedBounds.Width / 2,
+            draggedBounds.Top + draggedBounds.Height / 2);
+        var tiles = target.Tiles
+            .Where(tile => !ReferenceEquals(tile, moving))
+            .Select(tile =>
+                (Tile: tile,
+                    Bounds: new System.Windows.Rect(tile.Left, tile.Top, tile.PixelWidth, tile.PixelHeight)))
+            .ToArray();
+        var bodyHit = tiles.FirstOrDefault(candidate => candidate.Bounds.Contains(draggedCenter));
+        var left = tiles
+            .Where(candidate => candidate.Bounds.Right <= draggedBounds.Left
+                                && candidate.Bounds.Top < draggedBounds.Bottom
+                                && candidate.Bounds.Bottom > draggedBounds.Top)
+            .OrderBy(candidate => draggedBounds.Left - candidate.Bounds.Right)
+            .FirstOrDefault();
+        var right = tiles
+            .Where(candidate => candidate.Bounds.Left >= draggedBounds.Right
+                                && candidate.Bounds.Top < draggedBounds.Bottom
+                                && candidate.Bounds.Bottom > draggedBounds.Top)
+            .OrderBy(candidate => candidate.Bounds.Left - draggedBounds.Right)
+            .FirstOrDefault();
+        var above = tiles
+            .Where(candidate => candidate.Bounds.Bottom <= draggedBounds.Top
+                                && candidate.Bounds.Left < draggedBounds.Right
+                                && candidate.Bounds.Right > draggedBounds.Left)
+            .OrderBy(candidate => draggedBounds.Top - candidate.Bounds.Bottom)
+            .FirstOrDefault();
+        var below = tiles
+            .Where(candidate => candidate.Bounds.Top >= draggedBounds.Bottom
+                                && candidate.Bounds.Left < draggedBounds.Right
+                                && candidate.Bounds.Right > draggedBounds.Left)
+            .OrderBy(candidate => candidate.Bounds.Top - draggedBounds.Bottom)
+            .FirstOrDefault();
+        var signature = string.Join(
+            '|',
+            target.Id,
+            column,
+            row,
+            bodyHit.Tile?.Id,
+            folderTarget?.Id,
+            left.Tile?.Id,
+            right.Tile?.Id,
+            above.Tile?.Id,
+            below.Tile?.Id);
+        if (_tileDropGeometryTraceSignature == signature)
+        {
+            return;
+        }
+
+        _tileDropGeometryTraceSignature = signature;
+        DiagnosticLog.Write(
+            $"[DEBUG-tile-drop-geometry] pointer=({displayPosition.X:F1},{displayPosition.Y:F1}) " +
+            $"logical=({logicalPosition.X:F1},{logicalPosition.Y:F1}) anchor=({_dragAnchor.X:F1},{_dragAnchor.Y:F1}) " +
+            $"drag={FormatBounds(draggedBounds)} center=({draggedCenter.X:F1},{draggedCenter.Y:F1}) " +
+            $"cell=({column},{row}) body={FormatNeighbor(bodyHit, draggedBounds, Axis.None)} " +
+            $"folder={folderTarget?.Name ?? "<null>"} left={FormatNeighbor(left, draggedBounds, Axis.Horizontal)} " +
+            $"right={FormatNeighbor(right, draggedBounds, Axis.Horizontal)} " +
+            $"above={FormatNeighbor(above, draggedBounds, Axis.Vertical)} " +
+            $"below={FormatNeighbor(below, draggedBounds, Axis.Vertical)}");
+    }
+
+    private static string FormatNeighbor(
+        (TileItem? Tile, System.Windows.Rect Bounds) candidate,
+        System.Windows.Rect draggedBounds,
+        Axis axis)
+    {
+        if (candidate.Tile is null)
+        {
+            return "<null>";
+        }
+
+        var gap = axis switch
+        {
+            Axis.Horizontal when candidate.Bounds.Right <= draggedBounds.Left =>
+                draggedBounds.Left - candidate.Bounds.Right,
+            Axis.Horizontal => candidate.Bounds.Left - draggedBounds.Right,
+            Axis.Vertical when candidate.Bounds.Bottom <= draggedBounds.Top =>
+                draggedBounds.Top - candidate.Bounds.Bottom,
+            Axis.Vertical => candidate.Bounds.Top - draggedBounds.Bottom,
+            _ => 0,
+        };
+        return $"{candidate.Tile.Name}:{FormatBounds(candidate.Bounds)}:gap={gap:F1}";
+    }
+
+    private static string FormatBounds(System.Windows.Rect bounds) =>
+        $"({bounds.Left:F1},{bounds.Top:F1},{bounds.Right:F1},{bounds.Bottom:F1})";
+
+    private enum Axis
+    {
+        None,
+        Horizontal,
+        Vertical,
+    }
+#endif
 
     private bool AddAppTile(TileGroup target, AppEntry app, System.Windows.Point position)
     {

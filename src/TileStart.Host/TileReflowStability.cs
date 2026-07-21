@@ -3,14 +3,19 @@ namespace TileStart.Host;
 public sealed class TileReflowStability
 {
     public const double RestartDistance = 3;
-    private const double RestartDistanceSquared = RestartDistance * RestartDistance;
 
+    private readonly double _restartDistanceSquared;
     private string? _targetKey;
     private System.Windows.Point _timerAnchor;
 
+    public TileReflowStability(double restartDistance = RestartDistance)
+    {
+        _restartDistanceSquared = restartDistance * restartDistance;
+    }
+
     public bool Observe(string targetKey, System.Windows.Point pointer)
     {
-        if (_targetKey == targetKey && (pointer - _timerAnchor).LengthSquared <= RestartDistanceSquared)
+        if (_targetKey == targetKey && (pointer - _timerAnchor).LengthSquared <= _restartDistanceSquared)
         {
             return false;
         }

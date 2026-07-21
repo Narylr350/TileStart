@@ -5,7 +5,7 @@ namespace TileStart.Host.Tests;
 public sealed class TileDragTransactionTests
 {
     [Fact]
-    public void PreviewRearrangesImmediatelyAndDisposeRollsBack()
+    public void PreviewSwapsOccupiedSlotsAndDisposeRollsBack()
     {
         var moving = Tile("moving", TileSize.Medium, 4, 0);
         var stationary = Tile("stationary", TileSize.Medium, 0, 0);
@@ -16,12 +16,45 @@ public sealed class TileDragTransactionTests
         {
             Assert.True(transaction.Preview(group, 0, 0));
             Assert.Equal((0, 0), (moving.Column, moving.Row));
-            Assert.Equal((2, 0), (stationary.Column, stationary.Row));
+            Assert.Equal((4, 0), (stationary.Column, stationary.Row));
         }
 
         Assert.Equal([stationary, moving], group.Tiles);
         Assert.Equal((0, 0), (stationary.Column, stationary.Row));
         Assert.Equal((4, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void SlightlyOffsetDropSwapsTheSingleOccupiedSlotWithoutCompactingTheGroup()
+    {
+        var moba = Tile("MobaXterm", TileSize.Medium, 0, 0);
+        var visualStudio = Tile("Visual Studio", TileSize.Medium, 2, 0);
+        var dataGrip = Tile("DataGrip", TileSize.Medium, 4, 0);
+        var outlook = Tile("Outlook", TileSize.Medium, 6, 0);
+        var intelliJ = Tile("IntelliJ", TileSize.Medium, 0, 2);
+        var webStorm = Tile("WebStorm", TileSize.Medium, 2, 2);
+        var pyCharm = Tile("PyCharm", TileSize.Medium, 4, 2);
+        var calculator = Tile("Calculator", TileSize.Medium, 6, 2);
+        var group = new TileGroup
+        {
+            Tiles = [moba, visualStudio, dataGrip, outlook, intelliJ, webStorm, pyCharm, calculator],
+        };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, calculator);
+        Assert.True(transaction.Preview(group, 5, 2));
+
+        Assert.Equal((4, 2), (calculator.Column, calculator.Row));
+        Assert.Equal((6, 2), (pyCharm.Column, pyCharm.Row));
+        Assert.Equal((0, 0), (moba.Column, moba.Row));
+        Assert.Equal((2, 0), (visualStudio.Column, visualStudio.Row));
+        Assert.Equal((4, 0), (dataGrip.Column, dataGrip.Row));
+        Assert.Equal((6, 0), (outlook.Column, outlook.Row));
+        Assert.Equal((0, 2), (intelliJ.Column, intelliJ.Row));
+        Assert.Equal((2, 2), (webStorm.Column, webStorm.Row));
+        Assert.Equal(
+            [moba, visualStudio, dataGrip, outlook, intelliJ, webStorm, pyCharm, calculator],
+            group.Tiles);
     }
 
     [Fact]

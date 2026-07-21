@@ -31,6 +31,16 @@ public sealed class TileReflowStabilityTests
     }
 
     [Fact]
+    public void CustomDriftAllowsFolderCandidateMicroMovement()
+    {
+        var stability = new TileReflowStability(12);
+        stability.Observe("folder:target", new System.Windows.Point(100, 100));
+
+        Assert.False(stability.Observe("folder:target", new System.Windows.Point(111.9, 100)));
+        Assert.True(stability.Observe("folder:target", new System.Windows.Point(112.1, 100)));
+    }
+
+    [Fact]
     public void ChangingTheCandidateRestartsTheTimerWithoutPointerMovement()
     {
         var stability = new TileReflowStability();

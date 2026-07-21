@@ -955,7 +955,7 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <Grid x:Name="TileBranding"
+                                                     <Grid x:Name="TileBranding"
                                                           Grid.Row="1"
                                                           Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
                                                         <TextBlock x:Name="TileTitle"
@@ -967,9 +967,22 @@
                                                                    Text="{Binding Name}"
                                                                    TextAlignment="Left"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   TextWrapping="NoWrap" />
-                                                    </Grid>
-                                                </Grid>
+                                                                    TextWrapping="NoWrap" />
+                                                     </Grid>
+                                                     <Grid x:Name="FolderDropCue"
+                                                           Grid.Row="0"
+                                                           Grid.RowSpan="2"
+                                                           Background="#52000000"
+                                                           IsHitTestVisible="False"
+                                                           Visibility="Collapsed">
+                                                         <TextBlock HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    FontFamily="Segoe MDL2 Assets"
+                                                                    FontSize="24"
+                                                                    Foreground="White"
+                                                                    Text="&#xE8B7;" />
+                                                     </Grid>
+                                                 </Grid>
                                             </Button>
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
@@ -980,9 +993,12 @@
                                                     <Setter TargetName="TileIcon" Property="Visibility" Value="Collapsed" />
                                                     <Setter TargetName="FolderPreview" Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                                    <Setter TargetName="TileButton" Property="Opacity" Value="0.24" />
-                                                </DataTrigger>
+                                                 <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                                     <Setter TargetName="TileButton" Property="Opacity" Value="0.24" />
+                                                 </DataTrigger>
+                                                 <DataTrigger Binding="{Binding IsFolderDropTarget}" Value="True">
+                                                     <Setter TargetName="FolderDropCue" Property="Visibility" Value="Visible" />
+                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Size}" Value="Small">
                                                     <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
