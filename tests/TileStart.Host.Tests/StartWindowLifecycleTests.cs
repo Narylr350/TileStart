@@ -2,43 +2,74 @@ namespace TileStart.Host.Tests;
 
 public sealed class StartWindowLifecycleTests
 {
-    [Theory]
-    [InlineData(false, false, false, false)]
-    [InlineData(true, false, false, true)]
-    [InlineData(false, true, false, true)]
-    [InlineData(false, false, true, true)]
-    public void HasAcquiredForegroundRequiresObservedNativeOwnership(
-        bool alreadyAcquired,
-        bool foregroundBelongsToStart,
-        bool receivedNativeActivation,
-        bool expected)
+    [Fact]
+    public void WaitingForForegroundNeverTreatsAnExternalWindowAsDismissal()
     {
-        Assert.Equal(expected, StartWindowLifecycle.HasAcquiredForeground(
-            alreadyAcquired,
-            foregroundBelongsToStart,
-            receivedNativeActivation));
+        var lifecycle = new StartWindowLifecycle();
+
+        for (var index = 0; index < 10; index++)
+        {
+            Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+        }
+
+        Assert.False(lifecycle.HasAcquiredForeground);
+        Assert.Equal(0, lifecycle.ForeignForegroundObservations);
+    }
+
+    [Fact]
+    public void NativeActivationArmsDismissalAfterConsecutiveForeignObservations()
+    {
+        var lifecycle = new StartWindowLifecycle();
+        lifecycle.ObserveNativeActivation();
+
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+        Assert.True(lifecycle.ObserveForeground(true, false, false, false));
+    }
+
+    [Fact]
+    public void ForegroundOwnershipAcquiresAndResetsForeignObservationCount()
+    {
+        var lifecycle = new StartWindowLifecycle();
+        lifecycle.ObserveNativeActivation();
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+
+        Assert.False(lifecycle.ObserveForeground(true, true, false, false));
+
+        Assert.True(lifecycle.HasAcquiredForeground);
+        Assert.Equal(0, lifecycle.ForeignForegroundObservations);
     }
 
     [Theory]
-    [InlineData(true, true, false, false, false, true)]
-    [InlineData(false, true, false, false, false, false)]
-    [InlineData(true, false, false, false, false, false)]
-    [InlineData(true, true, true, false, false, false)]
-    [InlineData(true, true, false, true, false, false)]
-    [InlineData(true, true, false, false, true, false)]
-    public void ShouldHideForForegroundChange_OnlyHidesAfterConfirmedAcquisition(
-        bool hasAcquiredForeground,
-        bool foregroundKnown,
-        bool foregroundBelongsToStart,
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void OwnedWindowsAndContextMenusCancelTransientForeignObservations(
         bool hasActiveOwnedWindow,
-        bool hasOpenContextMenu,
-        bool expected)
+        bool hasOpenContextMenu)
     {
-        Assert.Equal(expected, StartWindowLifecycle.ShouldHideForForegroundChange(
-            hasAcquiredForeground,
-            foregroundKnown,
-            foregroundBelongsToStart,
+        var lifecycle = new StartWindowLifecycle();
+        lifecycle.ObserveNativeActivation();
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+
+        Assert.False(lifecycle.ObserveForeground(
+            true,
+            false,
             hasActiveOwnedWindow,
             hasOpenContextMenu));
+
+        Assert.Equal(0, lifecycle.ForeignForegroundObservations);
+    }
+
+    [Fact]
+    public void ResetReturnsLifecycleToWaitingState()
+    {
+        var lifecycle = new StartWindowLifecycle();
+        lifecycle.ObserveNativeActivation();
+        lifecycle.ObserveForeground(true, false, false, false);
+
+        lifecycle.Reset();
+
+        Assert.False(lifecycle.HasAcquiredForeground);
+        Assert.Equal(0, lifecycle.ForeignForegroundObservations);
     }
 }

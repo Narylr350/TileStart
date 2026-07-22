@@ -17,15 +17,44 @@ LONG g_install_succeeded = 0;
 
 BOOL RequestHostOpen()
 {
+    if (!WaitNamedPipeW(kPipeName, kPipeTimeoutMilliseconds))
+    {
+        return FALSE;
+    }
+
+    const HANDLE pipe = CreateFileW(kPipeName,
+                                    GENERIC_READ | GENERIC_WRITE,
+                                    0,
+                                    nullptr,
+                                    OPEN_EXISTING,
+                                    0,
+                                    nullptr);
+    if (pipe == INVALID_HANDLE_VALUE)
+    {
+        return FALSE;
+    }
+
+    ULONG server_process = 0;
+    if (GetNamedPipeServerProcessId(pipe, &server_process) && server_process != 0)
+    {
+        AllowSetForegroundWindow(server_process);
+    }
+
     BYTE response = 0;
+    DWORD written = 0;
     DWORD response_size = 0;
-    const BOOL delivered = CallNamedPipeW(kPipeName,
-                                          const_cast<char*>(kOpenCommand),
-                                          sizeof(kOpenCommand) - 1,
-                                          &response,
-                                          sizeof(response),
-                                          &response_size,
-                                          kPipeTimeoutMilliseconds);
+    const BOOL delivered = WriteFile(pipe,
+                                     kOpenCommand,
+                                     sizeof(kOpenCommand) - 1,
+                                     &written,
+                                     nullptr)
+                           && written == sizeof(kOpenCommand) - 1
+                           && ReadFile(pipe,
+                                       &response,
+                                       sizeof(response),
+                                       &response_size,
+                                       nullptr);
+    CloseHandle(pipe);
     return delivered && response_size == sizeof(response) && response == 1;
 }
 

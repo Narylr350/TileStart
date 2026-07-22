@@ -31,7 +31,6 @@ public partial class MainWindow : Window
     private const uint AwHide = 0x00010000;
     private const uint AwBlend = 0x00080000;
     private const int DismissDurationMilliseconds = 150;
-    private const int ForegroundAcquisitionTimeoutMilliseconds = 1000;
     private const int CollapsedRecentAppCount = 3;
     private const int ExpandedRecentAppCount = 10;
     private const int WcaAccentPolicy = 19;
@@ -51,8 +50,7 @@ public partial class MainWindow : Window
     private bool _recentAppsExpanded;
     private bool _isDismissing;
     private HwndSource? _windowSource;
-    private bool _foregroundAcquiredSinceShow;
-    private long _foregroundAcquisitionDeadline;
+    private readonly StartWindowLifecycle _foregroundLifecycle = new();
     private int _openContextMenuCount;
     private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private System.Windows.Point _dragStart;
@@ -203,8 +201,7 @@ public partial class MainWindow : Window
 
         CancelEntranceSnapshot();
         ApplyWindowMaterial();
-        _foregroundAcquiredSinceShow = false;
-        _foregroundAcquisitionDeadline = Environment.TickCount64 + ForegroundAcquisitionTimeoutMilliseconds;
+        _foregroundLifecycle.Reset();
         PositionOnCurrentMonitor();
         PrepareMotionElements();
         var animationsEnabled = SystemParameters.ClientAreaAnimation;
@@ -234,10 +231,11 @@ public partial class MainWindow : Window
         }
 
         var foreground = GetForegroundWindow();
-        _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
-            _foregroundAcquiredSinceShow,
+        _foregroundLifecycle.ObserveForeground(
+            foreground != 0,
             foreground != 0 && ForegroundBelongsToStart(foreground),
-            receivedNativeActivation: false);
+            hasActiveOwnedWindow: false,
+            hasOpenContextMenu: false);
 
         _foregroundWatchdogTimer.Start();
         var generation = _entranceSnapshotGeneration;
@@ -780,10 +778,7 @@ public partial class MainWindow : Window
         {
             if (IsVisible)
             {
-                _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
-                    _foregroundAcquiredSinceShow,
-                    foregroundBelongsToStart: false,
-                    receivedNativeActivation: true);
+                _foregroundLifecycle.ObserveNativeActivation();
             }
 
             return 0;
@@ -1052,33 +1047,15 @@ public partial class MainWindow : Window
         var foreground = GetForegroundWindow();
         var foregroundKnown = foreground != 0;
         var foregroundBelongsToStart = foregroundKnown && ForegroundBelongsToStart(foreground);
-        _foregroundAcquiredSinceShow = StartWindowLifecycle.HasAcquiredForeground(
-            _foregroundAcquiredSinceShow,
-            foregroundBelongsToStart,
-            receivedNativeActivation: false);
-        if (foregroundBelongsToStart)
-        {
-            return;
-        }
-
         var hasActiveOwnedWindow = OwnedWindows.Cast<Window>().Any(window => window.IsActive);
-        if (StartWindowLifecycle.ShouldHideForForegroundChange(
-                _foregroundAcquiredSinceShow,
+        if (_foregroundLifecycle.ObserveForeground(
                 foregroundKnown,
                 foregroundBelongsToStart,
                 hasActiveOwnedWindow,
                 _openContextMenuCount > 0))
         {
             DiagnosticLog.Write(
-                $"Window dismissal: trigger={trigger}, foreground=0x{foreground.ToInt64():X}, active={IsActive}, ownedActive={hasActiveOwnedWindow}, contextMenus={_openContextMenuCount}.");
-            DismissWindow(yieldTopmost: true);
-        }
-        else if (!_foregroundAcquiredSinceShow
-                 && foregroundKnown
-                 && Environment.TickCount64 > _foregroundAcquisitionDeadline)
-        {
-            DiagnosticLog.Write(
-                $"Window dismissal: trigger=foreground-acquisition-timeout, foreground=0x{foreground.ToInt64():X}, active={IsActive}.");
+                $"Window dismissal: trigger={trigger}, foreground=0x{foreground.ToInt64():X}, active={IsActive}, acquired={_foregroundLifecycle.HasAcquiredForeground}, foreignSamples={_foregroundLifecycle.ForeignForegroundObservations}, ownedActive={hasActiveOwnedWindow}, contextMenus={_openContextMenuCount}.");
             DismissWindow(yieldTopmost: true);
         }
     }
