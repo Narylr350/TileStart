@@ -18,30 +18,32 @@ public sealed class Win10MenuPopupMotionTests
     }
 
     [Fact]
-    public void DownwardSubmenuStartsWithBottomThirdVisible()
+    public void DownwardSubmenuStartsWithTopThirdVisible()
     {
         var clip = Win10MenuPopupMotion.InitialClip(
             200,
             100,
             Win10MenuPopupMotion.SubmenuClosedRatio,
-            popupOpensUpward: false);
+            popupOpensUpward: false,
+            useSubmenuDirection: true);
 
         Assert.Equal(0, clip.X);
-        Assert.Equal(67, clip.Y, 2);
+        Assert.Equal(0, clip.Y, 2);
         Assert.Equal(200, clip.Width);
         Assert.Equal(33, clip.Height, 2);
     }
 
     [Fact]
-    public void UpwardSubmenuReversesTheRevealDirection()
+    public void UpwardSubmenuStartsWithBottomThirdVisible()
     {
         var clip = Win10MenuPopupMotion.InitialClip(
             200,
             100,
             Win10MenuPopupMotion.SubmenuClosedRatio,
-            popupOpensUpward: true);
+            popupOpensUpward: true,
+            useSubmenuDirection: true);
 
-        Assert.Equal(0, clip.Y);
+        Assert.Equal(67, clip.Y, 2);
         Assert.Equal(33, clip.Height, 2);
     }
 
@@ -56,5 +58,23 @@ public sealed class Win10MenuPopupMotionTests
 
         Assert.Equal(50, clip.Y, 2);
         Assert.Equal(50, clip.Height, 2);
+    }
+
+    [Fact]
+    public void SubmenuCanRevealFromPointerPosition()
+    {
+        var clip = Win10MenuPopupMotion.InitialClip(200, 120, 0.5, false, pointerOriginY: 60);
+
+        Assert.Equal(0, clip.Y, 2);
+        Assert.Equal(60, clip.Height, 2);
+    }
+
+    [Fact]
+    public void PointerRevealIsClampedInsidePopup()
+    {
+        var clip = Win10MenuPopupMotion.InitialClip(200, 120, 0.5, false, pointerOriginY: 5);
+
+        Assert.Equal(0, clip.Y, 2);
+        Assert.Equal(60, clip.Height, 2);
     }
 }

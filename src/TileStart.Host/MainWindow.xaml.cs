@@ -810,10 +810,13 @@ public partial class MainWindow : Window
 
         if (GetContextMenuPopupBorder(menu) is { } border)
         {
+            var opensUpward = ContextMenuOpensUpward(menu, border);
             AnimateMenuPopupBorder(
                 border,
                 Win10MenuPopupMotion.TopLevelClosedRatio,
-                ContextMenuOpensUpward(menu, border));
+                opensUpward,
+                opensUpward ? null : PointerOriginY(border),
+                useSubmenuDirection: true);
         }
 
         if (menu.PlacementTarget is Button { Tag: TileItem tile })
@@ -880,6 +883,7 @@ public partial class MainWindow : Window
         }
 
         var submenuOpensUpward = false;
+        double? pointerOriginY = null;
         if (popup.PlacementTarget is FrameworkElement placementTarget)
         {
             try
@@ -892,16 +896,25 @@ public partial class MainWindow : Window
             }
         }
 
+        if (!submenuOpensUpward)
+        {
+            pointerOriginY = PointerOriginY(border);
+        }
+
         AnimateMenuPopupBorder(
             border,
             Win10MenuPopupMotion.SubmenuClosedRatio,
-            submenuOpensUpward);
+            submenuOpensUpward,
+            pointerOriginY,
+            useSubmenuDirection: true);
     }
 
     private static void AnimateMenuPopupBorder(
         System.Windows.Controls.Border border,
         double closedRatio,
-        bool popupOpensUpward)
+        bool popupOpensUpward,
+        double? pointerOriginY = null,
+        bool useSubmenuDirection = false)
     {
         if (!SystemParameters.ClientAreaAnimation)
         {
@@ -921,7 +934,9 @@ public partial class MainWindow : Window
             border.ActualWidth,
             border.ActualHeight,
             closedRatio,
-            popupOpensUpward);
+            popupOpensUpward,
+            pointerOriginY,
+            useSubmenuDirection);
         animation.Completed += (_, _) =>
         {
             if (ReferenceEquals(border.Clip, clip))
@@ -937,6 +952,26 @@ public partial class MainWindow : Window
 
     private static System.Windows.Controls.Border? GetContextMenuPopupBorder(ContextMenu menu) =>
         menu.Template.FindName("ContextMenuPopupBorder", menu) as System.Windows.Controls.Border;
+
+    private static double? PointerOriginY(FrameworkElement popup)
+    {
+        if (!GetCursorPos(out var cursor))
+        {
+            return null;
+        }
+
+        try
+        {
+            var localPointer = popup.PointFromScreen(new System.Windows.Point(cursor.X, cursor.Y));
+            return localPointer.Y >= 0 && localPointer.Y <= popup.ActualHeight
+                ? localPointer.Y
+                : null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
 
     private static bool ContextMenuOpensUpward(
         ContextMenu menu,
