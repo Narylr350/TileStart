@@ -36,6 +36,10 @@ public sealed class AppEntry : INotifyPropertyChanged
 
     public bool IsFolder => Children.Count > 0;
 
+    public bool CanUninstall => AppUninstaller.CanUninstall(this);
+
+    public bool CanPinToTaskbar => TaskbarPinner.CanPin(this);
+
     public bool CanOpenFileLocation
     {
         get

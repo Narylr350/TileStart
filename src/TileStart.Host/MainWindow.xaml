@@ -438,9 +438,25 @@
                                             <DataTrigger Binding="{Binding CanOpenFileLocation}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible" />
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding CanPinToTaskbar}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </MenuItem.Style>
+                                <MenuItem Header="固定到任务栏"
+                                          Click="PinAppToTaskbar_Click">
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource StartMenuItemStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CanPinToTaskbar}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
                                 <MenuItem Header="打开文件所在的位置"
                                           Style="{StaticResource StartMenuItemStyle}"
                                           Click="OpenAppFileLocation_Click">
@@ -451,6 +467,25 @@
                                                    Text="&#xE838;" />
                                     </MenuItem.Icon>
                                 </MenuItem>
+                            </MenuItem>
+                            <MenuItem Header="卸载"
+                                      Click="UninstallApp_Click">
+                                <MenuItem.Icon>
+                                    <TextBlock Foreground="White"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Text="&#xE74D;" />
+                                </MenuItem.Icon>
+                                <MenuItem.Style>
+                                    <Style TargetType="MenuItem" BasedOn="{StaticResource StartMenuItemStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CanUninstall}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </MenuItem.Style>
                             </MenuItem>
                         </ContextMenu>
                     </Button.ContextMenu>
@@ -536,6 +571,7 @@
                   Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
                   HorizontalAlignment="Left"
                   Background="Transparent"
+                  MouseEnter="NavigationPane_MouseEnter"
                   MouseLeave="NavigationPane_MouseLeave"
                   Panel.ZIndex="30">
                 <Grid.RowDefinitions>
@@ -549,7 +585,6 @@
                         Content="&#xE700;"
                         Tag="开始"
                         ToolTip="展开"
-                        MouseEnter="NavigationToggleButton_MouseEnter"
                         Click="NavigationToggleButton_Click">
                     <Button.ContextMenu>
                         <ContextMenu Style="{StaticResource StartContextMenuStyle}"
@@ -868,7 +903,22 @@
                                         PreviewMouseLeftButtonDown="GroupHeader_PreviewMouseLeftButtonDown"
                                         PreviewMouseMove="GroupHeader_PreviewMouseMove"
                                         PreviewMouseLeftButtonUp="GroupHeader_PreviewMouseLeftButtonUp"
-                                        LostMouseCapture="GroupHeader_LostMouseCapture" />
+                                        LostMouseCapture="GroupHeader_LostMouseCapture">
+                                        <local:TileGroupHeader.ContextMenu>
+                                            <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                                                <MenuItem Header="从“开始”屏幕取消固定组"
+                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                          Click="DeleteGroup_Click">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Foreground="White"
+                                                                   FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="16"
+                                                                   Text="&#xE77A;" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </local:TileGroupHeader.ContextMenu>
+                                    </local:TileGroupHeader>
                                     <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                             Height="{Binding PixelHeight}"
                                             Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
@@ -991,6 +1041,10 @@
                                                                                     Text="&#xE838;" />
                                                                         </MenuItem.Icon>
                                                                     </MenuItem>
+                                                                    <MenuItem Header="固定到任务栏"
+                                                                              Tag="PinTaskbar"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="PinTileToTaskbar_Click" />
                                                                     <MenuItem Header="以管理员身份运行"
                                                                               Style="{StaticResource StartMenuItemStyle}"
                                                                               Click="RunTileAsAdministrator_Click">
@@ -1011,6 +1065,17 @@
                                                                                 FontFamily="Segoe MDL2 Assets"
                                                                                 FontSize="16"
                                                                                 Text="&#xE713;" />
+                                                                    </MenuItem.Icon>
+                                                                </MenuItem>
+                                                                <MenuItem Header="卸载"
+                                                                          Tag="Uninstall"
+                                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                                          Click="UninstallTile_Click">
+                                                                    <MenuItem.Icon>
+                                                                        <TextBlock Foreground="White"
+                                                                                   FontFamily="Segoe MDL2 Assets"
+                                                                                   FontSize="16"
+                                                                                   Text="&#xE74D;" />
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
                                                             </ContextMenu>

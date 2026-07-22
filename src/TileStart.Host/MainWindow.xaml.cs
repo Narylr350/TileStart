@@ -74,6 +74,11 @@ public partial class MainWindow : Window
         Interval = TimeSpan.FromMilliseconds(50),
     };
 
+    private readonly System.Windows.Threading.DispatcherTimer _navigationHoverTimer = new()
+    {
+        Interval = SystemParameters.MouseHoverTime,
+    };
+
     private readonly TileReflowStability _tileReflowStability = new();
     private readonly TileReflowStability _folderActivationStability = new(TileDropResolver.FolderActivationDrift);
     private bool _tileDragAutoScrollSubscribed;
@@ -150,6 +155,7 @@ public partial class MainWindow : Window
         _tileReflowTimer.Tick += TileReflowTimer_Tick;
         _folderActivationTimer.Tick += FolderActivationTimer_Tick;
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
+        _navigationHoverTimer.Tick += NavigationHoverTimer_Tick;
         DataContext = this;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
         MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
@@ -253,6 +259,7 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             _foregroundWatchdogTimer.Stop();
+            _navigationHoverTimer.Stop();
             Hide();
         }
 
@@ -264,6 +271,7 @@ public partial class MainWindow : Window
         StopWindowWidthSnapAnimation();
         StopTileDragAutoScroll();
         _foregroundWatchdogTimer.Stop();
+        _navigationHoverTimer.Stop();
         _windowSource?.RemoveHook(WindowMessageHook);
         _windowSource = null;
         base.OnClosed(e);
@@ -724,6 +732,7 @@ public partial class MainWindow : Window
 
         _isDismissing = true;
         _foregroundWatchdogTimer.Stop();
+        _navigationHoverTimer.Stop();
         CancelEntranceSnapshot();
         SaveCurrentSize();
         ClearSearch();
@@ -820,6 +829,18 @@ public partial class MainWindow : Window
                 else if (item.Tag as string == "DissolveFolder")
                 {
                     item.Visibility = tile.IsTileFolder ? Visibility.Visible : Visibility.Collapsed;
+                }
+                else if (item.Tag as string == "Uninstall")
+                {
+                    item.Visibility = AppUninstaller.CanUninstall(tile)
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
+                }
+                else if (item.Tag as string == "PinTaskbar")
+                {
+                    item.Visibility = TaskbarPinner.CanPin(tile)
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
                 }
                 else if (item.IsCheckable)
                 {
@@ -1591,6 +1612,74 @@ public partial class MainWindow : Window
             AppLauncher.OpenFileLocation(tile, _launchableApps);
         }
     }
+
+    private void UninstallApp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { DataContext: AppEntry app } && AppUninstaller.Open(app))
+        {
+            DismissWindow(yieldTopmost: true);
+        }
+    }
+
+    private void UninstallTile_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is not null && AppUninstaller.Open(tile, _launchableApps))
+        {
+            DismissWindow(yieldTopmost: true);
+        }
+    }
+
+    private async void PinAppToTaskbar_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { DataContext: AppEntry app })
+        {
+            await RequestTaskbarPinAsync(app);
+        }
+    }
+
+    private async void PinTileToTaskbar_Click(object sender, RoutedEventArgs e)
+    {
+        var tile = GetContextTile(sender);
+        if (tile is null)
+        {
+            return;
+        }
+
+        if (FindApp(tile) is { } app)
+        {
+            await RequestTaskbarPinAsync(app);
+            return;
+        }
+
+        if (await TaskbarPinner.RequestPinAsync(tile))
+        {
+            DismissWindow(yieldTopmost: true);
+            return;
+        }
+
+        ShowTaskbarPinFailed();
+    }
+
+    private async Task RequestTaskbarPinAsync(AppEntry app)
+    {
+        if (await TaskbarPinner.RequestPinAsync(app))
+        {
+            DismissWindow(yieldTopmost: true);
+            return;
+        }
+
+        ShowTaskbarPinFailed();
+    }
+
+    private void ShowTaskbarPinFailed() => System.Windows.MessageBox.Show(this,
+            "Windows 没有允许固定该应用，或该应用已经固定到任务栏。",
+            "固定到任务栏",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+
+    private AppEntry? FindApp(TileItem tile) => _launchableApps.FirstOrDefault(candidate =>
+        candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
 
     private void RunTileAsAdministrator_Click(object sender, RoutedEventArgs e)
     {
@@ -3864,15 +3953,32 @@ public partial class MainWindow : Window
 
     private void NavigationToggleButton_Click(object sender, RoutedEventArgs e)
     {
+        _navigationHoverTimer.Stop();
         _navigationPinnedOpen = !_navigationPinnedOpen;
         SetNavigationExpanded(_navigationPinnedOpen);
     }
 
-    private void NavigationToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
-        SetNavigationExpanded(true);
+    private void NavigationPane_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (!_navigationPinnedOpen && !_navigationExpanded)
+        {
+            _navigationHoverTimer.Stop();
+            _navigationHoverTimer.Start();
+        }
+    }
+
+    private void NavigationHoverTimer_Tick(object? sender, EventArgs e)
+    {
+        _navigationHoverTimer.Stop();
+        if (!_navigationPinnedOpen && NavigationPane.IsMouseOver)
+        {
+            SetNavigationExpanded(true);
+        }
+    }
 
     private void NavigationPane_MouseLeave(object sender, MouseEventArgs e)
     {
+        _navigationHoverTimer.Stop();
         if (!_navigationPinnedOpen && _openContextMenuCount == 0)
         {
             SetNavigationExpanded(false);
