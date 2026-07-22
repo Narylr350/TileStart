@@ -1117,10 +1117,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        var target = TileLayout.Groups.FirstOrDefault() ?? TileGroupManager.Add(TileLayout);
         var tile = CreateAppTile(app);
-        var location = Win10GroupLayout.FindFirstAvailable(target, tile);
-        if (Win10GroupLayout.Add(target, tile, location.Column, location.Row))
+        var placement = Win10GroupLayout.FindPinPlacement(TileLayout.Groups, tile)
+                        ?? new Win10PinPlacement(
+                            TileGroupManager.Add(TileLayout, CurrentGroupColumnCount()),
+                            0,
+                            0);
+        if (Win10GroupLayout.AddToFreeCell(placement.Group, tile, placement.Column, placement.Row))
         {
             TileLayoutStore.Save(TileLayout);
         }
@@ -1308,21 +1311,15 @@ public partial class MainWindow : Window
         }
 
         ApplyTileSettings(tile, dialog);
-        var group = TileLayout.Groups.LastOrDefault();
-        if (group is null)
+        var placement = Win10GroupLayout.FindPinPlacement(TileLayout.Groups, tile)
+                        ?? new Win10PinPlacement(
+                            TileGroupManager.Add(TileLayout, CurrentGroupColumnCount()),
+                            0,
+                            0);
+        if (Win10GroupLayout.AddToFreeCell(placement.Group, tile, placement.Column, placement.Row))
         {
-            group = TileGroupManager.Add(TileLayout, CurrentGroupColumnCount());
+            TileLayoutStore.Save(TileLayout);
         }
-
-        var location = Win10GroupLayout.FindFirstAvailable(group, tile);
-        Win10GroupLayout.Add(group, tile, location.Column, location.Row);
-        TileLayoutStore.Save(TileLayout);
-    }
-
-    private void AddGroup_Click(object sender, RoutedEventArgs e)
-    {
-        TileGroupManager.Add(TileLayout, CurrentGroupColumnCount());
-        TileLayoutStore.Save(TileLayout);
     }
 
     private void GroupHeader_NameCommitted(object sender, EventArgs e)
@@ -1629,26 +1626,6 @@ public partial class MainWindow : Window
         _groupDragTargets = [];
         _groupDragTargetCell = null;
         _isInternalGroupDrag = false;
-    }
-
-    private void MoveGroupLeft_Click(object sender, RoutedEventArgs e)
-    {
-        MoveGroup(sender, -1);
-    }
-
-    private void MoveGroupRight_Click(object sender, RoutedEventArgs e)
-    {
-        MoveGroup(sender, 1);
-    }
-
-    private void MoveGroup(object sender, int offset)
-    {
-        var group = GetContextGroup(sender);
-        if (group is not null
-            && TileGroupManager.Move(TileLayout, group, offset, CurrentGroupColumnCount()))
-        {
-            TileLayoutStore.Save(TileLayout);
-        }
     }
 
     private void DeleteGroup_Click(object sender, RoutedEventArgs e)

@@ -67,7 +67,7 @@ public sealed class Win10GroupLayoutTests
                 for (var otherIndex = index + 1; otherIndex < tiles.Length; otherIndex++)
                 {
                     Assert.False(Overlaps(tile.Size, tile.Column, tile.Row,
-                                          tiles[otherIndex].Size, tiles[otherIndex].Column, tiles[otherIndex].Row));
+                        tiles[otherIndex].Size, tiles[otherIndex].Column, tiles[otherIndex].Row));
                 }
             }
         }
@@ -113,6 +113,95 @@ public sealed class Win10GroupLayoutTests
 
         Assert.Equal((0, 0), (added.Column, added.Row));
         Assert.Equal((4, 0), (stationary.Column, stationary.Row));
+        AssertNoOverlap(group);
+    }
+
+    [Fact]
+    public void PinPlacementSearchesExistingGapsInVisualGroupOrder()
+    {
+        var fullLeftGroup = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles =
+            [
+                Tile(TileSize.Large, 0, 0),
+                Tile(TileSize.Large, 4, 0),
+            ],
+        };
+        var rightGroupWithGap = new TileGroup
+        {
+            GroupColumn = 1,
+            GroupRow = 0,
+            Tiles =
+            [
+                Tile(TileSize.Large, 0, 0),
+                Tile(TileSize.Medium, 4, 0),
+                Tile(TileSize.Medium, 6, 0),
+                Tile(TileSize.Medium, 4, 2),
+            ],
+        };
+        var pinned = Tile(TileSize.Medium, 0, 0);
+
+        var placement = Win10GroupLayout.FindPinPlacement([rightGroupWithGap, fullLeftGroup], pinned);
+
+        Assert.NotNull(placement);
+        Assert.Same(rightGroupWithGap, placement.Value.Group);
+        Assert.Equal((6, 2), (placement.Value.Column, placement.Value.Row));
+    }
+
+    [Fact]
+    public void PinPlacementRequiresANewGroupWhenNoExistingGapFits()
+    {
+        var rightGroup = new TileGroup
+        {
+            GroupColumn = 1,
+            GroupRow = 0,
+            Tiles =
+            [
+                Tile(TileSize.Large, 0, 0),
+                Tile(TileSize.Large, 4, 0),
+            ],
+        };
+        var leftGroup = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles =
+            [
+                Tile(TileSize.Large, 0, 0),
+                Tile(TileSize.Large, 4, 0),
+            ],
+        };
+
+        var placement = Win10GroupLayout.FindPinPlacement([rightGroup, leftGroup], Tile(TileSize.Medium, 0, 0));
+
+        Assert.Null(placement);
+    }
+
+    [Fact]
+    public void AddingPinnedTileToFreeCellDoesNotMoveExistingTiles()
+    {
+        var existing = new[]
+        {
+            Tile(TileSize.Large, 0, 0),
+            Tile(TileSize.Medium, 4, 0),
+            Tile(TileSize.Medium, 6, 0),
+            Tile(TileSize.Medium, 4, 2),
+        };
+        var positions = existing.ToDictionary(tile => tile, tile => (tile.Column, tile.Row));
+        var group = new TileGroup { Tiles = [.. existing] };
+        var pinned = Tile(TileSize.Medium, 0, 0);
+
+        Assert.True(Win10GroupLayout.AddToFreeCell(group, pinned, 6, 2));
+
+        Assert.Equal((6, 2), (pinned.Column, pinned.Row));
+        Assert.Same(pinned, group.Tiles[^1]);
+        foreach (var tile in existing)
+        {
+            Assert.Equal(positions[tile], (tile.Column, tile.Row));
+        }
+
         AssertNoOverlap(group);
     }
 
@@ -286,9 +375,9 @@ public sealed class Win10GroupLayoutTests
             {
                 var second = group.Tiles[secondIndex];
                 var overlaps = first.Column < second.Column + second.Size.ColumnSpan()
-                    && first.Column + first.Size.ColumnSpan() > second.Column
-                    && first.Row < second.Row + second.Size.RowSpan()
-                    && first.Row + first.Size.RowSpan() > second.Row;
+                               && first.Column + first.Size.ColumnSpan() > second.Column
+                               && first.Row < second.Row + second.Size.RowSpan()
+                               && first.Row + first.Size.RowSpan() > second.Row;
                 Assert.False(overlaps, $"{first.Name} overlaps {second.Name}");
             }
         }

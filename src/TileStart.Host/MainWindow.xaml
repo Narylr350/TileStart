@@ -37,8 +37,6 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="HoverBackground" Color="#22FFFFFF" />
-        <SolidColorBrush x:Key="PressedBackground" Color="#32FFFFFF" />
         <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
         <SolidColorBrush x:Key="ExpandedNavigationBackground" Color="#EE202020" />
@@ -131,12 +129,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Background"
-                                Background="{TemplateBinding Background}"
-                                ClipToBounds="True">
+                        <local:Win10InteractionBorder x:Name="Background"
+                                                      Background="{TemplateBinding Background}"
+                                                      IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      RevealRadius="88">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
+                                    <ColumnDefinition
+                                        Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0"
@@ -155,15 +155,7 @@
                                            Text="{TemplateBinding Tag}"
                                            TextTrimming="CharacterEllipsis" />
                             </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource PressedBackground}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                        </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -181,19 +173,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Background" Background="{TemplateBinding Background}">
+                        <local:Win10InteractionBorder x:Name="Background"
+                                                      Background="{TemplateBinding Background}"
+                                                      IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      RevealRadius="104">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource PressedBackground}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                        </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -210,21 +197,19 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="TileBorder"
-                                Background="{TemplateBinding Background}"
-                                SnapsToDevicePixels="True">
+                        <local:Win10InteractionBorder x:Name="TileBorder"
+                                                       Background="{TemplateBinding Background}"
+                                                       HoverFillOpacity="0"
+                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                       PressedFillOpacity="0"
+                                                       RevealBorderOpacity="0.42"
+                                                       RevealRadius="96"
+                                                       UsesSharedPointerLight="True"
+                                                       SnapsToDevicePixels="True">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TileBorder" Property="Opacity" Value="0.88" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="TileBorder" Property="Opacity" Value="0.72" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                        </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -277,7 +262,8 @@
                               Background="{TemplateBinding Background}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition x:Name="CheckColumn" Width="0" />
-                                <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.ContextMenuIconPlaceholderGridLength}" />
+                                <ColumnDefinition
+                                    Width="{x:Static local:Win10VisualMetrics.ContextMenuIconPlaceholderGridLength}" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="24" />
                             </Grid.ColumnDefinitions>
@@ -334,10 +320,12 @@
                                 <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                <Setter TargetName="MenuItemRoot" Property="Background"
+                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
                             </Trigger>
                             <Trigger Property="IsSubmenuOpen" Value="True">
-                                <Setter TargetName="MenuItemRoot" Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                <Setter TargetName="MenuItemRoot" Property="Background"
+                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.38" />
@@ -374,16 +362,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Background" Background="{TemplateBinding Background}">
+                        <local:Win10InteractionBorder x:Name="Background"
+                                                      Background="{TemplateBinding Background}"
+                                                      IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      RevealRadius="84">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                        </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -401,13 +387,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Background" Background="{TemplateBinding Background}">
+                        <local:Win10InteractionBorder x:Name="Background"
+                                                      Background="{TemplateBinding Background}"
+                                                      IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      RevealRadius="72">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
+                        </local:Win10InteractionBorder>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{StaticResource HoverBackground}" />
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.28" />
                                 <Setter Property="Cursor" Value="Arrow" />
@@ -533,686 +519,730 @@
 
     <Grid x:Name="WindowRoot" Background="Transparent">
         <Grid x:Name="MainSurface" Background="Transparent">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
-            <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
+                <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <Grid x:Name="NavigationPane"
-              Grid.Column="0"
-              Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
-              HorizontalAlignment="Left"
-              Background="Transparent"
-              Panel.ZIndex="30">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemGridLength}" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <Button x:Name="NavigationToggleButton"
-                    Grid.Row="0"
-                    Style="{StaticResource RailButtonStyle}"
-                    Content="&#xE700;"
-                    Tag="开始"
-                    ToolTip="展开"
-                    Click="NavigationToggleButton_Click" />
-            <StackPanel Grid.Row="2">
-                <Button x:Name="UserNavigationButton"
+            <Grid x:Name="NavigationPane"
+                  Grid.Column="0"
+                  Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
+                  HorizontalAlignment="Left"
+                  Background="Transparent"
+                  Panel.ZIndex="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemGridLength}" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Button x:Name="NavigationToggleButton"
+                        Grid.Row="0"
                         Style="{StaticResource RailButtonStyle}"
-                        Content="&#xE77B;"
-                        Tag="{Binding CurrentUserName}"
-                        ToolTip="用户"
-                        Click="UserNavigationButton_Click">
-                    <Button.ContextMenu>
-                        <ContextMenu Style="{StaticResource StartContextMenuStyle}"
-                                     Opened="StartContextMenu_Opened"
-                                     Closed="StartContextMenu_Closed">
-                            <MenuItem Header="更改账户设置" Style="{StaticResource StartMenuItemStyle}" Click="AccountSettings_Click" />
-                            <MenuItem Header="锁定" Style="{StaticResource StartMenuItemStyle}" Click="LockSession_Click" />
-                            <MenuItem Header="注销" Style="{StaticResource StartMenuItemStyle}" Click="SignOut_Click" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-                <Button Style="{StaticResource RailButtonStyle}"
-                        Content="&#xE8A5;"
-                        Tag="文档"
-                        ToolTip="文档"
-                        Click="DocumentsNavigationButton_Click" />
-                <Button Style="{StaticResource RailButtonStyle}"
-                        Content="&#xEB9F;"
-                        Tag="图片"
-                        ToolTip="图片"
-                        Click="PicturesNavigationButton_Click" />
-                <Button Style="{StaticResource RailButtonStyle}"
-                        Content="&#xE713;"
-                        Tag="设置"
-                        ToolTip="设置"
-                        Click="SettingsNavigationButton_Click" />
-                <Button x:Name="PowerNavigationButton"
-                        Style="{StaticResource RailButtonStyle}"
-                        Content="&#xE7E8;"
-                        Tag="电源"
-                        ToolTip="电源"
-                        Click="PowerNavigationButton_Click">
-                    <Button.ContextMenu>
-                        <ContextMenu Style="{StaticResource StartContextMenuStyle}"
-                                     Opened="StartContextMenu_Opened"
-                                     Closed="StartContextMenu_Closed">
-                            <MenuItem Header="睡眠" Style="{StaticResource StartMenuItemStyle}" Click="Sleep_Click" />
-                            <MenuItem Header="关机" Style="{StaticResource StartMenuItemStyle}" Click="ShutDown_Click" />
-                            <MenuItem Header="重启" Style="{StaticResource StartMenuItemStyle}" Click="Restart_Click" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-            </StackPanel>
-        </Grid>
+                        Content="&#xE700;"
+                        Tag="开始"
+                        ToolTip="展开"
+                        Click="NavigationToggleButton_Click" />
+                <StackPanel Grid.Row="2">
+                    <Button x:Name="UserNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE77B;"
+                            Tag="{Binding CurrentUserName}"
+                            ToolTip="用户"
+                            Click="UserNavigationButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu Style="{StaticResource StartContextMenuStyle}"
+                                         Opened="StartContextMenu_Opened"
+                                         Closed="StartContextMenu_Closed">
+                                <MenuItem Header="更改账户设置" Style="{StaticResource StartMenuItemStyle}"
+                                          Click="AccountSettings_Click" />
+                                <MenuItem Header="锁定" Style="{StaticResource StartMenuItemStyle}"
+                                          Click="LockSession_Click" />
+                                <MenuItem Header="注销" Style="{StaticResource StartMenuItemStyle}" Click="SignOut_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE8A5;"
+                            Tag="文档"
+                            ToolTip="文档"
+                            Click="DocumentsNavigationButton_Click" />
+                    <Button Style="{StaticResource RailButtonStyle}"
+                            Content="&#xEB9F;"
+                            Tag="图片"
+                            ToolTip="图片"
+                            Click="PicturesNavigationButton_Click" />
+                    <Button Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE713;"
+                            Tag="设置"
+                            ToolTip="设置"
+                            Click="SettingsNavigationButton_Click" />
+                    <Button x:Name="PowerNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE7E8;"
+                            Tag="电源"
+                            ToolTip="电源"
+                            Click="PowerNavigationButton_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu Style="{StaticResource StartContextMenuStyle}"
+                                         Opened="StartContextMenu_Opened"
+                                         Closed="StartContextMenu_Closed">
+                                <MenuItem Header="睡眠" Style="{StaticResource StartMenuItemStyle}" Click="Sleep_Click" />
+                                <MenuItem Header="关机" Style="{StaticResource StartMenuItemStyle}"
+                                          Click="ShutDown_Click" />
+                                <MenuItem Header="重启" Style="{StaticResource StartMenuItemStyle}" Click="Restart_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+            </Grid>
 
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <Border x:Name="SearchPanel"
-                    Margin="8,8,8,4"
-                    Height="36"
-                    Background="#2D2D2D"
-                    BorderBrush="#707070"
-                    BorderThickness="1"
-                    Visibility="Collapsed">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="34" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontFamily="Segoe MDL2 Assets"
-                               FontSize="14"
-                               Text="&#xE721;" />
-                    <TextBox x:Name="SearchBox"
-                             Grid.Column="1"
-                             Padding="0,7,4,0"
-                             Foreground="White"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             FontFamily="Segoe UI"
-                             FontSize="14"
-                             TextChanged="SearchBox_TextChanged" />
-                </Grid>
-            </Border>
+                <Border x:Name="SearchPanel"
+                        Margin="8,8,8,4"
+                        Height="36"
+                        Background="#2D2D2D"
+                        BorderBrush="#707070"
+                        BorderThickness="1"
+                        Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14"
+                                   Text="&#xE721;" />
+                        <TextBox x:Name="SearchBox"
+                                 Grid.Column="1"
+                                 Padding="0,7,4,0"
+                                 Foreground="White"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 FontFamily="Segoe UI"
+                                 FontSize="14"
+                                 TextChanged="SearchBox_TextChanged" />
+                    </Grid>
+                </Border>
 
-            <Grid x:Name="SemanticZoomViewport"
-                  Grid.Row="1"
-                  ClipToBounds="True">
-                <Grid x:Name="SemanticZoomSurface">
-                    <Grid.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform x:Name="SemanticZoomSharedScale"
-                                            ScaleX="2"
-                                            ScaleY="2" />
-                            <TranslateTransform x:Name="SemanticZoomSharedTranslate" />
-                        </TransformGroup>
-                    </Grid.RenderTransform>
-
-                    <Grid x:Name="ZoomedInPresenter">
+                <Grid x:Name="SemanticZoomViewport"
+                      Grid.Row="1"
+                      ClipToBounds="True">
+                    <Grid x:Name="SemanticZoomSurface">
                         <Grid.RenderTransform>
                             <TransformGroup>
-                                <ScaleTransform x:Name="SemanticZoomedInScale"
-                                                ScaleX="0.5"
-                                                ScaleY="0.5" />
-                                <TranslateTransform x:Name="SemanticZoomedInTranslate" />
+                                <ScaleTransform x:Name="SemanticZoomSharedScale"
+                                                ScaleX="2"
+                                                ScaleY="2" />
+                                <TranslateTransform x:Name="SemanticZoomSharedTranslate" />
                             </TransformGroup>
                         </Grid.RenderTransform>
 
-                        <ScrollViewer x:Name="AppsScrollViewer"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <ScrollViewer.Resources>
-                                <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
-                            </ScrollViewer.Resources>
-                            <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
-                                <StackPanel x:Name="RecentPanel">
-                                    <TextBlock Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
-                                               Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
-                                               VerticalAlignment="Center"
-                                               FontSize="12"
-                                               Text="最近添加" />
-                                    <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
-                                    <Button x:Name="RecentExpandButton"
-                                            Style="{StaticResource AppRowStyle}"
-                                            HorizontalContentAlignment="Left"
-                                            Click="RecentExpandButton_Click">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock x:Name="RecentExpandText"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Text="展开" />
-                                            <TextBlock x:Name="RecentExpandGlyph"
-                                                       Margin="4,0"
-                                                       VerticalAlignment="Center"
-                                                       FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="8"
-                                                       Text="&#xE70D;" />
-                                        </StackPanel>
-                                    </Button>
+                        <Grid x:Name="ZoomedInPresenter">
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="SemanticZoomedInScale"
+                                                    ScaleX="0.5"
+                                                    ScaleY="0.5" />
+                                    <TranslateTransform x:Name="SemanticZoomedInTranslate" />
+                                </TransformGroup>
+                            </Grid.RenderTransform>
+
+                            <ScrollViewer x:Name="AppsScrollViewer"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="ScrollBar"
+                                           BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
+                                </ScrollViewer.Resources>
+                                <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
+                                    <StackPanel x:Name="RecentPanel">
+                                        <TextBlock
+                                            Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
+                                            Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Text="最近添加" />
+                                        <ItemsControl ItemsSource="{Binding RecentApps}"
+                                                      ItemTemplate="{StaticResource AppEntryTemplate}" />
+                                        <Button x:Name="RecentExpandButton"
+                                                Style="{StaticResource AppRowStyle}"
+                                                HorizontalContentAlignment="Left"
+                                                Click="RecentExpandButton_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock x:Name="RecentExpandText"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="14"
+                                                           Text="展开" />
+                                                <TextBlock x:Name="RecentExpandGlyph"
+                                                           Margin="4,0"
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="8"
+                                                           Text="&#xE70D;" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <ItemsControl x:Name="AppsList"
+                                                  ItemsSource="{Binding AppsView}"
+                                                  ItemTemplate="{StaticResource AppEntryTemplate}">
+                                        <ItemsControl.GroupStyle>
+                                            <GroupStyle>
+                                                <GroupStyle.HeaderTemplate>
+                                                    <DataTemplate>
+                                                        <Button Style="{StaticResource LetterHeaderStyle}"
+                                                                Tag="{Binding Name}"
+                                                                Content="{Binding Name}"
+                                                                Click="LetterHeader_Click" />
+                                                    </DataTemplate>
+                                                </GroupStyle.HeaderTemplate>
+                                            </GroupStyle>
+                                        </ItemsControl.GroupStyle>
+                                    </ItemsControl>
                                 </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
 
-                                <ItemsControl x:Name="AppsList"
-                                              ItemsSource="{Binding AppsView}"
-                                              ItemTemplate="{StaticResource AppEntryTemplate}">
-                                    <ItemsControl.GroupStyle>
-                                        <GroupStyle>
-                                            <GroupStyle.HeaderTemplate>
-                                                <DataTemplate>
-                                                    <Button Style="{StaticResource LetterHeaderStyle}"
-                                                            Tag="{Binding Name}"
-                                                            Content="{Binding Name}"
-                                                            Click="LetterHeader_Click" />
-                                                </DataTemplate>
-                                            </GroupStyle.HeaderTemplate>
-                                        </GroupStyle>
-                                    </ItemsControl.GroupStyle>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
+                        <Border x:Name="LetterIndexPanel"
+                                Panel.ZIndex="5"
+                                Background="Transparent"
+                                IsHitTestVisible="False"
+                                Opacity="0"
+                                Visibility="Collapsed">
+                            <ItemsControl Width="208"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          ItemsSource="{Binding AlphabetLetters}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Width="208" Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
+                                        <Button Style="{StaticResource AlphabetButtonStyle}"
+                                                Tag="{Binding}"
+                                                Content="{Binding Label}"
+                                                IsEnabled="{Binding IsAvailable}"
+                                                Click="AlphabetLetter_Click" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
                     </Grid>
-
-                    <Border x:Name="LetterIndexPanel"
-                            Panel.ZIndex="5"
-                            Background="Transparent"
-                            IsHitTestVisible="False"
-                            Opacity="0"
-                            Visibility="Collapsed">
-                        <ItemsControl Width="208"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"
-                                      ItemsSource="{Binding AlphabetLetters}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Width="208" Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
-                                    <Button Style="{StaticResource AlphabetButtonStyle}"
-                                            Tag="{Binding}"
-                                            Content="{Binding Label}"
-                                            IsEnabled="{Binding IsAvailable}"
-                                            Click="AlphabetLetter_Click" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Border>
                 </Grid>
             </Grid>
-        </Grid>
 
-        <Border x:Name="TilePane"
-                Grid.Column="2"
-                Background="Transparent"
-                AllowDrop="True"
-                DragOver="TileArea_DragOver"
-                Drop="TileArea_Drop">
-            <Border.ContextMenu>
-                <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
-                    <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />
-                    <Separator />
-                    <MenuItem Header="新建组" Click="AddGroup_Click" />
-                </ContextMenu>
-            </Border.ContextMenu>
-            <ScrollViewer x:Name="TileScrollViewer"
-                          Margin="{x:Static local:Win10VisualMetrics.TileScrollViewerMargin}"
-                          Style="{StaticResource TileScrollViewerStyle}">
-                <ItemsControl x:Name="TileGroupsControl"
-                              Margin="0,0,0,20"
-                              ItemsSource="{Binding TileLayout.Groups}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <local:Win10GroupWrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:TileGroup}">
-                            <StackPanel Width="{x:Static local:Win10VisualMetrics.TileGroupVisualWidth}"
-                                        Margin="0,0,0,24">
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
-                                        <MenuItem Header="向左移动" Click="MoveGroupLeft_Click" />
-                                        <MenuItem Header="向右移动" Click="MoveGroupRight_Click" />
-                                        <Separator />
-                                        <MenuItem Header="删除组" Click="DeleteGroup_Click" />
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
-                                <local:TileGroupHeader Margin="{x:Static local:Win10VisualMetrics.TileGroupHeaderMargin}"
-                                                       NameCommitted="GroupHeader_NameCommitted"
-                                                       PreviewMouseLeftButtonDown="GroupHeader_PreviewMouseLeftButtonDown"
-                                                       PreviewMouseMove="GroupHeader_PreviewMouseMove"
-                                                       PreviewMouseLeftButtonUp="GroupHeader_PreviewMouseLeftButtonUp"
-                                                       LostMouseCapture="GroupHeader_LostMouseCapture" />
-                                 <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                         Height="{Binding PixelHeight}"
-                                         Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
-                                    <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                  Height="{Binding PixelHeight}"
-                                                  AllowDrop="True"
-                                                  ItemsSource="{Binding Tiles}"
-                                                  Tag="{Binding}"
-                                                  DragOver="TileGroup_DragOver"
-                                                  Drop="TileGroup_Drop">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemContainerStyle>
-                                        <Style TargetType="ContentPresenter">
-                                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                            <Setter Property="Canvas.Top" Value="{Binding DisplayTop}" />
-                                        </Style>
-                                    </ItemsControl.ItemContainerStyle>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type local:TileItem}">
-                                            <Button x:Name="TileButton"
-                                                    Width="{Binding PixelWidth}"
-                                                    Height="{Binding PixelHeight}"
-                                                    Background="{Binding BackgroundBrush}"
-                                                    Foreground="{Binding ForegroundBrush}"
-                                                    Style="{StaticResource TileStyle}"
-                                                    Tag="{Binding}"
-                                                    Click="TileButton_Click"
-                                                    PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
-                                                <Button.ContextMenu>
-                                                    <ContextMenu Style="{StaticResource StartContextMenuStyle}">
-                                                        <ContextMenu.Resources>
-                                                            <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="#2B2B2B" />
-                                                            <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="White" />
-                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#505050" />
-                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
-                                                        </ContextMenu.Resources>
-                                                         <MenuItem Header="从“开始”屏幕取消固定"
-                                                                   Style="{StaticResource StartMenuItemStyle}"
-                                                                   Click="UnpinTile_Click">
-                                                            <MenuItem.Icon>
-                                                                <TextBlock Foreground="White"
-                                                                           FontFamily="Segoe MDL2 Assets"
-                                                                           FontSize="16"
-                                                                           Text="&#xE77A;" />
-                                                             </MenuItem.Icon>
-                                                         </MenuItem>
-                                                         <MenuItem Header="解散文件夹"
-                                                                   Tag="DissolveFolder"
-                                                                   Visibility="Collapsed"
-                                                                   Style="{StaticResource StartMenuItemStyle}"
-                                                                   Click="DissolveFolder_Click" />
-                                                         <MenuItem Header="调整大小"
-                                                                   Style="{StaticResource StartMenuItemStyle}">
-                                                            <MenuItem Header="小"
-                                                                      Tag="Small"
-                                                                      IsCheckable="True"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click">
-                                                                <MenuItem.Icon>
-                                                                    <Border Width="13" Height="13" BorderBrush="White" BorderThickness="1.5" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                            <MenuItem Header="中"
-                                                                      Tag="Medium"
-                                                                      IsCheckable="True"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click">
-                                                                <MenuItem.Icon>
-                                                                    <Border Width="16" Height="16" BorderBrush="White" BorderThickness="1.5" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                            <MenuItem Header="宽"
-                                                                      Tag="Wide"
-                                                                      IsCheckable="True"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click">
-                                                                <MenuItem.Icon>
-                                                                    <Border Width="18" Height="10" BorderBrush="White" BorderThickness="1.5" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                            <MenuItem Header="大"
-                                                                      Tag="Large"
-                                                                      IsCheckable="True"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="ResizeTile_Click">
-                                                                <MenuItem.Icon>
-                                                                    <Border Width="16" Height="16" Background="White" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                        </MenuItem>
-                                                        <MenuItem Header="更多"
-                                                                  Style="{StaticResource StartMenuItemStyle}">
-                                                            <MenuItem Header="打开文件所在的位置"
-                                                                      Tag="OpenFileLocation"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="OpenTileFileLocation_Click">
-                                                                <MenuItem.Icon>
-                                                                    <TextBlock Foreground="White"
-                                                                               FontFamily="Segoe MDL2 Assets"
-                                                                               FontSize="16"
-                                                                               Text="&#xE838;" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                            <MenuItem Header="以管理员身份运行"
-                                                                      Style="{StaticResource StartMenuItemStyle}"
-                                                                      Click="RunTileAsAdministrator_Click">
-                                                                <MenuItem.Icon>
-                                                                    <TextBlock Foreground="White"
-                                                                               FontFamily="Segoe MDL2 Assets"
-                                                                               FontSize="16"
-                                                                               Text="&#xE83D;" />
-                                                                </MenuItem.Icon>
-                                                            </MenuItem>
-                                                        </MenuItem>
-                                                        <Separator />
-                                                        <MenuItem Header="TileStart 设置…"
-                                                                  Style="{StaticResource StartMenuItemStyle}"
-                                                                  Click="TileSettings_Click">
-                                                            <MenuItem.Icon>
-                                                                <TextBlock Foreground="White"
-                                                                           FontFamily="Segoe MDL2 Assets"
-                                                                           FontSize="16"
-                                                                           Text="&#xE713;" />
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                    </ContextMenu>
-                                                </Button.ContextMenu>
-                                                <Grid ClipToBounds="True">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition />
-                                                        <RowDefinition Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.RowSpan="2"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"
-                                                           Source="{Binding BackgroundImage}"
-                                                           Stretch="UniformToFill" />
-                                                    <TextBlock x:Name="TileInitial"
-                                                               Grid.Row="0"
-                                                               Grid.RowSpan="2"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="24"
-                                                               FontWeight="SemiBold"
-                                                               Text="{Binding Initial}"
-                                                               Visibility="Collapsed" />
-                                                    <Image x:Name="TileIcon"
-                                                           Grid.Row="0"
-                                                           Grid.RowSpan="2"
-                                                           Width="{Binding IconSize}"
-                                                           Height="{Binding IconSize}"
-                                                           Margin="8"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"
-                                                           Source="{Binding Icon}"
-                                                           Stretch="Uniform">
-                                                        <Image.RenderTransform>
-                                                            <TranslateTransform Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
-                                                        </Image.RenderTransform>
-                                                    </Image>
-                                                    <ItemsControl x:Name="FolderPreview"
+            <Border x:Name="TilePane"
+                    Grid.Column="2"
+                    Background="Transparent"
+                    AllowDrop="True"
+                    DragOver="TileArea_DragOver"
+                    Drop="TileArea_Drop">
+                <Border.ContextMenu>
+                    <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
+                        <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <ScrollViewer x:Name="TileScrollViewer"
+                              Margin="{x:Static local:Win10VisualMetrics.TileScrollViewerMargin}"
+                              Style="{StaticResource TileScrollViewerStyle}">
+                    <ItemsControl x:Name="TileGroupsControl"
+                                  Margin="0,0,0,20"
+                                  ItemsSource="{Binding TileLayout.Groups}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <local:Win10GroupWrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:TileGroup}">
+                                <StackPanel Width="{x:Static local:Win10VisualMetrics.TileGroupVisualWidth}"
+                                            Margin="0,0,0,24">
+                                    <StackPanel.ContextMenu>
+                                        <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
+                                            <MenuItem Header="删除组" Click="DeleteGroup_Click" />
+                                        </ContextMenu>
+                                    </StackPanel.ContextMenu>
+                                    <local:TileGroupHeader
+                                        Margin="{x:Static local:Win10VisualMetrics.TileGroupHeaderMargin}"
+                                        NameCommitted="GroupHeader_NameCommitted"
+                                        PreviewMouseLeftButtonDown="GroupHeader_PreviewMouseLeftButtonDown"
+                                        PreviewMouseMove="GroupHeader_PreviewMouseMove"
+                                        PreviewMouseLeftButtonUp="GroupHeader_PreviewMouseLeftButtonUp"
+                                        LostMouseCapture="GroupHeader_LostMouseCapture" />
+                                    <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                            Height="{Binding PixelHeight}"
+                                            Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
+                                        <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                      Height="{Binding PixelHeight}"
+                                                      AllowDrop="True"
+                                                      ItemsSource="{Binding Tiles}"
+                                                      Tag="{Binding}"
+                                                      DragOver="TileGroup_DragOver"
+                                                      Drop="TileGroup_Drop">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <Canvas />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemContainerStyle>
+                                                <Style TargetType="ContentPresenter">
+                                                    <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                                    <Setter Property="Canvas.Top" Value="{Binding DisplayTop}" />
+                                                </Style>
+                                            </ItemsControl.ItemContainerStyle>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type local:TileItem}">
+                                                    <Button x:Name="TileButton"
+                                                            Width="{Binding PixelWidth}"
+                                                            Height="{Binding PixelHeight}"
+                                                            Background="{Binding BackgroundBrush}"
+                                                            Foreground="{Binding ForegroundBrush}"
+                                                            Style="{StaticResource TileStyle}"
+                                                            Tag="{Binding}"
+                                                            Click="TileButton_Click"
+                                                            PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
+                                                        <Button.ContextMenu>
+                                                            <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                                                                <ContextMenu.Resources>
+                                                                    <SolidColorBrush
+                                                                        x:Key="{x:Static SystemColors.MenuBrushKey}"
+                                                                        Color="#2B2B2B" />
+                                                                    <SolidColorBrush
+                                                                        x:Key="{x:Static SystemColors.MenuTextBrushKey}"
+                                                                        Color="White" />
+                                                                    <SolidColorBrush
+                                                                        x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                                                        Color="#505050" />
+                                                                    <SolidColorBrush
+                                                                        x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                                                        Color="White" />
+                                                                </ContextMenu.Resources>
+                                                                <MenuItem Header="从“开始”屏幕取消固定"
+                                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                                          Click="UnpinTile_Click">
+                                                                    <MenuItem.Icon>
+                                                                        <TextBlock Foreground="White"
+                                                                                FontFamily="Segoe MDL2 Assets"
+                                                                                FontSize="16"
+                                                                                Text="&#xE77A;" />
+                                                                    </MenuItem.Icon>
+                                                                </MenuItem>
+                                                                <MenuItem Header="解散文件夹"
+                                                                          Tag="DissolveFolder"
+                                                                          Visibility="Collapsed"
+                                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                                          Click="DissolveFolder_Click" />
+                                                                <MenuItem Header="调整大小"
+                                                                          Style="{StaticResource StartMenuItemStyle}">
+                                                                    <MenuItem Header="小"
+                                                                              Tag="Small"
+                                                                              IsCheckable="True"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="ResizeTile_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <Border Width="13" Height="13"
+                                                                                    BorderBrush="White"
+                                                                                    BorderThickness="1.5" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                    <MenuItem Header="中"
+                                                                              Tag="Medium"
+                                                                              IsCheckable="True"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="ResizeTile_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <Border Width="16" Height="16"
+                                                                                    BorderBrush="White"
+                                                                                    BorderThickness="1.5" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                    <MenuItem Header="宽"
+                                                                              Tag="Wide"
+                                                                              IsCheckable="True"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="ResizeTile_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <Border Width="18" Height="10"
+                                                                                    BorderBrush="White"
+                                                                                    BorderThickness="1.5" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                    <MenuItem Header="大"
+                                                                              Tag="Large"
+                                                                              IsCheckable="True"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="ResizeTile_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <Border Width="16" Height="16"
+                                                                                    Background="White" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                </MenuItem>
+                                                                <MenuItem Header="更多"
+                                                                          Style="{StaticResource StartMenuItemStyle}">
+                                                                    <MenuItem Header="打开文件所在的位置"
+                                                                              Tag="OpenFileLocation"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="OpenTileFileLocation_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <TextBlock Foreground="White"
+                                                                                    FontFamily="Segoe MDL2 Assets"
+                                                                                    FontSize="16"
+                                                                                    Text="&#xE838;" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                    <MenuItem Header="以管理员身份运行"
+                                                                              Style="{StaticResource StartMenuItemStyle}"
+                                                                              Click="RunTileAsAdministrator_Click">
+                                                                        <MenuItem.Icon>
+                                                                            <TextBlock Foreground="White"
+                                                                                    FontFamily="Segoe MDL2 Assets"
+                                                                                    FontSize="16"
+                                                                                    Text="&#xE83D;" />
+                                                                        </MenuItem.Icon>
+                                                                    </MenuItem>
+                                                                </MenuItem>
+                                                                <Separator />
+                                                                <MenuItem Header="TileStart 设置…"
+                                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                                          Click="TileSettings_Click">
+                                                                    <MenuItem.Icon>
+                                                                        <TextBlock Foreground="White"
+                                                                                FontFamily="Segoe MDL2 Assets"
+                                                                                FontSize="16"
+                                                                                Text="&#xE713;" />
+                                                                    </MenuItem.Icon>
+                                                                </MenuItem>
+                                                            </ContextMenu>
+                                                        </Button.ContextMenu>
+                                                        <Grid ClipToBounds="True">
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition />
+                                                                <RowDefinition
+                                                                    Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
+                                                            </Grid.RowDefinitions>
+                                                            <Image Grid.RowSpan="2"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   Source="{Binding BackgroundImage}"
+                                                                   Stretch="UniformToFill" />
+                                                            <TextBlock x:Name="TileInitial"
+                                                                       Grid.Row="0"
+                                                                       Grid.RowSpan="2"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       FontSize="24"
+                                                                       FontWeight="SemiBold"
+                                                                       Text="{Binding Initial}"
+                                                                       Visibility="Collapsed" />
+                                                            <Image x:Name="TileIcon"
+                                                                   Grid.Row="0"
+                                                                   Grid.RowSpan="2"
+                                                                   Width="{Binding IconSize}"
+                                                                   Height="{Binding IconSize}"
+                                                                   Margin="8"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   Source="{Binding Icon}"
+                                                                   Stretch="Uniform">
+                                                                <Image.RenderTransform>
+                                                                    <TranslateTransform
+                                                                        Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
+                                                                </Image.RenderTransform>
+                                                            </Image>
+                                                            <ItemsControl x:Name="FolderPreview"
+                                                                          Grid.Row="0"
+                                                                          Grid.RowSpan="2"
+                                                                          Width="52"
+                                                                          Height="52"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          ClipToBounds="True"
+                                                                          ItemsSource="{Binding FolderTiles}"
+                                                                          Visibility="Collapsed">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <UniformGrid Columns="2" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Margin="1"
+                                                                                Background="{Binding BackgroundBrush}">
+                                                                            <Image Margin="3"
+                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                    Source="{Binding Icon}"
+                                                                                    Stretch="Uniform" />
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Grid x:Name="TileBranding"
+                                                                  Grid.Row="1"
+                                                                  Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
+                                                                <TextBlock x:Name="TileTitle"
+                                                                           HorizontalAlignment="Left"
+                                                                           VerticalAlignment="Bottom"
+                                                                           FontFamily="Segoe UI, Microsoft YaHei UI"
+                                                                           FontSize="12"
+                                                                           FontWeight="SemiBold"
+                                                                           Text="{Binding Name}"
+                                                                           TextAlignment="Left"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           TextWrapping="NoWrap" />
+                                                            </Grid>
+                                                            <Grid x:Name="FolderDropCue"
                                                                   Grid.Row="0"
                                                                   Grid.RowSpan="2"
-                                                                  Width="52"
-                                                                  Height="52"
-                                                                  HorizontalAlignment="Center"
-                                                                  VerticalAlignment="Center"
-                                                                  ClipToBounds="True"
-                                                                  ItemsSource="{Binding FolderTiles}"
+                                                                  Background="#52000000"
+                                                                  IsHitTestVisible="False"
                                                                   Visibility="Collapsed">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <UniformGrid Columns="2" />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border Margin="1" Background="{Binding BackgroundBrush}">
-                                                                    <Image Margin="3"
-                                                                           RenderOptions.BitmapScalingMode="HighQuality"
-                                                                           Source="{Binding Icon}"
-                                                                           Stretch="Uniform" />
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                     <Grid x:Name="TileBranding"
-                                                          Grid.Row="1"
-                                                          Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
-                                                        <TextBlock x:Name="TileTitle"
-                                                                   HorizontalAlignment="Left"
-                                                                   VerticalAlignment="Bottom"
-                                                                   FontFamily="Segoe UI, Microsoft YaHei UI"
-                                                                   FontSize="12"
-                                                                   FontWeight="SemiBold"
-                                                                   Text="{Binding Name}"
-                                                                   TextAlignment="Left"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                    TextWrapping="NoWrap" />
-                                                     </Grid>
-                                                     <Grid x:Name="FolderDropCue"
-                                                           Grid.Row="0"
-                                                           Grid.RowSpan="2"
-                                                           Background="#52000000"
-                                                           IsHitTestVisible="False"
-                                                           Visibility="Collapsed">
-                                                         <TextBlock HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"
-                                                                    FontFamily="Segoe MDL2 Assets"
-                                                                    FontSize="24"
-                                                                    Foreground="White"
-                                                                    Text="&#xE8B7;" />
-                                                     </Grid>
-                                                 </Grid>
-                                            </Button>
-                                            <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
-                                                    <Setter TargetName="TileInitial" Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
-                                                    <Setter TargetName="TileInitial" Property="Visibility" Value="Collapsed" />
-                                                    <Setter TargetName="TileIcon" Property="Visibility" Value="Collapsed" />
-                                                    <Setter TargetName="FolderPreview" Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                                 <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                                     <Setter TargetName="TileButton" Property="Opacity" Value="0.24" />
-                                                 </DataTrigger>
-                                                 <DataTrigger Binding="{Binding IsFolderDropTarget}" Value="True">
-                                                     <Setter TargetName="FolderDropCue" Property="Visibility" Value="Visible" />
-                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Size}" Value="Small">
-                                                    <Setter TargetName="TileBranding" Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding ShowTitle}" Value="False">
-                                                    <Setter TargetName="TileTitle" Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding UsesFullTileLogo}" Value="True">
-                                                    <Setter TargetName="TileIcon" Property="Width" Value="Auto" />
-                                                    <Setter TargetName="TileIcon" Property="Height" Value="Auto" />
-                                                    <Setter TargetName="TileIcon" Property="Margin" Value="0" />
-                                                    <Setter TargetName="TileIcon" Property="Stretch" Value="Fill" />
-                                                    <Setter TargetName="TileIcon" Property="RenderTransform">
-                                                        <Setter.Value>
-                                                            <TranslateTransform Y="0" />
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
-                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Left" />
-                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Top" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
-                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Right" />
-                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Top" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomLeft">
-                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Left" />
-                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Bottom" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomRight">
-                                                    <Setter TargetName="TileIcon" Property="HorizontalAlignment" Value="Right" />
-                                                    <Setter TargetName="TileIcon" Property="VerticalAlignment" Value="Bottom" />
-                                                </DataTrigger>
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                  Height="{Binding PixelHeight}"
-                                                  Panel.ZIndex="2"
-                                                  ItemsSource="{Binding Tiles}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <Canvas />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemContainerStyle>
-                                            <Style TargetType="ContentPresenter">
-                                                <Setter Property="Canvas.Left" Value="0" />
-                                                <Setter Property="Canvas.Top" Value="{Binding FolderRegionTop}" />
-                                            </Style>
-                                        </ItemsControl.ItemContainerStyle>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="{x:Type local:TileItem}">
-                                                <Border x:Name="FolderRegion"
-                                                        Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                        Height="{Binding FolderRegionHeight}"
-                                                        Background="#16000000"
-                                                        ClipToBounds="True">
-                                                    <Grid>
-                                                        <Grid.RowDefinitions>
-                                                            <RowDefinition Height="1" />
-                                                            <RowDefinition Height="32" />
-                                                            <RowDefinition Height="*" />
-                                                            <RowDefinition Height="1" />
-                                                            <RowDefinition Height="4" />
-                                                        </Grid.RowDefinitions>
-                                                        <Border Grid.Row="0" Background="#55FFFFFF" />
-                                                        <TextBox Grid.Row="1"
-                                                                 MaxLength="500"
-                                                                 Padding="0,7,6,0"
-                                                                 Foreground="White"
-                                                                 Background="Transparent"
-                                                                 BorderThickness="0"
-                                                                 FontFamily="Segoe UI"
-                                                                 FontSize="12"
-                                                                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <ItemsControl Grid.Row="2"
-                                                                      Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                                      Height="{Binding FolderContentHeight}"
-                                                                      HorizontalAlignment="Left"
-                                                                      VerticalAlignment="Top"
-                                                                      AllowDrop="True"
-                                                                      ItemsSource="{Binding FolderTiles}"
-                                                                      Tag="{Binding}"
-                                                                      DragOver="FolderRegion_DragOver"
-                                                                      Drop="FolderRegion_Drop">
-                                                            <ItemsControl.ItemsPanel>
-                                                                <ItemsPanelTemplate>
-                                                                    <Canvas />
-                                                                </ItemsPanelTemplate>
-                                                            </ItemsControl.ItemsPanel>
-                                                            <ItemsControl.ItemContainerStyle>
-                                                                <Style TargetType="ContentPresenter">
-                                                                    <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                                                    <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                                                </Style>
-                                                            </ItemsControl.ItemContainerStyle>
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate DataType="{x:Type local:TileItem}">
-                                                                    <Button Width="{Binding PixelWidth}"
-                                                                            Height="{Binding PixelHeight}"
-                                                                            Background="{Binding BackgroundBrush}"
-                                                                            Foreground="{Binding ForegroundBrush}"
-                                                                            Style="{StaticResource TileStyle}"
-                                                                            Tag="{Binding}"
-                                                                            Click="TileButton_Click"
-                                                                            PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
-                                                                        <Grid ClipToBounds="True">
-                                                                            <Image Width="{Binding IconSize}"
-                                                                                   Height="{Binding IconSize}"
-                                                                                   Margin="8"
-                                                                                   HorizontalAlignment="Center"
-                                                                                   VerticalAlignment="Center"
-                                                                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                   Source="{Binding Icon}"
-                                                                                   Stretch="Uniform" />
-                                                                            <TextBlock Margin="8,0,8,5"
-                                                                                       HorizontalAlignment="Left"
-                                                                                       VerticalAlignment="Bottom"
-                                                                                       FontFamily="Segoe UI, Microsoft YaHei UI"
-                                                                                       FontSize="12"
-                                                                                       FontWeight="SemiBold"
-                                                                                       Text="{Binding Name}"
-                                                                                       TextTrimming="CharacterEllipsis" />
-                                                                        </Grid>
-                                                                    </Button>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                        <Border Grid.Row="3" Background="#55FFFFFF" />
-                                                    </Grid>
-                                                </Border>
-                                                <DataTemplate.Triggers>
-                                                    <DataTrigger Binding="{Binding IsFolderExpanded}" Value="False">
-                                                        <Setter TargetName="FolderRegion" Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </DataTemplate.Triggers>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Canvas>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Border>
+                                                                <TextBlock HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"
+                                                                           FontFamily="Segoe MDL2 Assets"
+                                                                           FontSize="24"
+                                                                           Foreground="White"
+                                                                           Text="&#xE8B7;" />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Button>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                            <Setter TargetName="TileInitial" Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                            <Setter TargetName="TileInitial" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Setter TargetName="TileIcon" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Setter TargetName="FolderPreview" Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                                            <Setter TargetName="TileButton" Property="Opacity"
+                                                                    Value="0.24" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsFolderDropTarget}"
+                                                                     Value="True">
+                                                            <Setter TargetName="FolderDropCue" Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Size}" Value="Small">
+                                                            <Setter TargetName="TileBranding" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ShowTitle}" Value="False">
+                                                            <Setter TargetName="TileTitle" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding UsesFullTileLogo}" Value="True">
+                                                            <Setter TargetName="TileIcon" Property="Width" Value="Auto" />
+                                                            <Setter TargetName="TileIcon" Property="Height"
+                                                                    Value="Auto" />
+                                                            <Setter TargetName="TileIcon" Property="Margin" Value="0" />
+                                                            <Setter TargetName="TileIcon" Property="Stretch"
+                                                                    Value="Fill" />
+                                                            <Setter TargetName="TileIcon" Property="RenderTransform">
+                                                                <Setter.Value>
+                                                                    <TranslateTransform Y="0" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
+                                                            <Setter TargetName="TileIcon"
+                                                                    Property="HorizontalAlignment" Value="Left" />
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
+                                                            <Setter TargetName="TileIcon"
+                                                                    Property="HorizontalAlignment" Value="Right" />
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IconPosition}"
+                                                                     Value="BottomLeft">
+                                                            <Setter TargetName="TileIcon"
+                                                                    Property="HorizontalAlignment" Value="Left" />
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IconPosition}"
+                                                                     Value="BottomRight">
+                                                            <Setter TargetName="TileIcon"
+                                                                    Property="HorizontalAlignment" Value="Right" />
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                      Height="{Binding PixelHeight}"
+                                                      Panel.ZIndex="2"
+                                                      ItemsSource="{Binding Tiles}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <Canvas />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemContainerStyle>
+                                                <Style TargetType="ContentPresenter">
+                                                    <Setter Property="Canvas.Left" Value="0" />
+                                                    <Setter Property="Canvas.Top" Value="{Binding FolderRegionTop}" />
+                                                </Style>
+                                            </ItemsControl.ItemContainerStyle>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type local:TileItem}">
+                                                    <Border x:Name="FolderRegion"
+                                                            Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                            Height="{Binding FolderRegionHeight}"
+                                                            Background="#16000000"
+                                                            ClipToBounds="True">
+                                                        <Grid>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="1" />
+                                                                <RowDefinition Height="32" />
+                                                                <RowDefinition Height="*" />
+                                                                <RowDefinition Height="1" />
+                                                                <RowDefinition Height="4" />
+                                                            </Grid.RowDefinitions>
+                                                            <Border Grid.Row="0" Background="#55FFFFFF" />
+                                                            <TextBox Grid.Row="1"
+                                                                     MaxLength="500"
+                                                                     Padding="0,7,6,0"
+                                                                     Foreground="White"
+                                                                     Background="Transparent"
+                                                                     BorderThickness="0"
+                                                                     FontFamily="Segoe UI"
+                                                                     FontSize="12"
+                                                                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                                            <ItemsControl Grid.Row="2"
+                                                                          Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                                          Height="{Binding FolderContentHeight}"
+                                                                          HorizontalAlignment="Left"
+                                                                          VerticalAlignment="Top"
+                                                                          AllowDrop="True"
+                                                                          ItemsSource="{Binding FolderTiles}"
+                                                                          Tag="{Binding}"
+                                                                          DragOver="FolderRegion_DragOver"
+                                                                          Drop="FolderRegion_Drop">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <Canvas />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemContainerStyle>
+                                                                    <Style TargetType="ContentPresenter">
+                                                                        <Setter Property="Canvas.Left"
+                                                                                Value="{Binding Left}" />
+                                                                        <Setter Property="Canvas.Top"
+                                                                                Value="{Binding Top}" />
+                                                                    </Style>
+                                                                </ItemsControl.ItemContainerStyle>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate DataType="{x:Type local:TileItem}">
+                                                                        <Button Width="{Binding PixelWidth}"
+                                                                                Height="{Binding PixelHeight}"
+                                                                                Background="{Binding BackgroundBrush}"
+                                                                                Foreground="{Binding ForegroundBrush}"
+                                                                                Style="{StaticResource TileStyle}"
+                                                                                Tag="{Binding}"
+                                                                                Click="TileButton_Click"
+                                                                                PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
+                                                                            <Grid ClipToBounds="True">
+                                                                                <Image Width="{Binding IconSize}"
+                                                                                    Height="{Binding IconSize}"
+                                                                                    Margin="8"
+                                                                                    HorizontalAlignment="Center"
+                                                                                    VerticalAlignment="Center"
+                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                    Source="{Binding Icon}"
+                                                                                    Stretch="Uniform" />
+                                                                                <TextBlock Margin="8,0,8,5"
+                                                                                    HorizontalAlignment="Left"
+                                                                                    VerticalAlignment="Bottom"
+                                                                                    FontFamily="Segoe UI, Microsoft YaHei UI"
+                                                                                    FontSize="12"
+                                                                                    FontWeight="SemiBold"
+                                                                                    Text="{Binding Name}"
+                                                                                    TextTrimming="CharacterEllipsis" />
+                                                                            </Grid>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Border Grid.Row="3" Background="#55FFFFFF" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding IsFolderExpanded}" Value="False">
+                                                            <Setter TargetName="FolderRegion" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Canvas>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
 
-        <Canvas x:Name="InternalDragOverlay"
-                Grid.ColumnSpan="3"
-                IsHitTestVisible="False"
-                Panel.ZIndex="20">
-            <Image x:Name="InternalDragPreview"
-                   Canvas.Left="0"
-                   Canvas.Top="0"
-                   Opacity="0.96"
-                   RenderOptions.BitmapScalingMode="HighQuality"
-                   Visibility="Collapsed">
-                <Image.RenderTransform>
-                    <TranslateTransform x:Name="InternalDragPreviewTransform" />
-                </Image.RenderTransform>
-            </Image>
-        </Canvas>
+            <Canvas x:Name="InternalDragOverlay"
+                    Grid.ColumnSpan="3"
+                    IsHitTestVisible="False"
+                    Panel.ZIndex="20">
+                <Image x:Name="InternalDragPreview"
+                       Canvas.Left="0"
+                       Canvas.Top="0"
+                       Opacity="0.96"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Visibility="Collapsed">
+                    <Image.RenderTransform>
+                        <TranslateTransform x:Name="InternalDragPreviewTransform" />
+                    </Image.RenderTransform>
+                </Image>
+            </Canvas>
 
-        <Border Height="7"
-                Grid.ColumnSpan="3"
-                VerticalAlignment="Top"
-                Background="Transparent"
-                Cursor="SizeNS"
-                Panel.ZIndex="50"
-                MouseLeftButtonDown="TopResizeBorder_MouseLeftButtonDown" />
-        <Border Width="7"
-                Grid.ColumnSpan="3"
-                HorizontalAlignment="Right"
-                Background="Transparent"
-                Cursor="SizeWE"
-                Panel.ZIndex="50"
-                MouseLeftButtonDown="RightResizeBorder_MouseLeftButtonDown" />
-        <Border Width="14"
-                Height="14"
-                Grid.ColumnSpan="3"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Background="Transparent"
-                Cursor="SizeNESW"
-                Panel.ZIndex="51"
-                MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
+            <Border Height="7"
+                    Grid.ColumnSpan="3"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    Cursor="SizeNS"
+                    Panel.ZIndex="50"
+                    MouseLeftButtonDown="TopResizeBorder_MouseLeftButtonDown" />
+            <Border Width="7"
+                    Grid.ColumnSpan="3"
+                    HorizontalAlignment="Right"
+                    Background="Transparent"
+                    Cursor="SizeWE"
+                    Panel.ZIndex="50"
+                    MouseLeftButtonDown="RightResizeBorder_MouseLeftButtonDown" />
+            <Border Width="14"
+                    Height="14"
+                    Grid.ColumnSpan="3"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    Cursor="SizeNESW"
+                    Panel.ZIndex="51"
+                    MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
         </Grid>
 
         <Image x:Name="EntrancePreview"
