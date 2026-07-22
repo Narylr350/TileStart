@@ -198,14 +198,14 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="TileBorder"
-                                                       Background="{TemplateBinding Background}"
-                                                       HoverFillOpacity="0"
-                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                       PressedFillOpacity="0"
-                                                       RevealBorderOpacity="0.42"
-                                                       RevealRadius="96"
-                                                       UsesSharedPointerLight="True"
-                                                       SnapsToDevicePixels="True">
+                                                      Background="{TemplateBinding Background}"
+                                                      HoverFillOpacity="0"
+                                                      IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      PressedFillOpacity="0"
+                                                      RevealBorderOpacity="0.42"
+                                                      RevealRadius="96"
+                                                      UsesSharedPointerLight="True"
+                                                      SnapsToDevicePixels="True">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
@@ -492,8 +492,10 @@
                     </Grid>
                 </Button>
                 <ItemsControl Margin="20,0,0,0"
+                              ClipToBounds="True"
                               ItemsSource="{Binding Children}"
-                              ItemTemplate="{DynamicResource AppEntryTemplate}">
+                              ItemTemplate="{DynamicResource AppEntryTemplate}"
+                              Tag="{Binding}">
                     <ItemsControl.Style>
                         <Style TargetType="ItemsControl">
                             <Setter Property="Visibility" Value="Collapsed" />
