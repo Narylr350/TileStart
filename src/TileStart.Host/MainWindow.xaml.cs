@@ -171,6 +171,8 @@ public partial class MainWindow : Window
 
     public string CurrentUserName { get; } = Environment.UserName;
 
+    public ImageSource? CurrentUserPicture { get; } = UserAccountPictureLoader.Load();
+
     public ICollectionView AppsView { get; }
 
     public IReadOnlyList<AlphabetIndexEntry> AlphabetLetters { get; } = AlphabetIndex.Create();
@@ -315,11 +317,198 @@ public partial class MainWindow : Window
             }
 
             PrepareMotionElements();
+            DiagnosticLog.Write("Application content ready.");
+            QueueContextMenuPrewarm();
+            _ = LoadApplicationIconsAsync(launchableApps);
         }
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Application list load failed: {exception}");
         }
+    }
+
+    private void QueueContextMenuPrewarm()
+    {
+        Dispatcher.BeginInvoke(
+            PrewarmContextMenus,
+            System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    private void PrewarmContextMenus()
+    {
+        if (IsVisible)
+        {
+            return;
+        }
+
+        var startedAt = Environment.TickCount64;
+        var owners = new List<Button> { NavigationToggleButton };
+        var appOwner = FindVisualDescendants<Button>(WindowRoot)
+            .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is AppEntry { IsFolder: false });
+        var tileOwner = FindVisualDescendants<Button>(WindowRoot)
+            .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is TileItem);
+        if (appOwner is not null)
+        {
+            owners.Add(appOwner);
+        }
+
+        if (tileOwner is not null)
+        {
+            owners.Add(tileOwner);
+        }
+
+        var prewarmed = 0;
+        foreach (var owner in owners.Distinct())
+        {
+            if (PrewarmContextMenu(owner))
+            {
+                prewarmed++;
+            }
+        }
+
+        DiagnosticLog.Write(
+            $"Context menu prewarm completed: {prewarmed} menus in {Environment.TickCount64 - startedAt} ms.");
+    }
+
+    private static bool PrewarmContextMenu(Button owner)
+    {
+        var menu = owner.ContextMenu;
+        if (menu is null)
+        {
+            return false;
+        }
+
+        var placement = menu.Placement;
+        var placementTarget = menu.PlacementTarget;
+        var horizontalOffset = menu.HorizontalOffset;
+        var verticalOffset = menu.VerticalOffset;
+        var opacity = menu.Opacity;
+        try
+        {
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.AbsolutePoint;
+            menu.PlacementTarget = owner;
+            menu.HorizontalOffset = -32000;
+            menu.VerticalOffset = -32000;
+            menu.Opacity = 0;
+            menu.IsOpen = true;
+            menu.UpdateLayout();
+
+            var submenu = EnumerateMenuItems(menu)
+                .FirstOrDefault(item => item.HasItems && item.Visibility == Visibility.Visible);
+            if (submenu is not null)
+            {
+                submenu.IsSubmenuOpen = true;
+                submenu.UpdateLayout();
+                submenu.IsSubmenuOpen = false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            menu.IsOpen = false;
+            menu.Opacity = opacity;
+            menu.HorizontalOffset = horizontalOffset;
+            menu.VerticalOffset = verticalOffset;
+            menu.PlacementTarget = placementTarget;
+            menu.Placement = placement;
+        }
+    }
+
+    private async Task LoadApplicationIconsAsync(IReadOnlyList<AppEntry> apps)
+    {
+        try
+        {
+            var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
+            var packagedApps = apps.Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
+            await Task.WhenAll(
+                Task.Run(() => LoadApplicationIcons(classicApps)),
+                RunStaThreadAsync(() => LoadApplicationIcons(packagedApps), "TileStart Packaged Icon Loader"));
+            DiagnosticLog.Write($"Application icon loading completed: {apps.Count} entries processed.");
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Application icon load failed: {exception}");
+        }
+    }
+
+    private void LoadApplicationIcons(IEnumerable<AppEntry> apps)
+    {
+        foreach (var app in apps)
+        {
+            try
+            {
+                var icon = ShellIconLoader.Load(app.LaunchTarget);
+                if (icon is null)
+                {
+                    continue;
+                }
+
+                if (Dispatcher.HasShutdownStarted)
+                {
+                    return;
+                }
+
+                Dispatcher.Invoke(() => ApplyApplicationIcon(app, icon));
+            }
+            catch (Exception exception)
+            {
+                if (Dispatcher.HasShutdownStarted)
+                {
+                    return;
+                }
+
+                DiagnosticLog.Write($"Application icon load failed for '{app.LaunchTarget}': {exception.Message}");
+            }
+        }
+    }
+
+    private void ApplyApplicationIcon(AppEntry app, ImageSource icon)
+    {
+        app.Icon = icon;
+        foreach (var tile in TileLayout.Groups.SelectMany(group => group.Tiles))
+        {
+            ApplyApplicationIconToTile(tile, app.LaunchTarget, icon);
+        }
+    }
+
+    private static void ApplyApplicationIconToTile(TileItem tile, string launchTarget, ImageSource icon)
+    {
+        if (string.IsNullOrWhiteSpace(tile.IconPath) &&
+            !tile.UsesFullTileLogo &&
+            tile.LaunchTarget.Equals(launchTarget, StringComparison.OrdinalIgnoreCase))
+        {
+            tile.Icon = icon;
+        }
+
+        foreach (var child in tile.FolderTiles)
+        {
+            ApplyApplicationIconToTile(child, launchTarget, icon);
+        }
+    }
+
+    private static Task RunStaThreadAsync(Action action, string name)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                action();
+                completion.SetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = name,
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
     }
 
     private void PrepareMotionElements()

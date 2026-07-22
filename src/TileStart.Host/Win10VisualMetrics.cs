@@ -7,6 +7,7 @@ public static class Win10VisualMetrics
     public const double CollapsedNavigationWidth = 48;
     public const double ExpandedNavigationWidth = 256;
     public const double NavigationItemHeight = 48;
+    public const double NavigationUserPictureSize = 32;
     public const double AllAppsWidth = 260;
     public const double AllAppsGridItemWidth = 244;
     public const double AllAppsHorizontalInset = (AllAppsWidth - AllAppsGridItemWidth) / 2;

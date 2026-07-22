@@ -24,7 +24,7 @@ CloseApplications=yes
 RestartApplications=no
 
 [Tasks]
-Name: "autostart"; Description: "登录 Windows 时启动 TileStart"; Flags: unchecked
+Name: "autostart"; Description: "登录 Windows 时启动 TileStart"
 Name: "desktopicon"; Description: "创建桌面快捷方式"; Flags: unchecked
 
 [Files]

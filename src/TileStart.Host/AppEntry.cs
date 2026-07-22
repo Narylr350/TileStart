@@ -9,13 +9,27 @@ namespace TileStart.Host;
 public sealed class AppEntry : INotifyPropertyChanged
 {
     private bool _isExpanded;
+    private ImageSource? _icon;
 
     public required string Name { get; init; }
     public required string LaunchTarget { get; init; }
     public required string SortLetter { get; init; }
     public required string Initial { get; init; }
     public required DateTime AddedAt { get; init; }
-    public ImageSource? Icon { get; init; }
+    public ImageSource? Icon
+    {
+        get => _icon;
+        set
+        {
+            if (ReferenceEquals(_icon, value))
+            {
+                return;
+            }
+
+            _icon = value;
+            OnPropertyChanged();
+        }
+    }
     public string PackageInstallPath { get; init; } = string.Empty;
     public string AppUserModelId { get; init; } = string.Empty;
     public ObservableCollection<AppEntry> Children { get; init; } = [];

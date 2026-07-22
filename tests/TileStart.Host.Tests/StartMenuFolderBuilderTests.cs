@@ -68,6 +68,19 @@ public sealed class StartMenuFolderBuilderTests
         Assert.Equal("\uE70E", folder.FolderChevron);
     }
 
+    [Fact]
+    public void ApplicationIconCanBeFilledAfterMetadataScan()
+    {
+        var app = AppEntry.Application("Tool", "tool.lnk", DateTime.MinValue);
+        var changedProperties = new List<string?>();
+        app.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        app.Icon = Win10FolderIcon.Image;
+
+        Assert.Same(Win10FolderIcon.Image, app.Icon);
+        Assert.Contains(nameof(AppEntry.Icon), changedProperties);
+    }
+
     private static StartMenuShortcut Shortcut(string name, string target, string folder) =>
         new(name, target, DateTime.MinValue, folder);
 }

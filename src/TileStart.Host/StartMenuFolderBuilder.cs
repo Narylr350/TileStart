@@ -15,8 +15,7 @@ public static class StartMenuFolderBuilder
             .Where(candidate => candidate.Folders.Length == 0)
             .Select(candidate => AppEntry.Application(candidate.Shortcut.Name,
                                                        candidate.Shortcut.LaunchTarget,
-                                                       candidate.Shortcut.AddedAt,
-                                                       ShellIconLoader.Load(candidate.Shortcut.LaunchTarget)));
+                                                       candidate.Shortcut.AddedAt));
         var folders = candidates
             .Where(candidate => candidate.Folders.Length > 0)
             .GroupBy(candidate => candidate.Folders[0], StringComparer.CurrentCultureIgnoreCase)

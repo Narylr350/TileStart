@@ -110,8 +110,8 @@ public static class StartAppScanner
                             IsPackagedAppsFolderItem(packageFamilyName))
                         {
                             var launchTarget = $"shell:AppsFolder\\{appUserModelId}";
-                            apps.Add(AppEntry.Application(name, launchTarget, DateTime.MinValue,
-                                ShellIconLoader.Load(launchTarget), packageInstallPath ?? string.Empty, appUserModelId));
+                            apps.Add(AppEntry.Application(name, launchTarget, DateTime.MinValue, null,
+                                packageInstallPath ?? string.Empty, appUserModelId));
                         }
                     }
                     finally
@@ -145,9 +145,6 @@ public static class StartAppScanner
 
     internal static bool IsPackagedAppsFolderItem(string? packageFamilyName) =>
         !string.IsNullOrWhiteSpace(packageFamilyName);
-
-    private static AppEntry CreateEntry(string name, string launchTarget, DateTime addedAt) =>
-        AppEntry.Application(name, launchTarget, addedAt, ShellIconLoader.Load(launchTarget));
 
     private static void ReleaseComObject(object? value)
     {

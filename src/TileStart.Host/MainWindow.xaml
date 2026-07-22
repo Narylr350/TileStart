@@ -139,13 +139,13 @@
                                         Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16"
-                                           Text="{TemplateBinding Content}" />
+                                <ContentPresenter Grid.Column="0"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Content="{TemplateBinding Content}"
+                                                  TextElement.FontFamily="Segoe MDL2 Assets"
+                                                  TextElement.FontSize="16"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}" />
                                 <TextBlock Grid.Column="1"
                                            Margin="12,0,16,0"
                                            VerticalAlignment="Center"
@@ -587,10 +587,26 @@
                 <StackPanel Grid.Row="2">
                     <Button x:Name="UserNavigationButton"
                             Style="{StaticResource RailButtonStyle}"
-                            Content="&#xE77B;"
                             Tag="{Binding CurrentUserName}"
                             ToolTip="用户"
                             Click="UserNavigationButton_Click">
+                        <Button.Content>
+                            <Grid Width="{x:Static local:Win10VisualMetrics.NavigationUserPictureSize}"
+                                  Height="{x:Static local:Win10VisualMetrics.NavigationUserPictureSize}">
+                                <Ellipse Fill="#5A5A5A" />
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Text="&#xE77B;" />
+                                <Ellipse>
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="{Binding CurrentUserPicture}"
+                                                    Stretch="UniformToFill" />
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                            </Grid>
+                        </Button.Content>
                         <Button.ContextMenu>
                             <ContextMenu Style="{StaticResource StartContextMenuStyle}"
                                          Opened="StartContextMenu_Opened"
