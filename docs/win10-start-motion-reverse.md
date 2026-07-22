@@ -1012,6 +1012,78 @@ ZoomOutView:
 
 zoom-out button 从 Visible 到 Hidden 的 transition `BeginTime=3 s`，随后执行 `FadeOutThemeAnimation`，并在 transition 开始时把 `IsHitTestVisible` 设为 `false`。Fade 动画的最终时长继续从系统 ThemeAnimation/UxTheme 取得，不在 TileStart 中凭感觉发明常量。
 
+### 17.4 共享 manipulated surface 与 jump-list 特殊路径
+
+系统默认模板不是分别移动两个 presenter。`OnApplyTemplate` 为同一个 manipulated element 设置固定 `2×` 缩放，并给 zoomed-in presenter 设置 `0.5×` 补偿；zoomed-out presenter 保持 `1×`：
+
+```text
+共享 manipulated surface：Scale = 2
+ZoomedInPresenter       ：Scale = 0.5
+ZoomedOutPresenter      ：Scale = 1
+
+ScrollViewer zoom factor：zoomed-in 1.0 <-> zoomed-out 0.5
+```
+
+可见净比例为：
+
+```text
+进入索引：
+ZoomedIn  1.0 -> 0.5
+ZoomedOut 2.0 -> 1.0
+
+返回列表：
+ZoomedOut 1.0 -> 2.0
+ZoomedIn  0.5 -> 1.0
+```
+
+`ResetViewsAndSnapToActiveView` 将 ScrollViewer manipulation extent 设置为可用显示器宽高的 `6×`：`2×` 用于固定缩放补偿，另外 `3×` 在屏幕中心周围保留 manipulation 空间。manipulated element 被移到该大画布中央，再通过 ScrollViewer offset 和 zoom factor 选择当前视图。它产生的是围绕同一共享中心收拢或展开的运动，不是组标题和字母格各自沿独立路径交换位置。
+
+通用 `ListViewBase::StartViewChangeFromImpl` 会把源容器的完整 `X/Y/Width/Height` 写入 `SemanticZoomLocation.Bounds`。程序化切换随后按 manipulated surface 中心换算目标坐标：
+
+```text
+distanceToCenter = destinationCoordinate - surfaceSize / 2
+distanceToCenter *= currentZoom / targetZoom
+destinationCoordinate = distanceToCenter + surfaceSize / 2
+```
+
+但是 StartUI 的字母索引点击属于 jump-list 特殊路径。组标题通过 `SetSemanticZoomView(false, group)` 提供 requesting group 后，`StartViewChangeFromImpl` 使用该 group 查找目标，同时设置 jump-list alignment；该分支明确跳过源容器 bounds 映射。因此不能把“当前组标题中心 -> 对应字母格中心”作为 StartUI 的动画轨迹。
+
+目标 view 的 `MakeVisible` 行为为：
+
+- 进入 zoomed-out view 时，若索引自身可滚动，requesting group 可要求目标字母靠底部；当前全部字母可容纳时不会为了制造轨迹强行滚动。
+- 从字母索引返回 grouped zoomed-in view 时，选中 group 使用 `ScrollIntoViewAlignment.Leading`，即先把目标组靠顶部，再完成反向共享缩放。
+
+TileStart 的 WPF 重建因此使用同一公共 Scale/Translate 驱动两个 presenter，并保留 `0.5/1.0` 固定补偿和返回前的目标组顶部对齐。WPF 不需要为 DirectManipulation 额外创建真实 `6×` 可滚动 extent；在可见视口上使用等价的中心仿射变换即可得到相同的端点比例和共享运动方向。
+
+### 17.5 当前 Win10 build 的系统动画数据
+
+当前验证环境为 Windows 10 build 19045。`Windows.UI.Xaml.Resources.19h1.dll` 的系统 `SemanticZoom` 模板只声明 `FadeInThemeAnimation` / `FadeOutThemeAnimation`，实际透明度时间线来自 UxTheme：
+
+```text
+OpenThemeData(NULL, "Animations")
+OpenThemeData(NULL, "timingfunction")
+
+FadeIn  : TAS_FADEIN  / TA_FADEIN_SHOWN
+          0 ms + 167 ms, opacity 0 -> 1, linear (0,0,1,1)
+
+FadeOut : TAS_FADEOUT / TA_FADEOUT_HIDDEN
+          0 ms + 167 ms, current opacity -> 0, linear (0,0,1,1)
+```
+
+这些值由当前系统的 `GetThemeAnimationProperty`、`GetThemeAnimationTransform` 和 `GetThemeTimingFunction` 直接读取，不是视频估算。
+
+程序化视图切换的缩放与位移则由以下调用完成：
+
+```text
+SemanticZoom::ChangeViews
+  -> ScrollViewer::BringIntoViewport(..., animate=true)
+  -> IDirectManipulationViewport::ZoomToRect(..., TRUE)
+```
+
+公开 `ZoomToRect` 接口只提供是否动画的开关，没有 duration/easing 参数；当前微软开源 XAML 实现也没有在这条路径上追加固定 Storyboard。因此 TileStart 可以精确复刻 `1.0 <-> 0.5` 缩放关系、共享中心模型、jump-list 对齐规则和 167 ms presenter Fade，但 DirectManipulation 的缩放/位移时间曲线仍需用原版逐帧样本校准。当前 WPF 实现将该曲线明确保留为近似参数，不把它描述成已从 Win10 19045 精确提取。
+
+当前 Win10 150% DPI 实机确认的 WPF 校准值为 `350 ms`、`cubic-bezier(0.15,0.75,0.25,1)`。切换期间两个 presenter 临时启用 `BitmapCache`，动画完成立即释放，使 WPF 主要在合成阶段处理公共 Scale/Translate 和 Opacity，避免每帧重绘完整应用列表。缓存纹理在非整数比例缩放时产生的采样柔化可能是当前观感更接近原版的原因之一；原版是否另有速度相关 motion-blur shader 尚无证据，不作为已还原事实，也不在当前实现中额外添加模糊效果。
+
 ## 18. 上下文菜单 VisualState
 
 普通菜单样式位于 `TileStyles.xaml`：

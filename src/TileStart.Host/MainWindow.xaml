@@ -643,84 +643,110 @@
                 </Grid>
             </Border>
 
-            <ScrollViewer x:Name="AppsScrollViewer"
-                          Grid.Row="1"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
-                <ScrollViewer.Resources>
-                    <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
-                </ScrollViewer.Resources>
-                <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
-                    <StackPanel x:Name="RecentPanel">
-                        <TextBlock Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
-                                   Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
-                                   VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Text="最近添加" />
-                        <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
-                        <Button x:Name="RecentExpandButton"
-                                Style="{StaticResource AppRowStyle}"
-                                HorizontalContentAlignment="Left"
-                                Click="RecentExpandButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="RecentExpandText"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           Text="展开" />
-                                <TextBlock x:Name="RecentExpandGlyph"
-                                           Margin="4,0"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="8"
-                                           Text="&#xE70D;" />
+            <Grid x:Name="SemanticZoomViewport"
+                  Grid.Row="1"
+                  ClipToBounds="True">
+                <Grid x:Name="SemanticZoomSurface">
+                    <Grid.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="SemanticZoomSharedScale"
+                                            ScaleX="2"
+                                            ScaleY="2" />
+                            <TranslateTransform x:Name="SemanticZoomSharedTranslate" />
+                        </TransformGroup>
+                    </Grid.RenderTransform>
+
+                    <Grid x:Name="ZoomedInPresenter">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="SemanticZoomedInScale"
+                                                ScaleX="0.5"
+                                                ScaleY="0.5" />
+                                <TranslateTransform x:Name="SemanticZoomedInTranslate" />
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
+                        <ScrollViewer x:Name="AppsScrollViewer"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="ScrollBar" BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
+                            </ScrollViewer.Resources>
+                            <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
+                                <StackPanel x:Name="RecentPanel">
+                                    <TextBlock Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
+                                               Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
+                                               VerticalAlignment="Center"
+                                               FontSize="12"
+                                               Text="最近添加" />
+                                    <ItemsControl ItemsSource="{Binding RecentApps}" ItemTemplate="{StaticResource AppEntryTemplate}" />
+                                    <Button x:Name="RecentExpandButton"
+                                            Style="{StaticResource AppRowStyle}"
+                                            HorizontalContentAlignment="Left"
+                                            Click="RecentExpandButton_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="RecentExpandText"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="14"
+                                                       Text="展开" />
+                                            <TextBlock x:Name="RecentExpandGlyph"
+                                                       Margin="4,0"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="8"
+                                                       Text="&#xE70D;" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <ItemsControl x:Name="AppsList"
+                                              ItemsSource="{Binding AppsView}"
+                                              ItemTemplate="{StaticResource AppEntryTemplate}">
+                                    <ItemsControl.GroupStyle>
+                                        <GroupStyle>
+                                            <GroupStyle.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <Button Style="{StaticResource LetterHeaderStyle}"
+                                                            Tag="{Binding Name}"
+                                                            Content="{Binding Name}"
+                                                            Click="LetterHeader_Click" />
+                                                </DataTemplate>
+                                            </GroupStyle.HeaderTemplate>
+                                        </GroupStyle>
+                                    </ItemsControl.GroupStyle>
+                                </ItemsControl>
                             </StackPanel>
-                        </Button>
-                    </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
 
-                    <ItemsControl x:Name="AppsList"
-                                  ItemsSource="{Binding AppsView}"
-                                  ItemTemplate="{StaticResource AppEntryTemplate}">
-                        <ItemsControl.GroupStyle>
-                            <GroupStyle>
-                                <GroupStyle.HeaderTemplate>
-                                    <DataTemplate>
-                                        <Button Style="{StaticResource LetterHeaderStyle}"
-                                                Tag="{Binding Name}"
-                                                Content="{Binding Name}"
-                                                Click="LetterHeader_Click" />
-                                    </DataTemplate>
-                                </GroupStyle.HeaderTemplate>
-                            </GroupStyle>
-                        </ItemsControl.GroupStyle>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
-
-            <Border x:Name="LetterIndexPanel"
-                    Grid.RowSpan="2"
-                    Background="Transparent"
-                    Visibility="Collapsed"
-                    Panel.ZIndex="5">
-                <ItemsControl Width="208"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              ItemsSource="{Binding AlphabetLetters}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Width="208" Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
-                            <Button Style="{StaticResource AlphabetButtonStyle}"
-                                    Tag="{Binding}"
-                                    Content="{Binding Label}"
-                                    IsEnabled="{Binding IsAvailable}"
-                                    Click="AlphabetLetter_Click" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Border>
+                    <Border x:Name="LetterIndexPanel"
+                            Panel.ZIndex="5"
+                            Background="Transparent"
+                            IsHitTestVisible="False"
+                            Opacity="0"
+                            Visibility="Collapsed">
+                        <ItemsControl Width="208"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      ItemsSource="{Binding AlphabetLetters}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Width="208" Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
+                                    <Button Style="{StaticResource AlphabetButtonStyle}"
+                                            Tag="{Binding}"
+                                            Content="{Binding Label}"
+                                            IsEnabled="{Binding IsAvailable}"
+                                            Click="AlphabetLetter_Click" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </Grid>
+            </Grid>
         </Grid>
 
         <Border x:Name="TilePane"

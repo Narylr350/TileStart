@@ -122,6 +122,9 @@ public partial class MainWindow : Window
     private double _windowWidthSnapTo;
     private double _windowWidthSnapRight;
     private Dictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
+    private int _semanticZoomAnimationGeneration;
+    private bool _isLetterIndexActive;
+    private bool _isSemanticZoomAnimating;
 #if DEBUG
     private string? _tileDropTraceCandidateKey;
     private System.Windows.Point _tileDropTraceCandidatePosition;
@@ -135,6 +138,7 @@ public partial class MainWindow : Window
         AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.SortLetter), ListSortDirection.Ascending));
         AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
         InitializeComponent();
+        SemanticZoomViewport.SizeChanged += SemanticZoomViewport_SizeChanged;
         _tileReflowTimer.Tick += TileReflowTimer_Tick;
         _folderActivationTimer.Tick += FolderActivationTimer_Tick;
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
@@ -762,7 +766,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        HideLetterIndex();
+        HideLetterIndex(animate: false);
         ShowSearch();
         SearchBox.Text += e.Text;
         SearchBox.CaretIndex = SearchBox.Text.Length;
@@ -784,7 +788,7 @@ public partial class MainWindow : Window
 
     private void ShowSearch()
     {
-        HideLetterIndex();
+        HideLetterIndex(animate: false);
         SearchPanel.Visibility = Visibility.Visible;
         SearchBox.Focus();
     }
@@ -816,8 +820,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        AppsScrollViewer.Visibility = Visibility.Collapsed;
+        if (_isLetterIndexActive)
+        {
+            return;
+        }
+
+        ResetSemanticZoomVisuals();
+        _isLetterIndexActive = true;
         LetterIndexPanel.Visibility = Visibility.Visible;
+        AppsScrollViewer.IsHitTestVisible = false;
+        LetterIndexPanel.IsHitTestVisible = false;
+        BeginSemanticZoomTransition(
+            zoomedInViewActive: false,
+            animate: true,
+            () => LetterIndexPanel.IsHitTestVisible = true);
     }
 
     private void AlphabetLetter_Click(object sender, RoutedEventArgs e)
@@ -827,11 +843,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        HideLetterIndex();
         if (entry.IsRecent)
         {
             AppsScrollViewer.ScrollToTop();
             RecentPanel.BringIntoView();
+            HideLetterIndex();
             return;
         }
 
@@ -844,26 +860,128 @@ public partial class MainWindow : Window
             return;
         }
 
+        AlignAppGroupToTop(group);
+        HideLetterIndex(focusGroup: group);
+    }
+
+    private void AlignAppGroupToTop(CollectionViewGroup group)
+    {
         AppsScrollViewer.UpdateLayout();
         if (AppsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement container)
         {
             var groupTop = container.TranslatePoint(new System.Windows.Point(), AppsScrollViewer).Y;
             AppsScrollViewer.ScrollToVerticalOffset(Math.Max(0, AppsScrollViewer.VerticalOffset + groupTop));
+            AppsScrollViewer.UpdateLayout();
+        }
+    }
+
+    private void HideLetterIndex(bool animate = true, CollectionViewGroup? focusGroup = null)
+    {
+        _isLetterIndexActive = false;
+        AppsScrollViewer.IsHitTestVisible = false;
+        LetterIndexPanel.IsHitTestVisible = false;
+
+        if (LetterIndexPanel.Visibility != Visibility.Visible)
+        {
+            ResetSemanticZoomVisuals();
+            AppsScrollViewer.IsHitTestVisible = true;
+            FocusAppGroup(focusGroup);
+            return;
+        }
+
+        BeginSemanticZoomTransition(
+            zoomedInViewActive: true,
+            animate,
+            () =>
+            {
+                LetterIndexPanel.Visibility = Visibility.Collapsed;
+                AppsScrollViewer.IsHitTestVisible = true;
+                FocusAppGroup(focusGroup);
+            });
+    }
+
+    private void FocusAppGroup(CollectionViewGroup? group)
+    {
+        if (group is null)
+        {
+            return;
+        }
+
+        AppsScrollViewer.UpdateLayout();
+        if (AppsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement container)
+        {
             container.Focus();
         }
     }
 
-    private void HideLetterIndex()
+    private void SemanticZoomViewport_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        LetterIndexPanel.Visibility = Visibility.Collapsed;
-        AppsScrollViewer.Visibility = Visibility.Visible;
+        if (!_isSemanticZoomAnimating)
+        {
+            ResetSemanticZoomVisuals();
+        }
+    }
+
+    private void BeginSemanticZoomTransition(bool zoomedInViewActive, bool animate, Action? completed = null)
+    {
+        var viewport = new System.Windows.Size(SemanticZoomViewport.ActualWidth, SemanticZoomViewport.ActualHeight);
+        if (viewport.Width <= 0 || viewport.Height <= 0)
+        {
+            ResetSemanticZoomVisuals();
+            completed?.Invoke();
+            return;
+        }
+
+        var generation = ++_semanticZoomAnimationGeneration;
+        var animationsEnabled = animate && SystemParameters.ClientAreaAnimation;
+        _isSemanticZoomAnimating = animationsEnabled;
+        SemanticZoomMotion.Animate(
+            viewport,
+            zoomedInViewActive,
+            SemanticZoomSharedScale,
+            SemanticZoomSharedTranslate,
+            SemanticZoomedInScale,
+            SemanticZoomedInTranslate,
+            ZoomedInPresenter,
+            LetterIndexPanel,
+            animationsEnabled,
+            () =>
+            {
+                if (generation != _semanticZoomAnimationGeneration)
+                {
+                    return;
+                }
+
+                _isSemanticZoomAnimating = false;
+                ResetSemanticZoomVisuals();
+                completed?.Invoke();
+            });
+    }
+
+    private void ResetSemanticZoomVisuals()
+    {
+        var viewport = new System.Windows.Size(SemanticZoomViewport.ActualWidth, SemanticZoomViewport.ActualHeight);
+        if (viewport.Width <= 0 || viewport.Height <= 0)
+        {
+            return;
+        }
+
+        SemanticZoomMotion.Snap(
+            viewport,
+            !_isLetterIndexActive,
+            SemanticZoomSharedScale,
+            SemanticZoomSharedTranslate,
+            SemanticZoomedInScale,
+            SemanticZoomedInTranslate,
+            ZoomedInPresenter,
+            LetterIndexPanel);
     }
 
     private void ClearSearch()
     {
         SearchBox.Clear();
         SearchPanel.Visibility = Visibility.Collapsed;
-        HideLetterIndex();
+        HideLetterIndex(animate: false);
         RecentPanel.Visibility = Visibility.Visible;
         AppsView.Filter = null;
         AppsView.Refresh();
