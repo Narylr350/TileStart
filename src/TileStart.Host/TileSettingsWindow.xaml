@@ -4,10 +4,10 @@
         xmlns:local="clr-namespace:TileStart.Host"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="磁贴设置"
-        Width="520"
-        Height="680"
-        MinWidth="480"
-        MinHeight="560"
+        Width="820"
+        Height="720"
+        MinWidth="760"
+        MinHeight="620"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
@@ -444,17 +444,207 @@
                         Content="&#xE8BB;" />
             </Grid>
 
-            <ScrollViewer Grid.Row="1"
-                          Margin="22,18,14,18"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Padding="22"
+                        Background="#181818"
+                        BorderBrush="#383838"
+                        BorderThickness="0,0,1,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       Text="实时预览" />
+                            <TextBlock x:Name="PreviewSizeText"
+                                       Margin="0,5,0,0"
+                                       Foreground="{StaticResource MutedText}"
+                                       FontSize="11"
+                                       Text="中 · 144 × 144 DIP" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Margin="0,20,0,20">
+                            <Border Background="#101010"
+                                    BorderBrush="#303030"
+                                    BorderThickness="1">
+                                <Grid Margin="16">
+                                    <Viewbox Stretch="Uniform"
+                                             StretchDirection="DownOnly">
+                                        <Border Width="{Binding PixelWidth}"
+                                                Height="{Binding PixelHeight}"
+                                                Background="{Binding BackgroundBrush}"
+                                                DataContext="{Binding PreviewTile}"
+                                                SnapsToDevicePixels="True">
+                                            <Grid ClipToBounds="True">
+                                                <Image Source="{Binding BackgroundImage}"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                       Stretch="UniformToFill" />
+                                                <TextBlock Text="{Binding Initial}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="24"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Setter Property="Foreground" Value="{Binding ForegroundBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <Image Source="{Binding Icon}"
+                                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Style>
+                                                         <Style TargetType="Image">
+                                                             <Setter Property="Width" Value="{Binding IconSize}" />
+                                                             <Setter Property="Height" Value="{Binding IconSize}" />
+                                                             <Setter Property="HorizontalAlignment" Value="Center" />
+                                                             <Setter Property="VerticalAlignment" Value="Center" />
+                                                            <Setter Property="Stretch" Value="Uniform" />
+                                                            <Setter Property="RenderTransform">
+                                                                <Setter.Value>
+                                                                    <TranslateTransform Y="-2" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding UsesFullTileLogo}" Value="True">
+                                                                    <Setter Property="Width" Value="Auto" />
+                                                                    <Setter Property="Height" Value="Auto" />
+                                                                    <Setter Property="Margin" Value="0" />
+                                                                    <Setter Property="Stretch" Value="Fill" />
+                                                                    <Setter Property="RenderTransform">
+                                                                        <Setter.Value>
+                                                                            <TranslateTransform Y="0" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
+                                                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                    <Setter Property="VerticalAlignment" Value="Top" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
+                                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                                    <Setter Property="VerticalAlignment" Value="Top" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomLeft">
+                                                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                    <Setter Property="VerticalAlignment" Value="Bottom" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}" Value="BottomRight">
+                                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                                    <Setter Property="VerticalAlignment" Value="Bottom" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+                                                <ItemsControl Width="52"
+                                                              Height="52"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              ClipToBounds="True"
+                                                              ItemsSource="{Binding FolderTiles}">
+                                                    <ItemsControl.Style>
+                                                        <Style TargetType="ItemsControl">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ItemsControl.Style>
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Columns="2" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Margin="1" Background="{Binding BackgroundBrush}">
+                                                                <Image Margin="3"
+                                                                       Source="{Binding Icon}"
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                                       Stretch="Uniform" />
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Grid Height="28"
+                                                      Margin="10,0,10,4"
+                                                      VerticalAlignment="Bottom">
+                                                    <TextBlock VerticalAlignment="Bottom"
+                                                               Foreground="{Binding ForegroundBrush}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               Text="{Binding Name}"
+                                                               TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ShowTitle}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Size}" Value="Small">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+                                    </Viewbox>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Foreground="{StaticResource MutedText}"
+                                       FontSize="11"
+                                       Text="预览使用与开始菜单一致的尺寸、颜色和图标布局参数。"
+                                       TextWrapping="Wrap" />
+                            <Button Margin="0,14,0,0"
+                                    Height="34"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="恢复默认外观"
+                                    Click="RestoreDefaultAppearance_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Column="1"
+                              Margin="24,18,16,18"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
                 <ScrollViewer.Resources>
                     <Style TargetType="ScrollBar" BasedOn="{StaticResource DialogVerticalScrollBarStyle}" />
                 </ScrollViewer.Resources>
                 <StackPanel Margin="0,0,10,0">
                     <TextBlock Style="{StaticResource SectionTitleStyle}" Text="基本信息" />
                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="名称" />
-                    <TextBox x:Name="NameBox" />
+                    <TextBox x:Name="NameBox" TextChanged="PreviewTextBox_TextChanged" />
 
                     <Border Height="1" Margin="0,22,0,16" Background="{StaticResource Divider}" />
                     <StackPanel x:Name="LaunchSection">
@@ -501,33 +691,85 @@
                                     Click="BrowseWorkingDirectory_Click" />
                         </Grid>
 
-                        <CheckBox x:Name="RunAsAdministratorBox" Margin="0,16,0,0" Content="以管理员身份运行" />
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox x:Name="RunAsAdministratorBox"
+                                      VerticalAlignment="Center"
+                                      Content="以管理员身份运行" />
+                            <Button Grid.Column="1"
+                                    Width="92"
+                                    Height="32"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="测试启动"
+                                    Click="TestLaunch_Click" />
+                        </Grid>
                     </StackPanel>
 
                     <Border Height="1" Margin="0,22,0,16" Background="{StaticResource Divider}" />
                     <TextBlock Style="{StaticResource SectionTitleStyle}" Text="外观" />
 
-                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="自定义图标来源" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="IconPathBox" />
-                        <Button Grid.Column="1"
-                                Width="76"
-                                Margin="10,0,0,0"
-                                Style="{StaticResource DialogButtonStyle}"
-                                Content="浏览…"
-                                Click="BrowseIcon_Click" />
-                        <Button Grid.Column="2"
-                                Width="58"
-                                Margin="8,0,0,0"
-                                Style="{StaticResource DialogButtonStyle}"
-                                Content="清除"
-                                Click="ClearIcon_Click" />
-                    </Grid>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="图标来源" />
+                    <Border Margin="0,0,0,10"
+                            Padding="10"
+                            Background="{StaticResource ControlReadOnlyBackground}"
+                            BorderBrush="#3E3E3E"
+                            BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="42" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="34"
+                                    Height="34"
+                                    HorizontalAlignment="Left"
+                                    Background="#202020"
+                                    BorderBrush="#4A4A4A"
+                                    BorderThickness="1">
+                                <Image Margin="4"
+                                       Source="{Binding PreviewTile.Icon}"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Foreground="White" FontSize="12" Text="当前图标" />
+                                <TextBlock x:Name="IconSourceText"
+                                           Margin="0,3,0,0"
+                                           Foreground="{StaticResource MutedText}"
+                                           FontSize="11"
+                                           Text="应用默认图标"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <StackPanel>
+                        <TextBox x:Name="IconPathBox"
+                                  IsReadOnly="True"
+                                  TextChanged="PreviewTextBox_TextChanged" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Width="88"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="选择本地…"
+                                    Click="BrowseIcon_Click" />
+                            <Button Width="88"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="网络图标…"
+                                    Click="ChooseNetworkIcon_Click" />
+                            <Button Width="76"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="SVG…"
+                                    Click="ChooseSvgIcon_Click" />
+                            <Button Width="76"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Content="使用默认"
+                                    Click="ClearIcon_Click" />
+                        </WrapPanel>
+                    </StackPanel>
 
                     <TextBlock Margin="0,14,0,5" Style="{StaticResource FieldLabelStyle}" Text="背景图片" />
                     <Grid>
@@ -536,7 +778,8 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="BackgroundImagePathBox" />
+                        <TextBox x:Name="BackgroundImagePathBox"
+                                 TextChanged="PreviewTextBox_TextChanged" />
                         <Button Grid.Column="1"
                                 Width="76"
                                 Margin="10,0,0,0"
@@ -601,7 +844,11 @@
                                 Click="ChooseForegroundColor_Click" />
                     </Grid>
 
-                    <CheckBox x:Name="ShowTitleBox" Margin="0,16,0,0" Content="显示磁贴标题" />
+                    <CheckBox x:Name="ShowTitleBox"
+                              Margin="0,16,0,0"
+                              Content="显示磁贴标题"
+                              Checked="PreviewOption_Changed"
+                              Unchecked="PreviewOption_Changed" />
 
                     <Grid Margin="0,18,0,5">
                         <Grid.ColumnDefinitions>
@@ -615,12 +862,15 @@
                     </Grid>
                     <Slider x:Name="IconSizeBox"
                             Minimum="16"
-                            Maximum="96"
-                            TickFrequency="8"
-                            IsSnapToTickEnabled="True" />
+                            Maximum="204"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="PreviewSlider_ValueChanged" />
 
                     <TextBlock Margin="0,16,0,5" Style="{StaticResource FieldLabelStyle}" Text="图标位置" />
-                    <ComboBox x:Name="IconPositionBox" SelectedValuePath="Tag">
+                    <ComboBox x:Name="IconPositionBox"
+                              SelectedValuePath="Tag"
+                              SelectionChanged="PreviewSelection_Changed">
                         <ComboBoxItem Content="居中" Tag="Center" />
                         <ComboBoxItem Content="左上" Tag="TopLeft" />
                         <ComboBoxItem Content="右上" Tag="TopRight" />
@@ -629,14 +879,17 @@
                     </ComboBox>
 
                     <TextBlock Margin="0,16,0,5" Style="{StaticResource FieldLabelStyle}" Text="磁贴尺寸" />
-                    <ComboBox x:Name="SizeBox" SelectedValuePath="Tag">
+                    <ComboBox x:Name="SizeBox"
+                              SelectedValuePath="Tag"
+                              SelectionChanged="PreviewSelection_Changed">
                         <ComboBoxItem Content="小（1×1）" Tag="Small" />
                         <ComboBoxItem Content="中（2×2）" Tag="Medium" />
                         <ComboBoxItem Content="宽（4×2）" Tag="Wide" />
                         <ComboBoxItem Content="大（4×4）" Tag="Large" />
                     </ComboBox>
                 </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </Grid>
 
             <Border Grid.Row="2"
                     Padding="20,12"

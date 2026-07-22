@@ -15,7 +15,7 @@ public static class ShellIconLoader
     private const uint SiigbfBiggerSizeOk = 0x00000001;
     private const uint SiigbfIconOnly = 0x00000004;
     private static readonly Guid ShellItemImageFactoryId = new("bcc18b79-ba16-442f-80c4-8a59c30c463b");
-    private static readonly string[] ImageExtensions = [".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png"];
+    private static readonly string[] ImageExtensions = [".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg"];
 
     public static ImageSource? Load(string displayName)
     {
@@ -67,9 +67,15 @@ public static class ShellIconLoader
 
     public static ImageSource? LoadImage(string path)
     {
-        if (!File.Exists(path) || !ImageExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
+        var extension = Path.GetExtension(path);
+        if (!File.Exists(path) || !ImageExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
         {
             return null;
+        }
+
+        if (extension.Equals(".svg", StringComparison.OrdinalIgnoreCase))
+        {
+            return SvgIconLoader.Load(path);
         }
 
         try

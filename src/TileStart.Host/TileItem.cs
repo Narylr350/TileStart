@@ -65,6 +65,8 @@ public sealed class TileItem : INotifyPropertyChanged
     public string Arguments { get; set; } = string.Empty;
     public string WorkingDirectory { get; set; } = string.Empty;
     public string IconPath { get; set; } = string.Empty;
+    public CustomIconSourceKind IconSourceKind { get; set; }
+    public string IconSourceValue { get; set; } = string.Empty;
     public bool RunAsAdministrator { get; set; }
 
     public bool IsTileFolder
@@ -205,7 +207,7 @@ public sealed class TileItem : INotifyPropertyChanged
         get => _iconSize;
         set
         {
-            var normalized = double.IsFinite(value) ? Math.Clamp(value, 16, 128) : 32;
+            var normalized = double.IsFinite(value) ? Math.Clamp(value, 16, 204) : 32;
             if (_iconSize == normalized)
             {
                 return;

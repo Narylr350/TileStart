@@ -21,12 +21,33 @@ public sealed class TileVisualSettingsTests
     [Theory]
     [InlineData(0, 16)]
     [InlineData(20, 20)]
-    [InlineData(200, 128)]
+    [InlineData(200, 200)]
+    [InlineData(300, 204)]
     public void IconSizeIsClampedToRenderableRange(double requested, double expected)
     {
         var tile = new TileItem { IconSize = requested };
 
         Assert.Equal(expected, tile.IconSize);
+    }
+
+    [Theory]
+    [InlineData(TileSize.Small, 48)]
+    [InlineData(TileSize.Medium, 100)]
+    [InlineData(TileSize.Wide, 100)]
+    [InlineData(TileSize.Large, 204)]
+    public void IconSizeLimitMatchesTileShortSide(TileSize size, double expected)
+    {
+        Assert.Equal(expected, Win10TileMetrics.MaxIconSize(size));
+    }
+
+    [Fact]
+    public void IconSizeScalesWithTileSizeAndRoundTrips()
+    {
+        var large = Win10TileMetrics.ScaleIconSize(96, TileSize.Medium, TileSize.Large);
+        var medium = Win10TileMetrics.ScaleIconSize(large, TileSize.Large, TileSize.Medium);
+
+        Assert.Equal(196, large);
+        Assert.Equal(96, medium);
     }
 
     [Fact]
@@ -58,6 +79,9 @@ public sealed class TileVisualSettingsTests
                             Name = "终端",
                             Subtitle = "开发工具",
                             BackgroundImagePath = @"C:\Images\terminal.png",
+                            IconPath = @"C:\Images\terminal.svg",
+                            IconSourceKind = CustomIconSourceKind.Svg,
+                            IconSourceValue = @"C:\Images\terminal.svg",
                             BackgroundColor = "#123456",
                             ForegroundColor = "#ABCDEF",
                             ShowTitle = false,
@@ -74,6 +98,9 @@ public sealed class TileVisualSettingsTests
         var tile = Assert.Single(Assert.Single(restored!.Groups).Tiles);
         Assert.Equal("开发工具", tile.Subtitle);
         Assert.Equal(@"C:\Images\terminal.png", tile.BackgroundImagePath);
+        Assert.Equal(@"C:\Images\terminal.svg", tile.IconPath);
+        Assert.Equal(CustomIconSourceKind.Svg, tile.IconSourceKind);
+        Assert.Equal(@"C:\Images\terminal.svg", tile.IconSourceValue);
         Assert.Equal("#123456", tile.BackgroundColor);
         Assert.Equal("#ABCDEF", tile.ForegroundColor);
         Assert.False(tile.ShowTitle);

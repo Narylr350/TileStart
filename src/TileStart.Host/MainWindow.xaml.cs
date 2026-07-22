@@ -1524,8 +1524,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var dialog = new TileSettingsWindow(tile) { Owner = this };
-        if (dialog.ShowDialog() != true)
+        var dialog = new TileSettingsWindow(tile);
+        if (ShowTileSettingsDialog(dialog) != true)
         {
             return;
         }
@@ -1627,8 +1627,8 @@ public partial class MainWindow : Window
             TargetType = TileTargetType.Command,
             Size = TileSize.Medium,
         };
-        var dialog = new TileSettingsWindow(tile, true) { Owner = this };
-        if (dialog.ShowDialog() != true)
+        var dialog = new TileSettingsWindow(tile, true);
+        if (ShowTileSettingsDialog(dialog) != true)
         {
             return;
         }
@@ -1994,6 +1994,8 @@ public partial class MainWindow : Window
         tile.Arguments = dialog.Arguments;
         tile.WorkingDirectory = dialog.WorkingDirectory;
         tile.IconPath = dialog.IconPath;
+        tile.IconSourceKind = dialog.IconSourceKind;
+        tile.IconSourceValue = dialog.IconSourceValue;
         tile.BackgroundImagePath = dialog.BackgroundImagePath;
         tile.BackgroundColor = dialog.BackgroundColor;
         tile.ForegroundColor = dialog.ForegroundColor;
@@ -2004,6 +2006,21 @@ public partial class MainWindow : Window
         tile.Size = dialog.TileSize;
         RestoreTileIcon(tile, _launchableApps);
         tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
+    }
+
+    private bool? ShowTileSettingsDialog(TileSettingsWindow dialog)
+    {
+        var wasTopmost = Topmost;
+        Topmost = false;
+        dialog.Owner = this;
+        try
+        {
+            return dialog.ShowDialog();
+        }
+        finally
+        {
+            Topmost = wasTopmost;
+        }
     }
 
     private void TileButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
