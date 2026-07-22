@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -32,7 +33,7 @@ public partial class MainWindow : Window
     private const int DismissDurationMilliseconds = 150;
     private const int ForegroundAcquisitionTimeoutMilliseconds = 1000;
     private const int CollapsedRecentAppCount = 3;
-    private const int ExpandedRecentAppCount = 6;
+    private const int ExpandedRecentAppCount = 10;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
     private const int WmActivate = 0x0006;
@@ -116,6 +117,8 @@ public partial class MainWindow : Window
     private bool _isInternalGroupDrag;
     private bool _isCompletingGroupDrag;
     private bool _navigationExpanded;
+    private bool _navigationPinnedOpen;
+    private readonly NavigationPreferences _navigationPreferences = NavigationPreferencesStore.Load();
     private bool _isWindowWidthSnapAnimating;
     private long _windowWidthSnapStartedAt;
     private double _windowWidthSnapFrom;
@@ -142,6 +145,7 @@ public partial class MainWindow : Window
         AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.SortLetter), ListSortDirection.Ascending));
         AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
         InitializeComponent();
+        ApplyNavigationPreferences();
         SemanticZoomViewport.SizeChanged += SemanticZoomViewport_SizeChanged;
         _tileReflowTimer.Tick += TileReflowTimer_Tick;
         _folderActivationTimer.Tick += FolderActivationTimer_Tick;
@@ -601,7 +605,20 @@ public partial class MainWindow : Window
     private void StartContextMenu_Opened(object sender, RoutedEventArgs e)
     {
         _openContextMenuCount++;
-        if (sender is ContextMenu { PlacementTarget: Button { Tag: TileItem tile } } menu)
+        if (sender is not ContextMenu menu)
+        {
+            return;
+        }
+
+        if (GetContextMenuPopupBorder(menu) is { } border)
+        {
+            AnimateMenuPopupBorder(
+                border,
+                Win10MenuPopupMotion.TopLevelClosedRatio,
+                ContextMenuOpensUpward(menu, border));
+        }
+
+        if (menu.PlacementTarget is Button { Tag: TileItem tile })
         {
             foreach (var item in EnumerateMenuItems(menu))
             {
@@ -635,9 +652,127 @@ public partial class MainWindow : Window
         }
     }
 
+    private void SubmenuPopup_Opened(object? sender, EventArgs e)
+    {
+        if (!SystemParameters.ClientAreaAnimation
+            || sender is not System.Windows.Controls.Primitives.Popup
+            {
+                Child: System.Windows.Controls.Border border,
+            } popup)
+        {
+            return;
+        }
+
+        border.UpdateLayout();
+        if (border.ActualWidth <= 0 || border.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        var submenuOpensUpward = false;
+        if (popup.PlacementTarget is FrameworkElement placementTarget)
+        {
+            try
+            {
+                submenuOpensUpward = border.PointToScreen(new System.Windows.Point()).Y
+                                       < placementTarget.PointToScreen(new System.Windows.Point()).Y - 0.5;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        AnimateMenuPopupBorder(
+            border,
+            Win10MenuPopupMotion.SubmenuClosedRatio,
+            submenuOpensUpward);
+    }
+
+    private static void AnimateMenuPopupBorder(
+        System.Windows.Controls.Border border,
+        double closedRatio,
+        bool popupOpensUpward)
+    {
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            return;
+        }
+
+        border.UpdateLayout();
+        if (border.ActualWidth <= 0 || border.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        var fullRect = new System.Windows.Rect(0, 0, border.ActualWidth, border.ActualHeight);
+        var clip = new RectangleGeometry(fullRect);
+        border.Clip = clip;
+        var animation = Win10MenuPopupMotion.CreateOpenAnimation(
+            border.ActualWidth,
+            border.ActualHeight,
+            closedRatio,
+            popupOpensUpward);
+        animation.Completed += (_, _) =>
+        {
+            if (ReferenceEquals(border.Clip, clip))
+            {
+                border.ClearValue(ClipProperty);
+            }
+        };
+        clip.BeginAnimation(
+            RectangleGeometry.RectProperty,
+            animation,
+            HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private static System.Windows.Controls.Border? GetContextMenuPopupBorder(ContextMenu menu) =>
+        menu.Template.FindName("ContextMenuPopupBorder", menu) as System.Windows.Controls.Border;
+
+    private static bool ContextMenuOpensUpward(
+        ContextMenu menu,
+        System.Windows.Controls.Border border)
+    {
+        try
+        {
+            var menuTop = border.PointToScreen(new System.Windows.Point()).Y;
+            if (menu.Placement == System.Windows.Controls.Primitives.PlacementMode.Right
+                && menu.PlacementTarget is FrameworkElement placementTarget)
+            {
+                return menuTop < placementTarget.PointToScreen(new System.Windows.Point()).Y - 0.5;
+            }
+
+            return GetCursorPos(out var cursor) && menuTop < cursor.Y - 0.5;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private void SubmenuPopup_Closed(object? sender, EventArgs e)
+    {
+        if (sender is System.Windows.Controls.Primitives.Popup
+            {
+                Child: System.Windows.Controls.Border border,
+            })
+        {
+            border.ClearValue(ClipProperty);
+        }
+    }
+
     private void StartContextMenu_Closed(object sender, RoutedEventArgs e)
     {
         _openContextMenuCount = Math.Max(0, _openContextMenuCount - 1);
+        if (sender is ContextMenu menu && GetContextMenuPopupBorder(menu) is { } border)
+        {
+            border.ClearValue(ClipProperty);
+        }
+
+        if (!_navigationPinnedOpen && !NavigationPane.IsMouseOver)
+        {
+            SetNavigationExpanded(false);
+        }
+
         Dispatcher.BeginInvoke(
             () => TryDismissAfterForegroundChange("context-menu-closed"),
             System.Windows.Threading.DispatcherPriority.ApplicationIdle);
@@ -3523,14 +3658,47 @@ public partial class MainWindow : Window
 
     private void NavigationToggleButton_Click(object sender, RoutedEventArgs e)
     {
-        _navigationExpanded = !_navigationExpanded;
-        var targetWidth = _navigationExpanded
+        _navigationPinnedOpen = !_navigationPinnedOpen;
+        SetNavigationExpanded(_navigationPinnedOpen);
+    }
+
+    private void NavigationToggleButton_MouseEnter(object sender, MouseEventArgs e) =>
+        SetNavigationExpanded(true);
+
+    private void NavigationPane_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (!_navigationPinnedOpen && _openContextMenuCount == 0)
+        {
+            SetNavigationExpanded(false);
+        }
+    }
+
+    private void SetNavigationExpanded(bool expanded)
+    {
+        if (_navigationExpanded == expanded)
+        {
+            return;
+        }
+
+        _navigationExpanded = expanded;
+        var targetWidth = expanded
             ? Win10VisualMetrics.ExpandedNavigationWidth
             : Win10VisualMetrics.CollapsedNavigationWidth;
-        NavigationToggleButton.ToolTip = _navigationExpanded ? "收起" : "展开";
-        if (_navigationExpanded)
+        NavigationToggleButton.ToolTip = expanded ? "收起" : "展开";
+        if (expanded)
         {
             NavigationPane.Background = (System.Windows.Media.Brush)FindResource("ExpandedNavigationBackground");
+        }
+
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            NavigationPane.Width = targetWidth;
+            if (!expanded)
+            {
+                NavigationPane.Background = System.Windows.Media.Brushes.Transparent;
+            }
+
+            return;
         }
 
         var animation = new System.Windows.Media.Animation.DoubleAnimation
@@ -3547,13 +3715,57 @@ public partial class MainWindow : Window
         {
             NavigationPane.BeginAnimation(WidthProperty, null);
             NavigationPane.Width = targetWidth;
-            if (!_navigationExpanded)
+            if (!expanded && !_navigationExpanded)
             {
                 NavigationPane.Background = System.Windows.Media.Brushes.Transparent;
             }
         };
         NavigationPane.BeginAnimation(WidthProperty, animation);
     }
+
+    private void NavigationPreferencesMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ContextMenu menu)
+        {
+            return;
+        }
+
+        foreach (var item in menu.Items.OfType<MenuItem>())
+        {
+            if (item.Tag is string key)
+            {
+                item.IsChecked = _navigationPreferences.IsVisible(key);
+            }
+        }
+    }
+
+    private void NavigationPreference_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem { Tag: string key } item)
+        {
+            return;
+        }
+
+        _navigationPreferences.SetVisible(key, item.IsChecked);
+        NavigationPreferencesStore.Save(_navigationPreferences);
+        ApplyNavigationPreferences();
+    }
+
+    private void ApplyNavigationPreferences()
+    {
+        UserNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowUser));
+        DocumentsNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowDocuments));
+        DownloadsNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowDownloads));
+        PicturesNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowPictures));
+        MusicNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowMusic));
+        VideosNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowVideos));
+        FileExplorerNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowFileExplorer));
+        NetworkNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowNetwork));
+        SettingsNavigationButton.Visibility = PreferenceVisibility(nameof(NavigationPreferences.ShowSettings));
+    }
+
+    private Visibility PreferenceVisibility(string key) =>
+        _navigationPreferences.IsVisible(key) ? Visibility.Visible : Visibility.Collapsed;
 
     private void UserNavigationButton_Click(object sender, RoutedEventArgs e) =>
         OpenButtonContextMenu(UserNavigationButton);
@@ -3576,8 +3788,23 @@ public partial class MainWindow : Window
     private void DocumentsNavigationButton_Click(object sender, RoutedEventArgs e) =>
         LaunchNavigationTarget("文档", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
 
+    private void DownloadsNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("下载", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
+
     private void PicturesNavigationButton_Click(object sender, RoutedEventArgs e) =>
         LaunchNavigationTarget("图片", Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+
+    private void MusicNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("音乐", Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+
+    private void VideosNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("视频", Environment.GetFolderPath(Environment.SpecialFolder.MyVideos));
+
+    private void FileExplorerNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("文件资源管理器", "explorer.exe");
+
+    private void NetworkNavigationButton_Click(object sender, RoutedEventArgs e) =>
+        LaunchNavigationTarget("网络", "shell:NetworkPlacesFolder");
 
     private void SettingsNavigationButton_Click(object sender, RoutedEventArgs e) =>
         LaunchNavigationTarget("设置", "ms-settings:");

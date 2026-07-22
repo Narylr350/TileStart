@@ -230,7 +230,8 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
-                        <Border MinWidth="{TemplateBinding MinWidth}"
+                        <Border x:Name="ContextMenuPopupBorder"
+                                MinWidth="{TemplateBinding MinWidth}"
                                 Padding="{TemplateBinding Padding}"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
@@ -296,6 +297,8 @@
                                    AllowsTransparency="True"
                                    Focusable="False"
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Opened="SubmenuPopup_Opened"
+                                   Closed="SubmenuPopup_Closed"
                                    Placement="Right"
                                    PopupAnimation="None">
                                 <Border MinWidth="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}"
@@ -529,9 +532,11 @@
 
             <Grid x:Name="NavigationPane"
                   Grid.Column="0"
+                  Grid.ColumnSpan="2"
                   Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
                   HorizontalAlignment="Left"
                   Background="Transparent"
+                  MouseLeave="NavigationPane_MouseLeave"
                   Panel.ZIndex="30">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="{x:Static local:Win10VisualMetrics.NavigationItemGridLength}" />
@@ -544,7 +549,41 @@
                         Content="&#xE700;"
                         Tag="开始"
                         ToolTip="展开"
-                        Click="NavigationToggleButton_Click" />
+                        MouseEnter="NavigationToggleButton_MouseEnter"
+                        Click="NavigationToggleButton_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource StartContextMenuStyle}"
+                                     Opened="NavigationPreferencesMenu_Opened">
+                            <MenuItem Header="用户" Tag="ShowUser" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="文档" Tag="ShowDocuments" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="下载" Tag="ShowDownloads" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="图片" Tag="ShowPictures" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="音乐" Tag="ShowMusic" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="视频" Tag="ShowVideos" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="文件资源管理器" Tag="ShowFileExplorer" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="网络" Tag="ShowNetwork" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                            <MenuItem Header="设置" Tag="ShowSettings" IsCheckable="True"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Click="NavigationPreference_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
                 <StackPanel Grid.Row="2">
                     <Button x:Name="UserNavigationButton"
                             Style="{StaticResource RailButtonStyle}"
@@ -564,17 +603,50 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Button Style="{StaticResource RailButtonStyle}"
+                    <Button x:Name="DocumentsNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
                             Content="&#xE8A5;"
                             Tag="文档"
                             ToolTip="文档"
                             Click="DocumentsNavigationButton_Click" />
-                    <Button Style="{StaticResource RailButtonStyle}"
+                    <Button x:Name="DownloadsNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE896;"
+                            Tag="下载"
+                            ToolTip="下载"
+                            Click="DownloadsNavigationButton_Click" />
+                    <Button x:Name="PicturesNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
                             Content="&#xEB9F;"
                             Tag="图片"
                             ToolTip="图片"
                             Click="PicturesNavigationButton_Click" />
-                    <Button Style="{StaticResource RailButtonStyle}"
+                    <Button x:Name="MusicNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE8D6;"
+                            Tag="音乐"
+                            ToolTip="音乐"
+                            Click="MusicNavigationButton_Click" />
+                    <Button x:Name="VideosNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE714;"
+                            Tag="视频"
+                            ToolTip="视频"
+                            Click="VideosNavigationButton_Click" />
+                    <Button x:Name="FileExplorerNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE838;"
+                            Tag="文件资源管理器"
+                            ToolTip="文件资源管理器"
+                            Click="FileExplorerNavigationButton_Click" />
+                    <Button x:Name="NetworkNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
+                            Content="&#xE968;"
+                            Tag="网络"
+                            ToolTip="网络"
+                            Click="NetworkNavigationButton_Click" />
+                    <Button x:Name="SettingsNavigationButton"
+                            Style="{StaticResource RailButtonStyle}"
                             Content="&#xE713;"
                             Tag="设置"
                             ToolTip="设置"
