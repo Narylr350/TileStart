@@ -77,3 +77,16 @@ Win10 和 Win11 使用独立 Shell Adapter，避免把不同系统版本的 Hook
 - Windows Shell 功能使用最小范围的 COM/Win32 封装。
 - 对外部目标统一通过 Windows Shell 启动。
 - 不为 MVP 之外的能力建立扩展框架。
+
+## NVIDIA App Overlay 兼容（2026-07-22）
+
+当前 Win10 实机上，硬件加速的 `TileStart.Host.exe` 会触发 NVIDIA App 信息悬浮窗，并加载 Overlay 捕获模块 `nvspcap64.dll`。已通过 NVIDIA DRS 创建只关联 `TileStart.Host.exe` 的 `TileStart` 应用 Profile，并实测以下两个隐藏设置需要同时启用：
+
+```text
+0x90DE9159 = 0x00000001
+0x809D5F60 = 0x10000000
+```
+
+单独设置 `0x90DE9159=1` 时，`nvspcap64.dll` 仍会延迟注入。两个设置同时写入并重启 NVIDIA Overlay 后，当前 Release 连续启动两次均不再显示信息悬浮窗，等待 20 秒也未加载 `nvspcap64.dll`。
+
+产品化时由安装阶段的一次性管理员 helper 创建或更新该应用 Profile；卸载时只删除 TileStart 自己的 Profile，不全局关闭 NVIDIA Overlay。该设置属于隐藏、驱动版本相关的 DRS 参数，驱动或 NVIDIA App 更新后需要重新验证，必要时重新应用。
