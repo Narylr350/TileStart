@@ -52,6 +52,29 @@ public sealed class SemanticZoomMotionTests
     public void PresenterFadeUsesRecoveredWin10ThemeDuration()
     {
         Assert.Equal(167, SemanticZoomMotion.PresenterFadeDurationMilliseconds);
-        Assert.Equal(350, SemanticZoomMotion.ViewChangeDurationMilliseconds);
+        Assert.Equal(17, SemanticZoomMotion.ZoomOutGeometryDelayMilliseconds);
+        Assert.Equal(217, SemanticZoomMotion.ZoomOutGeometryDurationMilliseconds);
+        Assert.Equal(250, SemanticZoomMotion.ZoomOutVisualDurationMilliseconds);
+        Assert.Equal(183, SemanticZoomMotion.ZoomInGeometryDurationMilliseconds);
+        Assert.Equal(200, SemanticZoomMotion.ZoomInVisualDurationMilliseconds);
+        Assert.Equal(5, SemanticZoomMotion.MotionBlurRadius);
+    }
+
+    [Theory]
+    [InlineData(false, 0.15, 0.10)]
+    [InlineData(false, 0.46, 0.54)]
+    [InlineData(false, 0.77, 0.92)]
+    [InlineData(true, 0.20, 0.18)]
+    [InlineData(true, 0.50, 0.62)]
+    [InlineData(true, 0.80, 0.94)]
+    public void GeometryProgressUsesFrameMeasuredPiecewiseCurve(
+        bool zoomedInViewActive,
+        double normalizedTime,
+        double expectedProgress)
+    {
+        Assert.Equal(
+            expectedProgress,
+            SemanticZoomMotion.CalculateGeometryProgress(zoomedInViewActive, normalizedTime),
+            6);
     }
 }
