@@ -5,9 +5,12 @@ namespace TileStart.Host;
 public static class AppUninstaller
 {
     public static bool CanUninstall(AppEntry app) =>
-        !app.IsFolder && !string.IsNullOrWhiteSpace(app.LaunchTarget);
+        !app.IsFolder && !app.IsCustom && !string.IsNullOrWhiteSpace(app.LaunchTarget);
 
-    public static bool CanUninstall(TileItem tile) => tile.TargetType == TileTargetType.Application;
+    public static bool CanUninstall(TileItem tile, IReadOnlyList<AppEntry> apps) =>
+        tile.TargetType == TileTargetType.Application
+        && apps.Any(app => !app.IsCustom
+                          && app.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
 
     internal static string SettingsUri(string appUserModelId)
     {

@@ -428,6 +428,18 @@
                                                FontFamily="Segoe MDL2 Assets"
                                                FontSize="16"
                                                Text="&#xE718;" />
+                                    </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="从“开始”屏幕取消固定"
+                                      Tag="UnpinStart"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Visibility="Collapsed"
+                                      Click="UnpinAppFromStart_Click">
+                                <MenuItem.Icon>
+                                    <TextBlock Foreground="White"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Text="&#xE77A;" />
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="更多">

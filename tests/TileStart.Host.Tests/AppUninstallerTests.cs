@@ -33,6 +33,27 @@ public sealed class AppUninstallerTests
     }
 
     [Fact]
+    public void CustomPortableApplicationCannotBeUninstalled()
+    {
+        var app = AppEntry.Application("Portable", Environment.ProcessPath!, DateTime.MinValue, isCustom: true);
+
+        Assert.False(app.CanUninstall);
+    }
+
+    [Fact]
+    public void TileWithoutInstalledApplicationCannotBeUninstalled()
+    {
+        var tile = new TileItem
+        {
+            Name = "Portable",
+            LaunchTarget = Environment.ProcessPath!,
+            TargetType = TileTargetType.Application,
+        };
+
+        Assert.False(AppUninstaller.CanUninstall(tile, []));
+    }
+
+    [Fact]
     public void MissingClassicShortcutCannotBePinned()
     {
         Assert.False(TaskbarPinner.IsClassicShortcut(@"C:\missing\Tool.lnk"));

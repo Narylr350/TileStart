@@ -1046,7 +1046,7 @@ public partial class MainWindow : Window
                 }
                 else if (item.Tag as string == "Uninstall")
                 {
-                    item.Visibility = AppUninstaller.CanUninstall(tile)
+                    item.Visibility = AppUninstaller.CanUninstall(tile, _launchableApps)
                         ? Visibility.Visible
                         : Visibility.Collapsed;
                 }
@@ -1059,6 +1059,18 @@ public partial class MainWindow : Window
                 else if (item.IsCheckable)
                 {
                     item.IsChecked = TileContextActions.IsSelectedSize(tile.Size, item.Tag as string);
+                }
+            }
+        }
+        else if (menu.PlacementTarget is Button { Tag: AppEntry app })
+        {
+            foreach (var item in EnumerateMenuItems(menu))
+            {
+                if (item.Tag as string == "UnpinStart")
+                {
+                    item.Visibility = IsPinnedToStart(app)
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
                 }
             }
         }
@@ -1703,6 +1715,42 @@ public partial class MainWindow : Window
 
         var tile = CreateAppTile(app);
         PinTileToStart(tile);
+    }
+
+    private void UnpinAppFromStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem item
+            || ItemsControl.ItemsControlFromItemContainer(item) is not ContextMenu
+            {
+                PlacementTarget: Button { Tag: AppEntry app },
+            })
+        {
+            return;
+        }
+
+        var identity = LaunchTargetIdentity.GetKey(app.LaunchTarget);
+        var tiles = TileLayout.Groups
+            .SelectMany(group => group.Tiles)
+            .Where(tile => LaunchTargetIdentity.GetKey(tile.LaunchTarget) == identity)
+            .ToArray();
+        var changed = false;
+        foreach (var tile in tiles)
+        {
+            changed |= TileContextActions.Unpin(TileLayout, tile);
+        }
+
+        if (changed)
+        {
+            TileLayoutStore.Save(TileLayout);
+        }
+    }
+
+    private bool IsPinnedToStart(AppEntry app)
+    {
+        var identity = LaunchTargetIdentity.GetKey(app.LaunchTarget);
+        return TileLayout.Groups
+            .SelectMany(group => group.Tiles)
+            .Any(tile => LaunchTargetIdentity.GetKey(tile.LaunchTarget) == identity);
     }
 
     private bool PinTileToStart(TileItem tile)

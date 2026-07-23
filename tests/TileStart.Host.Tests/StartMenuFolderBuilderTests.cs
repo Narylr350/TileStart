@@ -1,3 +1,4 @@
+using System.IO;
 using TileStart.Host;
 
 namespace TileStart.Host.Tests;
@@ -51,6 +52,23 @@ public sealed class StartMenuFolderBuilderTests
         Assert.True(shortcut.CanOpenFileLocation);
         Assert.False(packaged.CanOpenFileLocation);
         Assert.False(folder.CanOpenFileLocation);
+    }
+
+    [Fact]
+    public void CustomExecutableExposesOpenFileLocation()
+    {
+        var executable = Path.Combine(Path.GetTempPath(), $"TileStart-{Guid.NewGuid():N}.exe");
+        File.WriteAllText(executable, string.Empty);
+        try
+        {
+            var app = AppEntry.Application("Portable", executable, DateTime.MinValue, isCustom: true);
+
+            Assert.True(app.CanOpenFileLocation);
+        }
+        finally
+        {
+            File.Delete(executable);
+        }
     }
 
     [Fact]

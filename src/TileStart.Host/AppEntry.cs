@@ -47,7 +47,8 @@ public sealed class AppEntry : INotifyPropertyChanged
         {
             var extension = Path.GetExtension(LaunchTarget);
             return !IsFolder
-                && (extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+                && ((IsCustom && File.Exists(LaunchTarget))
+                    || extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
                     || extension.Equals(".url", StringComparison.OrdinalIgnoreCase)
                     || extension.Equals(".appref-ms", StringComparison.OrdinalIgnoreCase));
         }

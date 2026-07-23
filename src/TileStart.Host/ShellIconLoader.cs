@@ -26,13 +26,22 @@ public static class ShellIconLoader
         }
 
         var shortcutTarget = ResolveShortcutTargetWithoutIcon(displayName);
-        if (!string.IsNullOrWhiteSpace(shortcutTarget)
+            if (!string.IsNullOrWhiteSpace(shortcutTarget)
             && !shortcutTarget.Equals(displayName, StringComparison.OrdinalIgnoreCase))
         {
             var targetIcon = Load(shortcutTarget);
             if (targetIcon is not null)
             {
                 return targetIcon;
+            }
+        }
+
+        if (Path.GetExtension(displayName).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            var executableIcon = LoadExecutableIcon(displayName, 64);
+            if (executableIcon is not null)
+            {
+                return executableIcon;
             }
         }
 
@@ -47,7 +56,11 @@ public static class ShellIconLoader
             var shellItemImage = LoadShellItemImage(itemIdList, 64);
             if (shellItemImage is not null)
             {
-                return IconImageNormalizer.NormalizeShellIcon(shellItemImage);
+                var normalizedShellItemImage = IconImageNormalizer.NormalizeShellIcon(shellItemImage);
+                if (normalizedShellItemImage is not null)
+                {
+                    return normalizedShellItemImage;
+                }
             }
 
             var fileInfo = new ShellFileInfo();
@@ -195,6 +208,32 @@ public static class ShellIconLoader
         }
     }
 
+    private static ImageSource? LoadExecutableIcon(string path, int size)
+    {
+        var largeIcons = new nint[1];
+        try
+        {
+            if (ExtractIconEx(path, 0, largeIcons, null, 1) != 1 || largeIcons[0] == 0)
+            {
+                return null;
+            }
+
+            var image = Imaging.CreateBitmapSourceFromHIcon(
+                largeIcons[0],
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromWidthAndHeight(size, size));
+            image.Freeze();
+            return IconImageNormalizer.NormalizeShellIcon(image) ?? image;
+        }
+        finally
+        {
+            if (largeIcons[0] != 0)
+            {
+                DestroyIcon(largeIcons[0]);
+            }
+        }
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private readonly struct NativeSize(int width, int height)
     {
@@ -235,4 +274,7 @@ public static class ShellIconLoader
 
     [DllImport("user32.dll")]
     private static extern bool DestroyIcon(nint icon);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint ExtractIconEx(string file, int iconIndex, nint[]? largeIcons, nint[]? smallIcons, uint iconCount);
 }
