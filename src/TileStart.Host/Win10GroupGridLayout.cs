@@ -6,43 +6,22 @@ public static class Win10GroupGridLayout
 {
     public static bool EnsureCoordinates(TileLayout layout, int columns)
     {
-        return EnsureCoordinates(layout.Groups, columns);
-    }
-
-    private static bool EnsureCoordinates(IEnumerable<TileGroup> source, int columns)
-    {
-        columns = Math.Max(1, columns);
-        var groups = source.ToArray();
-        var occupied = new HashSet<TileGroupCell>();
-        var coordinatesAreValid = groups.All(group =>
-            group.GroupColumn >= 0
-            && group.GroupColumn < columns
-            && group.GroupRow >= 0
-            && occupied.Add(new TileGroupCell(group.GroupColumn, group.GroupRow)));
-        if (!coordinatesAreValid)
-        {
-            for (var index = 0; index < groups.Length; index++)
-            {
-                SetCell(groups[index], new TileGroupCell(index % columns, index / columns));
-            }
-
-            return groups.Length > 0;
-        }
-
+        columns = NormalizeColumns(layout.Groups, columns);
         var changed = false;
-        foreach (var column in groups.GroupBy(group => group.GroupColumn))
+        var occupied = new Dictionary<int, HashSet<int>>();
+        foreach (var group in layout.Groups)
         {
-            var row = 0;
-            foreach (var group in column.OrderBy(group => group.GroupRow))
+            var requested = GetCell(group);
+            var cell = IsAvailable(requested, group.WidthUnits, columns, occupied)
+                ? requested
+                : FindFirstAvailable(group.WidthUnits, columns, occupied);
+            if (requested != cell)
             {
-                if (group.GroupRow != row)
-                {
-                    group.GroupRow = row;
-                    changed = true;
-                }
-
-                row++;
+                SetCell(group, cell);
+                changed = true;
             }
+
+            Occupy(cell, group.WidthUnits, occupied);
         }
 
         return changed;
@@ -50,14 +29,16 @@ public static class Win10GroupGridLayout
 
     public static TileGroupCell FindAppendCell(TileLayout layout, int columns)
     {
+        var probe = new TileGroup();
+        return FindAppendCell(layout, probe, columns);
+    }
+
+    public static TileGroupCell FindAppendCell(TileLayout layout, TileGroup group, int columns)
+    {
+        columns = NormalizeColumns(layout.Groups.Append(group), columns);
         EnsureCoordinates(layout, columns);
-        return Enumerable.Range(0, Math.Max(1, columns))
-            .Select(column => new TileGroupCell(
-                column,
-                layout.Groups.Count(group => group.GroupColumn == column)))
-            .OrderBy(cell => cell.Row)
-            .ThenBy(cell => cell.Column)
-            .First();
+        var occupied = BuildOccupied(layout.Groups.Where(candidate => !ReferenceEquals(candidate, group)));
+        return FindFirstAvailable(group.WidthUnits, columns, occupied);
     }
 
     public static void Insert(TileLayout layout, TileGroup group, TileGroupCell target, int columns)
@@ -67,21 +48,12 @@ public static class Win10GroupGridLayout
             throw new ArgumentException("The inserted group must belong to the layout.", nameof(group));
         }
 
-        EnsureCoordinates(layout.Groups.Where(candidate => candidate != group), columns);
-        var column = Math.Clamp(target.Column, 0, Math.Max(1, columns) - 1);
-        var row = Math.Clamp(
-            target.Row,
-            0,
-            layout.Groups.Count(candidate => candidate != group && candidate.GroupColumn == column));
-        foreach (var candidate in layout.Groups.Where(candidate =>
-                     candidate != group
-                     && candidate.GroupColumn == column
-                     && candidate.GroupRow >= row))
-        {
-            candidate.GroupRow++;
-        }
-
-        SetCell(group, new TileGroupCell(column, row));
+        columns = NormalizeColumns(layout.Groups, columns);
+        var others = layout.Groups.Where(candidate => !ReferenceEquals(candidate, group)).ToArray();
+        EnsureCoordinates(new TileLayout { Groups = [.. others] }, columns);
+        var occupied = BuildOccupied(others);
+        var cell = FindNearestAvailable(target, group.WidthUnits, columns, occupied);
+        SetCell(group, cell);
     }
 
     public static bool Move(TileLayout layout, TileGroup group, TileGroupCell target, int columns)
@@ -91,42 +63,52 @@ public static class Win10GroupGridLayout
             return false;
         }
 
+        columns = NormalizeColumns(layout.Groups, columns);
         EnsureCoordinates(layout, columns);
         var source = GetCell(group);
-        var column = Math.Clamp(target.Column, 0, Math.Max(1, columns) - 1);
-        var maxRow = layout.Groups.Count(candidate => candidate != group && candidate.GroupColumn == column);
-        var destination = new TileGroupCell(column, Math.Clamp(target.Row, 0, maxRow));
-        if (source == destination)
+        var clampedTarget = new TileGroupCell(
+            Math.Clamp(target.Column, 0, columns - Math.Min(group.WidthUnits, columns)),
+            Math.Max(0, target.Row));
+        if (source == clampedTarget)
         {
             return false;
         }
 
-        var occupant = layout.Groups.FirstOrDefault(candidate =>
-            candidate != group
-            && candidate.GroupColumn == destination.Column
-            && candidate.GroupRow == destination.Row);
-        if (occupant is not null)
+        var others = layout.Groups.Where(candidate => !ReferenceEquals(candidate, group)).ToArray();
+        var occupied = BuildOccupied(others);
+        if (IsAvailable(clampedTarget, group.WidthUnits, columns, occupied))
         {
-            SetCell(occupant, source);
-            SetCell(group, destination);
+            SetCell(group, clampedTarget);
             return true;
         }
 
-        SetCell(group, destination);
-        CompactColumn(layout, source.Column, group);
-        return true;
-    }
+        var occupant = others.FirstOrDefault(candidate => Overlaps(
+            clampedTarget,
+            group.WidthUnits,
+            GetCell(candidate),
+            candidate.WidthUnits));
+        if (occupant is not null && occupant.WidthUnits == group.WidthUnits)
+        {
+            var withoutOccupant = BuildOccupied(others.Where(candidate => !ReferenceEquals(candidate, occupant)));
+            if (IsAvailable(source, occupant.WidthUnits, columns, withoutOccupant))
+            {
+                SetCell(occupant, source);
+                SetCell(group, clampedTarget);
+                return true;
+            }
+        }
 
-    public static bool Remove(TileLayout layout, TileGroup group)
-    {
-        if (!layout.Groups.Remove(group))
+        var destination = FindNearestAvailable(clampedTarget, group.WidthUnits, columns, occupied);
+        if (destination == source)
         {
             return false;
         }
 
-        CompactColumn(layout, group.GroupColumn);
+        SetCell(group, destination);
         return true;
     }
+
+    public static bool Remove(TileLayout layout, TileGroup group) => layout.Groups.Remove(group);
 
     public static TileGroupCell GetCell(TileGroup group) => new(group.GroupColumn, group.GroupRow);
 
@@ -136,14 +118,122 @@ public static class Win10GroupGridLayout
         group.GroupRow = cell.Row;
     }
 
-    private static void CompactColumn(TileLayout layout, int column, TileGroup? excluded = null)
+    private static int NormalizeColumns(IEnumerable<TileGroup> groups, int columns) =>
+        Math.Max(Math.Max(1, columns), groups.Select(group => group.WidthUnits).DefaultIfEmpty(1).Max());
+
+    private static Dictionary<int, HashSet<int>> BuildOccupied(IEnumerable<TileGroup> groups)
     {
-        var row = 0;
-        foreach (var group in layout.Groups
-                     .Where(group => group != excluded && group.GroupColumn == column)
-                     .OrderBy(group => group.GroupRow))
+        var occupied = new Dictionary<int, HashSet<int>>();
+        foreach (var group in groups)
         {
-            group.GroupRow = row++;
+            Occupy(GetCell(group), group.WidthUnits, occupied);
+        }
+
+        return occupied;
+    }
+
+    private static bool IsAvailable(
+        TileGroupCell cell,
+        int span,
+        int columns,
+        IReadOnlyDictionary<int, HashSet<int>> occupied)
+    {
+        span = Math.Clamp(span, 1, columns);
+        if (cell.Column < 0 || cell.Row < 0 || cell.Column + span > columns)
+        {
+            return false;
+        }
+
+        return !occupied.TryGetValue(cell.Row, out var row)
+               || Enumerable.Range(cell.Column, span).All(column => !row.Contains(column));
+    }
+
+    private static TileGroupCell FindFirstAvailable(
+        int span,
+        int columns,
+        IReadOnlyDictionary<int, HashSet<int>> occupied)
+    {
+        span = Math.Clamp(span, 1, columns);
+        for (var row = 0;; row++)
+        {
+            for (var column = 0; column <= columns - span; column++)
+            {
+                var cell = new TileGroupCell(column, row);
+                if (IsAvailable(cell, span, columns, occupied))
+                {
+                    return cell;
+                }
+            }
         }
     }
+
+    private static TileGroupCell FindNearestAvailable(
+        TileGroupCell target,
+        int span,
+        int columns,
+        IReadOnlyDictionary<int, HashSet<int>> occupied)
+    {
+        span = Math.Clamp(span, 1, columns);
+        var maxOccupiedRow = occupied.Keys.DefaultIfEmpty(0).Max();
+        var maxDistance = Math.Max(columns, maxOccupiedRow + 2);
+        for (var distance = 0; distance <= maxDistance; distance++)
+        {
+            var candidates = new List<TileGroupCell>();
+            for (var rowOffset = -distance; rowOffset <= distance; rowOffset++)
+            {
+                var columnOffset = distance - Math.Abs(rowOffset);
+                candidates.Add(new TileGroupCell(target.Column - columnOffset, target.Row + rowOffset));
+                if (columnOffset != 0)
+                {
+                    candidates.Add(new TileGroupCell(target.Column + columnOffset, target.Row + rowOffset));
+                }
+            }
+
+            foreach (var candidate in candidates
+                         .Where(candidate => candidate.Row >= 0)
+                         .OrderBy(candidate => Math.Abs(candidate.Row - target.Row))
+                         .ThenBy(candidate => Math.Abs(candidate.Column - target.Column))
+                         .ThenBy(candidate => candidate.Row)
+                         .ThenBy(candidate => candidate.Column))
+            {
+                if (IsAvailable(candidate, span, columns, occupied))
+                {
+                    return candidate;
+                }
+            }
+        }
+
+        return FindFirstAvailable(span, columns, occupied);
+    }
+
+    private static void Occupy(
+        TileGroupCell cell,
+        int span,
+        IDictionary<int, HashSet<int>> occupied)
+    {
+        if (cell.Row < 0 || cell.Column < 0)
+        {
+            return;
+        }
+
+        if (!occupied.TryGetValue(cell.Row, out var row))
+        {
+            row = [];
+            occupied.Add(cell.Row, row);
+        }
+
+        for (var column = cell.Column; column < cell.Column + span; column++)
+        {
+            row.Add(column);
+        }
+    }
+
+    private static bool Overlaps(
+        TileGroupCell first,
+        int firstSpan,
+        TileGroupCell second,
+        int secondSpan) =>
+        first.Row == second.Row
+        && first.Column < second.Column + secondSpan
+        && first.Column + firstSpan > second.Column;
 }

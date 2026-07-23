@@ -5,7 +5,7 @@ namespace TileStart.Host.Tests;
 public sealed class StartWindowSizingTests
 {
     [Fact]
-    public void WidthTargetsExposeExactlyOneTwoOrThreeGroupColumns()
+    public void WidthTargetsExposeFourWorkspaceUnitsPerLegacyGroupColumn()
     {
         for (var columns = 1; columns <= 3; columns++)
         {
@@ -14,8 +14,9 @@ public sealed class StartWindowSizingTests
                                 - Win10VisualMetrics.AllAppsWidth
                                 - Win10VisualMetrics.TileScrollViewerLeftMargin;
 
-            Assert.Equal(columns, Win10GroupWrapPanel.ColumnsForWidth(viewportWidth));
-            Assert.True(viewportWidth >= Win10GroupWrapPanel.RequiredWidth(columns));
+            var workspaceColumns = columns * TileWorkspaceMetrics.LegacyGroupWidthUnits;
+            Assert.Equal(workspaceColumns, Win10GroupWrapPanel.ColumnsForWidth(viewportWidth));
+            Assert.True(viewportWidth >= Win10GroupWrapPanel.RequiredWidth(workspaceColumns));
         }
     }
 

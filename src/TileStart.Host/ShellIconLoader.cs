@@ -25,6 +25,17 @@ public static class ShellIconLoader
             return loadedImage;
         }
 
+        var shortcutTarget = ResolveShortcutTargetWithoutIcon(displayName);
+        if (!string.IsNullOrWhiteSpace(shortcutTarget)
+            && !shortcutTarget.Equals(displayName, StringComparison.OrdinalIgnoreCase))
+        {
+            var targetIcon = Load(shortcutTarget);
+            if (targetIcon is not null)
+            {
+                return targetIcon;
+            }
+        }
+
         nint itemIdList = 0;
         try
         {
@@ -36,7 +47,7 @@ public static class ShellIconLoader
             var shellItemImage = LoadShellItemImage(itemIdList, 64);
             if (shellItemImage is not null)
             {
-                return shellItemImage;
+                return IconImageNormalizer.NormalizeShellIcon(shellItemImage);
             }
 
             var fileInfo = new ShellFileInfo();
@@ -49,7 +60,7 @@ public static class ShellIconLoader
             {
                 var image = Imaging.CreateBitmapSourceFromHIcon(fileInfo.Icon, Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(32, 32));
                 image.Freeze();
-                return image;
+                return IconImageNormalizer.NormalizeShellIcon(image);
             }
             finally
             {
@@ -92,6 +103,60 @@ public static class ShellIconLoader
         catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
         {
             return null;
+        }
+    }
+
+    private static string? ResolveShortcutTargetWithoutIcon(string displayName)
+    {
+        if (!File.Exists(displayName)
+            || !Path.GetExtension(displayName).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        object? shell = null;
+        object? shortcut = null;
+        try
+        {
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            shell = shellType is null ? null : Activator.CreateInstance(shellType);
+            if (shell is null)
+            {
+                return null;
+            }
+
+            shortcut = ((dynamic)shell).CreateShortcut(displayName);
+            dynamic shortcutApi = shortcut;
+            var iconLocation = shortcutApi.IconLocation as string ?? string.Empty;
+            var separator = iconLocation.LastIndexOf(',');
+            var iconPath = separator >= 0 ? iconLocation[..separator] : iconLocation;
+            if (!string.IsNullOrWhiteSpace(iconPath.Trim().Trim('"')))
+            {
+                return null;
+            }
+
+            var targetPath = shortcutApi.TargetPath as string;
+            return !string.IsNullOrWhiteSpace(targetPath) && File.Exists(targetPath)
+                ? targetPath
+                : null;
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Shortcut icon target resolution failed: shortcut={displayName}, error={exception.Message}");
+            return null;
+        }
+        finally
+        {
+            ReleaseComObject(shortcut);
+            ReleaseComObject(shell);
+        }
+    }
+
+    private static void ReleaseComObject(object? value)
+    {
+        if (value is not null && Marshal.IsComObject(value))
+        {
+            Marshal.FinalReleaseComObject(value);
         }
     }
 

@@ -7,8 +7,6 @@ public sealed class SingleInstanceGuard : IDisposable
 {
     private const string MutexName = "Local\\TileStart.Host";
     private const string PipeName = "TileStart.Host";
-    private static readonly byte[] OpenCommand = "OPEN"u8.ToArray();
-    private static readonly byte[] ExitCommand = "EXIT"u8.ToArray();
     private readonly Mutex _mutex;
 
     public SingleInstanceGuard()
@@ -19,13 +17,13 @@ public sealed class SingleInstanceGuard : IDisposable
 
     public bool IsPrimaryInstance { get; }
 
-    public static void NotifyPrimaryInstance(bool requestShutdown = false)
+    public static void NotifyPrimaryInstance(HostRequest request)
     {
         try
         {
             using var pipe = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut);
             pipe.Connect(250);
-            pipe.Write(requestShutdown ? ExitCommand : OpenCommand);
+            pipe.Write(request.Encode());
             pipe.Flush();
         }
         catch (IOException)

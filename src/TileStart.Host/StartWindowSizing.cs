@@ -14,7 +14,8 @@ public static class StartWindowSizing
     {
         columns = Math.Clamp(columns, MinimumGroupColumns, MaximumGroupColumns);
         return FixedPaneWidth
-               + Win10GroupWrapPanel.RequiredWidth(columns)
+               + Win10GroupWrapPanel.RequiredWidth(
+                   columns * TileWorkspaceMetrics.LegacyGroupWidthUnits)
                + Win10VisualMetrics.TileScrollBarLayoutWidth;
     }
 

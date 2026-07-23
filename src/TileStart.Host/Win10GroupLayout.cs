@@ -4,73 +4,98 @@ public readonly record struct Win10PinPlacement(TileGroup Group, int Column, int
 
 public static class Win10GroupLayout
 {
-    public static void Normalize(TileGroup group)
+    public static bool Normalize(TileGroup group)
     {
+        var snapshots = group.Tiles.ToDictionary(tile => tile, tile => (tile.Column, tile.Row));
         var occupied = new HashSet<(int Column, int Row)>();
         foreach (var tile in group.Tiles)
         {
             var column = tile.Column;
             var row = tile.Row;
-            if (!CanFit(tile, column, row, occupied))
+            if (!CanFit(group, tile, column, row, occupied))
             {
-                (column, row) = FindFirstAvailable(tile, occupied);
-                tile.Column = column;
-                tile.Row = row;
+                if (!TryFindFirstAvailable(group, tile, occupied, out var location))
+                {
+                    RestorePositions(snapshots);
+                    group.RefreshLayout();
+                    return false;
+                }
+
+                (column, row) = location;
             }
 
+            tile.Column = column;
+            tile.Row = row;
             Occupy(tile, column, row, occupied);
         }
 
         group.RefreshLayout();
+        return true;
     }
 
     public static bool Add(TileGroup target, TileItem tile, int column, int row)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
+        if (!IsWithinBounds(target, tile, column, row))
         {
             return false;
         }
 
+        var snapshots = CapturePositions(target);
         row = ConstrainDropRow(target, tile, column, row);
         tile.Column = column;
         tile.Row = row;
         target.Tiles.Insert(0, tile);
-        Normalize(target);
-        return true;
+        if (Normalize(target))
+        {
+            return true;
+        }
+
+        target.Tiles.Remove(tile);
+        RestorePositions(snapshots);
+        target.RefreshLayout();
+        return false;
     }
 
     public static bool Move(TileGroup source, TileGroup target, TileItem tile, int column, int row)
     {
-        if (!source.Tiles.Contains(tile)
-            || column < 0
-            || row < 0
-            || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
+        if (!source.Tiles.Contains(tile) || !IsWithinBounds(target, tile, column, row))
         {
             return false;
         }
 
+        var sourceSnapshot = CapturePositions(source);
+        var targetSnapshot = ReferenceEquals(source, target) ? sourceSnapshot : CapturePositions(target);
         row = ConstrainDropRow(target, tile, column, row);
         source.Tiles.Remove(tile);
         tile.Column = column;
         tile.Row = row;
         target.Tiles.Insert(0, tile);
-        Normalize(target);
-        if (source != target)
+        if (Normalize(target) && (ReferenceEquals(source, target) || Normalize(source)))
         {
-            Normalize(source);
+            return true;
         }
 
-        return true;
+        target.Tiles.Remove(tile);
+        if (!source.Tiles.Contains(tile))
+        {
+            source.Tiles.Add(tile);
+        }
+
+        RestorePositions(sourceSnapshot);
+        if (!ReferenceEquals(source, target))
+        {
+            RestorePositions(targetSnapshot);
+        }
+
+        source.RefreshLayout();
+        target.RefreshLayout();
+        return false;
     }
 
     public static bool TryMove(TileGroup group, TileItem tile, int column, int row)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
-        {
-            return false;
-        }
-
-        if (group.Tiles.Any(other => other != tile && Overlaps(tile, column, row, other)))
+        if (!IsWithinBounds(group, tile, column, row)
+            || group.Tiles.Any(other => other != tile && Overlaps(tile, column, row, other)))
         {
             return false;
         }
@@ -81,7 +106,10 @@ public static class Win10GroupLayout
         return true;
     }
 
-    public static (int Column, int Row) FindFirstAvailable(TileGroup group, TileItem tile)
+    public static bool TryFindFirstAvailable(
+        TileGroup group,
+        TileItem tile,
+        out (int Column, int Row) location)
     {
         var occupied = new HashSet<(int Column, int Row)>();
         foreach (var other in group.Tiles.Where(other => other != tile))
@@ -89,7 +117,7 @@ public static class Win10GroupLayout
             Occupy(other, other.Column, other.Row, occupied);
         }
 
-        return FindFirstAvailable(tile, occupied);
+        return TryFindFirstAvailable(group, tile, occupied, out location);
     }
 
     public static Win10PinPlacement? FindPinPlacement(IEnumerable<TileGroup> groups, TileItem tile)
@@ -103,7 +131,10 @@ public static class Win10GroupLayout
             .ToArray();
         foreach (var group in orderedGroups)
         {
-            if (TryFindAvailableWithinOccupiedRows(group, tile, out var location))
+            var found = group.ContentRowLimit is null
+                ? TryFindAvailableWithinOccupiedRows(group, tile, out var location)
+                : TryFindFirstAvailable(group, tile, out location);
+            if (found)
             {
                 return new Win10PinPlacement(group, location.Column, location.Row);
             }
@@ -114,9 +145,7 @@ public static class Win10GroupLayout
 
     public static bool AddToFreeCell(TileGroup target, TileItem tile, int column, int row)
     {
-        if (column < 0
-            || row < 0
-            || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns
+        if (!IsWithinBounds(target, tile, column, row)
             || target.Tiles.Any(other => other != tile && Overlaps(tile, column, row, other)))
         {
             return false;
@@ -126,6 +155,22 @@ public static class Win10GroupLayout
         tile.Row = row;
         target.Tiles.Add(tile);
         target.RefreshLayout();
+        return true;
+    }
+
+    public static bool CanFitAll(TileGroup group, IEnumerable<TileItem> tiles)
+    {
+        var occupied = new HashSet<(int Column, int Row)>();
+        foreach (var tile in tiles.OrderByDescending(TileArea).ThenByDescending(tile => tile.Size.ColumnSpan()))
+        {
+            if (!TryFindFirstAvailable(group, tile, occupied, out var location))
+            {
+                return false;
+            }
+
+            Occupy(tile, location.Column, location.Row, occupied);
+        }
+
         return true;
     }
 
@@ -145,15 +190,15 @@ public static class Win10GroupLayout
         if (occupiedRows == 0)
         {
             location = (0, 0);
-            return true;
+            return tile.Size.ColumnSpan() <= group.ContentColumns;
         }
 
         var lastStartRow = occupiedRows - tile.Size.RowSpan();
         for (var row = 0; row <= lastStartRow; row++)
         {
-            for (var column = 0; column <= Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan(); column++)
+            for (var column = 0; column <= group.ContentColumns - tile.Size.ColumnSpan(); column++)
             {
-                if (CanFit(tile, column, row, occupied))
+                if (CanFit(group, tile, column, row, occupied))
                 {
                     location = (column, row);
                     return true;
@@ -165,18 +210,34 @@ public static class Win10GroupLayout
         return false;
     }
 
-    private static (int Column, int Row) FindFirstAvailable(TileItem tile, HashSet<(int Column, int Row)> occupied)
+    private static bool TryFindFirstAvailable(
+        TileGroup group,
+        TileItem tile,
+        HashSet<(int Column, int Row)> occupied,
+        out (int Column, int Row) location)
     {
-        for (var row = 0;; row++)
+        var lastStartRow = group.ContentRowLimit is { } rowLimit
+            ? rowLimit - tile.Size.RowSpan()
+            : int.MaxValue;
+        for (var row = 0; row <= lastStartRow; row++)
         {
-            for (var column = 0; column <= Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan(); column++)
+            for (var column = 0; column <= group.ContentColumns - tile.Size.ColumnSpan(); column++)
             {
-                if (CanFit(tile, column, row, occupied))
+                if (CanFit(group, tile, column, row, occupied))
                 {
-                    return (column, row);
+                    location = (column, row);
+                    return true;
                 }
             }
+
+            if (row == int.MaxValue)
+            {
+                break;
+            }
         }
+
+        location = default;
+        return false;
     }
 
     private static int ConstrainDropRow(TileGroup group, TileItem tile, int column, int requestedRow)
@@ -189,12 +250,26 @@ public static class Win10GroupLayout
             .Select(other => other.Row + other.Size.RowSpan())
             .DefaultIfEmpty(0)
             .Max();
-        return Math.Min(requestedRow, supportedRow);
+        var row = Math.Min(requestedRow, supportedRow);
+        return group.ContentRowLimit is { } rowLimit
+            ? Math.Min(row, rowLimit - tile.Size.RowSpan())
+            : row;
     }
 
-    private static bool CanFit(TileItem tile, int column, int row, HashSet<(int Column, int Row)> occupied)
+    private static bool IsWithinBounds(TileGroup group, TileItem tile, int column, int row) =>
+        column >= 0
+        && row >= 0
+        && column + tile.Size.ColumnSpan() <= group.ContentColumns
+        && (group.ContentRowLimit is null || row + tile.Size.RowSpan() <= group.ContentRowLimit);
+
+    private static bool CanFit(
+        TileGroup group,
+        TileItem tile,
+        int column,
+        int row,
+        HashSet<(int Column, int Row)> occupied)
     {
-        if (column < 0 || row < 0 || column + tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
+        if (!IsWithinBounds(group, tile, column, row))
         {
             return false;
         }
@@ -213,15 +288,17 @@ public static class Win10GroupLayout
         return true;
     }
 
-    private static bool Overlaps(TileItem tile, int column, int row, TileItem other)
-    {
-        return column < other.Column + other.Size.ColumnSpan()
-               && column + tile.Size.ColumnSpan() > other.Column
-               && row < other.Row + other.Size.RowSpan()
-               && row + tile.Size.RowSpan() > other.Row;
-    }
+    private static bool Overlaps(TileItem tile, int column, int row, TileItem other) =>
+        column < other.Column + other.Size.ColumnSpan()
+        && column + tile.Size.ColumnSpan() > other.Column
+        && row < other.Row + other.Size.RowSpan()
+        && row + tile.Size.RowSpan() > other.Row;
 
-    private static void Occupy(TileItem tile, int column, int row, HashSet<(int Column, int Row)> occupied)
+    private static void Occupy(
+        TileItem tile,
+        int column,
+        int row,
+        HashSet<(int Column, int Row)> occupied)
     {
         for (var y = row; y < row + tile.Size.RowSpan(); y++)
         {
@@ -231,4 +308,18 @@ public static class Win10GroupLayout
             }
         }
     }
+
+    private static Dictionary<TileItem, (int Column, int Row)> CapturePositions(TileGroup group) =>
+        group.Tiles.ToDictionary(tile => tile, tile => (tile.Column, tile.Row));
+
+    private static void RestorePositions(IReadOnlyDictionary<TileItem, (int Column, int Row)> snapshots)
+    {
+        foreach (var (tile, position) in snapshots)
+        {
+            tile.Column = position.Column;
+            tile.Row = position.Row;
+        }
+    }
+
+    private static int TileArea(TileItem tile) => tile.Size.ColumnSpan() * tile.Size.RowSpan();
 }

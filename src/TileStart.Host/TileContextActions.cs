@@ -49,7 +49,7 @@ public static class TileContextActions
             child.Column = Math.Clamp(
                 originColumn + child.Column,
                 0,
-                Win10TileMetrics.GroupColumns - child.Size.ColumnSpan());
+                group.ContentColumns - child.Size.ColumnSpan());
             child.Row = Math.Max(0, originRow + child.Row);
             group.Tiles.Add(child);
         }

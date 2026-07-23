@@ -33,7 +33,7 @@ public static class TileGroupManager
             return false;
         }
 
-        var targetColumn = group.GroupColumn + offset;
+        var targetColumn = group.GroupColumn + offset * group.WidthUnits;
         return targetColumn >= 0
                && targetColumn < columns
                && Win10GroupGridLayout.Move(
@@ -44,5 +44,10 @@ public static class TileGroupManager
     }
 
     private static int InferColumns(TileLayout layout) =>
-        Math.Max(1, layout.Groups.Select(group => group.GroupColumn + 1).DefaultIfEmpty(1).Max());
+        Math.Max(
+            TileWorkspaceMetrics.LegacyGroupWidthUnits,
+            layout.Groups
+                .Select(group => group.GroupColumn + group.WidthUnits)
+                .DefaultIfEmpty(TileWorkspaceMetrics.LegacyGroupWidthUnits)
+                .Max());
 }

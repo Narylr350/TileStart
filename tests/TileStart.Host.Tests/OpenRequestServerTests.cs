@@ -14,9 +14,8 @@ public sealed class OpenRequestServerTests
     public async Task CommandsAreAcknowledgedWithoutWaitingForUiWork(string command, byte expectedResponse)
     {
         var dispatcher = Dispatcher.CurrentDispatcher;
-        var openQueued = false;
-        var exitQueued = false;
-        var server = new OpenRequestServer(() => openQueued = true, () => exitQueued = true, dispatcher);
+        HostRequest? queuedRequest = null;
+        var server = new OpenRequestServer(request => queuedRequest = request, dispatcher);
         server.Start();
 
         try
@@ -30,8 +29,7 @@ public sealed class OpenRequestServerTests
             var response = new byte[1];
             Assert.Equal(1, await client.ReadAsync(response, timeout.Token));
             Assert.Equal(expectedResponse, response[0]);
-            Assert.False(openQueued);
-            Assert.False(exitQueued);
+            Assert.Null(queuedRequest);
         }
         finally
         {

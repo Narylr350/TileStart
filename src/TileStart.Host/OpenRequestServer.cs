@@ -7,18 +7,14 @@ namespace TileStart.Host;
 public sealed class OpenRequestServer
 {
     private const string PipeName = "TileStart.Host";
-    private static readonly byte[] OpenCommand = "OPEN"u8.ToArray();
-    private static readonly byte[] ExitCommand = "EXIT"u8.ToArray();
-    private readonly Action _openWindow;
-    private readonly Action _exit;
+    private readonly Action<HostRequest> _handleRequest;
     private readonly Dispatcher _dispatcher;
     private readonly CancellationTokenSource _cancellation = new();
     private Task? _listenTask;
 
-    public OpenRequestServer(Action openWindow, Action exit, Dispatcher dispatcher)
+    public OpenRequestServer(Action<HostRequest> handleRequest, Dispatcher dispatcher)
     {
-        _openWindow = openWindow;
-        _exit = exit;
+        _handleRequest = handleRequest;
         _dispatcher = dispatcher;
     }
 
@@ -56,29 +52,24 @@ public sealed class OpenRequestServer
             try
             {
                 await pipe.WaitForConnectionAsync(cancellationToken);
-                var command = new byte[OpenCommand.Length];
-                var received = 0;
-                while (received < command.Length)
+                await using var message = new MemoryStream();
+                var buffer = new byte[4096];
+                do
                 {
-                    var count = await pipe.ReadAsync(command.AsMemory(received), cancellationToken);
+                    var count = await pipe.ReadAsync(buffer, cancellationToken);
                     if (count == 0)
                     {
                         break;
                     }
 
-                    received += count;
+                    await message.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
                 }
+                while (!pipe.IsMessageComplete);
 
-                var openRequested = received == OpenCommand.Length && command.SequenceEqual(OpenCommand);
-                var exitRequested = received == ExitCommand.Length && command.SequenceEqual(ExitCommand);
-                var accepted = openRequested || exitRequested;
-                if (openRequested)
+                var accepted = HostRequest.TryDecode(message.ToArray(), out var request);
+                if (accepted)
                 {
-                    _ = _dispatcher.BeginInvoke(_openWindow);
-                }
-                else if (exitRequested)
-                {
-                    _ = _dispatcher.BeginInvoke(_exit);
+                    _ = _dispatcher.BeginInvoke(() => _handleRequest(request));
                 }
 
                 await pipe.WriteAsync(new[] { accepted ? (byte)1 : (byte)0 }, cancellationToken);

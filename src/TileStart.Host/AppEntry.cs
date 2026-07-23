@@ -32,6 +32,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     }
     public string PackageInstallPath { get; init; } = string.Empty;
     public string AppUserModelId { get; init; } = string.Empty;
+    public bool IsCustom { get; init; }
     public ObservableCollection<AppEntry> Children { get; init; } = [];
 
     public bool IsFolder => Children.Count > 0;
@@ -73,7 +74,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public static AppEntry Application(string name, string launchTarget, DateTime addedAt, ImageSource? icon = null,
-                                       string packageInstallPath = "", string appUserModelId = "")
+                                       string packageInstallPath = "", string appUserModelId = "", bool isCustom = false)
     {
         var (initial, sortLetter) = GetIndex(name);
         return new AppEntry
@@ -86,6 +87,7 @@ public sealed class AppEntry : INotifyPropertyChanged
             Icon = icon,
             PackageInstallPath = packageInstallPath,
             AppUserModelId = appUserModelId,
+            IsCustom = isCustom,
         };
     }
 

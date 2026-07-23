@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     private const uint GwOwner = 4;
     private static readonly nint HwndTopmost = new(-1);
     private readonly RangeObservableCollection<AppEntry> _apps = [];
+    private readonly Queue<HostRequest> _pendingHostRequests = [];
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _allowClose;
@@ -135,6 +136,7 @@ public partial class MainWindow : Window
     private int _tileFolderAnimationGeneration;
     private bool _isAppFolderAnimating;
     private bool _isTileFolderAnimating;
+    private bool _applicationContentReady;
 #if DEBUG
     private string? _tileDropTraceCandidateKey;
     private System.Windows.Point _tileDropTraceCandidatePosition;
@@ -197,6 +199,11 @@ public partial class MainWindow : Window
         {
             DismissWindow();
             return;
+        }
+
+        if (_applicationContentReady && RemoveMissingApplications(_apps))
+        {
+            RefreshApplicationCollection();
         }
 
         CancelEntranceSnapshot();
@@ -291,7 +298,18 @@ public partial class MainWindow : Window
     {
         try
         {
-            var apps = await StartAppScanner.ScanAsync();
+            var scannedApps = FilterHiddenApplications(
+                await StartAppScanner.ScanAsync(),
+                AppVisibilityStore.Load());
+            var customApps = CustomAppStore.Load();
+            var scannedLaunchableApps = AppEntry.FlattenApplications(scannedApps).ToArray();
+            var apps = customApps.Count == 0
+                ? scannedApps.ToArray()
+                : scannedApps
+                    .Concat(customApps.Where(custom => !scannedLaunchableApps.Any(existing =>
+                        LaunchTargetIdentity.GetKey(existing.LaunchTarget)
+                        == LaunchTargetIdentity.GetKey(custom.LaunchTarget))))
+                    .ToArray();
             _apps.AddRange(apps);
 
             var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
@@ -326,11 +344,213 @@ public partial class MainWindow : Window
             DiagnosticLog.Write("Application content ready.");
             QueueContextMenuPrewarm();
             _ = LoadApplicationIconsAsync(launchableApps);
+            _applicationContentReady = true;
+            while (_pendingHostRequests.Count > 0)
+            {
+                HandleHostRequest(_pendingHostRequests.Dequeue());
+            }
         }
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Application list load failed: {exception}");
         }
+    }
+
+    public void HandleHostRequest(HostRequest request)
+    {
+        if (!_applicationContentReady)
+        {
+            _pendingHostRequests.Enqueue(request);
+            return;
+        }
+
+        switch (request.Kind)
+        {
+            case HostRequestKind.AddToAppList:
+                AddExternalApplication(request.Path);
+                break;
+            case HostRequestKind.PinTile:
+                PinExternalTile(request.Path);
+                break;
+        }
+    }
+
+    private void AddExternalApplication(string path)
+    {
+        var identity = LaunchTargetIdentity.GetKey(path);
+        AppVisibilityStore.Show(identity);
+        var app = CustomAppStore.Add(path);
+        if (app is null)
+        {
+            return;
+        }
+
+        if (_launchableApps.Any(existing => LaunchTargetIdentity.GetKey(existing.LaunchTarget) == identity))
+        {
+            ShowIfHidden();
+            return;
+        }
+
+        _apps.Add(app);
+        RefreshApplicationCollection();
+        _ = LoadApplicationIconsAsync([app]);
+        ShowIfHidden();
+    }
+
+    private void PinExternalTile(string path)
+    {
+        var tile = DroppedTileFactory.Create(path);
+        if (tile is null || tile.TargetType != TileTargetType.Application)
+        {
+            return;
+        }
+
+        var identity = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
+        if (!CustomAppStore.Contains(path))
+        {
+            AppVisibilityStore.Hide(identity);
+            RemoveApplicationFromList(identity);
+        }
+
+        if (TileLayout.Groups.SelectMany(group => group.Tiles)
+            .Any(existing => LaunchTargetIdentity.GetKey(existing.LaunchTarget) == identity))
+        {
+            ShowIfHidden();
+            return;
+        }
+
+        if (PinTileToStart(tile))
+        {
+            ShowIfHidden();
+        }
+    }
+
+    private void ShowIfHidden()
+    {
+        if (!IsVisible)
+        {
+            ShowFromShell();
+        }
+    }
+
+    private static IReadOnlyList<AppEntry> FilterHiddenApplications(
+        IEnumerable<AppEntry> entries,
+        IReadOnlySet<string> hiddenIdentities)
+    {
+        var visible = new List<AppEntry>();
+        foreach (var entry in entries)
+        {
+            if (entry.IsFolder)
+            {
+                var visibleChildren = FilterHiddenApplications(entry.Children, hiddenIdentities);
+                entry.Children.Clear();
+                foreach (var child in visibleChildren)
+                {
+                    entry.Children.Add(child);
+                }
+
+                if (entry.Children.Count > 0)
+                {
+                    visible.Add(entry);
+                }
+            }
+            else if (!hiddenIdentities.Contains(LaunchTargetIdentity.GetKey(entry.LaunchTarget)))
+            {
+                visible.Add(entry);
+            }
+        }
+
+        return visible;
+    }
+
+    private void RemoveApplicationFromList(string identity)
+    {
+        if (RemoveApplicationsByIdentity(_apps, identity))
+        {
+            RefreshApplicationCollection();
+        }
+    }
+
+    private static bool RemoveApplicationsByIdentity(IList<AppEntry> entries, string identity)
+    {
+        var removed = false;
+        for (var index = entries.Count - 1; index >= 0; index--)
+        {
+            var entry = entries[index];
+            if (entry.IsFolder)
+            {
+                removed |= RemoveApplicationsByIdentity(entry.Children, identity);
+                if (entry.Children.Count == 0)
+                {
+                    entries.RemoveAt(index);
+                }
+            }
+            else if (LaunchTargetIdentity.GetKey(entry.LaunchTarget) == identity)
+            {
+                entries.RemoveAt(index);
+                removed = true;
+            }
+        }
+
+        return removed;
+    }
+
+    private static bool RemoveMissingApplications(IList<AppEntry> entries)
+    {
+        var removed = false;
+        for (var index = entries.Count - 1; index >= 0; index--)
+        {
+            var entry = entries[index];
+            if (entry.IsFolder)
+            {
+                removed |= RemoveMissingApplications(entry.Children);
+                if (entry.Children.Count == 0)
+                {
+                    entries.RemoveAt(index);
+                    removed = true;
+                }
+            }
+            else if (IsMissingFileApplication(entry))
+            {
+                entries.RemoveAt(index);
+                removed = true;
+            }
+        }
+
+        return removed;
+    }
+
+    private static bool IsMissingFileApplication(AppEntry app)
+    {
+        if (app.LaunchTarget.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        try
+        {
+            return Path.IsPathFullyQualified(app.LaunchTarget) && !File.Exists(app.LaunchTarget);
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return true;
+        }
+    }
+
+    private void RefreshApplicationCollection()
+    {
+        _launchableApps = [.. AppEntry.FlattenApplications(_apps)];
+        _recentAppCandidates = _launchableApps
+            .Where(app => app.AddedAt > DateTime.MinValue)
+            .OrderByDescending(app => app.AddedAt)
+            .Take(ExpandedRecentAppCount)
+            .ToArray();
+        RefreshRecentApps();
+        RecentExpandButton.Visibility = _recentAppCandidates.Length > CollapsedRecentAppCount
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        AppsView.Refresh();
+        AlphabetIndex.UpdateAvailability(AlphabetLetters, _apps, RecentApps.Count > 0);
     }
 
     private void QueueContextMenuPrewarm()
@@ -444,11 +664,7 @@ public partial class MainWindow : Window
         {
             try
             {
-                var icon = ShellIconLoader.Load(app.LaunchTarget);
-                if (icon is null)
-                {
-                    continue;
-                }
+                var icon = ShellIconLoader.Load(app.LaunchTarget) ?? GenericAppIcon.Image;
 
                 if (Dispatcher.HasShutdownStarted)
                 {
@@ -1462,6 +1678,13 @@ public partial class MainWindow : Window
     {
         if (sender is MenuItem { DataContext: AppEntry app })
         {
+            if (IsMissingFileApplication(app))
+            {
+                RemoveApplicationFromList(LaunchTargetIdentity.GetKey(app.LaunchTarget));
+                DiagnosticLog.Write($"Removed missing application entry: {app.LaunchTarget}");
+                return;
+            }
+
             AppLauncher.OpenFileLocation(app);
         }
     }
@@ -1479,6 +1702,11 @@ public partial class MainWindow : Window
         }
 
         var tile = CreateAppTile(app);
+        PinTileToStart(tile);
+    }
+
+    private bool PinTileToStart(TileItem tile)
+    {
         var placement = Win10GroupLayout.FindPinPlacement(TileLayout.Groups, tile)
                         ?? new Win10PinPlacement(
                             TileGroupManager.Add(TileLayout, CurrentGroupColumnCount()),
@@ -1487,7 +1715,10 @@ public partial class MainWindow : Window
         if (Win10GroupLayout.AddToFreeCell(placement.Group, tile, placement.Column, placement.Row))
         {
             TileLayoutStore.Save(TileLayout);
+            return true;
         }
+
+        return false;
     }
 
     private static bool MatchesApp(AppEntry app, string query) =>
@@ -1876,9 +2107,13 @@ public partial class MainWindow : Window
                 item.group.GroupRow,
                 new System.Windows.Rect(
                     GetGroupLayoutPosition(item.container!),
-                    new System.Windows.Size(item.container!.ActualWidth, item.container.ActualHeight))))
+                    new System.Windows.Size(item.container!.ActualWidth, item.container.ActualHeight)),
+                ColumnSpan: item.group.WidthUnits))
             .ToArray();
-        _groupDragTargets = TileGroupDropResolver.IncludeEmptyColumns(existingTargets, groupColumns);
+        _groupDragTargets = TileGroupDropResolver.IncludeEmptyColumns(
+            existingTargets,
+            groupColumns,
+            _groupDragGroup.WidthUnits);
         _groupDragTransaction = new TileGroupDragTransaction(TileLayout, _groupDragGroup, groupColumns);
         _isInternalGroupDrag = true;
         _groupDragHeader.SetDragging(true);
@@ -2076,6 +2311,78 @@ public partial class MainWindow : Window
         }
     }
 
+    private void GroupSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var group = GetContextGroup(sender);
+        if (group is null)
+        {
+            return;
+        }
+
+        GroupSettingsWindow dialog;
+        try
+        {
+            dialog = new GroupSettingsWindow(group, _launchableApps);
+            if (ShowGroupSettingsDialog(dialog) != true)
+            {
+                return;
+            }
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Unable to open group settings: {exception}");
+            System.Windows.MessageBox.Show(
+                this,
+                "无法打开组设置，错误已写入 TileStart 日志。",
+                "TileStart",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
+        }
+
+        var previousName = group.Name;
+        var previousWidthUnits = group.WidthUnits;
+        var previousHeightUnits = group.HeightUnits;
+        var previousTiles = group.Tiles.ToArray();
+        var selectedTiles = dialog.SelectedOptions
+            .Select(option => option.ExistingTile ?? CreateAppTile(option.App!))
+            .ToArray();
+
+        group.Name = dialog.GroupName;
+        group.WidthUnits = dialog.WidthUnits;
+        group.HeightUnits = dialog.HeightUnits;
+        group.Tiles.Clear();
+        foreach (var tile in selectedTiles)
+        {
+            group.Tiles.Add(tile);
+        }
+
+        if (!Win10GroupLayout.Normalize(group))
+        {
+            group.Name = previousName;
+            group.WidthUnits = previousWidthUnits;
+            group.HeightUnits = previousHeightUnits;
+            group.Tiles.Clear();
+            foreach (var tile in previousTiles)
+            {
+                group.Tiles.Add(tile);
+            }
+
+            Win10GroupLayout.Normalize(group);
+            System.Windows.MessageBox.Show(
+                this,
+                "组内容无法应用到所选尺寸，原布局已恢复。",
+                "TileStart",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        EnsureGroupGridCoordinates();
+        RefreshGroupPanelLayout();
+        TileLayoutStore.Save(TileLayout);
+    }
+
     private static TileGroup? GetContextGroup(object sender)
     {
         return sender is MenuItem menuItem
@@ -2110,6 +2417,21 @@ public partial class MainWindow : Window
     }
 
     private bool? ShowTileSettingsDialog(TileSettingsWindow dialog)
+    {
+        var wasTopmost = Topmost;
+        Topmost = false;
+        dialog.Owner = this;
+        try
+        {
+            return dialog.ShowDialog();
+        }
+        finally
+        {
+            Topmost = wasTopmost;
+        }
+    }
+
+    private bool? ShowGroupSettingsDialog(GroupSettingsWindow dialog)
     {
         var wasTopmost = Topmost;
         Topmost = false;
@@ -2853,10 +3175,11 @@ public partial class MainWindow : Window
 
         var widthColumns = Win10GroupWrapPanel.ColumnsForWidth(availableWidth);
         var visualColumns = TileLayout.Groups
-            .Select(GetGroupContainer)
-            .Where(container => container is not null)
-            .Select(container => (int)Math.Round(
-                GetGroupLayoutPosition(container!).X / Win10TileMetrics.GroupPitch) + 1)
+            .Select(group => new { Group = group, Container = GetGroupContainer(group) })
+            .Where(item => item.Container is not null)
+            .Select(item => (int)Math.Round(
+                GetGroupLayoutPosition(item.Container!).X / TileWorkspaceMetrics.ColumnPitch)
+                            + item.Group.WidthUnits)
             .DefaultIfEmpty(0)
             .Max();
         return Math.Max(1, Math.Max(widthColumns, visualColumns));
@@ -2910,7 +3233,7 @@ public partial class MainWindow : Window
         TileItem tile,
         bool force)
     {
-        var (column, row) = TileDropResolver.GetCell(position, _dragAnchor, tile);
+        var (column, row) = TileDropResolver.GetCell(position, _dragAnchor, tile, target.ContentColumns);
         var key = $"folder:{target.Id}:{folder.Id}:{column}:{row}";
         if (!force)
         {
@@ -2946,7 +3269,7 @@ public partial class MainWindow : Window
         var logicalPosition = new System.Windows.Point(
             position.X,
             TileFolderLayout.ToLogicalY(target, position.Y));
-        var (column, row) = TileDropResolver.GetCell(logicalPosition, _dragAnchor, tile);
+        var (column, row) = TileDropResolver.GetCell(logicalPosition, _dragAnchor, tile, target.ContentColumns);
         var folderTarget = TileDropResolver.FindFolderTarget(
             target,
             tile,
@@ -3259,7 +3582,7 @@ public partial class MainWindow : Window
     private bool AddAppTile(TileGroup target, AppEntry app, System.Windows.Point position)
     {
         var tile = CreateAppTile(app);
-        var (column, row) = TileDropResolver.GetCell(position, _appDragAnchor, tile);
+        var (column, row) = TileDropResolver.GetCell(position, _appDragAnchor, tile, target.ContentColumns);
         if (!Win10GroupLayout.Add(target, tile, column, row))
         {
             return false;
@@ -3294,12 +3617,22 @@ public partial class MainWindow : Window
                 continue;
             }
 
-            (int Column, int Row) location = added
-                ? Win10GroupLayout.FindFirstAvailable(target, tile)
-                : (
+            (int Column, int Row) location;
+            if (added)
+            {
+                if (!Win10GroupLayout.TryFindFirstAvailable(target, tile, out location))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                location = (
                     Math.Clamp((int)Math.Round(position.X / Win10TileMetrics.CellPitch), 0,
-                        Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan()),
+                        target.ContentColumns - tile.Size.ColumnSpan()),
                     Math.Max(0, (int)Math.Round(position.Y / Win10TileMetrics.CellPitch)));
+            }
+
             added |= Win10GroupLayout.Add(target, tile, location.Column, location.Row);
         }
 
@@ -3334,7 +3667,7 @@ public partial class MainWindow : Window
         tile.UsesFullTileLogo = false;
         if (!string.IsNullOrWhiteSpace(tile.IconPath))
         {
-            tile.Icon = ShellIconLoader.Load(tile.IconPath);
+            tile.Icon = ShellIconLoader.Load(tile.IconPath) ?? GenericAppIcon.Image;
             return;
         }
 
@@ -3352,11 +3685,11 @@ public partial class MainWindow : Window
                 return;
             }
 
-            tile.Icon = app.Icon;
+            tile.Icon = app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image;
             return;
         }
 
-        tile.Icon = ShellIconLoader.Load(tile.LaunchTarget);
+        tile.Icon = ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image;
     }
 
     private Dictionary<TileItem, System.Windows.Point> CaptureReorderPositions()

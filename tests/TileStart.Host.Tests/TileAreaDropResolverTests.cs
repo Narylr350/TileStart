@@ -84,7 +84,7 @@ public sealed class TileAreaDropResolverTests
             212,
             100,
             columnSpan: 2,
-            groupColumns: 3);
+            groupColumns: 12);
 
         Assert.Equal(new TileNewGroupDropTarget(0, 1, 6, 0), target);
     }
@@ -94,17 +94,25 @@ public sealed class TileAreaDropResolverTests
     {
         var upperLeft = new TileGroupDropZone("upper-left", 0, 0, 412, 204, 204, 0, 0);
         var lowerLeft = new TileGroupDropZone("lower-left", 0, 300, 412, 204, 204, 0, 1);
-        var upperMiddle = new TileGroupDropZone("upper-middle", 428, 0, 412, 404, 404, 1, 0);
+        var upperMiddle = new TileGroupDropZone(
+            "upper-middle",
+            TileWorkspaceMetrics.Left(4),
+            0,
+            412,
+            404,
+            404,
+            4,
+            0);
 
         var target = TileAreaDropResolver.FindNewGroupTargetForDraggedTile(
             [upperLeft, lowerLeft, upperMiddle],
-            Win10TileMetrics.GroupPitch + Win10TileMetrics.Left(2),
+            TileWorkspaceMetrics.Left(4) + Win10TileMetrics.Left(2),
             430,
             100,
             columnSpan: 2,
-            groupColumns: 3);
+            groupColumns: 12);
 
-        Assert.Equal(new TileNewGroupDropTarget(1, 1, 2, 0), target);
+        Assert.Equal(new TileNewGroupDropTarget(4, 1, 2, 0), target);
     }
 
     [Fact]

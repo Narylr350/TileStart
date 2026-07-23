@@ -121,11 +121,11 @@ public sealed class TileDragTransactionTests
         };
         var layout = new TileLayout { Groups = [source, following] };
 
-        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 12);
         var created = transaction.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 6, 0));
 
-        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(created));
-        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(following));
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(created));
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(following));
         Assert.Equal((6, 0), (moving.Column, moving.Row));
     }
 
@@ -141,7 +141,7 @@ public sealed class TileDragTransactionTests
         };
         var second = new TileGroup
         {
-            GroupColumn = 1,
+            GroupColumn = 4,
             GroupRow = 0,
             Tiles = [Tile("second", TileSize.Medium, 0, 0)],
         };
@@ -150,33 +150,33 @@ public sealed class TileDragTransactionTests
             new TileGroupDropZone(source.Id, 0, 0, 412, 204, GroupColumn: 0, GroupRow: 0),
             new TileGroupDropZone(
                 second.Id,
-                Win10TileMetrics.GroupPitch,
+                TileWorkspaceMetrics.Left(4),
                 0,
                 412,
                 204,
-                GroupColumn: 1,
+                GroupColumn: 4,
                 GroupRow: 0),
         };
         var geometry = new TileDragHitGeometry(zones);
         var layout = new TileLayout { Groups = [source, second] };
         var target = geometry.FindNewGroupTarget(
-            draggedLeft: Win10TileMetrics.GroupPitch * 2,
+            draggedLeft: TileWorkspaceMetrics.Left(8),
             draggedTop: 0,
             draggedHeight: Win10TileMetrics.Height(TileSize.Medium),
             columnSpan: TileSize.Medium.ColumnSpan(),
-            groupColumns: 3);
+            groupColumns: 12);
 
-        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 12);
         var created = transaction.PreviewNewGroup(target);
         var slots = Win10GroupWrapPanel.CalculateSlots(
             layout.Groups
                 .Select((group, index) => new Win10GroupPanelItem(index, group.GroupColumn, group.GroupRow, 232))
                 .ToArray(),
-            columns: 3);
+            columns: 12);
 
-        Assert.Equal(new TileNewGroupDropTarget(2, 0, 0, 0), target);
-        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(created));
-        Assert.Equal(2, slots.Single(slot => slot.Index == layout.Groups.IndexOf(created)).Column);
+        Assert.Equal(new TileNewGroupDropTarget(8, 0, 0, 0), target);
+        Assert.Equal(new TileGroupCell(8, 0), Win10GroupGridLayout.GetCell(created));
+        Assert.Equal(8, slots.Single(slot => slot.Index == layout.Groups.IndexOf(created)).Column);
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public sealed class TileDragTransactionTests
         var source = new TileGroup { Tiles = [moving] };
         var layout = new TileLayout { Groups = [source] };
 
-        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 12);
         var created = transaction.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 2, 0));
 
         Assert.True(transaction.Preview(created, 6, 0));
@@ -320,13 +320,13 @@ public sealed class TileDragTransactionTests
         };
         var target = new TileGroup
         {
-            GroupColumn = 1,
+            GroupColumn = 4,
             GroupRow = 0,
             Tiles = [Tile("target", TileSize.Medium, 0, 0)],
         };
         var unrelated = new TileGroup
         {
-            GroupColumn = 2,
+            GroupColumn = 8,
             GroupRow = 0,
             Tiles = [Tile("unrelated", TileSize.Medium, 0, 0)],
         };
@@ -334,7 +334,7 @@ public sealed class TileDragTransactionTests
         var unrelatedChanges = 0;
         unrelated.Tiles.CollectionChanged += (_, _) => unrelatedChanges++;
 
-        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 3);
+        using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 12);
         Assert.True(transaction.Preview(target, 2, 0));
         Assert.True(transaction.Preview(source, 4, 0));
 

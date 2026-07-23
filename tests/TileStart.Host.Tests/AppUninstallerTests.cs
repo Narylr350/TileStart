@@ -37,4 +37,20 @@ public sealed class AppUninstallerTests
     {
         Assert.False(TaskbarPinner.IsClassicShortcut(@"C:\missing\Tool.lnk"));
     }
+
+    [Fact]
+    public void AppsFolderTargetContainingExecutablePathIsNormalizedToClassicApplication()
+    {
+        var executable = Environment.ProcessPath!;
+
+        Assert.Equal(executable, TaskbarPinner.NormalizeDisplayName($"shell:AppsFolder\\{executable}"));
+    }
+
+    [Fact]
+    public void PackagedApplicationIdentityRemainsAnAppsFolderTarget()
+    {
+        const string target = "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App";
+
+        Assert.Equal(target, TaskbarPinner.NormalizeDisplayName(target));
+    }
 }

@@ -219,7 +219,7 @@ public sealed class TileDragTransaction : IDisposable
             || !target.Tiles.Contains(folderTarget)
             || column < 0
             || row < 0
-            || column + _tile.Size.ColumnSpan() > Win10TileMetrics.GroupColumns)
+            || column + _tile.Size.ColumnSpan() > target.ContentColumns)
         {
             return false;
         }
@@ -386,7 +386,8 @@ public sealed class TileDragTransaction : IDisposable
         params TileItem[] ignored) =>
         column >= 0
         && row >= 0
-        && column + tile.Size.ColumnSpan() <= Win10TileMetrics.GroupColumns
+        && column + tile.Size.ColumnSpan() <= group.ContentColumns
+        && (group.ContentRowLimit is null || row + tile.Size.RowSpan() <= group.ContentRowLimit)
         && group.Tiles.All(other => ignored.Contains(other)
                                     || !Overlaps(tile, column, row, other, other.Column, other.Row));
 

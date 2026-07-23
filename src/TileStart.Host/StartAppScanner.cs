@@ -42,6 +42,12 @@ public static class StartAppScanner
             {
                 foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
                 {
+                    if (path.StartsWith(TaskbarPinner.ShortcutRoot + Path.DirectorySeparatorChar,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
                     if (!ShortcutExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
                     {
                         continue;

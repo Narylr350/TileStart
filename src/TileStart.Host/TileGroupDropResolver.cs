@@ -3,7 +3,12 @@ using Rect = System.Windows.Rect;
 
 namespace TileStart.Host;
 
-public readonly record struct TileGroupDropTarget(int Column, int Row, Rect Bounds, bool IsEmptyColumn = false);
+public readonly record struct TileGroupDropTarget(
+    int Column,
+    int Row,
+    Rect Bounds,
+    bool IsEmptyColumn = false,
+    int ColumnSpan = 1);
 
 public static class TileGroupDropResolver
 {
@@ -43,16 +48,20 @@ public static class TileGroupDropResolver
 
     public static TileGroupDropTarget[] IncludeEmptyColumns(
         IEnumerable<TileGroupDropTarget> source,
-        int columns)
+        int columns,
+        int columnSpan = TileWorkspaceMetrics.LegacyGroupWidthUnits)
     {
         columns = Math.Max(1, columns);
+        columnSpan = Math.Clamp(columnSpan, 1, columns);
         var targets = source.ToList();
         var originLeft = targets.Count == 0
             ? 0
-            : targets.Min(target => target.Bounds.Left - target.Column * Win10TileMetrics.GroupPitch);
-        for (var column = 0; column < columns; column++)
+            : targets.Min(target => target.Bounds.Left - target.Column * TileWorkspaceMetrics.ColumnPitch);
+        for (var column = 0; column <= columns - columnSpan; column++)
         {
-            if (targets.Any(target => target.Column == column))
+            if (targets.Any(target => target.Row == 0
+                                      && column < target.Column + target.ColumnSpan
+                                      && column + columnSpan > target.Column))
             {
                 continue;
             }
@@ -61,11 +70,12 @@ public static class TileGroupDropResolver
                 column,
                 0,
                 new Rect(
-                    originLeft + column * Win10TileMetrics.GroupPitch,
+                    originLeft + column * TileWorkspaceMetrics.ColumnPitch,
                     0,
-                    Win10VisualMetrics.TileGroupVisualWidth,
+                    TileWorkspaceMetrics.GroupVisualWidth(columnSpan),
                     0),
-                IsEmptyColumn: true));
+                IsEmptyColumn: true,
+                ColumnSpan: columnSpan));
         }
 
         return [.. targets];

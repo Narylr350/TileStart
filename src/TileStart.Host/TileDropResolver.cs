@@ -7,15 +7,18 @@ public static class TileDropResolver
     public const double FolderActivationDrift = 12;
     private const double FolderActivationInsetRatio = 0.2;
 
-    public static (int Column, int Row) GetCell(System.Windows.Point pointer, System.Windows.Point anchor,
-        TileItem tile)
+    public static (int Column, int Row) GetCell(
+        System.Windows.Point pointer,
+        System.Windows.Point anchor,
+        TileItem tile,
+        int columns = Win10TileMetrics.GroupColumns)
     {
         var left = pointer.X - anchor.X;
         var top = pointer.Y - anchor.Y;
         return (
             Math.Clamp((int)Math.Round(left / Win10TileMetrics.CellPitch),
                 0,
-                Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan()),
+                Math.Max(0, columns - tile.Size.ColumnSpan())),
             Math.Max(0, (int)Math.Round(top / Win10TileMetrics.CellPitch)));
     }
 

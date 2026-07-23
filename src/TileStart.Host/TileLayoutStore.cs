@@ -6,6 +6,7 @@ namespace TileStart.Host;
 
 public static class TileLayoutStore
 {
+    internal const int CurrentVersion = 2;
     private static readonly string DirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
     private static readonly string FilePath = Path.Combine(DirectoryPath, "layout.json");
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -50,6 +51,7 @@ public static class TileLayoutStore
 
     internal static string Serialize(TileLayout layout)
     {
+        layout.Version = CurrentVersion;
         return JsonSerializer.Serialize(layout, JsonOptions);
     }
 
@@ -59,6 +61,21 @@ public static class TileLayoutStore
         if (layout is null)
         {
             return null;
+        }
+
+        if (layout.Version < CurrentVersion)
+        {
+            // Version 1 stored GroupColumn in whole-group units. The first custom-grid
+            // prototype could also persist partially converted values without a version.
+            // Resetting outer cells lets the runtime repack the saved group order using
+            // the actual DIP-derived workspace width without touching tile contents.
+            foreach (var group in layout.Groups)
+            {
+                group.GroupColumn = -1;
+                group.GroupRow = -1;
+            }
+
+            layout.Version = CurrentVersion;
         }
 
         foreach (var group in layout.Groups)

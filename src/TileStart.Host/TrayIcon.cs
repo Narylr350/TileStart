@@ -7,6 +7,7 @@ public sealed class TrayIcon : IDisposable
 {
     private readonly Forms.NotifyIcon _notifyIcon;
     private readonly Forms.ToolStripMenuItem _pauseItem;
+    private readonly Drawing.Icon? _applicationIcon;
 
     public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Action exit)
     {
@@ -39,10 +40,11 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("退出", null, (_, _) => exit());
 
+        _applicationIcon = LoadApplicationIcon();
         _notifyIcon = new Forms.NotifyIcon
         {
             Text = "TileStart",
-            Icon = Drawing.SystemIcons.Application,
+            Icon = _applicationIcon ?? Drawing.SystemIcons.Application,
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -54,5 +56,24 @@ public sealed class TrayIcon : IDisposable
         _notifyIcon.Visible = false;
         _notifyIcon.ContextMenuStrip?.Dispose();
         _notifyIcon.Dispose();
+        _applicationIcon?.Dispose();
+    }
+
+    private static Drawing.Icon? LoadApplicationIcon()
+    {
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return Drawing.Icon.ExtractAssociatedIcon(executablePath);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 }

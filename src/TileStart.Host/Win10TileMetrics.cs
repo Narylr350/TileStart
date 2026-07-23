@@ -14,6 +14,10 @@ public static class Win10TileMetrics
 
     public static double Height(TileSize size) => size.RowSpan() * CellPitch - Gap;
 
+    public static double WidthForColumns(int columns) => Math.Max(1, columns) * CellPitch - Gap;
+
+    public static double HeightForRows(int rows) => Math.Max(1, rows) * CellPitch - Gap;
+
     public static double MaxIconSize(TileSize size) => Math.Min(Width(size), Height(size));
 
     public static double ScaleIconSize(double iconSize, TileSize previousSize, TileSize nextSize)

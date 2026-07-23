@@ -67,14 +67,15 @@ public static class TileAreaDropResolver
 
         var centerX = draggedLeft + (columnSpan * Win10TileMetrics.CellPitch - Win10TileMetrics.Gap) / 2;
         var centerY = draggedTop + draggedHeight / 2;
-        var originLeft = candidates.Min(zone => zone.Left - zone.GroupColumn * Win10TileMetrics.GroupPitch);
-        var groupColumn = Math.Clamp(
-            (int)Math.Round(
-                (centerX - originLeft - Win10TileMetrics.GroupWidth / 2)
-                / Win10TileMetrics.GroupPitch),
-            0,
-            groupColumns - 1);
-        var groupLeft = originLeft + groupColumn * Win10TileMetrics.GroupPitch;
+        var originLeft = candidates.Min(zone => zone.Left - zone.GroupColumn * TileWorkspaceMetrics.ColumnPitch);
+        var newGroupWidthUnits = Math.Min(TileWorkspaceMetrics.LegacyGroupWidthUnits, groupColumns);
+        var groupColumn = ResolveGroupColumn(
+            candidates,
+            centerX,
+            originLeft,
+            groupColumns,
+            newGroupWidthUnits);
+        var groupLeft = originLeft + groupColumn * TileWorkspaceMetrics.ColumnPitch;
         var column = candidates
             .Where(zone => zone.GroupColumn == groupColumn)
             .OrderBy(zone => zone.GroupRow)
@@ -198,5 +199,58 @@ public static class TileAreaDropResolver
             (int)Math.Round((draggedLeft - groupLeft) / Win10TileMetrics.CellPitch),
             0,
             Win10TileMetrics.GroupColumns - columnSpan);
+
+    private static int ResolveGroupColumn(
+        IReadOnlyList<TileGroupDropZone> candidates,
+        double centerX,
+        double originLeft,
+        int groupColumns,
+        int newGroupWidthUnits)
+    {
+        var direct = candidates
+            .Where(zone => centerX >= zone.Left && centerX < zone.Left + zone.Width)
+            .OrderBy(zone => Math.Abs(centerX - (zone.Left + zone.Width / 2)))
+            .FirstOrDefault();
+        if (!string.IsNullOrEmpty(direct.GroupId))
+        {
+            return Math.Clamp(direct.GroupColumn, 0, groupColumns - newGroupWidthUnits);
+        }
+
+        var leftmost = candidates.MinBy(zone => zone.Left);
+        var rightmost = candidates.MaxBy(zone => zone.Left + zone.Width);
+        if (centerX < leftmost.Left)
+        {
+            return Math.Clamp(leftmost.GroupColumn, 0, groupColumns - newGroupWidthUnits);
+        }
+
+        if (centerX >= rightmost.Left + rightmost.Width)
+        {
+            var appendColumn = rightmost.GroupColumn + EstimateWorkspaceSpan(rightmost);
+            return Math.Clamp(appendColumn, 0, groupColumns - newGroupWidthUnits);
+        }
+
+        var nearest = candidates
+            .OrderBy(zone => HorizontalDistance(zone, centerX))
+            .ThenBy(zone => Math.Abs(centerX - (zone.Left + zone.Width / 2)))
+            .First();
+        var snapped = (int)Math.Round((centerX - originLeft) / TileWorkspaceMetrics.ColumnPitch);
+        return Math.Clamp(
+            Math.Abs(snapped - nearest.GroupColumn) <= newGroupWidthUnits
+                ? nearest.GroupColumn
+                : snapped,
+            0,
+            groupColumns - newGroupWidthUnits);
+    }
+
+    private static int EstimateWorkspaceSpan(TileGroupDropZone zone) =>
+        Math.Max(1, (int)Math.Round(
+            (zone.Width + TileWorkspaceMetrics.ColumnGap) / TileWorkspaceMetrics.ColumnPitch));
+
+    private static double HorizontalDistance(TileGroupDropZone zone, double x) =>
+        x < zone.Left
+            ? zone.Left - x
+            : x > zone.Left + zone.Width
+                ? x - zone.Left - zone.Width
+                : 0;
 
 }

@@ -8,11 +8,11 @@ namespace TileStart.Host;
 
 public sealed class TileGroup : INotifyPropertyChanged
 {
-    public const double PixelWidth = Win10TileMetrics.GroupWidth;
-
     private readonly HashSet<TileItem> _trackedTiles = [];
     private int _groupColumn = -1;
     private int _groupRow = -1;
+    private int _widthUnits = TileWorkspaceMetrics.LegacyGroupWidthUnits;
+    private int _heightUnits;
     private string _name = string.Empty;
     private ObservableCollection<TileItem> _tiles = [];
 
@@ -53,6 +53,47 @@ public sealed class TileGroup : INotifyPropertyChanged
         }
     }
 
+    public int WidthUnits
+    {
+        get => _widthUnits;
+        set
+        {
+            value = Math.Clamp(
+                value,
+                TileWorkspaceMetrics.MinimumGroupWidthUnits,
+                TileWorkspaceMetrics.MaximumGroupWidthUnits);
+            if (_widthUnits == value)
+            {
+                return;
+            }
+
+            _widthUnits = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ContentColumns));
+            OnPropertyChanged(nameof(PixelWidth));
+            OnPropertyChanged(nameof(VisualWidth));
+            OnPropertyChanged(nameof(TileCanvasHorizontalInset));
+        }
+    }
+
+    public int HeightUnits
+    {
+        get => _heightUnits;
+        set
+        {
+            value = Math.Clamp(value, 0, TileWorkspaceMetrics.MaximumGroupHeightUnits);
+            if (_heightUnits == value)
+            {
+                return;
+            }
+
+            _heightUnits = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ContentRowLimit));
+            RefreshLayout();
+        }
+    }
+
     public string Name
     {
         get => _name;
@@ -82,10 +123,28 @@ public sealed class TileGroup : INotifyPropertyChanged
     }
 
     [JsonIgnore]
+    public int ContentColumns => TileWorkspaceMetrics.TileColumns(WidthUnits);
+
+    [JsonIgnore]
+    public int? ContentRowLimit => HeightUnits == 0 ? null : TileWorkspaceMetrics.TileRows(HeightUnits);
+
+    [JsonIgnore]
+    public double PixelWidth => Win10TileMetrics.WidthForColumns(ContentColumns);
+
+    [JsonIgnore]
+    public double VisualWidth => TileWorkspaceMetrics.GroupVisualWidth(WidthUnits);
+
+    [JsonIgnore]
+    public double TileCanvasHorizontalInset => Math.Max(0, (VisualWidth - PixelWidth) / 2);
+
+    [JsonIgnore]
     public double PixelHeight
     {
         get
         {
+            var minimumHeight = ContentRowLimit is { } rows
+                ? Win10TileMetrics.HeightForRows(rows)
+                : 0;
             var tileBottom = Tiles.Count == 0
                 ? Win10TileMetrics.CellSize
                 : Tiles.Max(tile => tile.DisplayTop + tile.PixelHeight);
@@ -93,7 +152,7 @@ public sealed class TileGroup : INotifyPropertyChanged
                 .Select(tile => tile.FolderRegionTop + tile.FolderRegionHeight)
                 .DefaultIfEmpty(0)
                 .Max();
-            return Math.Max(tileBottom, regionBottom);
+            return Math.Max(minimumHeight, Math.Max(tileBottom, regionBottom));
         }
     }
 

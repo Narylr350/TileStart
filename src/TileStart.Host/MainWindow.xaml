@@ -890,10 +890,12 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type local:TileGroup}">
-                                <StackPanel Width="{x:Static local:Win10VisualMetrics.TileGroupVisualWidth}"
-                                            Margin="0,0,0,24">
+                                <StackPanel Width="{Binding VisualWidth}"
+                                             Margin="0,0,0,24">
                                     <StackPanel.ContextMenu>
                                         <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
+                                            <MenuItem Header="TileStart 组设置…" Click="GroupSettings_Click" />
+                                            <Separator />
                                             <MenuItem Header="删除组" Click="DeleteGroup_Click" />
                                         </ContextMenu>
                                     </StackPanel.ContextMenu>
@@ -906,6 +908,17 @@
                                         LostMouseCapture="GroupHeader_LostMouseCapture">
                                         <local:TileGroupHeader.ContextMenu>
                                             <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                                                <MenuItem Header="TileStart 组设置…"
+                                                          Style="{StaticResource StartMenuItemStyle}"
+                                                          Click="GroupSettings_Click">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Foreground="White"
+                                                                   FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="16"
+                                                                   Text="&#xE713;" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator />
                                                 <MenuItem Header="从“开始”屏幕取消固定组"
                                                           Style="{StaticResource StartMenuItemStyle}"
                                                           Click="DeleteGroup_Click">
@@ -919,10 +932,11 @@
                                             </ContextMenu>
                                         </local:TileGroupHeader.ContextMenu>
                                     </local:TileGroupHeader>
-                                    <Canvas Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                            Height="{Binding PixelHeight}"
-                                            Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
-                                        <ItemsControl Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                    <Canvas Width="{Binding PixelWidth}"
+                                             Height="{Binding PixelHeight}"
+                                             HorizontalAlignment="Center"
+                                             Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
+                                        <ItemsControl Width="{Binding PixelWidth}"
                                                       Height="{Binding PixelHeight}"
                                                       AllowDrop="True"
                                                       ItemsSource="{Binding Tiles}"

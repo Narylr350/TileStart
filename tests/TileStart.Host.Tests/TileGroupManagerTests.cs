@@ -19,13 +19,13 @@ public sealed class TileGroupManagerTests
     public void MoveSwapsAdjacentColumnsAndRejectsEdges()
     {
         var first = new TileGroup { Name = "一", GroupColumn = 0, GroupRow = 0 };
-        var second = new TileGroup { Name = "二", GroupColumn = 1, GroupRow = 0 };
-        var third = new TileGroup { Name = "三", GroupColumn = 2, GroupRow = 0 };
+        var second = new TileGroup { Name = "二", GroupColumn = 4, GroupRow = 0 };
+        var third = new TileGroup { Name = "三", GroupColumn = 8, GroupRow = 0 };
         var layout = new TileLayout { Groups = [first, second, third] };
 
         Assert.True(TileGroupManager.Move(layout, third, -1));
-        Assert.Equal(new TileGroupCell(1, 0), Win10GroupGridLayout.GetCell(third));
-        Assert.Equal(new TileGroupCell(2, 0), Win10GroupGridLayout.GetCell(second));
+        Assert.Equal(new TileGroupCell(4, 0), Win10GroupGridLayout.GetCell(third));
+        Assert.Equal(new TileGroupCell(8, 0), Win10GroupGridLayout.GetCell(second));
         Assert.False(TileGroupManager.Move(layout, first, -1));
         Assert.False(TileGroupManager.Move(layout, second, 1));
     }
@@ -50,7 +50,7 @@ public sealed class TileGroupManagerTests
             Groups =
             [
                 new TileGroup { Name = "开发", GroupColumn = 0, GroupRow = 0 },
-                new TileGroup { Name = "游戏", GroupColumn = 1, GroupRow = 0 },
+                new TileGroup { Name = "游戏", GroupColumn = 4, GroupRow = 0, WidthUnits = 3, HeightUnits = 2 },
             ],
         };
 
@@ -58,8 +58,9 @@ public sealed class TileGroupManagerTests
 
         Assert.Equal(["开发", "游戏"], restored!.Groups.Select(group => group.Name));
         Assert.Equal(
-            [new TileGroupCell(0, 0), new TileGroupCell(1, 0)],
+            [new TileGroupCell(0, 0), new TileGroupCell(4, 0)],
             restored.Groups.Select(Win10GroupGridLayout.GetCell));
+        Assert.Equal((3, 2), (restored.Groups[1].WidthUnits, restored.Groups[1].HeightUnits));
     }
 
     [Fact]
@@ -78,12 +79,41 @@ public sealed class TileGroupManagerTests
         var layout = TileLayoutStore.Deserialize(json)!;
 
         Assert.All(layout.Groups, group => Assert.Equal(new TileGroupCell(-1, -1), Win10GroupGridLayout.GetCell(group)));
-        Assert.True(Win10GroupGridLayout.EnsureCoordinates(layout, columns: 3));
+        Assert.True(Win10GroupGridLayout.EnsureCoordinates(layout, columns: 12));
         Assert.Equal(
             [
                 new TileGroupCell(0, 0),
-                new TileGroupCell(1, 0),
-                new TileGroupCell(2, 0),
+                new TileGroupCell(4, 0),
+                new TileGroupCell(8, 0),
+                new TileGroupCell(0, 1),
+            ],
+            layout.Groups.Select(Win10GroupGridLayout.GetCell));
+    }
+
+    [Fact]
+    public void UnversionedPrototypeCoordinatesAreResetBeforeWorkspaceRepack()
+    {
+        const string json = """
+                            {
+                              "Groups": [
+                                { "Name": "一", "GroupColumn": 0, "GroupRow": 0, "WidthUnits": 4, "Tiles": [] },
+                                { "Name": "二", "GroupColumn": 4, "GroupRow": 0, "WidthUnits": 4, "Tiles": [] },
+                                { "Name": "三", "GroupColumn": 8, "GroupRow": 0, "WidthUnits": 4, "Tiles": [] },
+                                { "Name": "四", "GroupColumn": 4, "GroupRow": 1, "WidthUnits": 4, "Tiles": [] }
+                              ]
+                            }
+                            """;
+
+        var layout = TileLayoutStore.Deserialize(json)!;
+
+        Assert.Equal(TileLayoutStore.CurrentVersion, layout.Version);
+        Assert.All(layout.Groups, group => Assert.Equal(new TileGroupCell(-1, -1), Win10GroupGridLayout.GetCell(group)));
+        Assert.True(Win10GroupGridLayout.EnsureCoordinates(layout, columns: 12));
+        Assert.Equal(
+            [
+                new TileGroupCell(0, 0),
+                new TileGroupCell(4, 0),
+                new TileGroupCell(8, 0),
                 new TileGroupCell(0, 1),
             ],
             layout.Groups.Select(Win10GroupGridLayout.GetCell));

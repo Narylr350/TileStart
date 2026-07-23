@@ -22,11 +22,12 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         DiagnosticLog.Write("Host startup started.");
 
-        var shutdownRequested = e.Args.Contains("--shutdown", StringComparer.OrdinalIgnoreCase);
+        var startupRequest = HostRequest.FromArguments(e.Args);
+        var shutdownRequested = startupRequest.Kind == HostRequestKind.Exit;
         _singleInstance = new SingleInstanceGuard();
         if (!_singleInstance.IsPrimaryInstance)
         {
-            SingleInstanceGuard.NotifyPrimaryInstance(shutdownRequested);
+            SingleInstanceGuard.NotifyPrimaryInstance(startupRequest);
             Shutdown();
             return;
         }
@@ -41,8 +42,9 @@ public partial class App : System.Windows.Application
         MainWindow = new MainWindow();
         PrimeHiddenWindow(MainWindow);
         DiagnosticLog.Write("Main window created.");
-        _server = new OpenRequestServer(((MainWindow)MainWindow).ShowFromShell, ExitApplication, Dispatcher);
+        _server = new OpenRequestServer(HandleHostRequest, Dispatcher);
         _server.Start();
+        ExplorerContextMenuRegistration.EnsureRegistered();
         _winKeyHook = new WinKeyHook(() => Dispatcher.BeginInvoke(((MainWindow)MainWindow).ShowFromShell));
         if (!_winKeyHook.Start())
         {
@@ -58,7 +60,28 @@ public partial class App : System.Windows.Application
                                  SetPaused,
                                  WinKeyHook.OpenNativeStartMenu,
                                  ExitApplication);
+        if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
+        {
+            Dispatcher.BeginInvoke(() => HandleHostRequest(startupRequest));
+        }
         DiagnosticLog.Write("Host startup completed.");
+    }
+
+    private void HandleHostRequest(HostRequest request)
+    {
+        switch (request.Kind)
+        {
+            case HostRequestKind.Open:
+                ((MainWindow)MainWindow).ShowFromShell();
+                break;
+            case HostRequestKind.Exit:
+                ExitApplication();
+                break;
+            case HostRequestKind.AddToAppList:
+            case HostRequestKind.PinTile:
+                ((MainWindow)MainWindow).HandleHostRequest(request);
+                break;
+        }
     }
 
     private static void PrimeHiddenWindow(Window window)
