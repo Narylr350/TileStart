@@ -47,6 +47,7 @@ public partial class TileSettingsWindow : Window
             Size = tile.Size,
             BackgroundColor = tile.BackgroundColor,
             ForegroundColor = tile.ForegroundColor,
+            IconPath = tile.IconPath,
             BackgroundImagePath = tile.BackgroundImagePath,
             BackgroundImage = tile.BackgroundImage,
             ShowTitle = tile.ShowTitle,
@@ -140,7 +141,7 @@ public partial class TileSettingsWindow : Window
         var dialog = new OpenFileDialog
         {
             CheckFileExists = true,
-            Filter = "图标来源|*.ico;*.exe;*.dll;*.png;*.jpg;*.jpeg;*.bmp;*.svg|所有文件|*.*",
+            Filter = "图标来源|*.ico;*.exe;*.dll;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.svg|所有文件|*.*",
             FileName = File.Exists(IconPath) ? IconPath : string.Empty,
         };
         if (dialog.ShowDialog(this) == true)
@@ -320,6 +321,7 @@ public partial class TileSettingsWindow : Window
         PreviewTile.Name = string.IsNullOrWhiteSpace(TileName) ? "磁贴名称" : TileName;
         PreviewTile.BackgroundColor = IsValidColor(BackgroundColor) ? BackgroundColor : "#3A3A3A";
         PreviewTile.ForegroundColor = IsValidColor(ForegroundColor) ? ForegroundColor : "#FFFFFF";
+        PreviewTile.IconPath = IconPath;
         PreviewTile.BackgroundImagePath = BackgroundImagePath;
         PreviewTile.BackgroundImage = ShellIconLoader.LoadImage(BackgroundImagePath);
         PreviewTile.ShowTitle = ShowTitle;

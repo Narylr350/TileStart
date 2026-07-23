@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:local="clr-namespace:TileStart.Host"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="TileStart"
         Width="1252"
         Height="768"
@@ -1124,10 +1125,22 @@
                                                                 <RowDefinition
                                                                     Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
                                                             </Grid.RowDefinitions>
-                                                            <Image Grid.RowSpan="2"
-                                                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                                                   Source="{Binding BackgroundImage}"
-                                                                   Stretch="UniformToFill" />
+                                                             <Image Grid.RowSpan="2"
+                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                    Source="{Binding BackgroundImage}"
+                                                                    gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                    Stretch="UniformToFill">
+                                                                 <Image.Style>
+                                                                     <Style TargetType="Image">
+                                                                         <Style.Triggers>
+                                                                             <DataTrigger Binding="{Binding BackgroundImagePath, Converter={StaticResource IsGifPathConverter}}" Value="True">
+                                                                                 <Setter Property="Source" Value="{x:Null}" />
+                                                                             </DataTrigger>
+                                                                         </Style.Triggers>
+                                                                     </Style>
+                                                                 </Image.Style>
+                                                             </Image>
                                                             <TextBlock x:Name="TileInitial"
                                                                        Grid.Row="0"
                                                                        Grid.RowSpan="2"
@@ -1137,17 +1150,28 @@
                                                                        FontWeight="SemiBold"
                                                                        Text="{Binding Initial}"
                                                                        Visibility="Collapsed" />
-                                                             <Image x:Name="TileIcon"
+                                                              <Image x:Name="TileIcon"
                                                                     Grid.Row="0"
                                                                     Grid.RowSpan="2"
                                                                     Width="{Binding IconSize}"
                                                                     Height="{Binding IconSize}"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                                                   Source="{Binding Icon}"
-                                                                   Stretch="Uniform">
-                                                                <Image.RenderTransform>
+                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                    Source="{Binding Icon}"
+                                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                    Stretch="Uniform">
+                                                                 <Image.Style>
+                                                                     <Style TargetType="Image">
+                                                                         <Style.Triggers>
+                                                                             <DataTrigger Binding="{Binding IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
+                                                                                 <Setter Property="Source" Value="{x:Null}" />
+                                                                             </DataTrigger>
+                                                                         </Style.Triggers>
+                                                                     </Style>
+                                                                 </Image.Style>
+                                                                 <Image.RenderTransform>
                                                                     <TranslateTransform
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                                 </Image.RenderTransform>
@@ -1174,7 +1198,19 @@
                                                                             <Image Margin="3"
                                                                                     RenderOptions.BitmapScalingMode="HighQuality"
                                                                                     Source="{Binding Icon}"
-                                                                                    Stretch="Uniform" />
+                                                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                    Stretch="Uniform">
+                                                                                 <Image.Style>
+                                                                                     <Style TargetType="Image">
+                                                                                         <Style.Triggers>
+                                                                                             <DataTrigger Binding="{Binding IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
+                                                                                                 <Setter Property="Source" Value="{x:Null}" />
+                                                                                             </DataTrigger>
+                                                                                         </Style.Triggers>
+                                                                                     </Style>
+                                                                                 </Image.Style>
+                                                                             </Image>
                                                                         </Border>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>

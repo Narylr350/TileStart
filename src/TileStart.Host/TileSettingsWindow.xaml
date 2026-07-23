@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TileStart.Host"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="磁贴设置"
         Width="820"
         Height="720"
@@ -486,8 +487,20 @@
                                                 SnapsToDevicePixels="True">
                                             <Grid ClipToBounds="True">
                                                 <Image Source="{Binding BackgroundImage}"
+                                                       gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                       gif:ImageBehavior.RepeatBehavior="Forever"
                                                        RenderOptions.BitmapScalingMode="HighQuality"
-                                                       Stretch="UniformToFill" />
+                                                       Stretch="UniformToFill">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding BackgroundImagePath, Converter={StaticResource IsGifPathConverter}}" Value="True">
+                                                                    <Setter Property="Source" Value="{x:Null}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
                                                 <TextBlock Text="{Binding Initial}"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
@@ -730,8 +743,20 @@
                                     BorderThickness="1">
                                 <Image Margin="4"
                                        Source="{Binding PreviewTile.Icon}"
+                                       gif:ImageBehavior.AnimatedSource="{Binding PreviewTile.IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                       gif:ImageBehavior.RepeatBehavior="Forever"
                                        RenderOptions.BitmapScalingMode="HighQuality"
-                                       Stretch="Uniform" />
+                                       Stretch="Uniform">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PreviewTile.IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
+                                                    <Setter Property="Source" Value="{x:Null}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Foreground="White" FontSize="12" Text="当前图标" />
