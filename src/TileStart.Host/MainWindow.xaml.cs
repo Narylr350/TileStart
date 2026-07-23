@@ -1072,6 +1072,10 @@ public partial class MainWindow : Window
                         ? Visibility.Visible
                         : Visibility.Collapsed;
                 }
+                else if (item.Tag as string == "RemoveCustomApp")
+                {
+                    item.Visibility = app.IsCustom ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
         }
     }
@@ -1751,6 +1755,28 @@ public partial class MainWindow : Window
         return TileLayout.Groups
             .SelectMany(group => group.Tiles)
             .Any(tile => LaunchTargetIdentity.GetKey(tile.LaunchTarget) == identity);
+    }
+
+    private void RemoveCustomApp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem item
+            || ItemsControl.ItemsControlFromItemContainer(item) is not ContextMenu
+            {
+                PlacementTarget: Button { Tag: AppEntry app },
+            }
+            || !app.IsCustom)
+        {
+            return;
+        }
+
+        if (!CustomAppStore.Remove(app.LaunchTarget))
+        {
+            return;
+        }
+
+        var identity = LaunchTargetIdentity.GetKey(app.LaunchTarget);
+        RemoveApplicationFromList(identity);
+        ShowIfHidden();
     }
 
     private bool PinTileToStart(TileItem tile)

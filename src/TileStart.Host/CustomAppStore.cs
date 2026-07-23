@@ -102,6 +102,36 @@ public static class CustomAppStore
         }
     }
 
+    public static bool Remove(string path)
+    {
+        var normalizedPath = NormalizePath(path);
+        if (normalizedPath is null || !File.Exists(FilePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            var definitions = JsonSerializer.Deserialize<List<CustomAppDefinition>>(File.ReadAllText(FilePath)) ?? [];
+            var identity = LaunchTargetIdentity.GetKey(normalizedPath);
+            var removed = definitions.RemoveAll(item => LaunchTargetIdentity.GetKey(item.LaunchTarget) == identity) > 0;
+            if (!removed)
+            {
+                return false;
+            }
+
+            var temporaryPath = FilePath + ".tmp";
+            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(definitions, JsonOptions));
+            File.Move(temporaryPath, FilePath, true);
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException)
+        {
+            DiagnosticLog.Write($"Unable to remove custom application '{path}': {exception.Message}");
+            return false;
+        }
+    }
+
     internal static bool Supports(string path) =>
         File.Exists(path)
         && SupportedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);

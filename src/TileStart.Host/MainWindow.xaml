@@ -442,6 +442,18 @@
                                                Text="&#xE77A;" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="从应用列表取消固定"
+                                      Tag="RemoveCustomApp"
+                                      Style="{StaticResource StartMenuItemStyle}"
+                                      Visibility="Collapsed"
+                                      Click="RemoveCustomApp_Click">
+                                <MenuItem.Icon>
+                                    <TextBlock Foreground="White"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Text="&#xE74D;" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <MenuItem Header="更多">
                                 <MenuItem.Style>
                                     <Style TargetType="MenuItem" BasedOn="{StaticResource StartMenuItemStyle}">
