@@ -551,10 +551,7 @@
                                                 DataContext="{Binding PreviewTile}"
                                                 SnapsToDevicePixels="True">
                                             <Grid ClipToBounds="True">
-                                                <Image
-                                                    gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
-                                                    gif:ImageBehavior.RepeatBehavior="Forever"
-                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                <Image RenderOptions.BitmapScalingMode="HighQuality"
                                                     RenderTransformOrigin="0.5,0.5"
                                                     Stretch="UniformToFill">
                                                     <Image.RenderTransform>
@@ -568,6 +565,17 @@
                                                             <Binding Path="BackgroundImagePath" />
                                                         </MultiBinding>
                                                     </Image.Source>
+                                                </Image>
+                                                <Image
+                                                    gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                    RenderTransformOrigin="0.5,0.5"
+                                                    Stretch="UniformToFill">
+                                                    <Image.RenderTransform>
+                                                        <ScaleTransform ScaleX="{Binding BackgroundImageScale}"
+                                                                        ScaleY="{Binding BackgroundImageScale}" />
+                                                    </Image.RenderTransform>
                                                 </Image>
                                                 <TextBlock Text="{Binding Initial}"
                                                            HorizontalAlignment="Center"
@@ -591,10 +599,7 @@
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
-                                                <Image
-                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                    gif:ImageBehavior.RepeatBehavior="Forever"
-                                                    RenderOptions.BitmapScalingMode="HighQuality">
+                                                <Image RenderOptions.BitmapScalingMode="HighQuality">
                                                     <Image.Source>
                                                         <MultiBinding
                                                             Converter="{StaticResource NonGifImageSourceConverter}">
@@ -657,6 +662,51 @@
                                                         </Style>
                                                     </Image.Style>
                                                 </Image>
+                                                <Image
+                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                    RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Setter Property="Width" Value="{Binding IconSize}" />
+                                                            <Setter Property="Height" Value="{Binding IconSize}" />
+                                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                                            <Setter Property="Stretch" Value="Uniform" />
+                                                            <Setter Property="RenderTransform">
+                                                                <Setter.Value>
+                                                                    <TranslateTransform Y="-2" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTileFolder}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}"
+                                                                             Value="TopLeft">
+                                                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                    <Setter Property="VerticalAlignment" Value="Top" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}"
+                                                                             Value="TopRight">
+                                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                                    <Setter Property="VerticalAlignment" Value="Top" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}"
+                                                                             Value="BottomLeft">
+                                                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                                                    <Setter Property="VerticalAlignment" Value="Bottom" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IconPosition}"
+                                                                             Value="BottomRight">
+                                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                                    <Setter Property="VerticalAlignment" Value="Bottom" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
                                                 <ItemsControl Width="52"
                                                               Height="52"
                                                               HorizontalAlignment="Center"
@@ -682,19 +732,23 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
                                                             <Border Margin="1" Background="{Binding BackgroundBrush}">
-                                                                <Image Margin="3"
-                                                                       gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                       gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                       RenderOptions.BitmapScalingMode="HighQuality"
-                                                                       Stretch="Uniform">
-                                                                    <Image.Source>
-                                                                        <MultiBinding
-                                                                            Converter="{StaticResource NonGifImageSourceConverter}">
-                                                                            <Binding Path="Icon" />
-                                                                            <Binding Path="IconPath" />
-                                                                        </MultiBinding>
-                                                                    </Image.Source>
-                                                                </Image>
+                                                                <Grid Margin="3">
+                                                                    <Image RenderOptions.BitmapScalingMode="HighQuality"
+                                                                           Stretch="Uniform">
+                                                                        <Image.Source>
+                                                                            <MultiBinding
+                                                                                Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                <Binding Path="Icon" />
+                                                                                <Binding Path="IconPath" />
+                                                                            </MultiBinding>
+                                                                        </Image.Source>
+                                                                    </Image>
+                                                                    <Image
+                                                                        gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                        gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                        Stretch="Uniform" />
+                                                                </Grid>
                                                             </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
@@ -844,19 +898,23 @@
                                                 Background="#202020"
                                                 BorderBrush="#4A4A4A"
                                                 BorderThickness="1">
-                                            <Image Margin="4"
-                                                   gif:ImageBehavior.AnimatedSource="{Binding PreviewTile.IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                   gif:ImageBehavior.RepeatBehavior="Forever"
-                                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                                   Stretch="Uniform">
-                                                <Image.Source>
-                                                    <MultiBinding
-                                                        Converter="{StaticResource NonGifImageSourceConverter}">
-                                                        <Binding Path="PreviewTile.Icon" />
-                                                        <Binding Path="PreviewTile.IconPath" />
-                                                    </MultiBinding>
-                                                </Image.Source>
-                                            </Image>
+                                            <Grid Margin="4">
+                                                <Image RenderOptions.BitmapScalingMode="HighQuality"
+                                                       Stretch="Uniform">
+                                                    <Image.Source>
+                                                        <MultiBinding
+                                                            Converter="{StaticResource NonGifImageSourceConverter}">
+                                                            <Binding Path="PreviewTile.Icon" />
+                                                            <Binding Path="PreviewTile.IconPath" />
+                                                        </MultiBinding>
+                                                    </Image.Source>
+                                                </Image>
+                                                <Image
+                                                    gif:ImageBehavior.AnimatedSource="{Binding PreviewTile.IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                    Stretch="Uniform" />
+                                            </Grid>
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Foreground="White" FontSize="12" Text="当前图标" />

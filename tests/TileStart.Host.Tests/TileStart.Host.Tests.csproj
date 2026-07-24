@@ -43,6 +43,12 @@
     <Content Include="..\..\docs\reference\win10-start\specs\*.json"
              Link="TestData\win10-start-specs\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\MainWindow.xaml"
+             Link="TestData\Xaml\MainWindow.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Tiles\Settings\TileSettingsWindow.xaml"
+             Link="TestData\Xaml\TileSettingsWindow.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
