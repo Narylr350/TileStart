@@ -1,5 +1,5 @@
 #define AppName "TileStart"
-#define AppVersion "0.1.0-dev"
+#define AppVersion "0.1.0"
 #define AppPublisher "Narylr350"
 #define AppExeName "TileStart.Host.exe"
 
