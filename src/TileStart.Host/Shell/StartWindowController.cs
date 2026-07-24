@@ -12,7 +12,7 @@ using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Shell;
 
-public class StartWindowController
+public class StartWindowController : IDisposable
 {
     private const uint MonitorDefaultToNearest = 2;
     private const int MdtEffectiveDpi = 0;
@@ -53,6 +53,7 @@ public class StartWindowController
     private bool _allowClose;
     private bool _isDismissing;
     private HwndSource? _windowSource;
+    private bool _isDisposed;
 
     private bool _isWindowWidthSnapAnimating;
     private long _windowWidthSnapStartedAt;
@@ -97,12 +98,17 @@ public class StartWindowController
     {
         if (_windowSource != null)
             _windowSource.RemoveHook(WindowMessageHook);
-        _windowSource = source;
+        _windowSource = _isDisposed ? null : source;
         _windowSource?.AddHook(WindowMessageHook);
     }
 
     public void ShowFromShell()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (_window.IsVisible)
         {
             DismissWindow();
@@ -170,12 +176,23 @@ public class StartWindowController
         }
     }
 
-    public void OnClosed()
+    public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _foregroundActivationGeneration++;
         StopWindowWidthSnapAnimation();
+        StopEntranceCache();
         _foregroundWatchdogTimer.Stop();
+        _foregroundWatchdogTimer.Tick -= ForegroundWatchdogTimer_Tick;
         _windowSource?.RemoveHook(WindowMessageHook);
         _windowSource = null;
+        WindowDismissing = null;
+        WindowShown = null;
     }
 
     public void ApplyWindowMaterial()
@@ -232,7 +249,7 @@ public class StartWindowController
 
     private void TryAcquireForeground(int generation, int attempt)
     {
-        if (generation != _foregroundActivationGeneration || !_window.IsVisible)
+        if (_isDisposed || generation != _foregroundActivationGeneration || !_window.IsVisible)
         {
             return;
         }
@@ -475,6 +492,11 @@ public class StartWindowController
         nint lParam,
         ref bool handled)
     {
+        if (_isDisposed)
+        {
+            return 0;
+        }
+
         if (message != WmActivate)
         {
             return 0;
@@ -497,7 +519,13 @@ public class StartWindowController
     private void RequestDismissAfterForegroundChange(string trigger)
     {
         _window.Dispatcher.BeginInvoke(
-            () => TryDismissAfterForegroundChange(trigger),
+            () =>
+            {
+                if (!_isDisposed)
+                {
+                    TryDismissAfterForegroundChange(trigger);
+                }
+            },
             System.Windows.Threading.DispatcherPriority.Input);
     }
 
@@ -517,7 +545,8 @@ public class StartWindowController
 
     public void TryDismissAfterForegroundChange(string trigger)
     {
-        if (!_window.IsVisible
+        if (_isDisposed
+            || !_window.IsVisible
             || _isDismissing
             || IsAnyMouseButtonPressed()
             || _isAnyDragActive())
@@ -589,8 +618,9 @@ public class StartWindowController
 
     private void WindowWidthSnap_Rendering(object? sender, EventArgs e)
     {
-        if (!_isWindowWidthSnapAnimating)
+        if (_isDisposed || !_isWindowWidthSnapAnimating)
         {
+            StopWindowWidthSnapAnimation();
             return;
         }
 

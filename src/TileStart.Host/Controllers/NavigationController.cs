@@ -15,7 +15,7 @@ using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Controllers;
 
-internal sealed class NavigationController
+internal sealed class NavigationController : IDisposable
 {
     private readonly System.Windows.Threading.DispatcherTimer _navigationHoverTimer = new()
     {
@@ -28,6 +28,7 @@ internal sealed class NavigationController
     private int _semanticZoomAnimationGeneration;
     private bool _isLetterIndexActive;
     private bool _isSemanticZoomAnimating;
+    private bool _isDisposed;
 
     private readonly Grid _navigationPane;
     private readonly Button _navigationToggleButton;
@@ -207,6 +208,11 @@ internal sealed class NavigationController
         };
         animation.Completed += (_, _) =>
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             _navigationPane.BeginAnimation(FrameworkElement.WidthProperty, null);
             _navigationPane.Width = targetWidth;
             if (!expanded && !_navigationExpanded)
@@ -555,7 +561,7 @@ internal sealed class NavigationController
             animationsEnabled,
             () =>
             {
-                if (generation != _semanticZoomAnimationGeneration)
+                if (_isDisposed || generation != _semanticZoomAnimationGeneration)
                 {
                     return;
                 }
@@ -614,5 +620,22 @@ internal sealed class NavigationController
         }
 
         return anyMatch;
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _navigationHoverTimer.Stop();
+        _navigationHoverTimer.Tick -= NavigationHoverTimer_Tick;
+        _semanticZoomViewport.SizeChanged -= SemanticZoomViewport_SizeChanged;
+        _semanticZoomAnimationGeneration++;
+        _isSemanticZoomAnimating = false;
+        _navigationPane.BeginAnimation(FrameworkElement.WidthProperty, null);
+        ResetSemanticZoomVisuals();
     }
 }

@@ -17,7 +17,7 @@ using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Controllers;
 
-internal sealed class ApplicationPaneController
+internal sealed class ApplicationPaneController : IDisposable
 {
     private const int CollapsedRecentAppCount = 3;
     private const int ExpandedRecentAppCount = 10;
@@ -26,10 +26,14 @@ internal sealed class ApplicationPaneController
     private readonly RangeObservableCollection<IApplicationListItem> _applicationListItems = [];
     private readonly RecentApplicationsSection _recentSection = new();
     private readonly Queue<HostRequest> _pendingHostRequests = [];
+    private readonly CancellationTokenSource _lifetimeCancellation = new();
+    private readonly CancellationToken _lifetimeToken;
+    private System.Windows.Threading.DispatcherOperation? _contextMenuPrewarmOperation;
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _applicationContentReady;
     private bool _recentAppsExpanded;
+    private bool _isDisposed;
 
     private readonly TileLayout _tileLayout;
     private readonly System.Windows.Threading.Dispatcher _dispatcher;
@@ -56,6 +60,7 @@ internal sealed class ApplicationPaneController
         Action prepareMotionElements,
         Action updateLayout)
     {
+        _lifetimeToken = _lifetimeCancellation.Token;
         _tileLayout = tileLayout;
         _dispatcher = dispatcher;
         _navigationToggleButton = navigationToggleButton;
@@ -73,7 +78,8 @@ internal sealed class ApplicationPaneController
         AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(IApplicationListItem.SortLetter)));
         AppsView.SortDescriptions.Add(
             new SortDescription(nameof(IApplicationListItem.SortLetter), ListSortDirection.Ascending));
-        AppsView.SortDescriptions.Add(new SortDescription(nameof(IApplicationListItem.SortName), ListSortDirection.Ascending));
+        AppsView.SortDescriptions.Add(new SortDescription(nameof(IApplicationListItem.SortName),
+            ListSortDirection.Ascending));
     }
 
     public ObservableCollection<AppEntry> RecentApps => _recentSection.Apps;
@@ -96,11 +102,17 @@ internal sealed class ApplicationPaneController
 
     public async Task LoadAppsAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         try
         {
             var scannedApps = FilterHiddenApplications(
                 await StartAppScanner.ScanAsync(),
                 AppVisibilityStore.Load());
+            _lifetimeToken.ThrowIfCancellationRequested();
             var customApps = CustomAppStore.Load();
             var scannedLaunchableApps = AppEntry.FlattenApplications(scannedApps).ToArray();
             var apps = customApps.Count == 0
@@ -148,6 +160,9 @@ internal sealed class ApplicationPaneController
                 HandleHostRequest(_pendingHostRequests.Dequeue());
             }
         }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+        }
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Application list load failed: {exception}");
@@ -156,6 +171,11 @@ internal sealed class ApplicationPaneController
 
     public void HandleHostRequest(HostRequest request)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (!_applicationContentReady)
         {
             _pendingHostRequests.Enqueue(request);
@@ -357,13 +377,24 @@ internal sealed class ApplicationPaneController
 
     private void QueueContextMenuPrewarm()
     {
-        _dispatcher.BeginInvoke(
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _contextMenuPrewarmOperation = _dispatcher.BeginInvoke(
             PrewarmContextMenus,
             System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private void PrewarmContextMenus()
     {
+        _contextMenuPrewarmOperation = null;
+        if (_isDisposed)
+        {
+            return;
+        }
+
         var startedAt = Environment.TickCount64;
         var owners = new List<Button> { _navigationToggleButton };
         var appOwner = FindVisualDescendants<Button>(_windowRoot)
@@ -440,6 +471,11 @@ internal sealed class ApplicationPaneController
 
     private async Task LoadApplicationIconsAsync(IReadOnlyList<AppEntry> apps)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         try
         {
             var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
@@ -448,10 +484,15 @@ internal sealed class ApplicationPaneController
                 Task.Run(() => LoadApplicationIcons(classicApps)),
                 RunStaThreadAsync(() => LoadApplicationIcons(packagedApps), "TileStart Packaged Icon Loader"));
             var loadedIcons = loadedGroups.SelectMany(group => group).ToArray();
+            _lifetimeToken.ThrowIfCancellationRequested();
             await _dispatcher.InvokeAsync(
                 () => ApplyApplicationIcons(loadedIcons),
-                System.Windows.Threading.DispatcherPriority.Background);
+                System.Windows.Threading.DispatcherPriority.Background,
+                _lifetimeToken);
             DiagnosticLog.Write($"Application icon loading completed: {apps.Count} entries processed.");
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
         }
         catch (Exception exception)
         {
@@ -679,5 +720,20 @@ internal sealed class ApplicationPaneController
                 yield return child;
             }
         }
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _lifetimeCancellation.Cancel();
+        _contextMenuPrewarmOperation?.Abort();
+        _contextMenuPrewarmOperation = null;
+        _pendingHostRequests.Clear();
+        _lifetimeCancellation.Dispose();
     }
 }

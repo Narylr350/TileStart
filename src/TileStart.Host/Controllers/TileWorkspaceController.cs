@@ -22,7 +22,7 @@ using TileStart.Host.Tiles.Folders;
 
 namespace TileStart.Host.Controllers;
 
-internal sealed class TileWorkspaceController
+internal sealed class TileWorkspaceController : IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]
     private struct Point
@@ -38,6 +38,9 @@ internal sealed class TileWorkspaceController
     private int _tileFolderAnimationGeneration;
     private bool _isAppFolderAnimating;
     private bool _isTileFolderAnimating;
+    private readonly CancellationTokenSource _lifetimeCancellation = new();
+    private readonly CancellationToken _lifetimeToken;
+    private bool _isDisposed;
 
     private readonly Window _window;
     private readonly TileLayout _tileLayout;
@@ -68,6 +71,7 @@ internal sealed class TileWorkspaceController
         Action<int> setOpenContextMenuCount,
         Func<long> getSuppressTileActivationUntil)
     {
+        _lifetimeToken = _lifetimeCancellation.Token;
         _window = window;
         _tileLayout = tileLayout;
         _tileDragCoordinator = tileDragCoordinator;
@@ -322,7 +326,13 @@ internal sealed class TileWorkspaceController
         }
 
         _window.Dispatcher.BeginInvoke(
-            () => _tryDismissAfterForegroundChange("context-menu-closed"),
+            () =>
+            {
+                if (!_isDisposed)
+                {
+                    _tryDismissAfterForegroundChange("context-menu-closed");
+                }
+            },
             System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
@@ -838,7 +848,7 @@ internal sealed class TileWorkspaceController
 
     public async Task ToggleAppFolderAsync(AppEntry folder)
     {
-        if (_isAppFolderAnimating)
+        if (_isDisposed || _isAppFolderAnimating)
         {
             return;
         }
@@ -860,7 +870,11 @@ internal sealed class TileWorkspaceController
                 _window.UpdateLayout();
                 AnimateAppEntryReflowFrom(expandPreviousPositions);
                 AnimateAppFolderChildren(folder, expanding: true);
-                await Task.Delay(Win10FolderMotion.AppOpenDuration(folder.Children.Count));
+                if (!await WaitForAnimationAsync(Win10FolderMotion.AppOpenDuration(folder.Children.Count)))
+                {
+                    return;
+                }
+
                 return;
             }
 
@@ -880,7 +894,11 @@ internal sealed class TileWorkspaceController
             }
 
             AnimateAppFolderChildren(folder, expanding: false);
-            await Task.Delay(Win10FolderMotion.AppChildDurationMilliseconds);
+            if (!await WaitForAnimationAsync(Win10FolderMotion.AppChildDurationMilliseconds))
+            {
+                return;
+            }
+
             if (generation != _appFolderAnimationGeneration)
             {
                 return;
@@ -995,7 +1013,7 @@ internal sealed class TileWorkspaceController
 
     public async Task ToggleTileFolderAsync(TileGroup group, TileItem folder)
     {
-        if (_isTileFolderAnimating)
+        if (_isDisposed || _isTileFolderAnimating)
         {
             return;
         }
@@ -1022,9 +1040,13 @@ internal sealed class TileWorkspaceController
                 var shiftDuration = AnimateTileFolderShift(group, expandPreviousTops, expanding: true);
                 var expandMovedGroups = _tileDragCoordinator.AnimateGroupReorderFrom(expandPreviousGroupPositions);
                 AnimateTileFolderRegion(folder, expanding: true);
-                await Task.Delay(Math.Max(
-                    Math.Max(shiftDuration, Win10FolderMotion.TileRegionExpandDurationMilliseconds),
-                    expandMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds));
+                if (!await WaitForAnimationAsync(Math.Max(
+                        Math.Max(shiftDuration, Win10FolderMotion.TileRegionExpandDurationMilliseconds),
+                        expandMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds)))
+                {
+                    return;
+                }
+
                 return;
             }
 
@@ -1068,7 +1090,11 @@ internal sealed class TileWorkspaceController
                 Math.Max(
                     Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
                     collapseMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds));
-            await Task.Delay(Win10FolderMotion.TileRegionCollapseDurationMilliseconds);
+            if (!await WaitForAnimationAsync(Win10FolderMotion.TileRegionCollapseDurationMilliseconds))
+            {
+                return;
+            }
+
             if (generation != _tileFolderAnimationGeneration)
             {
                 return;
@@ -1081,9 +1107,12 @@ internal sealed class TileWorkspaceController
                 collapseRegion.ClearValue(UIElement.VisibilityProperty);
             }
 
-            await Task.Delay(Math.Max(
-                0,
-                totalCollapseDuration - Win10FolderMotion.TileRegionCollapseDurationMilliseconds));
+            if (!await WaitForAnimationAsync(Math.Max(
+                    0,
+                    totalCollapseDuration - Win10FolderMotion.TileRegionCollapseDurationMilliseconds)))
+            {
+                return;
+            }
         }
         finally
         {
@@ -1246,5 +1275,34 @@ internal sealed class TileWorkspaceController
                 yield return descendant;
             }
         }
+    }
+
+    private async Task<bool> WaitForAnimationAsync(int milliseconds)
+    {
+        try
+        {
+            await Task.Delay(milliseconds, _lifetimeToken);
+            return true;
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _appFolderAnimationGeneration++;
+        _tileFolderAnimationGeneration++;
+        _isAppFolderAnimating = false;
+        _isTileFolderAnimating = false;
+        _lifetimeCancellation.Cancel();
+        _lifetimeCancellation.Dispose();
     }
 }

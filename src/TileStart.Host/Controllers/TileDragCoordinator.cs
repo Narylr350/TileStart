@@ -31,7 +31,7 @@ namespace TileStart.Host.Controllers;
 
 internal delegate bool FindTileLocationHandler(TileItem tile, out TileGroup group, out TileItem? folder);
 
-internal sealed class TileDragCoordinator
+internal sealed class TileDragCoordinator : IDisposable
 {
     private readonly Window _window;
     private readonly Grid _mainSurface;
@@ -98,6 +98,7 @@ internal sealed class TileDragCoordinator
     private TileGroupCell? _groupDragTargetCell;
     private bool _isInternalGroupDrag;
     private bool _isCompletingGroupDrag;
+    private bool _isDisposed;
     private readonly TileReflowStability _tileReflowStability = new();
 #if DEBUG
     private string? _tileDropTraceCandidateKey;
@@ -141,6 +142,43 @@ internal sealed class TileDragCoordinator
     public bool DragCompletedFlag => _dragCompleted;
 
     public void ResetDragCompletedFlag() => _dragCompleted = false;
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        CancelCurrentDrag();
+        StopTileDragAutoScroll();
+        _tileReflowTimer.Stop();
+        _folderActivationTimer.Stop();
+        _tileReflowTimer.Tick -= TileReflowTimer_Tick;
+        _folderActivationTimer.Tick -= FolderActivationTimer_Tick;
+
+        _dragTransaction?.Dispose();
+        _dragTransaction = null;
+        if (_groupDragTransaction is not null)
+        {
+            _groupDragTransaction.Cancel();
+        }
+
+        _groupDragTransaction = null;
+        if (_dragTile is not null)
+        {
+            _dragTile.IsDragging = false;
+        }
+
+        HideInternalDragPreview();
+        ClearTileDragState();
+        ClearGroupDragState();
+        _appDragEntry = null;
+        _appDragSourceElement = null;
+        _isInternalAppDrag = false;
+        Mouse.Capture(null);
+    }
 
     public bool CancelCurrentDrag()
     {
@@ -505,7 +543,7 @@ internal sealed class TileDragCoordinator
         }
 
         transaction?.Dispose();
-        if (!didCommit && rollbackPositions is not null)
+        if (!_isDisposed && !didCommit && rollbackPositions is not null)
         {
             _window.UpdateLayout();
             AnimateReorderFrom(rollbackPositions);
@@ -521,7 +559,8 @@ internal sealed class TileDragCoordinator
         ResetPendingTileDrop();
         ClearTileDragState();
 
-        if (tile is null
+        if (_isDisposed
+            || tile is null
             || _internalDragPreview.Visibility != Visibility.Visible
             || !SystemParameters.ClientAreaAnimation)
         {
@@ -538,7 +577,6 @@ internal sealed class TileDragCoordinator
         {
             AnimateInternalDragPreviewReturn(tile);
         }
-
     }
 
     private void AnimateInternalDragPreviewHandoff(TileItem tile)
@@ -809,7 +847,10 @@ internal sealed class TileDragCoordinator
                 if (changed)
                 {
                     RefreshGroupPanelLayout();
-                    AnimateGroupReorderFrom(previousPositions);
+                    if (!_isDisposed)
+                    {
+                        AnimateGroupReorderFrom(previousPositions);
+                    }
                 }
             }
         }
@@ -821,7 +862,7 @@ internal sealed class TileDragCoordinator
             Panel.SetZIndex(container, 0);
             container.RenderTransform = null;
             var finalPosition = GetGroupLayoutPosition(container);
-            if (SystemParameters.ClientAreaAnimation)
+            if (!_isDisposed && SystemParameters.ClientAreaAnimation)
             {
                 Win10ReorderMotion.AnimateFrom(container, visiblePosition - finalPosition);
             }

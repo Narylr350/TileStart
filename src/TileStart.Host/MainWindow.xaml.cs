@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private readonly Controllers.TileDragCoordinator _tileDragCoordinator;
     private readonly Controllers.NavigationController _navigationController;
     private readonly Controllers.TileWorkspaceController _tileWorkspaceController;
+    private bool _controllersDisposed;
 
     public MainWindow()
     {
@@ -158,10 +159,23 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        _tileDragCoordinator?.StopTileDragAutoScroll();
-        _navigationController.StopHoverTimer();
-        _controller.OnClosed();
+        DisposeControllers();
         base.OnClosed(e);
+    }
+
+    private void DisposeControllers()
+    {
+        if (_controllersDisposed)
+        {
+            return;
+        }
+
+        _controllersDisposed = true;
+        _controller.Dispose();
+        _tileWorkspaceController.Dispose();
+        _tileDragCoordinator.Dispose();
+        _navigationController.Dispose();
+        _appController.Dispose();
     }
 
     private void Window_Deactivated(object? sender, EventArgs e) =>
