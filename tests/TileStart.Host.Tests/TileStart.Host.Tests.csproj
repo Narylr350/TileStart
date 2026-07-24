@@ -64,6 +64,9 @@
     <Content Include="..\..\src\TileStart.Host\Windowing\StartMotion.cs"
              Link="TestData\Performance\StartMotion.cs"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Shell\StartWindowController.cs"
+             Link="TestData\Performance\StartWindowController.cs"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\Navigation\SemanticZoomMotion.cs"
              Link="TestData\Performance\SemanticZoomMotion.cs"
              CopyToOutputDirectory="PreserveNewest" />

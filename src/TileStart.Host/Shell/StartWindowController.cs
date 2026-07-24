@@ -118,9 +118,9 @@ public class StartWindowController : IDisposable
         _beforeShow();
 
         StopEntranceCache();
-        ApplyWindowMaterial();
         _foregroundLifecycle.Reset();
         PositionOnCurrentMonitor();
+        ApplyWindowMaterial();
         PrepareMotionElements();
         var animationsEnabled = SystemParameters.ClientAreaAnimation;
         _ = RenderFrameProbe.Start(

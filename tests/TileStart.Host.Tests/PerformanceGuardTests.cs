@@ -57,4 +57,19 @@ public sealed class PerformanceGuardTests
         Assert.DoesNotContain("SetDesiredFrameRate", source, StringComparison.Ordinal);
         Assert.DoesNotContain("DesiredFrameRate = 240", source, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void StartWindowPositionsBeforeApplyingAcrylicMaterial()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+        var showMethod = source[source.IndexOf("public void ShowFromShell()", StringComparison.Ordinal)..];
+        showMethod = showMethod[..showMethod.IndexOf("public void AllowClose()", StringComparison.Ordinal)];
+
+        var positionIndex = showMethod.IndexOf("PositionOnCurrentMonitor();", StringComparison.Ordinal);
+        var materialIndex = showMethod.IndexOf("ApplyWindowMaterial();", StringComparison.Ordinal);
+
+        Assert.True(positionIndex >= 0);
+        Assert.True(materialIndex > positionIndex);
+    }
 }
