@@ -62,6 +62,8 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
 
+    public static Thickness AllAppsViewportMargin { get; } = new(0, 7, 0, 0);
+
     public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);
 
     public static Thickness ContextMenuItemPadding { get; } = new(12, 7, 12, 7);

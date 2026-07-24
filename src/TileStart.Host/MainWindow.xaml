@@ -47,6 +47,10 @@
         <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
         <SolidColorBrush x:Key="ExpandedNavigationBackground" Color="#EE202020" />
 
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
         <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
             <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.TileScrollBarWidth}" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileScrollBarMargin}" />
@@ -547,8 +551,12 @@
                                    FontFamily="Segoe UI, Microsoft YaHei UI"
                                    FontSize="14"
                                    FontWeight="Medium"
+                                   LineHeight="17"
+                                   LineStackingStrategy="BlockLineHeight"
+                                   MaxHeight="34"
                                    Text="{Binding Name}"
-                                   TextTrimming="CharacterEllipsis" />
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="Wrap" />
                         <TextBlock x:Name="FolderChevron"
                                    Grid.Column="2"
                                    HorizontalAlignment="Center"
@@ -811,9 +819,10 @@
                             </Grid.RenderTransform>
 
                             <ListBox x:Name="AppsList"
-                                     Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}"
+                                     Margin="{x:Static local:Win10VisualMetrics.AllAppsViewportMargin}"
                                      Background="Transparent"
                                      BorderThickness="0"
+                                     Foreground="White"
                                      ItemsSource="{Binding AppsView}"
                                      ScrollViewer.CanContentScroll="True"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -878,6 +887,7 @@
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
                                         <Setter Property="Focusable" Value="False" />
+                                        <Setter Property="Foreground" Value="White" />
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         <Setter Property="Padding" Value="0" />
                                         <Setter Property="Template">
@@ -1224,15 +1234,15 @@
                                                                        FontWeight="SemiBold"
                                                                        Text="{Binding Initial}"
                                                                        Visibility="Collapsed" />
-                                                             <Image x:Name="TileIcon"
-                                                                    Grid.Row="0"
-                                                                    Grid.RowSpan="2"
+                                                            <Image x:Name="TileIcon"
+                                                                   Grid.Row="0"
+                                                                   Grid.RowSpan="2"
                                                                    Width="{Binding IconSize}"
                                                                    Height="{Binding IconSize}"
-                                                                    HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"
-                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                    Stretch="Uniform">
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   Stretch="Uniform">
                                                                 <Image.Source>
                                                                     <MultiBinding
                                                                         Converter="{StaticResource NonGifImageSourceConverter}">
@@ -1243,24 +1253,24 @@
                                                                 <Image.RenderTransform>
                                                                     <TranslateTransform
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
-                                                                  </Image.RenderTransform>
-                                                              </Image>
-                                                              <Image x:Name="TileAnimatedIcon"
-                                                                     Grid.Row="0"
-                                                                     Grid.RowSpan="2"
-                                                                     Width="{Binding IconSize}"
-                                                                     Height="{Binding IconSize}"
-                                                                     HorizontalAlignment="Center"
-                                                                     VerticalAlignment="Center"
-                                                                     RenderOptions.BitmapScalingMode="HighQuality"
-                                                                     gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                     gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                     Stretch="Uniform">
-                                                                  <Image.RenderTransform>
-                                                                      <TranslateTransform
-                                                                          Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
-                                                                  </Image.RenderTransform>
-                                                              </Image>
+                                                                </Image.RenderTransform>
+                                                            </Image>
+                                                            <Image x:Name="TileAnimatedIcon"
+                                                                   Grid.Row="0"
+                                                                   Grid.RowSpan="2"
+                                                                   Width="{Binding IconSize}"
+                                                                   Height="{Binding IconSize}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                   gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                   Stretch="Uniform">
+                                                                <Image.RenderTransform>
+                                                                    <TranslateTransform
+                                                                        Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
+                                                                </Image.RenderTransform>
+                                                            </Image>
                                                             <ItemsControl x:Name="FolderPreview"
                                                                           Grid.Row="0"
                                                                           Grid.RowSpan="2"
@@ -1281,8 +1291,9 @@
                                                                         <Border Margin="1"
                                                                                 Background="{Binding BackgroundBrush}">
                                                                             <Grid Margin="3">
-                                                                                <Image RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                       Stretch="Uniform">
+                                                                                <Image
+                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                    Stretch="Uniform">
                                                                                     <Image.Source>
                                                                                         <MultiBinding
                                                                                             Converter="{StaticResource NonGifImageSourceConverter}">
@@ -1291,10 +1302,11 @@
                                                                                         </MultiBinding>
                                                                                     </Image.Source>
                                                                                 </Image>
-                                                                                <Image RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                       gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                                       gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                                       Stretch="Uniform" />
+                                                                                <Image
+                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                    Stretch="Uniform" />
                                                                             </Grid>
                                                                         </Border>
                                                                     </DataTemplate>
@@ -1334,13 +1346,13 @@
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Visible" />
                                                         </DataTrigger>
-                                                         <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Collapsed" />
-                                                             <Setter TargetName="TileIcon" Property="Visibility"
-                                                                     Value="Collapsed" />
-                                                             <Setter TargetName="TileAnimatedIcon" Property="Visibility"
-                                                                     Value="Collapsed" />
+                                                            <Setter TargetName="TileIcon" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Setter TargetName="TileAnimatedIcon" Property="Visibility"
+                                                                    Value="Collapsed" />
                                                             <Setter TargetName="FolderPreview" Property="Visibility"
                                                                     Value="Visible" />
                                                         </DataTrigger>
@@ -1374,48 +1386,52 @@
                                                                 </Setter.Value>
                                                             </Setter>
                                                         </DataTrigger>
-                                                         <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
+                                                        <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
                                                             <Setter TargetName="TileIcon"
                                                                     Property="HorizontalAlignment" Value="Left" />
-                                                             <Setter TargetName="TileIcon" Property="VerticalAlignment"
-                                                                     Value="Top" />
-                                                             <Setter TargetName="TileAnimatedIcon"
-                                                                     Property="HorizontalAlignment" Value="Left" />
-                                                             <Setter TargetName="TileAnimatedIcon" Property="VerticalAlignment"
-                                                                     Value="Top" />
-                                                         </DataTrigger>
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="HorizontalAlignment" Value="Left" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
                                                             <Setter TargetName="TileIcon"
                                                                     Property="HorizontalAlignment" Value="Right" />
-                                                             <Setter TargetName="TileIcon" Property="VerticalAlignment"
-                                                                     Value="Top" />
-                                                             <Setter TargetName="TileAnimatedIcon"
-                                                                     Property="HorizontalAlignment" Value="Right" />
-                                                             <Setter TargetName="TileAnimatedIcon" Property="VerticalAlignment"
-                                                                     Value="Top" />
-                                                         </DataTrigger>
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="HorizontalAlignment" Value="Right" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="VerticalAlignment"
+                                                                    Value="Top" />
+                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding IconPosition}"
                                                                      Value="BottomLeft">
                                                             <Setter TargetName="TileIcon"
                                                                     Property="HorizontalAlignment" Value="Left" />
-                                                             <Setter TargetName="TileIcon" Property="VerticalAlignment"
-                                                                     Value="Bottom" />
-                                                             <Setter TargetName="TileAnimatedIcon"
-                                                                     Property="HorizontalAlignment" Value="Left" />
-                                                             <Setter TargetName="TileAnimatedIcon" Property="VerticalAlignment"
-                                                                     Value="Bottom" />
-                                                         </DataTrigger>
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="HorizontalAlignment" Value="Left" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding IconPosition}"
                                                                      Value="BottomRight">
                                                             <Setter TargetName="TileIcon"
                                                                     Property="HorizontalAlignment" Value="Right" />
-                                                             <Setter TargetName="TileIcon" Property="VerticalAlignment"
-                                                                     Value="Bottom" />
-                                                             <Setter TargetName="TileAnimatedIcon"
-                                                                     Property="HorizontalAlignment" Value="Right" />
-                                                             <Setter TargetName="TileAnimatedIcon" Property="VerticalAlignment"
-                                                                     Value="Bottom" />
-                                                         </DataTrigger>
+                                                            <Setter TargetName="TileIcon" Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="HorizontalAlignment" Value="Right" />
+                                                            <Setter TargetName="TileAnimatedIcon"
+                                                                    Property="VerticalAlignment"
+                                                                    Value="Bottom" />
+                                                        </DataTrigger>
                                                     </DataTemplate.Triggers>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
