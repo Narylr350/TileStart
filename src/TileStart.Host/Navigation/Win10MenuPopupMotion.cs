@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Media.Animation;
-using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Navigation;
 
@@ -60,7 +59,6 @@ public static class Win10MenuPopupMotion
             Duration = duration,
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, StartMotion.DesiredFrameRate);
         animation.KeyFrames.Add(new DiscreteRectKeyFrame(
             InitialClip(width, height, closedRatio, popupOpensUpward, pointerOriginY, useSubmenuDirection),
             KeyTime.FromTimeSpan(TimeSpan.Zero)));

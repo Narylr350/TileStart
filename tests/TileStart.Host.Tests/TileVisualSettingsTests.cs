@@ -16,6 +16,8 @@ public sealed class TileVisualSettingsTests
 
         Assert.Equal(Color.FromRgb(0x12, 0x34, 0x56), Assert.IsType<SolidColorBrush>(tile.BackgroundBrush).Color);
         Assert.Equal(Color.FromRgb(0xAB, 0xCD, 0xEF), Assert.IsType<SolidColorBrush>(tile.ForegroundBrush).Color);
+        Assert.Same(tile.BackgroundBrush, tile.BackgroundBrush);
+        Assert.Same(tile.ForegroundBrush, tile.ForegroundBrush);
     }
 
     [Theory]

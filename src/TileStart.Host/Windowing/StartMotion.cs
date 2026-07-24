@@ -11,7 +11,6 @@ public readonly record struct EntranceMotionParameters(
 
 public static class StartMotion
 {
-    public const int DesiredFrameRate = 240;
     private static readonly KeySpline EntranceSpline = new(0.1, 0.9, 0.2, 1);
 
     private static readonly DependencyProperty MotionTranslateProperty = DependencyProperty.RegisterAttached(
@@ -155,7 +154,6 @@ public static class StartMotion
             Duration = end,
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(TimeSpan.Zero)));
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(delay)));
         animation.KeyFrames.Add(new SplineDoubleKeyFrame(to, KeyTime.FromTimeSpan(end), spline));

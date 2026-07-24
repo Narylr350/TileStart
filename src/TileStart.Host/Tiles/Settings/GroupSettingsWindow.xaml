@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:TileStart.Host"
         xmlns:settings="clr-namespace:TileStart.Host.Tiles.Settings"
         xmlns:models="clr-namespace:TileStart.Host.Tiles.Models"
+        xmlns:utilities="clr-namespace:TileStart.Host.Utilities"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="组设置"
         Width="1100"
@@ -125,7 +126,9 @@
                                     <Border.RenderTransform>
                                         <ScaleTransform ScaleY="0.96" />
                                     </Border.RenderTransform>
-                                    <ScrollViewer CanContentScroll="True"
+                                    <ScrollViewer CanContentScroll="False"
+                                                  PanningMode="VerticalOnly"
+                                                  utilities:SmoothScroll.IsEnabled="True"
                                                   HorizontalContentAlignment="Stretch"
                                                   HorizontalScrollBarVisibility="Disabled">
                                         <ItemsPresenter HorizontalAlignment="Stretch" />
@@ -514,9 +517,12 @@
                                  BorderThickness="0"
                                  ScrollViewer.CanContentScroll="True"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.PanningMode="VerticalOnly"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  VirtualizingPanel.IsVirtualizing="True"
-                                 VirtualizingPanel.VirtualizationMode="Recycling">
+                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 utilities:SmoothScroll.IsEnabled="True">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Padding" Value="0" />

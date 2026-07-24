@@ -49,6 +49,24 @@
     <Content Include="..\..\src\TileStart.Host\Tiles\Settings\TileSettingsWindow.xaml"
              Link="TestData\Xaml\TileSettingsWindow.xaml"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Tiles\Settings\GroupSettingsWindow.xaml"
+             Link="TestData\Xaml\GroupSettingsWindow.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Tiles\Settings\SvgIconWindow.xaml"
+             Link="TestData\Xaml\SvgIconWindow.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Windowing\StartMotion.cs"
+             Link="TestData\Performance\StartMotion.cs"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Navigation\SemanticZoomMotion.cs"
+             Link="TestData\Performance\SemanticZoomMotion.cs"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Navigation\Win10MenuPopupMotion.cs"
+             Link="TestData\Performance\Win10MenuPopupMotion.cs"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Tiles\Folders\Win10FolderMotion.cs"
+             Link="TestData\Performance\Win10FolderMotion.cs"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

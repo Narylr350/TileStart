@@ -943,6 +943,7 @@ internal sealed class TileDragCoordinator
         }
         else if (!_tileDragAutoScrollSubscribed)
         {
+            SmoothScroll.Cancel(_tileScrollViewer);
             _tileDragAutoScrollLastFrame = null;
             CompositionTarget.Rendering += TileDragAutoScroll_Rendering;
             _tileDragAutoScrollSubscribed = true;

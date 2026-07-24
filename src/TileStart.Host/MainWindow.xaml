@@ -7,6 +7,7 @@
         xmlns:apps="clr-namespace:TileStart.Host.Applications"
         xmlns:models="clr-namespace:TileStart.Host.Tiles.Models"
         xmlns:layouts="clr-namespace:TileStart.Host.Tiles.Layout"
+        xmlns:utilities="clr-namespace:TileStart.Host.Utilities"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="TileStart"
         Width="1252"
@@ -809,60 +810,114 @@
                                 </TransformGroup>
                             </Grid.RenderTransform>
 
-                            <ScrollViewer x:Name="AppsScrollViewer"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          VerticalScrollBarVisibility="Auto">
-                                <ScrollViewer.Resources>
+                            <ListBox x:Name="AppsList"
+                                     Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ItemsSource="{Binding AppsView}"
+                                     ScrollViewer.CanContentScroll="True"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.PanningMode="VerticalOnly"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     VirtualizingPanel.CacheLength="1"
+                                     VirtualizingPanel.CacheLengthUnit="Page"
+                                     VirtualizingPanel.IsVirtualizing="True"
+                                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                                     VirtualizingPanel.ScrollUnit="Pixel"
+                                     VirtualizingPanel.VirtualizationMode="Recycling"
+                                     utilities:SmoothScroll.IsEnabled="True">
+                                <ListBox.Resources>
                                     <Style TargetType="ScrollBar"
                                            BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
-                                </ScrollViewer.Resources>
-                                <StackPanel Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}">
-                                    <StackPanel x:Name="RecentPanel">
-                                        <TextBlock
-                                            Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
-                                            Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Text="最近添加" />
-                                        <ItemsControl ItemsSource="{Binding RecentApps}"
-                                                      ItemTemplate="{StaticResource AppEntryTemplate}" />
-                                        <Button x:Name="RecentExpandButton"
-                                                Style="{StaticResource AppRowStyle}"
-                                                HorizontalContentAlignment="Left"
-                                                Click="RecentExpandButton_Click">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock x:Name="RecentExpandText"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="14"
-                                                           Text="展开" />
-                                                <TextBlock x:Name="RecentExpandGlyph"
-                                                           Margin="4,0"
-                                                           VerticalAlignment="Center"
-                                                           FontFamily="Segoe MDL2 Assets"
-                                                           FontSize="8"
-                                                           Text="&#xE70D;" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-
-                                    <ItemsControl x:Name="AppsList"
-                                                  ItemsSource="{Binding AppsView}"
-                                                  ItemTemplate="{StaticResource AppEntryTemplate}">
-                                        <ItemsControl.GroupStyle>
-                                            <GroupStyle>
-                                                <GroupStyle.HeaderTemplate>
-                                                    <DataTemplate>
-                                                        <Button Style="{StaticResource LetterHeaderStyle}"
-                                                                Tag="{Binding Name}"
-                                                                Content="{Binding Name}"
-                                                                Click="LetterHeader_Click" />
-                                                    </DataTemplate>
-                                                </GroupStyle.HeaderTemplate>
-                                            </GroupStyle>
-                                        </ItemsControl.GroupStyle>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </ScrollViewer>
+                                    <DataTemplate DataType="{x:Type apps:RecentApplicationsSection}">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
+                                                Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Text="最近添加" />
+                                            <ItemsControl ItemsSource="{Binding Apps}"
+                                                          ItemTemplate="{StaticResource AppEntryTemplate}" />
+                                            <Button HorizontalContentAlignment="Left"
+                                                    Click="RecentExpandButton_Click">
+                                                <Button.Style>
+                                                    <Style TargetType="Button"
+                                                           BasedOn="{StaticResource AppRowStyle}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CanExpand}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock VerticalAlignment="Center"
+                                                               FontSize="14"
+                                                               Text="{Binding ExpandText}" />
+                                                    <TextBlock Margin="4,0"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="8"
+                                                               Text="{Binding ExpandGlyph}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                    <DataTemplate DataType="{x:Type apps:AppEntry}">
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource AppEntryTemplate}" />
+                                    </DataTemplate>
+                                </ListBox.Resources>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Focusable" Value="False" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <ContentPresenter />
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.Panel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel />
+                                            </ItemsPanelTemplate>
+                                        </GroupStyle.Panel>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <Button Tag="{Binding Name}"
+                                                        Content="{Binding Name}"
+                                                        Click="LetterHeader_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button"
+                                                               BasedOn="{StaticResource LetterHeaderStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Name}"
+                                                                             Value="{x:Static apps:RecentApplicationsSection.GroupKey}">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </ListBox.GroupStyle>
+                            </ListBox>
                         </Grid>
 
                         <Border x:Name="LetterIndexPanel"
@@ -908,6 +963,8 @@
                 </Border.ContextMenu>
                 <ScrollViewer x:Name="TileScrollViewer"
                               Margin="{x:Static local:Win10VisualMetrics.TileScrollViewerMargin}"
+                              PanningMode="VerticalOnly"
+                              utilities:SmoothScroll.IsEnabled="True"
                               Style="{StaticResource TileScrollViewerStyle}">
                     <ItemsControl x:Name="TileGroupsControl"
                                   Margin="0,0,0,20"
@@ -1517,13 +1574,5 @@
                     Panel.ZIndex="51"
                     MouseLeftButtonDown="TopRightResizeBorder_MouseLeftButtonDown" />
         </Grid>
-
-        <Image x:Name="EntrancePreview"
-               IsHitTestVisible="False"
-               Panel.ZIndex="100"
-               RenderOptions.BitmapScalingMode="HighQuality"
-               SnapsToDevicePixels="True"
-               Stretch="Fill"
-               Visibility="Collapsed" />
     </Grid>
 </Window>

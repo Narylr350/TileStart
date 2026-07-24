@@ -7,9 +7,11 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Button = System.Windows.Controls.Button;
+using ListBox = System.Windows.Controls.ListBox;
 using TextBox = System.Windows.Controls.TextBox;
 using TileStart.Host.Applications;
 using TileStart.Host.Navigation;
+using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Controllers;
 
@@ -43,9 +45,8 @@ internal sealed class NavigationController
     private readonly Border _searchPanel;
     private readonly TextBox _searchBox;
     private readonly ICollectionView _appsView;
-    private readonly ScrollViewer _appsScrollViewer;
-    private readonly ItemsControl _appsList;
-    private readonly StackPanel _recentPanel;
+    private readonly ListBox _appsList;
+    private readonly RecentApplicationsSection _recentSection;
     private readonly Grid _semanticZoomViewport;
     private readonly ScaleTransform _semanticZoomSharedScale;
     private readonly TranslateTransform _semanticZoomSharedTranslate;
@@ -77,9 +78,8 @@ internal sealed class NavigationController
         Border searchPanel,
         TextBox searchBox,
         ICollectionView appsView,
-        ScrollViewer appsScrollViewer,
-        ItemsControl appsList,
-        StackPanel recentPanel,
+        ListBox appsList,
+        RecentApplicationsSection recentSection,
         Grid semanticZoomViewport,
         ScaleTransform semanticZoomSharedScale,
         TranslateTransform semanticZoomSharedTranslate,
@@ -109,9 +109,8 @@ internal sealed class NavigationController
         _searchPanel = searchPanel;
         _searchBox = searchBox;
         _appsView = appsView;
-        _appsScrollViewer = appsScrollViewer;
         _appsList = appsList;
-        _recentPanel = recentPanel;
+        _recentSection = recentSection;
         _semanticZoomViewport = semanticZoomViewport;
         _semanticZoomSharedScale = semanticZoomSharedScale;
         _semanticZoomSharedTranslate = semanticZoomSharedTranslate;
@@ -395,13 +394,17 @@ internal sealed class NavigationController
     public void SearchBoxTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         var query = _searchBox.Text.Trim();
-        _appsView.Filter = item => item is AppEntry app && MatchesApp(app, query);
+        _appsView.Filter = item => item switch
+        {
+            RecentApplicationsSection => query.Length == 0,
+            AppEntry app => MatchesApp(app, query),
+            _ => false,
+        };
         if (query.Length > 0)
         {
             ExpandMatchingFolders(_getAllApps(), query);
         }
 
-        _recentPanel.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         _appsView.Refresh();
     }
 
@@ -427,7 +430,7 @@ internal sealed class NavigationController
         ResetSemanticZoomVisuals();
         _isLetterIndexActive = true;
         _letterIndexPanel.Visibility = Visibility.Visible;
-        _appsScrollViewer.IsHitTestVisible = false;
+        _appsList.IsHitTestVisible = false;
         _letterIndexPanel.IsHitTestVisible = false;
         BeginSemanticZoomTransition(
             zoomedInViewActive: false,
@@ -444,8 +447,8 @@ internal sealed class NavigationController
 
         if (entry.IsRecent)
         {
-            _appsScrollViewer.ScrollToTop();
-            _recentPanel.BringIntoView();
+            SmoothScroll.Cancel(_appsList);
+            _appsList.ScrollIntoView(_recentSection);
             HideLetterIndex();
             return;
         }
@@ -465,25 +468,31 @@ internal sealed class NavigationController
 
     private void AlignAppGroupToTop(CollectionViewGroup group)
     {
-        _appsScrollViewer.UpdateLayout();
-        if (_appsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement container)
+        var firstItem = group.Items.Cast<object>().FirstOrDefault();
+        if (firstItem is null)
         {
-            var groupTop = container.TranslatePoint(new System.Windows.Point(), _appsScrollViewer).Y;
-            _appsScrollViewer.ScrollToVerticalOffset(Math.Max(0, _appsScrollViewer.VerticalOffset + groupTop));
-            _appsScrollViewer.UpdateLayout();
+            return;
+        }
+
+        SmoothScroll.Cancel(_appsList);
+        _appsList.ScrollIntoView(firstItem);
+        _appsList.UpdateLayout();
+        if (_appsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement groupContainer)
+        {
+            groupContainer.BringIntoView();
         }
     }
 
     private void HideLetterIndex(bool animate = true, CollectionViewGroup? focusGroup = null)
     {
         _isLetterIndexActive = false;
-        _appsScrollViewer.IsHitTestVisible = false;
+        _appsList.IsHitTestVisible = false;
         _letterIndexPanel.IsHitTestVisible = false;
 
         if (_letterIndexPanel.Visibility != Visibility.Visible)
         {
             ResetSemanticZoomVisuals();
-            _appsScrollViewer.IsHitTestVisible = true;
+            _appsList.IsHitTestVisible = true;
             FocusAppGroup(focusGroup);
             return;
         }
@@ -494,7 +503,7 @@ internal sealed class NavigationController
             () =>
             {
                 _letterIndexPanel.Visibility = Visibility.Collapsed;
-                _appsScrollViewer.IsHitTestVisible = true;
+                _appsList.IsHitTestVisible = true;
                 FocusAppGroup(focusGroup);
             });
     }
@@ -506,7 +515,7 @@ internal sealed class NavigationController
             return;
         }
 
-        _appsScrollViewer.UpdateLayout();
+        _appsList.UpdateLayout();
         if (_appsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement container)
         {
             container.Focus();
@@ -581,7 +590,6 @@ internal sealed class NavigationController
         _searchBox.Clear();
         _searchPanel.Visibility = Visibility.Collapsed;
         HideLetterIndex(animate: false);
-        _recentPanel.Visibility = Visibility.Visible;
         _appsView.Filter = null;
         _appsView.Refresh();
     }

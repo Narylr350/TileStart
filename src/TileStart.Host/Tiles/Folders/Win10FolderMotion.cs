@@ -1,5 +1,4 @@
 using System.Windows.Media.Animation;
-using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Tiles.Folders;
 
@@ -76,7 +75,6 @@ public static class Win10FolderMotion
             Duration = end,
             FillBehavior = fillBehavior,
         };
-        Timeline.SetDesiredFrameRate(animation, StartMotion.DesiredFrameRate);
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(TimeSpan.Zero)));
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(delay)));
         animation.KeyFrames.Add(new SplineDoubleKeyFrame(to, KeyTime.FromTimeSpan(end), spline));

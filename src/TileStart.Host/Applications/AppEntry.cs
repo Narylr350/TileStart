@@ -8,7 +8,7 @@ using TileStart.Host.Shell;
 
 namespace TileStart.Host.Applications;
 
-public sealed class AppEntry : INotifyPropertyChanged
+public sealed class AppEntry : INotifyPropertyChanged, IApplicationListItem
 {
     private bool _isExpanded;
     private ImageSource? _icon;
@@ -16,6 +16,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     public required string Name { get; init; }
     public required string LaunchTarget { get; init; }
     public required string SortLetter { get; init; }
+    public string SortName => Name;
     public required string Initial { get; init; }
     public required DateTime AddedAt { get; init; }
 

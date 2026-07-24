@@ -151,6 +151,7 @@ public partial class App : System.Windows.Application
 
         _shellIntegration?.Dispose();
         _singleInstance?.Dispose();
+        DiagnosticLog.Flush();
 
         base.OnExit(e);
     }

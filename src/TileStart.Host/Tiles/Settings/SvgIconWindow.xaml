@@ -1,6 +1,7 @@
 <Window x:Class="TileStart.Host.Tiles.Settings.SvgIconWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:utilities="clr-namespace:TileStart.Host.Utilities"
         Title="SVG 图标"
         Width="660"
         Height="500"
@@ -72,9 +73,10 @@
                          BorderBrush="#565656"
                          BorderThickness="1"
                          CaretBrush="White"
-                         FontFamily="Cascadia Mono, Consolas"
-                         FontSize="11"
-                         TextWrapping="NoWrap" />
+                          FontFamily="Cascadia Mono, Consolas"
+                          FontSize="11"
+                          utilities:SmoothScroll.IsEnabled="True"
+                          TextWrapping="NoWrap" />
                 <Button Grid.Row="2"
                         Width="96"
                         Margin="0,12,0,0"

@@ -19,6 +19,8 @@ public sealed class TileItem : INotifyPropertyChanged
     private string _subtitle = string.Empty;
     private string _backgroundColor = "#3A3A3A";
     private string _foregroundColor = "#FFFFFF";
+    private MediaBrush _backgroundBrush = DefaultBackgroundBrush;
+    private MediaBrush _foregroundBrush = MediaBrushes.White;
     private string _iconPath = string.Empty;
     private string _backgroundImagePath = string.Empty;
     private double _backgroundImageScale = 1;
@@ -168,6 +170,7 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _backgroundColor = value;
+            _backgroundBrush = ParseBrush(value, DefaultBackgroundBrush);
             OnPropertyChanged();
             OnPropertyChanged(nameof(BackgroundBrush));
         }
@@ -185,6 +188,7 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _foregroundColor = value;
+            _foregroundBrush = ParseBrush(value, MediaBrushes.White);
             OnPropertyChanged();
             OnPropertyChanged(nameof(ForegroundBrush));
         }
@@ -322,9 +326,9 @@ public sealed class TileItem : INotifyPropertyChanged
     [JsonIgnore]
     public string Initial => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[0].ToString().ToUpperInvariant();
 
-    [JsonIgnore] public MediaBrush BackgroundBrush => ParseBrush(BackgroundColor, DefaultBackgroundBrush);
+    [JsonIgnore] public MediaBrush BackgroundBrush => _backgroundBrush;
 
-    [JsonIgnore] public MediaBrush ForegroundBrush => ParseBrush(ForegroundColor, MediaBrushes.White);
+    [JsonIgnore] public MediaBrush ForegroundBrush => _foregroundBrush;
 
     [JsonIgnore]
     public ImageSource? Icon

@@ -26,7 +26,6 @@ public static class SemanticZoomMotion
     public const int ZoomInVisualDurationMilliseconds = 200;
     public const double MotionBlurRadius = 5;
 
-    private const int DesiredFrameRate = 240;
     private const double OutgoingBlurScale = 0.35;
 
     private static readonly SemanticZoomProgressPoint[] ZoomOutGeometryProgress =
@@ -296,7 +295,6 @@ public static class SemanticZoomMotion
             Duration = end,
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromTimeSpan(TimeSpan.Zero)));
         if (timing.GeometryDelayMilliseconds > 0)
         {
@@ -333,7 +331,6 @@ public static class SemanticZoomMotion
             Duration = TimeSpan.FromMilliseconds(PresenterFadeDurationMilliseconds),
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         return animation;
     }
 
@@ -348,7 +345,6 @@ public static class SemanticZoomMotion
             Duration = duration,
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         var points = new SemanticZoomProgressPoint[]
         {
             new(0, 0),
@@ -380,7 +376,6 @@ public static class SemanticZoomMotion
             Duration = visualEnd,
             FillBehavior = FillBehavior.Stop,
         };
-        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         var points = new SemanticZoomProgressPoint[]
         {
             new(0, 0),

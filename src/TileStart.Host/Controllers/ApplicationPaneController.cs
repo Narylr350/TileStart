@@ -23,6 +23,8 @@ internal sealed class ApplicationPaneController
     private const int ExpandedRecentAppCount = 10;
 
     private readonly RangeObservableCollection<AppEntry> _apps = [];
+    private readonly RangeObservableCollection<IApplicationListItem> _applicationListItems = [];
+    private readonly RecentApplicationsSection _recentSection = new();
     private readonly Queue<HostRequest> _pendingHostRequests = [];
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
@@ -31,9 +33,6 @@ internal sealed class ApplicationPaneController
 
     private readonly TileLayout _tileLayout;
     private readonly System.Windows.Threading.Dispatcher _dispatcher;
-    private readonly Button _recentExpandButton;
-    private readonly TextBlock _recentExpandText;
-    private readonly TextBlock _recentExpandGlyph;
     private readonly Button _navigationToggleButton;
     private readonly Grid _windowRoot;
     private readonly Action _showFromShell;
@@ -47,9 +46,6 @@ internal sealed class ApplicationPaneController
     public ApplicationPaneController(
         TileLayout tileLayout,
         System.Windows.Threading.Dispatcher dispatcher,
-        Button recentExpandButton,
-        TextBlock recentExpandText,
-        TextBlock recentExpandGlyph,
         Button navigationToggleButton,
         Grid windowRoot,
         Action showFromShell,
@@ -62,9 +58,6 @@ internal sealed class ApplicationPaneController
     {
         _tileLayout = tileLayout;
         _dispatcher = dispatcher;
-        _recentExpandButton = recentExpandButton;
-        _recentExpandText = recentExpandText;
-        _recentExpandGlyph = recentExpandGlyph;
         _navigationToggleButton = navigationToggleButton;
         _windowRoot = windowRoot;
         _showFromShell = showFromShell;
@@ -75,13 +68,17 @@ internal sealed class ApplicationPaneController
         _prepareMotionElements = prepareMotionElements;
         _updateLayout = updateLayout;
 
-        AppsView = new ListCollectionView(_apps);
-        AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AppEntry.SortLetter)));
-        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.SortLetter), ListSortDirection.Ascending));
-        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
+        _applicationListItems.Add(_recentSection);
+        AppsView = new ListCollectionView(_applicationListItems);
+        AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(IApplicationListItem.SortLetter)));
+        AppsView.SortDescriptions.Add(
+            new SortDescription(nameof(IApplicationListItem.SortLetter), ListSortDirection.Ascending));
+        AppsView.SortDescriptions.Add(new SortDescription(nameof(IApplicationListItem.SortName), ListSortDirection.Ascending));
     }
 
-    public ObservableCollection<AppEntry> RecentApps { get; } = [];
+    public ObservableCollection<AppEntry> RecentApps => _recentSection.Apps;
+
+    public RecentApplicationsSection RecentSection => _recentSection;
 
     public string CurrentUserName { get; } = Environment.UserName;
 
@@ -114,6 +111,7 @@ internal sealed class ApplicationPaneController
                         == LaunchTargetIdentity.GetKey(custom.LaunchTarget))))
                     .ToArray();
             _apps.AddRange(apps);
+            _applicationListItems.AddRange(apps);
 
             var launchableApps = AppEntry.FlattenApplications(apps).ToArray();
             _launchableApps = launchableApps;
@@ -123,9 +121,6 @@ internal sealed class ApplicationPaneController
                 .Take(ExpandedRecentAppCount)
                 .ToArray();
             RefreshRecentApps();
-            _recentExpandButton.Visibility = _recentAppCandidates.Length > CollapsedRecentAppCount
-                ? Visibility.Visible
-                : Visibility.Collapsed;
 
             AlphabetIndex.UpdateAvailability(AlphabetLetters, apps, RecentApps.Count > 0);
             var savedLayout = TileLayoutStore.Load();
@@ -195,6 +190,7 @@ internal sealed class ApplicationPaneController
         }
 
         _apps.Add(app);
+        _applicationListItems.Add(app);
         RefreshApplicationCollection();
         _ = LoadApplicationIconsAsync([app]);
         ShowIfHidden();
@@ -345,6 +341,9 @@ internal sealed class ApplicationPaneController
 
     public void RefreshApplicationCollection()
     {
+        _applicationListItems.Clear();
+        _applicationListItems.Add(_recentSection);
+        _applicationListItems.AddRange(_apps);
         _launchableApps = [.. AppEntry.FlattenApplications(_apps)];
         _recentAppCandidates = _launchableApps
             .Where(app => app.AddedAt > DateTime.MinValue)
@@ -352,9 +351,6 @@ internal sealed class ApplicationPaneController
             .Take(ExpandedRecentAppCount)
             .ToArray();
         RefreshRecentApps();
-        _recentExpandButton.Visibility = _recentAppCandidates.Length > CollapsedRecentAppCount
-            ? Visibility.Visible
-            : Visibility.Collapsed;
         AppsView.Refresh();
         AlphabetIndex.UpdateAvailability(AlphabetLetters, _apps, RecentApps.Count > 0);
     }
@@ -448,9 +444,13 @@ internal sealed class ApplicationPaneController
         {
             var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
             var packagedApps = apps.Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
-            await Task.WhenAll(
+            var loadedGroups = await Task.WhenAll(
                 Task.Run(() => LoadApplicationIcons(classicApps)),
                 RunStaThreadAsync(() => LoadApplicationIcons(packagedApps), "TileStart Packaged Icon Loader"));
+            var loadedIcons = loadedGroups.SelectMany(group => group).ToArray();
+            await _dispatcher.InvokeAsync(
+                () => ApplyApplicationIcons(loadedIcons),
+                System.Windows.Threading.DispatcherPriority.Background);
             DiagnosticLog.Write($"Application icon loading completed: {apps.Count} entries processed.");
         }
         catch (Exception exception)
@@ -459,66 +459,70 @@ internal sealed class ApplicationPaneController
         }
     }
 
-    private void LoadApplicationIcons(IEnumerable<AppEntry> apps)
+    private static IReadOnlyList<LoadedApplicationIcon> LoadApplicationIcons(IEnumerable<AppEntry> apps)
     {
+        var loadedIcons = new List<LoadedApplicationIcon>();
         foreach (var app in apps)
         {
             try
             {
                 var icon = ShellIconLoader.Load(app.LaunchTarget) ?? GenericAppIcon.Image;
-
-                if (_dispatcher.HasShutdownStarted)
-                {
-                    return;
-                }
-
-                _dispatcher.Invoke(() => ApplyApplicationIcon(app, icon));
+                loadedIcons.Add(new LoadedApplicationIcon(app, icon));
             }
             catch (Exception exception)
             {
-                if (_dispatcher.HasShutdownStarted)
-                {
-                    return;
-                }
-
                 DiagnosticLog.Write($"Application icon load failed for '{app.LaunchTarget}': {exception.Message}");
             }
         }
+
+        return loadedIcons;
     }
 
-    private void ApplyApplicationIcon(AppEntry app, ImageSource icon)
+    private void ApplyApplicationIcons(IReadOnlyList<LoadedApplicationIcon> loadedIcons)
     {
-        app.Icon = icon;
+        if (_dispatcher.HasShutdownStarted)
+        {
+            return;
+        }
+
+        var iconsByTarget = new Dictionary<string, ImageSource>(StringComparer.OrdinalIgnoreCase);
+        foreach (var loaded in loadedIcons)
+        {
+            loaded.App.Icon = loaded.Icon;
+            iconsByTarget[loaded.App.LaunchTarget] = loaded.Icon;
+        }
+
         foreach (var tile in _tileLayout.Groups.SelectMany(group => group.Tiles))
         {
-            ApplyApplicationIconToTile(tile, app.LaunchTarget, icon);
+            ApplyApplicationIconsToTile(tile, iconsByTarget);
         }
     }
 
-    private static void ApplyApplicationIconToTile(TileItem tile, string launchTarget, ImageSource icon)
+    private static void ApplyApplicationIconsToTile(
+        TileItem tile,
+        IReadOnlyDictionary<string, ImageSource> iconsByTarget)
     {
         if (string.IsNullOrWhiteSpace(tile.IconPath) &&
             !tile.UsesFullTileLogo &&
-            tile.LaunchTarget.Equals(launchTarget, StringComparison.OrdinalIgnoreCase))
+            iconsByTarget.TryGetValue(tile.LaunchTarget, out var icon))
         {
             tile.Icon = icon;
         }
 
         foreach (var child in tile.FolderTiles)
         {
-            ApplyApplicationIconToTile(child, launchTarget, icon);
+            ApplyApplicationIconsToTile(child, iconsByTarget);
         }
     }
 
-    private static Task RunStaThreadAsync(Action action, string name)
+    private static Task<T> RunStaThreadAsync<T>(Func<T> action, string name)
     {
-        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
             try
             {
-                action();
-                completion.SetResult();
+                completion.SetResult(action());
             }
             catch (Exception exception)
             {
@@ -533,6 +537,8 @@ internal sealed class ApplicationPaneController
         thread.Start();
         return completion.Task;
     }
+
+    private readonly record struct LoadedApplicationIcon(AppEntry App, ImageSource Icon);
 
     public void RecentExpandButtonClick()
     {
@@ -550,8 +556,9 @@ internal sealed class ApplicationPaneController
             RecentApps.Add(app);
         }
 
-        _recentExpandText.Text = _recentAppsExpanded ? "折叠" : "展开";
-        _recentExpandGlyph.Text = _recentAppsExpanded ? "\uE70E" : "\uE70D";
+        _recentSection.Update(
+            _recentAppsExpanded,
+            _recentAppCandidates.Length > CollapsedRecentAppCount);
     }
 
     public async Task AppButtonClick(AppEntry app)

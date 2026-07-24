@@ -6,8 +6,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
-using Image = System.Windows.Controls.Image;
 using TileStart.Host.Tiles.Models;
 using TileStart.Host.Utilities;
 using TileStart.Host.Windowing;
@@ -36,11 +34,9 @@ public class StartWindowController
     private readonly Window _window;
     private readonly Grid _windowRoot;
     private readonly Grid _mainSurface;
-    private readonly Image _entrancePreview;
     private readonly Action _beforeShow;
     private readonly Action _clearSearch;
     private readonly Func<bool> _ensureTileScrollBarClearance;
-    private readonly Func<FrameworkElement, BitmapSource> _captureElement;
     private readonly Func<IReadOnlyDictionary<TileGroup, System.Windows.Point>> _captureGroupReorderPositions;
     private readonly Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> _animateGroupReorderFrom;
     private readonly Func<bool> _isAnyDragActive;
@@ -54,8 +50,6 @@ public class StartWindowController
     private readonly StartWindowLifecycle _foregroundLifecycle = new();
     private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private int _foregroundActivationGeneration;
-    private bool _entranceSnapshotActive;
-    private int _entranceSnapshotGeneration;
     private bool _allowClose;
     private bool _isDismissing;
     private HwndSource? _windowSource;
@@ -77,11 +71,9 @@ public class StartWindowController
         Window window,
         Grid windowRoot,
         Grid mainSurface,
-        Image entrancePreview,
         Action beforeShow,
         Action clearSearch,
         Func<bool> ensureTileScrollBarClearance,
-        Func<FrameworkElement, BitmapSource> captureElement,
         Func<IReadOnlyDictionary<TileGroup, System.Windows.Point>> captureGroupReorderPositions,
         Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> animateGroupReorderFrom,
         Func<bool> isAnyDragActive,
@@ -90,11 +82,9 @@ public class StartWindowController
         _window = window;
         _windowRoot = windowRoot;
         _mainSurface = mainSurface;
-        _entrancePreview = entrancePreview;
         _beforeShow = beforeShow;
         _clearSearch = clearSearch;
         _ensureTileScrollBarClearance = ensureTileScrollBarClearance;
-        _captureElement = captureElement;
         _captureGroupReorderPositions = captureGroupReorderPositions;
         _animateGroupReorderFrom = animateGroupReorderFrom;
         _isAnyDragActive = isAnyDragActive;
@@ -121,20 +111,27 @@ public class StartWindowController
 
         _beforeShow();
 
-        CancelEntranceSnapshot();
+        StopEntranceCache();
         ApplyWindowMaterial();
         _foregroundLifecycle.Reset();
         PositionOnCurrentMonitor();
         PrepareMotionElements();
         var animationsEnabled = SystemParameters.ClientAreaAnimation;
-        var usesSnapshot = animationsEnabled && TryPrepareEntranceSnapshot();
-        FrameworkElement motionRoot = usesSnapshot ? _windowRoot : _mainSurface;
-        FrameworkElement[] motionElements = [usesSnapshot ? _entrancePreview : _mainSurface];
-        StartMotion.StageEntrance(motionRoot, motionElements, _taskbarEdge == TaskbarEdge.Bottom, animationsEnabled);
+        _ = RenderFrameProbe.Start(
+            _window.Dispatcher,
+            "start-entrance",
+            TimeSpan.FromMilliseconds(650));
+        if (animationsEnabled)
+        {
+            _mainSurface.CacheMode = new BitmapCache { EnableClearType = true, RenderAtScale = 1 };
+        }
+
+        StartMotion.StageEntrance(
+            _mainSurface,
+            [_mainSurface],
+            _taskbarEdge == TaskbarEdge.Bottom,
+            animationsEnabled);
         _window.Show();
-        _window.UpdateLayout();
-        _ensureTileScrollBarClearance();
-        PositionOnCurrentMonitor();
         _ = _window.Dispatcher.BeginInvoke(
             System.Windows.Threading.DispatcherPriority.Loaded,
             () =>
@@ -150,11 +147,10 @@ public class StartWindowController
         TryAcquireForeground(activationGeneration, 0);
 
         _foregroundWatchdogTimer.Start();
-        var generation = _entranceSnapshotGeneration;
         StartMotion.PlayEntrance(
-            motionElements,
+            [_mainSurface],
             animationsEnabled,
-            usesSnapshot ? () => CompleteEntranceSnapshot(generation) : null);
+            StopEntranceCache);
         WindowShown?.Invoke();
     }
 
@@ -292,61 +288,22 @@ public class StartWindowController
             return;
         }
 
-        var size = new System.Windows.Size(Math.Max(_window.MinWidth, _window.Width),
-            Math.Max(_window.MinHeight, _window.Height));
-        _windowRoot.Measure(size);
-        _windowRoot.Arrange(new System.Windows.Rect(new System.Windows.Point(), size));
-        _windowRoot.UpdateLayout();
-        StartMotion.Prepare([_mainSurface, _entrancePreview]);
-    }
-
-    private bool TryPrepareEntranceSnapshot()
-    {
-        if (_mainSurface.ActualWidth <= 0 || _mainSurface.ActualHeight <= 0)
+        if (!_windowRoot.IsMeasureValid || !_windowRoot.IsArrangeValid
+                                        || _windowRoot.ActualWidth <= 0 || _windowRoot.ActualHeight <= 0)
         {
-            return false;
-        }
-
-        try
-        {
-            _entrancePreview.Source = _captureElement(_mainSurface);
-            _entrancePreview.Width = _mainSurface.ActualWidth;
-            _entrancePreview.Height = _mainSurface.ActualHeight;
-            _entrancePreview.Visibility = Visibility.Visible;
-            _mainSurface.Visibility = Visibility.Hidden;
-            _entranceSnapshotActive = true;
-            _entranceSnapshotGeneration++;
+            var size = new System.Windows.Size(Math.Max(_window.MinWidth, _window.Width),
+                Math.Max(_window.MinHeight, _window.Height));
+            _windowRoot.Measure(size);
+            _windowRoot.Arrange(new System.Windows.Rect(new System.Windows.Point(), size));
             _windowRoot.UpdateLayout();
-            return true;
         }
-        catch (Exception exception)
-        {
-            DiagnosticLog.Write($"Entrance snapshot failed: {exception}");
-            CancelEntranceSnapshot();
-            return false;
-        }
+
+        StartMotion.Prepare([_mainSurface]);
     }
 
-    private void CompleteEntranceSnapshot(int generation)
+    private void StopEntranceCache()
     {
-        if (!_entranceSnapshotActive || generation != _entranceSnapshotGeneration)
-        {
-            return;
-        }
-
-        _mainSurface.Visibility = Visibility.Visible;
-        _entrancePreview.Visibility = Visibility.Collapsed;
-        _entrancePreview.Source = null;
-        _entranceSnapshotActive = false;
-    }
-
-    private void CancelEntranceSnapshot()
-    {
-        _entranceSnapshotGeneration++;
-        _entranceSnapshotActive = false;
-        _mainSurface.Visibility = Visibility.Visible;
-        _entrancePreview.Visibility = Visibility.Collapsed;
-        _entrancePreview.Source = null;
+        _mainSurface.CacheMode = null;
     }
 
     private void PositionOnCurrentMonitor()
@@ -485,7 +442,7 @@ public class StartWindowController
         _isDismissing = true;
         WindowDismissing?.Invoke();
         _foregroundWatchdogTimer.Stop();
-        CancelEntranceSnapshot();
+        StopEntranceCache();
         SaveCurrentSize();
         _clearSearch();
         var wasTopmost = _window.Topmost;

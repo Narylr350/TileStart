@@ -25,9 +25,6 @@ public partial class MainWindow : Window
         _appController = new Controllers.ApplicationPaneController(
             TileLayout,
             Dispatcher,
-            RecentExpandButton,
-            RecentExpandText,
-            RecentExpandGlyph,
             NavigationToggleButton,
             WindowRoot,
             showFromShell: ShowFromShell,
@@ -68,9 +65,8 @@ public partial class MainWindow : Window
             SearchPanel,
             SearchBox,
             AppsView,
-            AppsScrollViewer,
             AppsList,
-            RecentPanel,
+            _appController.RecentSection,
             SemanticZoomViewport,
             SemanticZoomSharedScale,
             SemanticZoomSharedTranslate,
@@ -101,7 +97,6 @@ public partial class MainWindow : Window
             this,
             WindowRoot,
             MainSurface,
-            EntrancePreview,
             beforeShow: () =>
             {
                 if (_appController.CheckAndRemoveMissingApps())
@@ -109,7 +104,6 @@ public partial class MainWindow : Window
             },
             clearSearch: _navigationController.ClearSearch,
             ensureTileScrollBarClearance: () => _tileDragCoordinator.EnsureTileScrollBarClearance(),
-            captureElement: CaptureElement,
             captureGroupReorderPositions: () => _tileDragCoordinator.CaptureGroupReorderPositions(),
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
