@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (major.minor.patch)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve release version
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if ($env:EVENT_NAME -eq 'workflow_dispatch') {
+            if ($env:REF -ne 'refs/heads/main') {
+              throw 'Manual releases must run from the main branch.'
+            }
+            $version = $env:INPUT_VERSION
+            $tag = "v$version"
+          }
+          else {
+            $tag = $env:REF_NAME
+            $version = $tag.TrimStart('v')
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version must use major.minor.patch format: $version"
+          }
+
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Run tests
+        shell: pwsh
+        run: dotnet test tests\TileStart.Host.Tests\TileStart.Host.Tests.csproj -c Release
+
+      - name: Build release packages
+        shell: pwsh
+        run: .\scripts\Build-Package.ps1 -Version $env:VERSION
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TileStart-${{ env.VERSION }}-win-x64
+          if-no-files-found: error
+          path: |
+            artifacts/installer/TileStart-Setup-win-x64.exe
+            artifacts/package/TileStart-portable-win-x64.zip
+            artifacts/package/SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = @(
+            'artifacts/installer/TileStart-Setup-win-x64.exe',
+            'artifacts/package/TileStart-portable-win-x64.zip',
+            'artifacts/package/SHA256SUMS.txt'
+          )
+          gh release create $env:RELEASE_TAG $assets `
+            --repo $env:GITHUB_REPOSITORY `
+            --target $env:GITHUB_SHA `
+            --title "TileStart $env:RELEASE_TAG" `
+            --generate-notes

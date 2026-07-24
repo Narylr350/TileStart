@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/Narylr350/TileStart?display_name=tag&style=flat-square)](https://github.com/Narylr350/TileStart/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
-![Tests](https://img.shields.io/badge/tests-325%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-326%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -237,6 +237,23 @@ artifacts\installer\TileStart-Setup-win-x64.exe
 ```
 
 `artifacts/` 是本地构建输出，不提交到 Git。
+
+### 自动发布
+
+推送符合 `v主版本.次版本.修订号` 格式的标签后，GitHub Actions 会自动运行测试、构建完整 x64 解决方案、生成便携包与安装器、计算 SHA-256，并创建 GitHub Release：
+
+```powershell
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.1`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
+
+本地为指定版本生成相同产物：
+
+```powershell
+.\scripts\Build-Package.ps1 -Version 0.1.1
+```
 
 ## 项目结构
 
