@@ -71,9 +71,48 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(highlight, colors.MenuItemSelected);
     }
 
+    [Fact]
+    public void SharedExpanderTemplatePropagatesWhiteForegroundIntoHeaderAndChevron()
+    {
+        var document = LoadXaml("App.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "TileStartDarkExpanderStyle");
+        Assert.Contains(style.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Foreground"
+            && (string?)setter.Attribute("Value") == "White");
+
+        var toggle = style.Descendants(presentation + "ToggleButton").Single();
+        Assert.Equal("{TemplateBinding Foreground}", (string?)toggle.Attribute("Foreground"));
+        var header = style.Descendants(presentation + "ContentPresenter")
+            .Single(element => element.Attribute("Content") is not null);
+        Assert.Equal("{TemplateBinding Foreground}", (string?)header.Attribute("TextElement.Foreground"));
+        var chevron = style.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute(x + "Name") == "Chevron");
+        Assert.Equal("{TemplateBinding Foreground}", (string?)chevron.Attribute("Foreground"));
+    }
+
+    [Theory]
+    [InlineData("TileSettingsWindow.xaml", "SettingsExpanderStyle")]
+    [InlineData("BackupRestoreWindow.xaml", "BackupExpanderStyle")]
+    public void DarkWindowsUseTheSharedExpanderTemplate(string fileName, string styleKey)
+    {
+        var document = LoadXaml(fileName);
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == styleKey);
+
+        Assert.Equal("{StaticResource TileStartDarkExpanderStyle}", (string?)style.Attribute("BasedOn"));
+    }
+
     private static XDocument LoadMainWindow()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", "MainWindow.xaml");
-        return XDocument.Load(path);
+        return LoadXaml("MainWindow.xaml");
     }
+
+    private static XDocument LoadXaml(string fileName) =>
+        XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", fileName));
 }

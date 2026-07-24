@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Windows;
+using TileStart.Host.Backup;
 using TileStart.Host.Shell;
 using TileStart.Host.Utilities;
+using MessageBox = System.Windows.MessageBox;
 
 namespace TileStart.Host;
 
@@ -11,6 +14,7 @@ public partial class App : System.Windows.Application
     private SingleInstanceGuard? _singleInstance;
     private TrayIcon? _trayIcon;
     private WinKeyHook? _winKeyHook;
+    private BackupRestoreRequest? _pendingRestore;
     private bool _isPaused;
 
     public App()
@@ -63,6 +67,7 @@ public partial class App : System.Windows.Application
         _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
             SetPaused,
             WinKeyHook.OpenNativeStartMenu,
+            OpenBackupAndRestore,
             ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
         {
@@ -134,6 +139,27 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private void OpenBackupAndRestore()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            var dialog = new BackupRestoreWindow(ScheduleRestore);
+            if (MainWindow?.IsVisible == true)
+            {
+                dialog.Owner = MainWindow;
+            }
+
+            dialog.ShowDialog();
+        });
+    }
+
+    private void ScheduleRestore(BackupRestoreRequest request)
+    {
+        _pendingRestore = request;
+        ((MainWindow)MainWindow).AllowClose();
+        Shutdown();
+    }
+
     private void ExitApplication()
     {
         ((MainWindow)MainWindow).AllowClose();
@@ -151,8 +177,34 @@ public partial class App : System.Windows.Application
 
         _shellIntegration?.Dispose();
         _singleInstance?.Dispose();
-        DiagnosticLog.Flush();
 
+        Exception? restoreError = null;
+        if (_pendingRestore is { } request)
+        {
+            try
+            {
+                var safetyBackup = TileStartBackupService.Default.Restore(request.ArchivePath, request.Components);
+                DiagnosticLog.Write($"Backup restored. Safety backup: {safetyBackup}");
+            }
+            catch (Exception exception)
+            {
+                restoreError = exception;
+                DiagnosticLog.Write($"Backup restore failed: {exception}");
+            }
+        }
+
+        DiagnosticLog.Flush();
         base.OnExit(e);
+
+        if (_pendingRestore is not null && Environment.ProcessPath is { } executablePath)
+        {
+            if (restoreError is not null)
+            {
+                MessageBox.Show($"恢复失败：{restoreError.Message}", "TileStart", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+
+            Process.Start(new ProcessStartInfo(executablePath) { UseShellExecute = true });
+        }
     }
 }

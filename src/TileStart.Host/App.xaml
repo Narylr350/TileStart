@@ -37,5 +37,75 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="TileStartDarkExpanderStyle" TargetType="Expander">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#242424" />
+            <Setter Property="BorderBrush" Value="#3D3D3D" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <ToggleButton x:Name="HeaderSite"
+                                              Height="44"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Grid x:Name="HeaderBackground" Background="{TemplateBinding Background}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="36" />
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Margin="16,0,0,0"
+                                                                  VerticalAlignment="Center"
+                                                                  TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                  Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}" />
+                                                <TextBlock x:Name="Chevron"
+                                                           Grid.Column="1"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{TemplateBinding Foreground}"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="10"
+                                                           Text="&#xE70D;" />
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="HeaderBackground" Property="Background" Value="#2E2E2E" />
+                                                </Trigger>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Chevron" Property="Text" Value="&#xE70E;" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ExpandSite"
+                                                  Grid.Row="1"
+                                                  Margin="16,2,16,16"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}"
+                                                  Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

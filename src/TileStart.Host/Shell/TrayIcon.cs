@@ -10,7 +10,8 @@ public sealed class TrayIcon : IDisposable
     private readonly Drawing.Icon? _applicationIcon;
     private readonly Drawing.Font _menuFont;
 
-    public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Action exit)
+    public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Action openBackupAndRestore,
+        Action exit)
     {
         _menuFont = new Drawing.Font("Segoe UI", 10, Drawing.FontStyle.Regular, Drawing.GraphicsUnit.Point);
         var menu = CreateContextMenu(_menuFont);
@@ -37,6 +38,7 @@ public sealed class TrayIcon : IDisposable
             }
         };
         menu.Items.Add(startupItem);
+        menu.Items.Add(CreateMenuItem("备份与恢复…", (_, _) => openBackupAndRestore()));
         menu.Items.Add(CreateSeparator());
         menu.Items.Add(CreateMenuItem("退出", (_, _) => exit()));
 

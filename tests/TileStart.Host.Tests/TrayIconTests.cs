@@ -16,12 +16,14 @@ public sealed class TrayIconTests
             {
                 var showCount = 0;
                 var nativeCount = 0;
+                var backupCount = 0;
                 var exitCount = 0;
                 var pauseStates = new List<bool>();
                 using var tray = new TrayIcon(
                     () => showCount++,
                     paused => pauseStates.Add(paused),
                     () => nativeCount++,
+                    () => backupCount++,
                     () => exitCount++);
 
                 var notifyIcon = Assert.IsType<Forms.NotifyIcon>(
@@ -35,10 +37,12 @@ public sealed class TrayIconTests
                 Assert.True(pause.Checked);
                 pause.PerformClick();
                 Assert.False(pause.Checked);
+                Find(menu, "备份与恢复…").PerformClick();
                 Find(menu, "退出").PerformClick();
 
                 Assert.Equal(1, showCount);
                 Assert.Equal(1, nativeCount);
+                Assert.Equal(1, backupCount);
                 Assert.Equal(1, exitCount);
                 Assert.Equal([true, false], pauseStates);
                 Assert.NotNull(menu.Items.OfType<Forms.ToolStripMenuItem>().Single(item => item.Text == "登录时启动"));

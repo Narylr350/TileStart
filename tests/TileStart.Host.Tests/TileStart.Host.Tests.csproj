@@ -46,6 +46,12 @@
     <Content Include="..\..\src\TileStart.Host\MainWindow.xaml"
              Link="TestData\Xaml\MainWindow.xaml"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\App.xaml"
+             Link="TestData\Xaml\App.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Backup\BackupRestoreWindow.xaml"
+             Link="TestData\Xaml\BackupRestoreWindow.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\Tiles\Settings\TileSettingsWindow.xaml"
              Link="TestData\Xaml\TileSettingsWindow.xaml"
              CopyToOutputDirectory="PreserveNewest" />
