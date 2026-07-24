@@ -436,7 +436,8 @@ internal sealed class TileWorkspaceController
 
     public void TileButton_Click(object sender, RoutedEventArgs e)
     {
-        var suppress = _tileDragCoordinator.DragCompletedFlag || Environment.TickCount64 <= _getSuppressTileActivationUntil();
+        var suppress = _tileDragCoordinator.DragCompletedFlag ||
+                       Environment.TickCount64 <= _getSuppressTileActivationUntil();
         if (suppress)
         {
             _tileDragCoordinator.ResetDragCompletedFlag();

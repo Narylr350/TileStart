@@ -36,7 +36,7 @@ public partial class MainWindow : Window
 {
     private readonly StartWindowController _controller;
     private readonly Controllers.ApplicationPaneController _appController;
-    private readonly Controllers.TileDragCoordinator _tileDragCoordinator = null!;
+    private readonly Controllers.TileDragCoordinator _tileDragCoordinator;
     private readonly Controllers.NavigationController _navigationController;
     private readonly Controllers.TileWorkspaceController _tileWorkspaceController;
 
@@ -68,7 +68,8 @@ public partial class MainWindow : Window
             InternalDragPreviewTransform,
             TileLayout,
             _appController,
-            findTileLocation: (TileItem tile, out TileGroup group, out TileItem? folder) => _tileWorkspaceController!.FindTileLocation(tile, out group, out folder),
+            findTileLocation: (TileItem tile, out TileGroup group, out TileItem? folder) =>
+                _tileWorkspaceController!.FindTileLocation(tile, out group, out folder),
             setSuppressTileActivationUntil: value => _suppressTileActivationUntil = value,
             captureElement: CaptureElement);
         _navigationController = new Controllers.NavigationController(
