@@ -1,15 +1,12 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using Button = System.Windows.Controls.Button;
 using Canvas = System.Windows.Controls.Canvas;
 using ContextMenu = System.Windows.Controls.ContextMenu;
@@ -37,37 +34,107 @@ namespace TileStart.Host;
 
 public partial class MainWindow : Window
 {
+    private readonly StartWindowController _controller;
+    private readonly Controllers.ApplicationPaneController _appController;
+    private readonly Controllers.TileDragCoordinator _tileDragCoordinator = null!;
+    private readonly Controllers.NavigationController _navigationController;
+    private readonly Controllers.TileWorkspaceController _tileWorkspaceController;
 
-    private readonly System.Windows.Threading.DispatcherTimer _foregroundWatchdogTimer = new()
-    {
-        Interval = TimeSpan.FromMilliseconds(50),
-    };
-
-    private readonly System.Windows.Threading.DispatcherTimer _navigationHoverTimer = new()
-    {
-        Interval = SystemParameters.MouseHoverTime,
-    };
-
-    private bool _navigationExpanded;
-    private bool _navigationPinnedOpen;
-    private readonly NavigationPreferences _navigationPreferences = NavigationPreferencesStore.Load();
-    private int _semanticZoomAnimationGeneration;
-    private int _foregroundActivationGeneration;
-    private bool _isLetterIndexActive;
-    private bool _isSemanticZoomAnimating;
     public MainWindow()
     {
-        AppsView = new ListCollectionView(_apps);
-        AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AppEntry.SortLetter)));
-        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.SortLetter), ListSortDirection.Ascending));
-        AppsView.SortDescriptions.Add(new SortDescription(nameof(AppEntry.Name), ListSortDirection.Ascending));
         InitializeComponent();
-        ApplyNavigationPreferences();
-        SemanticZoomViewport.SizeChanged += SemanticZoomViewport_SizeChanged;
-        _tileReflowTimer.Tick += TileReflowTimer_Tick;
-        _folderActivationTimer.Tick += FolderActivationTimer_Tick;
-        _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
-        _navigationHoverTimer.Tick += NavigationHoverTimer_Tick;
+        _appController = new Controllers.ApplicationPaneController(
+            TileLayout,
+            Dispatcher,
+            RecentExpandButton,
+            RecentExpandText,
+            RecentExpandGlyph,
+            NavigationToggleButton,
+            WindowRoot,
+            showFromShell: ShowFromShell,
+            dismissWindow: DismissWindow,
+            toggleAppFolderAsync: folder => _tileWorkspaceController!.ToggleAppFolderAsync(folder),
+            pinTileToStart: tile => _tileWorkspaceController!.PinTileToStart(tile),
+            ensureGroupGridCoordinates: () => _tileDragCoordinator!.EnsureGroupGridCoordinates(),
+            prepareMotionElements: PrepareMotionElements,
+            updateLayout: () => UpdateLayout());
+        _tileDragCoordinator = new Controllers.TileDragCoordinator(
+            this,
+            MainSurface,
+            TilePane,
+            TileScrollViewer,
+            TileGroupsControl,
+            InternalDragPreview,
+            InternalDragPreviewTransform,
+            TileLayout,
+            _appController,
+            findTileLocation: (TileItem tile, out TileGroup group, out TileItem? folder) => _tileWorkspaceController!.FindTileLocation(tile, out group, out folder),
+            setSuppressTileActivationUntil: value => _suppressTileActivationUntil = value,
+            captureElement: CaptureElement);
+        _navigationController = new Controllers.NavigationController(
+            NavigationPane,
+            NavigationToggleButton,
+            UserNavigationButton,
+            DocumentsNavigationButton,
+            DownloadsNavigationButton,
+            PicturesNavigationButton,
+            MusicNavigationButton,
+            VideosNavigationButton,
+            FileExplorerNavigationButton,
+            NetworkNavigationButton,
+            SettingsNavigationButton,
+            PowerNavigationButton,
+            LetterIndexPanel,
+            SearchPanel,
+            SearchBox,
+            AppsView,
+            AppsScrollViewer,
+            AppsList,
+            RecentPanel,
+            SemanticZoomViewport,
+            SemanticZoomSharedScale,
+            SemanticZoomSharedTranslate,
+            SemanticZoomedInScale,
+            SemanticZoomedInTranslate,
+            ZoomedInPresenter,
+            dismissWindow: DismissWindow,
+            cancelCurrentDrag: () => _tileDragCoordinator?.CancelCurrentDrag() ?? false,
+            getAllApps: () => _appController.AllApps,
+            getOpenContextMenuCount: () => _openContextMenuCount,
+            lockWorkStation: () => LockWorkStation(),
+            setSuspendState: (h, f, d) => SetSuspendState(h, f, d));
+        _tileWorkspaceController = new Controllers.TileWorkspaceController(
+            this,
+            TileLayout,
+            _tileDragCoordinator,
+            _appController,
+            _navigationController,
+            NavigationPane,
+            TileGroupsControl,
+            AppsList,
+            dismissWindow: DismissWindow,
+            tryDismissAfterForegroundChange: TryDismissAfterForegroundChange,
+            getOpenContextMenuCount: () => _openContextMenuCount,
+            setOpenContextMenuCount: value => _openContextMenuCount = value,
+            getSuppressTileActivationUntil: () => _suppressTileActivationUntil);
+        _controller = new StartWindowController(
+            this,
+            WindowRoot,
+            MainSurface,
+            EntrancePreview,
+            beforeShow: () =>
+            {
+                if (_appController.CheckAndRemoveMissingApps())
+                    _appController.RefreshApplicationCollection();
+            },
+            clearSearch: _navigationController.ClearSearch,
+            ensureTileScrollBarClearance: () => _tileDragCoordinator.EnsureTileScrollBarClearance(),
+            captureElement: CaptureElement,
+            captureGroupReorderPositions: () => _tileDragCoordinator.CaptureGroupReorderPositions(),
+            animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
+            isAnyDragActive: () => _tileDragCoordinator.IsDragging,
+            hasOpenContextMenu: () => _openContextMenuCount > 0);
+        _navigationController.ApplyNavigationPreferences();
         DataContext = this;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
         MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
@@ -82,106 +149,70 @@ public partial class MainWindow : Window
             Width = StartWindowSizing.WidthForColumns(2);
         }
 
-        _ = LoadAppsAsync();
+        _ = _appController.LoadAppsAsync();
     }
-    public ObservableCollection<AppEntry> RecentApps { get; } = [];
 
-    public string CurrentUserName { get; } = Environment.UserName;
+    public ObservableCollection<AppEntry> RecentApps => _appController.RecentApps;
 
-    public ImageSource? CurrentUserPicture { get; } = UserAccountPictureLoader.Load();
+    public string CurrentUserName => _appController.CurrentUserName;
 
-    public ICollectionView AppsView { get; }
+    public ImageSource? CurrentUserPicture => _appController.CurrentUserPicture;
 
-    public IReadOnlyList<AlphabetIndexEntry> AlphabetLetters { get; } = AlphabetIndex.Create();
+    public ICollectionView AppsView => _appController.AppsView;
+
+    public IReadOnlyList<AlphabetIndexEntry> AlphabetLetters => _appController.AlphabetLetters;
 
     public TileLayout TileLayout { get; } = new();
+
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        _windowSource = PresentationSource.FromVisual(this) as HwndSource;
-        _windowSource?.AddHook(WindowMessageHook);
-        ApplyWindowMaterial();
+        _controller.SetWindowSource(PresentationSource.FromVisual(this) as HwndSource);
+        _controller.ApplyWindowMaterial();
     }
-    public void ShowFromShell()
-    {
-        if (IsVisible)
-        {
-            DismissWindow();
-            return;
-        }
 
-        if (_applicationContentReady && RemoveMissingApplications(_apps))
-        {
-            RefreshApplicationCollection();
-        }
+    public void ShowFromShell() => _controller.ShowFromShell();
 
-        CancelEntranceSnapshot();
-        ApplyWindowMaterial();
-        _foregroundLifecycle.Reset();
-        PositionOnCurrentMonitor();
-        PrepareMotionElements();
-        var animationsEnabled = SystemParameters.ClientAreaAnimation;
-        var usesSnapshot = animationsEnabled && TryPrepareEntranceSnapshot();
-        FrameworkElement motionRoot = usesSnapshot ? WindowRoot : MainSurface;
-        FrameworkElement[] motionElements = [usesSnapshot ? EntrancePreview : MainSurface];
-        StartMotion.StageEntrance(motionRoot, motionElements, _taskbarEdge == TaskbarEdge.Bottom, animationsEnabled);
-        Show();
-        UpdateLayout();
-        EnsureTileScrollBarClearance();
-        PositionOnCurrentMonitor();
-        _ = Dispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.Loaded,
-            () =>
-            {
-                if (EnsureTileScrollBarClearance())
-                {
-                    PositionOnCurrentMonitor();
-                }
-            });
-        Activate();
-        Focus();
-        var activationGeneration = ++_foregroundActivationGeneration;
-        TryAcquireForeground(activationGeneration, 0);
+    public void AllowClose() => _controller.AllowClose();
 
-        _foregroundWatchdogTimer.Start();
-        var generation = _entranceSnapshotGeneration;
-        StartMotion.PlayEntrance(
-            motionElements,
-            animationsEnabled,
-            usesSnapshot ? () => CompleteEntranceSnapshot(generation) : null);
-    }
-    public void AllowClose()
-    {
-        _allowClose = true;
-    }
     protected override void OnClosing(CancelEventArgs e)
     {
-        SaveCurrentSize();
-        if (!_allowClose)
-        {
-            e.Cancel = true;
-            _foregroundWatchdogTimer.Stop();
-            _navigationHoverTimer.Stop();
-            Hide();
-        }
-
+        _controller.OnClosing(e);
+        _navigationController.StopHoverTimer();
         base.OnClosing(e);
     }
+
     protected override void OnClosed(EventArgs e)
     {
-        StopWindowWidthSnapAnimation();
-        StopTileDragAutoScroll();
-        _foregroundWatchdogTimer.Stop();
-        _navigationHoverTimer.Stop();
-        _windowSource?.RemoveHook(WindowMessageHook);
-        _windowSource = null;
+        _tileDragCoordinator?.StopTileDragAutoScroll();
+        _navigationController.StopHoverTimer();
+        _controller.OnClosed();
         base.OnClosed(e);
     }
+
+    private void Window_Deactivated(object? sender, EventArgs e) =>
+        _controller.WindowDeactivated();
+
+    private void TopResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        _controller.TopResizeBorder_MouseLeftButtonDown(sender, e);
+
+    private void RightResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        _controller.RightResizeBorder_MouseLeftButtonDown(sender, e);
+
+    private void TopRightResizeBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        _controller.TopRightResizeBorder_MouseLeftButtonDown(sender, e);
+
+    private void DismissWindow(bool yieldTopmost = false) => _controller.DismissWindow(yieldTopmost);
+
+    private void PrepareMotionElements() => _controller.PrepareMotionElements();
+
+    private void TryDismissAfterForegroundChange(string trigger) =>
+        _controller.TryDismissAfterForegroundChange(trigger);
+
     protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && _groupDragTransaction is not null)
+        if (e.Key == Key.Escape && _tileDragCoordinator?.CancelCurrentDrag() == true)
         {
-            FinishGroupDrag(commit: false);
             e.Handled = true;
             return;
         }
