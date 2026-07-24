@@ -6,16 +6,23 @@ namespace TileStart.Host.Shell;
 
 public sealed class OpenRequestServer
 {
-    private const string PipeName = "TileStart.Host";
+    private const string DefaultPipeName = "TileStart.Host";
     private readonly Action<HostRequest> _handleRequest;
     private readonly Dispatcher _dispatcher;
+    private readonly string _pipeName;
     private readonly CancellationTokenSource _cancellation = new();
     private Task? _listenTask;
 
     public OpenRequestServer(Action<HostRequest> handleRequest, Dispatcher dispatcher)
+        : this(handleRequest, dispatcher, DefaultPipeName)
+    {
+    }
+
+    internal OpenRequestServer(Action<HostRequest> handleRequest, Dispatcher dispatcher, string pipeName)
     {
         _handleRequest = handleRequest;
         _dispatcher = dispatcher;
+        _pipeName = pipeName;
     }
 
     public void Start()
@@ -44,7 +51,7 @@ public sealed class OpenRequestServer
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            await using var pipe = new NamedPipeServerStream(PipeName,
+            await using var pipe = new NamedPipeServerStream(_pipeName,
                 PipeDirection.InOut,
                 1,
                 PipeTransmissionMode.Message,

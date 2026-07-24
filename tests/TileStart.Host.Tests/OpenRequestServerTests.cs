@@ -15,12 +15,13 @@ public sealed class OpenRequestServerTests
     {
         var dispatcher = Dispatcher.CurrentDispatcher;
         HostRequest? queuedRequest = null;
-        var server = new OpenRequestServer(request => queuedRequest = request, dispatcher);
+        var pipeName = $"TileStart.Host.Tests.{Guid.NewGuid():N}";
+        var server = new OpenRequestServer(request => queuedRequest = request, dispatcher, pipeName);
         server.Start();
 
         try
         {
-            using var client = new NamedPipeClientStream(".", "TileStart.Host", PipeDirection.InOut, PipeOptions.Asynchronous);
+            using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             await client.ConnectAsync(timeout.Token);
             await client.WriteAsync(System.Text.Encoding.ASCII.GetBytes(command), timeout.Token);

@@ -97,8 +97,6 @@ internal sealed class ApplicationPaneController
 
     public IList<AppEntry> AllApps => _apps;
 
-    public event Action? AppsChanged;
-
     public async Task LoadAppsAsync()
     {
         try
@@ -359,7 +357,6 @@ internal sealed class ApplicationPaneController
             : Visibility.Collapsed;
         AppsView.Refresh();
         AlphabetIndex.UpdateAvailability(AlphabetLetters, _apps, RecentApps.Count > 0);
-        AppsChanged?.Invoke();
     }
 
     private void QueueContextMenuPrewarm()

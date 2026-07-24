@@ -142,8 +142,6 @@ internal sealed class TileDragCoordinator
 
     public void ResetDragCompletedFlag() => _dragCompleted = false;
 
-    public event Action<bool>? DragCompleted;
-
     public bool CancelCurrentDrag()
     {
         if (_isInternalAppDrag)
@@ -528,7 +526,6 @@ internal sealed class TileDragCoordinator
             || !SystemParameters.ClientAreaAnimation)
         {
             CompleteInternalTileDragVisual(tile);
-            DragCompleted?.Invoke(didCommit);
             return;
         }
 
@@ -542,7 +539,6 @@ internal sealed class TileDragCoordinator
             AnimateInternalDragPreviewReturn(tile);
         }
 
-        DragCompleted?.Invoke(didCommit);
     }
 
     private void AnimateInternalDragPreviewHandoff(TileItem tile)
