@@ -76,6 +76,9 @@
     <Content Include="..\..\src\TileStart.Host\Tiles\Folders\Win10FolderMotion.cs"
              Link="TestData\Performance\Win10FolderMotion.cs"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\installer\TileStart.iss"
+             Link="TestData\Installer\TileStart.iss"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -24,7 +24,10 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\{#AppExeName}
-CloseApplications=yes
+; Explorer hosts TileStart.ShellHook.dll. Never let Restart Manager close the
+; desktop shell just to replace an in-use hook; PrepareToInstall stops the Host
+; and waits for the hook to unload instead.
+CloseApplications=no
 RestartApplications=no
 
 [Tasks]
@@ -51,7 +54,21 @@ Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.appref-ms\shell\Ti
 Filename: "{app}\{#AppExeName}"; Description: "启动 TileStart"; Flags: nowait postinstall skipifsilent
 
 [Code]
-procedure StopTileStart;
+function WaitForTileStartHost(TimeoutMs: Integer): Boolean;
+var
+  ElapsedMs: Integer;
+begin
+  ElapsedMs := 0;
+  while CheckForMutexes('Local\TileStart.Host') and (ElapsedMs < TimeoutMs) do
+  begin
+    Sleep(250);
+    ElapsedMs := ElapsedMs + 250;
+  end;
+
+  Result := not CheckForMutexes('Local\TileStart.Host');
+end;
+
+function StopTileStart: Boolean;
 var
   AppPath: String;
   ResultCode: Integer;
@@ -60,18 +77,25 @@ begin
   if FileExists(AppPath) then
   begin
     Exec(AppPath, '--shutdown', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Sleep(1500);
   end;
 
-  Exec(ExpandConstant('{cmd}'), '/C taskkill /IM TileStart.Host.exe /F >NUL 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Sleep(2000);
-  Exec(ExpandConstant('{cmd}'), '/C taskkill /IM TileStart.Injector.exe /F >NUL 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if not WaitForTileStartHost(10000) then
+  begin
+    { Killing only the Host still lets its watcher observe the process exit and
+      unload the Explorer hook. Never kill the Injector directly. }
+    Exec(ExpandConstant('{cmd}'), '/C taskkill /IM TileStart.Host.exe /F >NUL 2>&1', '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode);
+  end;
+
+  Result := WaitForTileStartHost(10000);
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  StopTileStart;
-  Result := '';
+  if StopTileStart then
+    Result := ''
+  else
+    Result := '无法安全停止 TileStart。为避免影响 Windows 资源管理器，安装已中止。请重启 Windows 后重试。';
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
