@@ -49,7 +49,9 @@ dotnet publish -c Release -r win-x64 --self-contained true
 - 无效目标不会破坏已有布局。
 - IPC 超时和 Host 不可用时进入原生放行路径。
 
-## 首个实机环境
+## 已验证实机环境
+
+### Windows 10 基线
 
 ```text
 Windows 10 Pro for Workstations
@@ -59,6 +61,21 @@ Windows 10 Pro for Workstations
 240Hz
 任务栏位于底部
 ```
+
+### 当前 Windows 11 适配环境
+
+```text
+Windows 11 23H2 build 22631.6199
+2560 × 1600
+150% DPI
+任务栏位于底部
+```
+
+注册表 `ProductName` 可能仍显示升级前的 Windows 10 字符串；平台判断和验证记录以系统 build 为准。
+
+当前 Windows 11 环境已确认 Computer Use 可用，需要桌面自动化时按对应 skill 初始化后直接使用。只有实际失败、恢复后仍阻塞验证时才记录具体限制和未覆盖项，不在每轮重复说明可用性或降级策略。
+
+Windows 11 build 22631 上已确认安装版 Host 可启动，单独 `Win` 键可触发 TileStart 窗口定位与前台激活；当前 Injector 仍因 build 白名单安全退出，所以任务栏开始按钮接管和 Win11 Shell Adapter 尚未验证通过。
 
 ## Shell 集成验证
 
