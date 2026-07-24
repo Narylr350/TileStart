@@ -1,3 +1,5 @@
+using TileStart.Host.Tiles.Models;
+
 namespace TileStart.Host;
 
 public static class Win10TileMetrics

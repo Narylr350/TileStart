@@ -22,6 +22,18 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="TileStart.Host.Applications" />
+    <Using Include="TileStart.Host.Icons" />
+    <Using Include="TileStart.Host.Shell" />
+    <Using Include="TileStart.Host.Windowing" />
+    <Using Include="TileStart.Host.Navigation" />
+    <Using Include="TileStart.Host.Tiles.Models" />
+    <Using Include="TileStart.Host.Tiles.Layout" />
+    <Using Include="TileStart.Host.Tiles.DragDrop" />
+    <Using Include="TileStart.Host.Tiles.Folders" />
+    <Using Include="TileStart.Host.Tiles.Settings" />
+    <Using Include="TileStart.Host.Persistence" />
+    <Using Include="TileStart.Host.Utilities" />
   </ItemGroup>
 
   <ItemGroup>

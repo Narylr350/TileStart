@@ -1,0 +1,642 @@
+<Window x:Class="TileStart.Host.Tiles.Settings.GroupSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TileStart.Host"
+        xmlns:settings="clr-namespace:TileStart.Host.Tiles.Settings"
+        xmlns:models="clr-namespace:TileStart.Host.Tiles.Models"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="组设置"
+        Width="1100"
+        Height="700"
+        MinWidth="980"
+        MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        Background="#1F1F1F"
+        Foreground="White"
+        FontFamily="Segoe UI, Microsoft YaHei UI"
+        FontSize="12"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        Loaded="Window_Loaded">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="44"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#272727" />
+        <SolidColorBrush x:Key="ControlBrush" Color="#303030" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#555555" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#B8B8B8" />
+
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#232323" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background"
+                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="ComboBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <Grid>
+                                    <ContentPresenter Margin="10,0,36,0"
+                                                      VerticalAlignment="Center"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
+                                    <TextBlock Margin="0,0,12,0"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="9"
+                                               Text="&#xE70D;" />
+                                    <ToggleButton Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent" />
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   PopupAnimation="None">
+                                <Border x:Name="DropDownBorder"
+                                        Width="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="260"
+                                        Padding="0,4"
+                                        Opacity="0"
+                                        Background="#232323"
+                                        BorderBrush="#171717"
+                                        BorderThickness="1"
+                                        RenderTransformOrigin="0.5,0">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleY="0.96" />
+                                    </Border.RenderTransform>
+                                    <ScrollViewer CanContentScroll="True"
+                                                  HorizontalContentAlignment="Stretch"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter HorizontalAlignment="Stretch" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#909090" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush"
+                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="DropDownBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="DropDownBorder"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="7" />
+            <Setter Property="Margin" Value="0,2,2,2" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0"
+                                                  Focusable="False" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="ScrollThumb" Width="3" MinHeight="24"
+                                           HorizontalAlignment="Right" Background="#70FFFFFF">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0"
+                                                  Focusable="False" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ScrollThumb" Property="Width" Value="7" />
+                                <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TilePickerCardStyle" TargetType="ToggleButton">
+            <Setter Property="Height" Value="58" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#282828" />
+            <Setter Property="BorderBrush" Value="#444444" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="CardBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
+                            <local:Win10InteractionBorder Background="Transparent"
+                                                          UsesSharedPointerLight="True"
+                                                          RevealRadius="96"
+                                                          HoverFillOpacity="0.09"
+                                                          RevealBorderOpacity="0.42"
+                                                          IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Grid Margin="10,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="38" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Image Width="32" Height="32" Source="{Binding Icon}" Stretch="Uniform" />
+                                    <TextBlock Grid.Column="1" Margin="8,0,20,0" VerticalAlignment="Center"
+                                               Foreground="White" Text="{Binding Name}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <Border x:Name="SelectedBadge" Grid.Column="1" Width="18" Height="18"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}"
+                                            Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                        <Border.RenderTransform>
+                                            <ScaleTransform ScaleX="0.72" ScaleY="0.72" />
+                                        </Border.RenderTransform>
+                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontFamily="Segoe MDL2 Assets" FontSize="10" Text="&#xE73E;" />
+                                    </Border>
+                                </Grid>
+                            </local:Win10InteractionBorder>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CardBorder" Property="Background" Value="#343434" />
+                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#777777" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="CardBorder"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1.015" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="CardBorder"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1.015" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="CardBorder"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1" Duration="0:0:0.10">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="CardBorder"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1" Duration="0:0:0.10">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CardBorder" Property="Background" Value="#283B4E" />
+                                <Setter TargetName="CardBorder" Property="BorderBrush"
+                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                <Setter TargetName="CardBorder" Property="BorderThickness" Value="2" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.14" />
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.09" />
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="0.72" Duration="0:0:0.09" />
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBadge"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="0.72" Duration="0:0:0.09" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="MinWidth" Value="82" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="BorderBrush" Value="#666666" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#444444" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#505050" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
+            <Setter Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+            <Setter Property="BorderBrush" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="DialogSurface" Opacity="0" BorderBrush="#4A4A4A" BorderThickness="1"
+            RenderTransformOrigin="0.5,0.5">
+        <Border.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform ScaleX="0.985" ScaleY="0.985" />
+                <TranslateTransform Y="10" />
+            </TransformGroup>
+        </Border.RenderTransform>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="60" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Background="#252525" MouseLeftButtonDown="WindowHeader_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="44" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="16,0" VerticalAlignment="Center">
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="自定义组" />
+                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource MutedBrush}" FontSize="10"
+                               Text="设置容器跨度并选择要放入的磁贴" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        IsCancel="True" Content="&#xE8BB;" Click="Close_Click" />
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="24,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="组属性" />
+                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="名称" />
+                    <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged" />
+
+                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="宽度" />
+                    <ComboBox x:Name="WidthBox" SelectedValuePath="Tag" SelectionChanged="Settings_Changed">
+                        <ComboBoxItem Content="1 列" Tag="1" />
+                        <ComboBoxItem Content="2 列" Tag="2" />
+                        <ComboBoxItem Content="3 列" Tag="3" />
+                        <ComboBoxItem Content="4 列（原版宽度）" Tag="4" />
+                        <ComboBoxItem Content="5 列" Tag="5" />
+                        <ComboBoxItem Content="6 列" Tag="6" />
+                        <ComboBoxItem Content="7 列" Tag="7" />
+                        <ComboBoxItem Content="8 列" Tag="8" />
+                    </ComboBox>
+
+                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="高度" />
+                    <ComboBox x:Name="HeightBox" SelectedValuePath="Tag" SelectionChanged="Settings_Changed">
+                        <ComboBoxItem Content="自动（兼容旧组）" Tag="0" />
+                        <ComboBoxItem Content="1 行" Tag="1" />
+                        <ComboBoxItem Content="2 行" Tag="2" />
+                        <ComboBoxItem Content="3 行" Tag="3" />
+                        <ComboBoxItem Content="4 行" Tag="4" />
+                        <ComboBoxItem Content="5 行" Tag="5" />
+                        <ComboBoxItem Content="6 行" Tag="6" />
+                        <ComboBoxItem Content="7 行" Tag="7" />
+                        <ComboBoxItem Content="8 行" Tag="8" />
+                    </ComboBox>
+
+                    <StackPanel Margin="0,22,0,0">
+                        <TextBlock Foreground="#E5E5E5" FontWeight="SemiBold" Text="尺寸说明" />
+                        <Border Height="1" Margin="0,8,0,9" Background="#3A3A3A" />
+                        <TextBlock Foreground="{StaticResource MutedBrush}" LineHeight="19" TextWrapping="Wrap"
+                                   Text="每个单位对应一个中磁贴。小、宽和大磁贴会按实际占格自动排布。" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择磁贴" />
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}"
+                                   Text="{Binding SelectedCountText}" />
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,14,0,10">
+                        <TextBox x:Name="SearchBox" Padding="36,0,10,0" TextChanged="SearchBox_TextChanged" />
+                        <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets"
+                                   Foreground="#B8B8B8" FontSize="14" Text="&#xE721;" IsHitTestVisible="False" />
+                        <TextBlock Margin="36,0,0,0" VerticalAlignment="Center" Foreground="#8F8F8F"
+                                   Text="搜索应用和磁贴" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <Grid Grid.Row="2" Margin="0,0,0,10">
+                        <TextBlock VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="11" Text="已选磁贴始终置顶" />
+                        <Button HorizontalAlignment="Right" Height="28" MinWidth="58" Padding="10,0"
+                                Style="{StaticResource DialogButtonStyle}" Content="清空" Click="ClearSelection_Click" />
+                    </Grid>
+                    <Border Grid.Row="3" Padding="10" Background="#1D1D1D" BorderBrush="#3F3F3F" BorderThickness="1">
+                        <ListBox ItemsSource="{Binding TileOptionRows}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.CanContentScroll="True"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <ContentPresenter />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type settings:GroupTileOptionRow}">
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ToggleButton DataContext="{Binding First}"
+                                                      Style="{StaticResource TilePickerCardStyle}"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                        <ToggleButton Grid.Column="2"
+                                                      DataContext="{Binding Second}"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton" BasedOn="{StaticResource TilePickerCardStyle}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="DataContext" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Hidden" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ToggleButton.Style>
+                                        </ToggleButton>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Column="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="实时预览" />
+                    <TextBlock x:Name="PreviewSizeText" Grid.Row="1" Margin="0,6,0,12"
+                               Foreground="{StaticResource MutedBrush}" />
+                    <Border Grid.Row="2" Padding="16" Background="#151515" BorderBrush="#383838" BorderThickness="1">
+                        <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                            <StackPanel Width="{Binding PreviewGroup.VisualWidth}">
+                                <TextBlock Height="32" VerticalAlignment="Center" Foreground="White"
+                                           FontSize="14" Text="{Binding PreviewGroup.Name}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Canvas Width="{Binding PreviewGroup.PixelWidth}"
+                                        Height="{Binding PreviewGroup.PixelHeight}"
+                                        HorizontalAlignment="Center">
+                                    <ItemsControl Width="{Binding PreviewGroup.PixelWidth}"
+                                                  Height="{Binding PreviewGroup.PixelHeight}"
+                                                  ItemsSource="{Binding PreviewGroup.Tiles}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                                <Setter Property="Canvas.Top" Value="{Binding DisplayTop}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:TileItem}">
+                                                <Border Width="{Binding PixelWidth}" Height="{Binding PixelHeight}"
+                                                        Background="{Binding BackgroundBrush}">
+                                                    <Grid>
+                                                        <Image Width="{Binding IconSize}" Height="{Binding IconSize}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               Source="{Binding Icon}" Stretch="Uniform" />
+                                                        <TextBlock Margin="7,0,7,5" HorizontalAlignment="Left"
+                                                                   VerticalAlignment="Bottom"
+                                                                   Foreground="{Binding ForegroundBrush}" FontSize="11"
+                                                                   Text="{Binding Name}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Canvas>
+                            </StackPanel>
+                        </Viewbox>
+                    </Border>
+                    <TextBlock Grid.Row="3" Margin="0,12,0,0" MinHeight="18" Foreground="#FF8C8C"
+                               Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+                </Grid>
+            </Grid>
+
+            <Border Grid.Row="2" Padding="20,12" Background="#252525" BorderBrush="#3A3A3A" BorderThickness="0,1,0,0">
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button Margin="0,0,10,0" Style="{StaticResource DialogButtonStyle}" Content="取消"
+                            Click="Close_Click" />
+                    <Button x:Name="SaveButton" Style="{StaticResource PrimaryButtonStyle}" Content="保存"
+                            Click="Save_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

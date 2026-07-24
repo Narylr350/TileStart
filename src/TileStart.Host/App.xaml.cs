@@ -1,4 +1,7 @@
 using System.Windows;
+using TileStart.Host.Shell;
+using TileStart.Host.Windowing;
+using TileStart.Host.Utilities;
 
 namespace TileStart.Host;
 

@@ -3,6 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:local="clr-namespace:TileStart.Host"
+        xmlns:icons="clr-namespace:TileStart.Host.Icons"
+        xmlns:apps="clr-namespace:TileStart.Host.Applications"
+        xmlns:models="clr-namespace:TileStart.Host.Tiles.Models"
+        xmlns:layouts="clr-namespace:TileStart.Host.Tiles.Layout"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="TileStart"
         Width="1252"
@@ -520,8 +524,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="18" />
                         </Grid.ColumnDefinitions>
-                        <Grid Width="{x:Static local:Win10IconMetrics.ClassicAppLogoLayoutSize}"
-                              Height="{x:Static local:Win10IconMetrics.ClassicAppLogoLayoutSize}"
+                        <Grid Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
+                              Height="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
                               HorizontalAlignment="Left">
                             <TextBlock x:Name="AppInitial"
                                        HorizontalAlignment="Center"
@@ -530,8 +534,8 @@
                                        Text="{Binding Initial}"
                                        Visibility="Collapsed" />
                             <Image x:Name="AppIcon"
-                                   Width="{x:Static local:Win10IconMetrics.ClassicAppLogoImageSize}"
-                                   Height="{x:Static local:Win10IconMetrics.ClassicAppLogoImageSize}"
+                                   Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoImageSize}"
+                                   Height="{x:Static icons:Win10IconMetrics.ClassicAppLogoImageSize}"
                                    RenderOptions.BitmapScalingMode="HighQuality"
                                    Source="{Binding Icon}"
                                    Stretch="Uniform" />
@@ -877,7 +881,7 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type local:AlphabetIndexEntry}">
+                                    <DataTemplate DataType="{x:Type apps:AlphabetIndexEntry}">
                                         <Button Style="{StaticResource AlphabetButtonStyle}"
                                                 Tag="{Binding}"
                                                 Content="{Binding Label}"
@@ -910,11 +914,11 @@
                                   ItemsSource="{Binding TileLayout.Groups}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <local:Win10GroupWrapPanel />
+                                <layouts:Win10GroupWrapPanel />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type local:TileGroup}">
+                            <DataTemplate DataType="{x:Type models:TileGroup}">
                                 <StackPanel Width="{Binding VisualWidth}"
                                              Margin="0,0,0,24">
                                     <StackPanel.ContextMenu>
@@ -924,14 +928,14 @@
                                             <MenuItem Header="删除组" Click="DeleteGroup_Click" />
                                         </ContextMenu>
                                     </StackPanel.ContextMenu>
-                                    <local:TileGroupHeader
+                                    <layouts:TileGroupHeader
                                         Margin="{x:Static local:Win10VisualMetrics.TileGroupHeaderMargin}"
                                         NameCommitted="GroupHeader_NameCommitted"
                                         PreviewMouseLeftButtonDown="GroupHeader_PreviewMouseLeftButtonDown"
                                         PreviewMouseMove="GroupHeader_PreviewMouseMove"
                                         PreviewMouseLeftButtonUp="GroupHeader_PreviewMouseLeftButtonUp"
                                         LostMouseCapture="GroupHeader_LostMouseCapture">
-                                        <local:TileGroupHeader.ContextMenu>
+                                        <layouts:TileGroupHeader.ContextMenu>
                                             <ContextMenu Style="{StaticResource StartContextMenuStyle}">
                                                 <MenuItem Header="TileStart 组设置…"
                                                           Style="{StaticResource StartMenuItemStyle}"
@@ -955,8 +959,8 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
-                                        </local:TileGroupHeader.ContextMenu>
-                                    </local:TileGroupHeader>
+                                        </layouts:TileGroupHeader.ContextMenu>
+                                    </layouts:TileGroupHeader>
                                     <Canvas Width="{Binding PixelWidth}"
                                              Height="{Binding PixelHeight}"
                                              HorizontalAlignment="Center"
@@ -980,7 +984,7 @@
                                                 </Style>
                                             </ItemsControl.ItemContainerStyle>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type local:TileItem}">
+                                                <DataTemplate DataType="{x:Type models:TileItem}">
                                                     <Button x:Name="TileButton"
                                                             Width="{Binding PixelWidth}"
                                                             Height="{Binding PixelHeight}"
@@ -1326,7 +1330,7 @@
                                                 </Style>
                                             </ItemsControl.ItemContainerStyle>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type local:TileItem}">
+                                                <DataTemplate DataType="{x:Type models:TileItem}">
                                                     <Border x:Name="FolderRegion"
                                                             Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                                             Height="{Binding FolderRegionHeight}"
@@ -1374,7 +1378,7 @@
                                                                     </Style>
                                                                 </ItemsControl.ItemContainerStyle>
                                                                 <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate DataType="{x:Type local:TileItem}">
+                                                                    <DataTemplate DataType="{x:Type models:TileItem}">
                                                                         <Button Width="{Binding PixelWidth}"
                                                                                 Height="{Binding PixelHeight}"
                                                                                 Background="{Binding BackgroundBrush}"
