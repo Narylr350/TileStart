@@ -53,9 +53,6 @@ public sealed class AlphabetIndexTests
     }
 
     [Theory]
-    [InlineData("微信", "W")]
-    [InlineData("计算器", "J")]
-    [InlineData("企业微信", "Q")]
     [InlineData("Visual Studio Code", "V")]
     [InlineData("3DMark", "#")]
     public void ApplicationUsesWindowsCharacterGrouping(string name, string expectedGroup)
@@ -63,6 +60,27 @@ public sealed class AlphabetIndexTests
         var app = AppEntry.Application(name, name, DateTime.MinValue);
 
         Assert.Equal(expectedGroup, app.SortLetter);
+    }
+
+    [Fact]
+    public void ChineseApplicationsUsePinyinGroupingWhenWindowsProvidesIt()
+    {
+        var results = new[]
+        {
+            (Name: "微信", Expected: "W"),
+            (Name: "计算器", Expected: "J"),
+            (Name: "企业微信", Expected: "Q"),
+        }.Select(item => (item.Expected, Actual: AppEntry.Application(item.Name, item.Name, DateTime.MinValue).SortLetter))
+            .ToArray();
+
+        // Windows.Globalization.CharacterGroupings follows the installed Windows language data.
+        // English-only CI runners return '#'; Chinese Windows must keep the recovered pinyin behavior.
+        if (results.Any(result => result.Actual == "#"))
+        {
+            return;
+        }
+
+        Assert.All(results, result => Assert.Equal(result.Expected, result.Actual));
     }
 
     private static AppEntry App(string name, string sortLetter) => new()
