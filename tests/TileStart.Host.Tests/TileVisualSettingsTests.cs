@@ -19,6 +19,18 @@ public sealed class TileVisualSettingsTests
     }
 
     [Theory]
+    [InlineData(0.1, 0.5)]
+    [InlineData(1, 1)]
+    [InlineData(1.75, 1.75)]
+    [InlineData(5, 3)]
+    public void BackgroundImageScaleIsClampedToSupportedRange(double requested, double expected)
+    {
+        var tile = new TileItem { BackgroundImageScale = requested };
+
+        Assert.Equal(expected, tile.BackgroundImageScale);
+    }
+
+    [Theory]
     [InlineData(0, 16)]
     [InlineData(20, 20)]
     [InlineData(200, 200)]
@@ -64,6 +76,18 @@ public sealed class TileVisualSettingsTests
     }
 
     [Fact]
+    public void IconPathRaisesPropertyChangedWhenGifIsCleared()
+    {
+        var tile = new TileItem { IconPath = @"C:\Images\animated.gif" };
+        var changedProperties = new List<string?>();
+        tile.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        tile.IconPath = string.Empty;
+
+        Assert.Contains(nameof(TileItem.IconPath), changedProperties);
+    }
+
+    [Fact]
     public void LayoutJsonRoundTripPreservesVisualSettings()
     {
         var layout = new TileLayout
@@ -79,6 +103,7 @@ public sealed class TileVisualSettingsTests
                             Name = "终端",
                             Subtitle = "开发工具",
                             BackgroundImagePath = @"C:\Images\terminal.png",
+                            BackgroundImageScale = 1.75,
                             IconPath = @"C:\Images\terminal.svg",
                             IconSourceKind = CustomIconSourceKind.Svg,
                             IconSourceValue = @"C:\Images\terminal.svg",
@@ -98,6 +123,7 @@ public sealed class TileVisualSettingsTests
         var tile = Assert.Single(Assert.Single(restored!.Groups).Tiles);
         Assert.Equal("开发工具", tile.Subtitle);
         Assert.Equal(@"C:\Images\terminal.png", tile.BackgroundImagePath);
+        Assert.Equal(1.75, tile.BackgroundImageScale);
         Assert.Equal(@"C:\Images\terminal.svg", tile.IconPath);
         Assert.Equal(CustomIconSourceKind.Svg, tile.IconSourceKind);
         Assert.Equal(@"C:\Images\terminal.svg", tile.IconSourceValue);

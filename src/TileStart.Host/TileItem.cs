@@ -18,7 +18,9 @@ public sealed class TileItem : INotifyPropertyChanged
     private string _subtitle = string.Empty;
     private string _backgroundColor = "#3A3A3A";
     private string _foregroundColor = "#FFFFFF";
+    private string _iconPath = string.Empty;
     private string _backgroundImagePath = string.Empty;
+    private double _backgroundImageScale = 1;
     private bool _showTitle = true;
     private double _iconSize = 32;
     private TileIconPosition _iconPosition;
@@ -64,7 +66,11 @@ public sealed class TileItem : INotifyPropertyChanged
     public TileTargetType TargetType { get; set; }
     public string Arguments { get; set; } = string.Empty;
     public string WorkingDirectory { get; set; } = string.Empty;
-    public string IconPath { get; set; } = string.Empty;
+    public string IconPath
+    {
+        get => _iconPath;
+        set => SetText(ref _iconPath, value);
+    }
     public CustomIconSourceKind IconSourceKind { get; set; }
     public string IconSourceValue { get; set; } = string.Empty;
     public bool RunAsAdministrator { get; set; }
@@ -185,6 +191,22 @@ public sealed class TileItem : INotifyPropertyChanged
     {
         get => _backgroundImagePath;
         set => SetText(ref _backgroundImagePath, value);
+    }
+
+    public double BackgroundImageScale
+    {
+        get => _backgroundImageScale;
+        set
+        {
+            var normalized = double.IsFinite(value) ? Math.Clamp(value, 0.5, 3) : 1;
+            if (_backgroundImageScale == normalized)
+            {
+                return;
+            }
+
+            _backgroundImageScale = normalized;
+            OnPropertyChanged();
+        }
     }
 
     public bool ShowTitle

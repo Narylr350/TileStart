@@ -486,20 +486,21 @@
                                                 DataContext="{Binding PreviewTile}"
                                                 SnapsToDevicePixels="True">
                                             <Grid ClipToBounds="True">
-                                                <Image Source="{Binding BackgroundImage}"
-                                                       gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                <Image gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
                                                        gif:ImageBehavior.RepeatBehavior="Forever"
                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                       RenderTransformOrigin="0.5,0.5"
                                                        Stretch="UniformToFill">
-                                                    <Image.Style>
-                                                        <Style TargetType="Image">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding BackgroundImagePath, Converter={StaticResource IsGifPathConverter}}" Value="True">
-                                                                    <Setter Property="Source" Value="{x:Null}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Image.Style>
+                                                    <Image.RenderTransform>
+                                                        <ScaleTransform ScaleX="{Binding BackgroundImageScale}"
+                                                                        ScaleY="{Binding BackgroundImageScale}" />
+                                                    </Image.RenderTransform>
+                                                    <Image.Source>
+                                                        <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                            <Binding Path="BackgroundImage" />
+                                                            <Binding Path="BackgroundImagePath" />
+                                                        </MultiBinding>
+                                                    </Image.Source>
                                                 </Image>
                                                 <TextBlock Text="{Binding Initial}"
                                                            HorizontalAlignment="Center"
@@ -742,20 +743,16 @@
                                     BorderBrush="#4A4A4A"
                                     BorderThickness="1">
                                 <Image Margin="4"
-                                       Source="{Binding PreviewTile.Icon}"
                                        gif:ImageBehavior.AnimatedSource="{Binding PreviewTile.IconPath, Converter={StaticResource GifImageSourceConverter}}"
                                        gif:ImageBehavior.RepeatBehavior="Forever"
                                        RenderOptions.BitmapScalingMode="HighQuality"
                                        Stretch="Uniform">
-                                    <Image.Style>
-                                        <Style TargetType="Image">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding PreviewTile.IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
-                                                    <Setter Property="Source" Value="{x:Null}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
+                                    <Image.Source>
+                                        <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                            <Binding Path="PreviewTile.Icon" />
+                                            <Binding Path="PreviewTile.IconPath" />
+                                        </MultiBinding>
+                                    </Image.Source>
                                 </Image>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -818,6 +815,22 @@
                                 Content="清除"
                                 Click="ClearBackgroundImage_Click" />
                     </Grid>
+
+                    <Grid Margin="0,14,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="背景缩放" />
+                        <TextBlock Grid.Column="1"
+                                   Foreground="{StaticResource MutedText}"
+                                   Text="{Binding Value, ElementName=BackgroundImageScaleBox, StringFormat={}{0:P0}}" />
+                    </Grid>
+                    <Slider x:Name="BackgroundImageScaleBox"
+                            Minimum="0.5"
+                            Maximum="3"
+                            TickFrequency="0.05"
+                            ValueChanged="PreviewSlider_ValueChanged" />
 
                     <TextBlock Margin="0,14,0,5" Style="{StaticResource FieldLabelStyle}" Text="背景颜色" />
                     <Grid>

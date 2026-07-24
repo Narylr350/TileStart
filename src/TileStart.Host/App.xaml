@@ -5,6 +5,6 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <local:GifImageSourceConverter x:Key="GifImageSourceConverter" />
-        <local:IsGifPathConverter x:Key="IsGifPathConverter" />
+        <local:NonGifImageSourceConverter x:Key="NonGifImageSourceConverter" />
     </Application.Resources>
 </Application>

@@ -130,6 +130,7 @@ public partial class MainWindow : Window
     private double _windowWidthSnapRight;
     private Dictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
     private int _semanticZoomAnimationGeneration;
+    private int _foregroundActivationGeneration;
     private bool _isLetterIndexActive;
     private bool _isSemanticZoomAnimating;
     private int _appFolderAnimationGeneration;
@@ -231,18 +232,8 @@ public partial class MainWindow : Window
             });
         Activate();
         Focus();
-        var handle = new WindowInteropHelper(this).Handle;
-        if (handle != 0)
-        {
-            SetForegroundWindow(handle);
-        }
-
-        var foreground = GetForegroundWindow();
-        _foregroundLifecycle.ObserveForeground(
-            foreground != 0,
-            foreground != 0 && ForegroundBelongsToStart(foreground),
-            hasActiveOwnedWindow: false,
-            hasOpenContextMenu: false);
+        var activationGeneration = ++_foregroundActivationGeneration;
+        TryAcquireForeground(activationGeneration, 0);
 
         _foregroundWatchdogTimer.Start();
         var generation = _entranceSnapshotGeneration;
@@ -250,6 +241,57 @@ public partial class MainWindow : Window
             motionElements,
             animationsEnabled,
             usesSnapshot ? () => CompleteEntranceSnapshot(generation) : null);
+    }
+
+    private void TryAcquireForeground(int generation, int attempt)
+    {
+        if (generation != _foregroundActivationGeneration || !IsVisible)
+        {
+            return;
+        }
+
+        var handle = new WindowInteropHelper(this).Handle;
+        var requested = handle != 0 && RequestForegroundWindow(handle);
+        Activate();
+        Focus();
+        var foreground = GetForegroundWindow();
+        var acquired = foreground != 0 && ForegroundBelongsToStart(foreground);
+        _foregroundLifecycle.ObserveForeground(
+            foreground != 0,
+            acquired,
+            hasActiveOwnedWindow: false,
+            hasOpenContextMenu: false);
+        DiagnosticLog.Write(
+            $"Window foreground activation: attempt={attempt}, requested={requested}, foreground=0x{foreground.ToInt64():X}, acquired={acquired}.");
+
+        if (!acquired && attempt < 4)
+        {
+            _ = Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Input,
+                () => TryAcquireForeground(generation, attempt + 1));
+        }
+    }
+
+    private static bool RequestForegroundWindow(nint window)
+    {
+        var foreground = GetForegroundWindow();
+        var currentThread = GetCurrentThreadId();
+        var foregroundThread = foreground == 0 ? 0 : GetWindowThreadProcessId(foreground, out _);
+        var attached = foregroundThread != 0
+                       && foregroundThread != currentThread
+                       && AttachThreadInput(currentThread, foregroundThread, true);
+        try
+        {
+            BringWindowToTop(window);
+            return SetForegroundWindow(window);
+        }
+        finally
+        {
+            if (attached)
+            {
+                AttachThreadInput(currentThread, foregroundThread, false);
+            }
+        }
     }
 
     public void AllowClose()
@@ -992,7 +1034,7 @@ public partial class MainWindow : Window
 
         if ((wParam.ToInt64() & 0xffff) != WaInactive)
         {
-            if (IsVisible)
+            if (IsVisible && GetForegroundWindow() is var foreground && ForegroundBelongsToStart(foreground))
             {
                 _foregroundLifecycle.ObserveNativeActivation();
             }
@@ -1862,7 +1904,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        var dialog = new TileSettingsWindow(tile);
+        var defaultVisual = new TileItem
+        {
+            LaunchTarget = tile.LaunchTarget,
+            TargetType = tile.TargetType,
+            Size = tile.Size,
+            IconSize = tile.IconSize,
+            IconPosition = tile.IconPosition,
+        };
+        RestoreTileIcon(defaultVisual, _launchableApps);
+        var dialog = new TileSettingsWindow(
+            tile,
+            defaultIcon: defaultVisual.Icon,
+            defaultUsesFullTileLogo: defaultVisual.UsesFullTileLogo);
         if (ShowTileSettingsDialog(dialog) != true)
         {
             return;
@@ -2479,6 +2533,7 @@ public partial class MainWindow : Window
         tile.IconSourceKind = dialog.IconSourceKind;
         tile.IconSourceValue = dialog.IconSourceValue;
         tile.BackgroundImagePath = dialog.BackgroundImagePath;
+        tile.BackgroundImageScale = dialog.BackgroundImageScale;
         tile.BackgroundColor = dialog.BackgroundColor;
         tile.ForegroundColor = dialog.ForegroundColor;
         tile.ShowTitle = dialog.ShowTitle;
@@ -4643,6 +4698,18 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint window, out uint processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    private static extern bool AttachThreadInput(uint firstThreadId, uint secondThreadId, bool attach);
 
     [DllImport("user32.dll")]
     private static extern bool LockWorkStation();

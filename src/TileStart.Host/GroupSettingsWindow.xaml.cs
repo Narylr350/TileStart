@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -73,14 +72,20 @@ public sealed class GroupTileOption : INotifyPropertyChanged
     }
 }
 
+public sealed class GroupTileOptionRow
+{
+    public required GroupTileOption First { get; init; }
+    public GroupTileOption? Second { get; init; }
+}
+
 public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 {
     private readonly ObservableCollection<GroupTileOption> _options;
-    private readonly ICollectionView _optionsView;
+    private readonly RangeObservableCollection<GroupTileOptionRow> _optionRows = [];
     private bool _isReady;
     private TileGroup _previewGroup = new();
     private string _validationMessage = string.Empty;
-    private bool _showSelectedOnly;
+    private bool _suspendOptionUpdates;
 
     public GroupSettingsWindow(TileGroup group, IReadOnlyList<AppEntry> apps)
     {
@@ -90,18 +95,17 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
             option.PropertyChanged += Option_PropertyChanged;
         }
 
-        _optionsView = CollectionViewSource.GetDefaultView(_options);
-        _optionsView.Filter = FilterOption;
         InitializeComponent();
         DataContext = this;
         NameBox.Text = group.Name;
         WidthBox.SelectedValue = group.WidthUnits.ToString();
         HeightBox.SelectedValue = group.HeightUnits.ToString();
         _isReady = true;
+        RefreshOptionRows();
         RefreshPreview();
     }
 
-    public ICollectionView TileOptionsView => _optionsView;
+    public IReadOnlyList<GroupTileOptionRow> TileOptionRows => _optionRows;
 
     public TileGroup PreviewGroup
     {
@@ -196,48 +200,53 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
     private void Option_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(GroupTileOption.IsSelected))
+        if (e.PropertyName == nameof(GroupTileOption.IsSelected) && !_suspendOptionUpdates)
         {
             OnPropertyChanged(nameof(SelectedCountText));
-            if (_showSelectedOnly)
-            {
-                _optionsView.Refresh();
-            }
-
+            RefreshOptionRows();
             RefreshPreview();
         }
     }
 
-    private bool FilterOption(object item)
+    private void RefreshOptionRows()
     {
-        if (item is not GroupTileOption option)
+        var query = SearchBox?.Text.Trim();
+        var filtered = _options
+            .Where(option => string.IsNullOrWhiteSpace(query)
+                             || option.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase))
+            .OrderByDescending(option => option.IsSelected)
+            .ToArray();
+        var rows = new List<GroupTileOptionRow>((filtered.Length + 1) / 2);
+        for (var index = 0; index < filtered.Length; index += 2)
         {
-            return false;
+            rows.Add(new GroupTileOptionRow
+            {
+                First = filtered[index],
+                Second = index + 1 < filtered.Length ? filtered[index + 1] : null,
+            });
         }
 
-        var query = SearchBox?.Text.Trim();
-        return (!_showSelectedOnly || option.IsSelected)
-               && (string.IsNullOrWhiteSpace(query)
-                   || option.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+        _optionRows.Clear();
+        _optionRows.AddRange(rows);
     }
 
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        _optionsView.Refresh();
-    }
-
-    private void SelectedOnly_Changed(object sender, RoutedEventArgs e)
-    {
-        _showSelectedOnly = SelectedOnlyBox.IsChecked == true;
-        _optionsView.Refresh();
+        RefreshOptionRows();
     }
 
     private void ClearSelection_Click(object sender, RoutedEventArgs e)
     {
+        _suspendOptionUpdates = true;
         foreach (var option in _options.Where(option => option.IsSelected))
         {
             option.IsSelected = false;
         }
+
+        _suspendOptionUpdates = false;
+        OnPropertyChanged(nameof(SelectedCountText));
+        RefreshOptionRows();
+        RefreshPreview();
     }
 
     private void Settings_Changed(object sender, RoutedEventArgs e)
@@ -312,6 +321,7 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
             BackgroundColor = tile.BackgroundColor,
             ForegroundColor = tile.ForegroundColor,
             BackgroundImagePath = tile.BackgroundImagePath,
+            BackgroundImageScale = tile.BackgroundImageScale,
             ShowTitle = tile.ShowTitle,
             IconSize = tile.IconSize,
             IconPosition = tile.IconPosition,

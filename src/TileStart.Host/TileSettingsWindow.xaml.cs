@@ -25,7 +25,11 @@ public partial class TileSettingsWindow : Window
     private TileSize _previewSize;
     private bool _isReady;
 
-    public TileSettingsWindow(TileItem tile, bool isNew = false)
+    public TileSettingsWindow(
+        TileItem tile,
+        bool isNew = false,
+        ImageSource? defaultIcon = null,
+        bool defaultUsesFullTileLogo = false)
     {
         _subtitle = tile.Subtitle;
         _targetType = tile.TargetType;
@@ -34,10 +38,14 @@ public partial class TileSettingsWindow : Window
             ? CustomIconSourceKind.LocalFile
             : tile.IconSourceKind;
         _iconSourceValue = string.IsNullOrWhiteSpace(tile.IconSourceValue) ? tile.IconPath : tile.IconSourceValue;
-        _defaultIcon = string.IsNullOrWhiteSpace(tile.IconPath)
-            ? tile.Icon
-            : ShellIconLoader.Load(tile.LaunchTarget) ?? tile.Icon;
-        _defaultUsesFullTileLogo = string.IsNullOrWhiteSpace(tile.IconPath) && tile.UsesFullTileLogo;
+        _defaultIcon = defaultIcon
+                       ?? (string.IsNullOrWhiteSpace(tile.IconPath)
+                           ? tile.Icon
+                           : ShellIconLoader.Load(tile.LaunchTarget) ?? tile.Icon)
+                       ?? GenericAppIcon.Image;
+        _defaultUsesFullTileLogo = defaultIcon is not null
+            ? defaultUsesFullTileLogo
+            : string.IsNullOrWhiteSpace(tile.IconPath) && tile.UsesFullTileLogo;
         PreviewTile = new TileItem
         {
             Name = tile.Name,
@@ -49,6 +57,7 @@ public partial class TileSettingsWindow : Window
             ForegroundColor = tile.ForegroundColor,
             IconPath = tile.IconPath,
             BackgroundImagePath = tile.BackgroundImagePath,
+            BackgroundImageScale = tile.BackgroundImageScale,
             BackgroundImage = tile.BackgroundImage,
             ShowTitle = tile.ShowTitle,
             IconSize = tile.IconSize,
@@ -66,6 +75,7 @@ public partial class TileSettingsWindow : Window
         WorkingDirectoryBox.Text = tile.WorkingDirectory;
         IconPathBox.Text = tile.IconPath;
         BackgroundImagePathBox.Text = tile.BackgroundImagePath;
+        BackgroundImageScaleBox.Value = tile.BackgroundImageScale;
         BackgroundColorBox.Text = tile.BackgroundColor;
         ForegroundColorBox.Text = tile.ForegroundColor;
         ShowTitleBox.IsChecked = tile.ShowTitle;
@@ -100,6 +110,7 @@ public partial class TileSettingsWindow : Window
     public CustomIconSourceKind IconSourceKind => _iconSourceKind;
     public string IconSourceValue => _iconSourceValue;
     public string BackgroundImagePath => BackgroundImagePathBox.Text.Trim();
+    public double BackgroundImageScale => BackgroundImageScaleBox.Value;
     public string BackgroundColor => BackgroundColorBox.Text.Trim();
     public string ForegroundColor => ForegroundColorBox.Text.Trim();
     public bool ShowTitle => ShowTitleBox.IsChecked == true;
@@ -196,6 +207,7 @@ public partial class TileSettingsWindow : Window
     {
         IconPathBox.Clear();
         BackgroundImagePathBox.Clear();
+        BackgroundImageScaleBox.Value = 1;
         BackgroundColorBox.Text = "#3A3A3A";
         ForegroundColorBox.Text = "#FFFFFF";
         ShowTitleBox.IsChecked = true;
@@ -323,6 +335,7 @@ public partial class TileSettingsWindow : Window
         PreviewTile.ForegroundColor = IsValidColor(ForegroundColor) ? ForegroundColor : "#FFFFFF";
         PreviewTile.IconPath = IconPath;
         PreviewTile.BackgroundImagePath = BackgroundImagePath;
+        PreviewTile.BackgroundImageScale = BackgroundImageScale;
         PreviewTile.BackgroundImage = ShellIconLoader.LoadImage(BackgroundImagePath);
         PreviewTile.ShowTitle = ShowTitle;
         PreviewTile.IconSize = IconSize;

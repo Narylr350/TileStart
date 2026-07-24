@@ -1127,19 +1127,20 @@
                                                             </Grid.RowDefinitions>
                                                              <Image Grid.RowSpan="2"
                                                                     RenderOptions.BitmapScalingMode="HighQuality"
-                                                                    Source="{Binding BackgroundImage}"
                                                                     gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
                                                                     gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                    RenderTransformOrigin="0.5,0.5"
                                                                     Stretch="UniformToFill">
-                                                                 <Image.Style>
-                                                                     <Style TargetType="Image">
-                                                                         <Style.Triggers>
-                                                                             <DataTrigger Binding="{Binding BackgroundImagePath, Converter={StaticResource IsGifPathConverter}}" Value="True">
-                                                                                 <Setter Property="Source" Value="{x:Null}" />
-                                                                             </DataTrigger>
-                                                                         </Style.Triggers>
-                                                                     </Style>
-                                                                 </Image.Style>
+                                                                 <Image.RenderTransform>
+                                                                     <ScaleTransform ScaleX="{Binding BackgroundImageScale}"
+                                                                                     ScaleY="{Binding BackgroundImageScale}" />
+                                                                 </Image.RenderTransform>
+                                                                 <Image.Source>
+                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                         <Binding Path="BackgroundImage" />
+                                                                         <Binding Path="BackgroundImagePath" />
+                                                                     </MultiBinding>
+                                                                 </Image.Source>
                                                              </Image>
                                                             <TextBlock x:Name="TileInitial"
                                                                        Grid.Row="0"
@@ -1158,19 +1159,15 @@
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
                                                                     RenderOptions.BitmapScalingMode="HighQuality"
-                                                                    Source="{Binding Icon}"
                                                                     gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
                                                                     gif:ImageBehavior.RepeatBehavior="Forever"
                                                                     Stretch="Uniform">
-                                                                 <Image.Style>
-                                                                     <Style TargetType="Image">
-                                                                         <Style.Triggers>
-                                                                             <DataTrigger Binding="{Binding IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
-                                                                                 <Setter Property="Source" Value="{x:Null}" />
-                                                                             </DataTrigger>
-                                                                         </Style.Triggers>
-                                                                     </Style>
-                                                                 </Image.Style>
+                                                                 <Image.Source>
+                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                         <Binding Path="Icon" />
+                                                                         <Binding Path="IconPath" />
+                                                                     </MultiBinding>
+                                                                 </Image.Source>
                                                                  <Image.RenderTransform>
                                                                     <TranslateTransform
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
@@ -1197,19 +1194,15 @@
                                                                                 Background="{Binding BackgroundBrush}">
                                                                             <Image Margin="3"
                                                                                     RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                    Source="{Binding Icon}"
                                                                                     gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
                                                                                     gif:ImageBehavior.RepeatBehavior="Forever"
                                                                                     Stretch="Uniform">
-                                                                                 <Image.Style>
-                                                                                     <Style TargetType="Image">
-                                                                                         <Style.Triggers>
-                                                                                             <DataTrigger Binding="{Binding IconPath, Converter={StaticResource IsGifPathConverter}}" Value="True">
-                                                                                                 <Setter Property="Source" Value="{x:Null}" />
-                                                                                             </DataTrigger>
-                                                                                         </Style.Triggers>
-                                                                                     </Style>
-                                                                                 </Image.Style>
+                                                                                 <Image.Source>
+                                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                         <Binding Path="Icon" />
+                                                                                         <Binding Path="IconPath" />
+                                                                                     </MultiBinding>
+                                                                                 </Image.Source>
                                                                              </Image>
                                                                         </Border>
                                                                     </DataTemplate>
