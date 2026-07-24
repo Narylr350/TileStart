@@ -16,6 +16,7 @@ public sealed class TrayIconTests
             {
                 var showCount = 0;
                 var nativeCount = 0;
+                var updateCount = 0;
                 var backupCount = 0;
                 var exitCount = 0;
                 var pauseStates = new List<bool>();
@@ -23,6 +24,11 @@ public sealed class TrayIconTests
                     () => showCount++,
                     paused => pauseStates.Add(paused),
                     () => nativeCount++,
+                    () =>
+                    {
+                        updateCount++;
+                        return Task.CompletedTask;
+                    },
                     () => backupCount++,
                     () => exitCount++);
 
@@ -37,11 +43,13 @@ public sealed class TrayIconTests
                 Assert.True(pause.Checked);
                 pause.PerformClick();
                 Assert.False(pause.Checked);
+                Find(menu, "检查更新…").PerformClick();
                 Find(menu, "备份与恢复…").PerformClick();
                 Find(menu, "退出").PerformClick();
 
                 Assert.Equal(1, showCount);
                 Assert.Equal(1, nativeCount);
+                Assert.Equal(1, updateCount);
                 Assert.Equal(1, backupCount);
                 Assert.Equal(1, exitCount);
                 Assert.Equal([true, false], pauseStates);
