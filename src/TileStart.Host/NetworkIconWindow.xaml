@@ -51,11 +51,7 @@
                            FontWeight="SemiBold"
                            Text="从网络获取图标" />
                 <Button Grid.Column="1"
-                        Padding="0"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        FontFamily="Segoe MDL2 Assets"
-                        FontSize="14"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
                         IsCancel="True"
                         Content="&#xE8BB;" />
             </Grid>

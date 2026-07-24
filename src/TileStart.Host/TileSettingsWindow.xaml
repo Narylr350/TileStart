@@ -173,33 +173,6 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="46" />
-            <Setter Property="Height" Value="42" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="TitleButtonBorder" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TitleButtonBorder" Property="Background" Value="#C42B1C" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="TitleButtonBorder" Property="Background" Value="#A52317" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="#F0F0F0" />
             <Setter Property="FontSize" Value="12" />
@@ -439,7 +412,7 @@
                     <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="磁贴设置" />
                 </StackPanel>
                 <Button Grid.Column="1"
-                        Style="{StaticResource TitleBarButtonStyle}"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
                         IsCancel="True"
                         Content="&#xE8BB;" />

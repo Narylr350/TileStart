@@ -349,34 +349,6 @@
             </Setter>
         </Style>
 
-        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="44" />
-            <Setter Property="Height" Value="44" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="TitleButtonBorder" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TitleButtonBorder" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="TitleButtonBorder" Property="Opacity" Value="0.72" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <Style x:Key="DialogButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="34" />
             <Setter Property="MinWidth" Value="82" />
@@ -442,7 +414,7 @@
                                Text="设置容器跨度并选择要放入的磁贴" />
                 </StackPanel>
                 <Button Grid.Column="1"
-                        Style="{StaticResource TitleBarButtonStyle}"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
                         IsCancel="True" Content="&#xE8BB;" Click="Close_Click" />
             </Grid>
