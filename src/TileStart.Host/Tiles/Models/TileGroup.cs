@@ -123,20 +123,15 @@ public sealed class TileGroup : INotifyPropertyChanged
         }
     }
 
-    [JsonIgnore]
-    public int ContentColumns => TileWorkspaceMetrics.TileColumns(WidthUnits);
+    [JsonIgnore] public int ContentColumns => TileWorkspaceMetrics.TileColumns(WidthUnits);
 
-    [JsonIgnore]
-    public int? ContentRowLimit => HeightUnits == 0 ? null : TileWorkspaceMetrics.TileRows(HeightUnits);
+    [JsonIgnore] public int? ContentRowLimit => HeightUnits == 0 ? null : TileWorkspaceMetrics.TileRows(HeightUnits);
 
-    [JsonIgnore]
-    public double PixelWidth => Win10TileMetrics.WidthForColumns(ContentColumns);
+    [JsonIgnore] public double PixelWidth => Win10TileMetrics.WidthForColumns(ContentColumns);
 
-    [JsonIgnore]
-    public double VisualWidth => TileWorkspaceMetrics.GroupVisualWidth(WidthUnits);
+    [JsonIgnore] public double VisualWidth => TileWorkspaceMetrics.GroupVisualWidth(WidthUnits);
 
-    [JsonIgnore]
-    public double TileCanvasHorizontalInset => Math.Max(0, (VisualWidth - PixelWidth) / 2);
+    [JsonIgnore] public double TileCanvasHorizontalInset => Math.Max(0, (VisualWidth - PixelWidth) / 2);
 
     [JsonIgnore]
     public double PixelHeight

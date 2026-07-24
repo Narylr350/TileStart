@@ -1,11 +1,6 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using Button = System.Windows.Controls.Button;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using TileStart.Host.Applications;
-using TileStart.Host.Controllers;
-using TileStart.Host.Navigation;
 
 namespace TileStart.Host;
 

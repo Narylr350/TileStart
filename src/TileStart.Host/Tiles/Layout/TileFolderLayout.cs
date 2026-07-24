@@ -1,4 +1,3 @@
-using TileStart.Host;
 using TileStart.Host.Tiles.Models;
 
 namespace TileStart.Host.Tiles.Layout;
@@ -90,7 +89,7 @@ public static class TileFolderLayout
         TileItem tile,
         HashSet<(int Column, int Row)> occupied)
     {
-        for (var row = 0; ; row++)
+        for (var row = 0;; row++)
         {
             for (var column = 0; column <= Win10TileMetrics.GroupColumns - tile.Size.ColumnSpan(); column++)
             {

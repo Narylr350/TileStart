@@ -12,6 +12,7 @@ public static class TaskbarPinner
 {
     private static readonly Guid TaskbandPinClass = new("90AA3A4E-1CBA-4233-B8BB-535773D48449");
     private static readonly Guid PinnedList3Interface = new("0DD79AE2-D156-45D4-9EEB-3B549769E940");
+
     internal static string ShortcutRoot { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.Programs),
         "TileStart Taskbar Pins");

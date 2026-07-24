@@ -22,7 +22,8 @@ internal static class LaunchTargetIdentity
                 normalized = Path.GetFullPath(normalized);
             }
         }
-        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException
+                                              or PathTooLongException)
         {
         }
 

@@ -10,8 +10,12 @@ namespace TileStart.Host.Persistence;
 public static class TileLayoutStore
 {
     internal const int CurrentVersion = 2;
-    private static readonly string DirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+
+    private static readonly string DirectoryPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+
     private static readonly string FilePath = Path.Combine(DirectoryPath, "layout.json");
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,

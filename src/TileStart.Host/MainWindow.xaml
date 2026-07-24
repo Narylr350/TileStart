@@ -433,7 +433,7 @@
                                                FontFamily="Segoe MDL2 Assets"
                                                FontSize="16"
                                                Text="&#xE718;" />
-                                    </MenuItem.Icon>
+                                </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="从“开始”屏幕取消固定"
                                       Tag="UnpinStart"
@@ -920,7 +920,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:TileGroup}">
                                 <StackPanel Width="{Binding VisualWidth}"
-                                             Margin="0,0,0,24">
+                                            Margin="0,0,0,24">
                                     <StackPanel.ContextMenu>
                                         <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
                                             <MenuItem Header="TileStart 组设置…" Click="GroupSettings_Click" />
@@ -962,9 +962,9 @@
                                         </layouts:TileGroupHeader.ContextMenu>
                                     </layouts:TileGroupHeader>
                                     <Canvas Width="{Binding PixelWidth}"
-                                             Height="{Binding PixelHeight}"
-                                             HorizontalAlignment="Center"
-                                             Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
+                                            Height="{Binding PixelHeight}"
+                                            HorizontalAlignment="Center"
+                                            Margin="{x:Static local:Win10VisualMetrics.TileGroupTilesMargin}">
                                         <ItemsControl Width="{Binding PixelWidth}"
                                                       Height="{Binding PixelHeight}"
                                                       AllowDrop="True"
@@ -1116,9 +1116,9 @@
                                                                           Click="UninstallTile_Click">
                                                                     <MenuItem.Icon>
                                                                         <TextBlock Foreground="White"
-                                                                                   FontFamily="Segoe MDL2 Assets"
-                                                                                   FontSize="16"
-                                                                                   Text="&#xE74D;" />
+                                                                                FontFamily="Segoe MDL2 Assets"
+                                                                                FontSize="16"
+                                                                                Text="&#xE74D;" />
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
                                                             </ContextMenu>
@@ -1129,23 +1129,25 @@
                                                                 <RowDefinition
                                                                     Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
                                                             </Grid.RowDefinitions>
-                                                             <Image Grid.RowSpan="2"
-                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                    gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                    RenderTransformOrigin="0.5,0.5"
-                                                                    Stretch="UniformToFill">
-                                                                 <Image.RenderTransform>
-                                                                     <ScaleTransform ScaleX="{Binding BackgroundImageScale}"
-                                                                                     ScaleY="{Binding BackgroundImageScale}" />
-                                                                 </Image.RenderTransform>
-                                                                 <Image.Source>
-                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
-                                                                         <Binding Path="BackgroundImage" />
-                                                                         <Binding Path="BackgroundImagePath" />
-                                                                     </MultiBinding>
-                                                                 </Image.Source>
-                                                             </Image>
+                                                            <Image Grid.RowSpan="2"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                   gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                   RenderTransformOrigin="0.5,0.5"
+                                                                   Stretch="UniformToFill">
+                                                                <Image.RenderTransform>
+                                                                    <ScaleTransform
+                                                                        ScaleX="{Binding BackgroundImageScale}"
+                                                                        ScaleY="{Binding BackgroundImageScale}" />
+                                                                </Image.RenderTransform>
+                                                                <Image.Source>
+                                                                    <MultiBinding
+                                                                        Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                        <Binding Path="BackgroundImage" />
+                                                                        <Binding Path="BackgroundImagePath" />
+                                                                    </MultiBinding>
+                                                                </Image.Source>
+                                                            </Image>
                                                             <TextBlock x:Name="TileInitial"
                                                                        Grid.Row="0"
                                                                        Grid.RowSpan="2"
@@ -1155,24 +1157,25 @@
                                                                        FontWeight="SemiBold"
                                                                        Text="{Binding Initial}"
                                                                        Visibility="Collapsed" />
-                                                              <Image x:Name="TileIcon"
-                                                                    Grid.Row="0"
-                                                                    Grid.RowSpan="2"
-                                                                    Width="{Binding IconSize}"
-                                                                    Height="{Binding IconSize}"
-                                                                    HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"
-                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                    Stretch="Uniform">
-                                                                 <Image.Source>
-                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
-                                                                         <Binding Path="Icon" />
-                                                                         <Binding Path="IconPath" />
-                                                                     </MultiBinding>
-                                                                 </Image.Source>
-                                                                 <Image.RenderTransform>
+                                                            <Image x:Name="TileIcon"
+                                                                   Grid.Row="0"
+                                                                   Grid.RowSpan="2"
+                                                                   Width="{Binding IconSize}"
+                                                                   Height="{Binding IconSize}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                                   gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                   gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                   Stretch="Uniform">
+                                                                <Image.Source>
+                                                                    <MultiBinding
+                                                                        Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                        <Binding Path="Icon" />
+                                                                        <Binding Path="IconPath" />
+                                                                    </MultiBinding>
+                                                                </Image.Source>
+                                                                <Image.RenderTransform>
                                                                     <TranslateTransform
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                                 </Image.RenderTransform>
@@ -1201,13 +1204,14 @@
                                                                                     gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
                                                                                     gif:ImageBehavior.RepeatBehavior="Forever"
                                                                                     Stretch="Uniform">
-                                                                                 <Image.Source>
-                                                                                     <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
-                                                                                         <Binding Path="Icon" />
-                                                                                         <Binding Path="IconPath" />
-                                                                                     </MultiBinding>
-                                                                                 </Image.Source>
-                                                                             </Image>
+                                                                                <Image.Source>
+                                                                                    <MultiBinding
+                                                                                        Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                        <Binding Path="Icon" />
+                                                                                        <Binding Path="IconPath" />
+                                                                                    </MultiBinding>
+                                                                                </Image.Source>
+                                                                            </Image>
                                                                         </Border>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>

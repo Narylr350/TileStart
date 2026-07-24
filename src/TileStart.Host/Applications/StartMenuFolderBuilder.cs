@@ -14,8 +14,8 @@ public static class StartMenuFolderBuilder
         var applications = candidates
             .Where(candidate => candidate.Folders.Length == 0)
             .Select(candidate => AppEntry.Application(candidate.Shortcut.Name,
-                                                       candidate.Shortcut.LaunchTarget,
-                                                       candidate.Shortcut.AddedAt));
+                candidate.Shortcut.LaunchTarget,
+                candidate.Shortcut.AddedAt));
         var folders = candidates
             .Where(candidate => candidate.Folders.Length > 0)
             .GroupBy(candidate => candidate.Folders[0], StringComparer.CurrentCultureIgnoreCase)
@@ -31,7 +31,8 @@ public static class StartMenuFolderBuilder
     }
 
     private static string[] SplitPath(string path) =>
-        path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
+        path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+            StringSplitOptions.RemoveEmptyEntries);
 
     private sealed record Candidate(StartMenuShortcut Shortcut, string[] Folders);
 

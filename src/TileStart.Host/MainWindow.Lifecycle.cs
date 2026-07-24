@@ -1,5 +1,3 @@
-using TileStart.Host.Tiles.Layout;
-
 namespace TileStart.Host;
 
 public partial class MainWindow

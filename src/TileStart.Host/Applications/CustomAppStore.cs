@@ -17,6 +17,7 @@ public static class CustomAppStore
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "TileStart",
         "custom-apps.json");
+
     private static readonly string[] SupportedExtensions = [".exe", ".lnk", ".appref-ms"];
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -144,7 +145,8 @@ public static class CustomAppStore
             var fullPath = Path.GetFullPath(path);
             return Supports(fullPath) ? fullPath : null;
         }
-        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException
+                                              or PathTooLongException)
         {
             return null;
         }

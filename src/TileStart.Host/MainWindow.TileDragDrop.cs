@@ -1,12 +1,8 @@
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Button = System.Windows.Controls.Button;
-using MenuItem = System.Windows.Controls.MenuItem;
 using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using TileStart.Host.Applications;
 
 namespace TileStart.Host;
 

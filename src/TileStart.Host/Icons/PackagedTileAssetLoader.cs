@@ -52,10 +52,13 @@ internal static partial class PackagedTileAssetLoader
             var document = XDocument.Load(manifestPath);
             var application = document.Descendants()
                 .FirstOrDefault(element => element.Name.LocalName == "Application"
-                    && element.Attributes().Any(attribute => attribute.Name.LocalName == "Id"
-                        && attribute.Value.Equals(applicationId, StringComparison.OrdinalIgnoreCase)));
-            var visualElements = application?.Elements().FirstOrDefault(element => element.Name.LocalName == "VisualElements");
-            var defaultTile = visualElements?.Elements().FirstOrDefault(element => element.Name.LocalName == "DefaultTile");
+                                           && element.Attributes().Any(attribute => attribute.Name.LocalName == "Id"
+                                               && attribute.Value.Equals(applicationId,
+                                                   StringComparison.OrdinalIgnoreCase)));
+            var visualElements = application?.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "VisualElements");
+            var defaultTile = visualElements?.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "DefaultTile");
             var asset = size switch
             {
                 TileSize.Small => Attribute(defaultTile, "Square71x71Logo"),
@@ -66,7 +69,8 @@ internal static partial class PackagedTileAssetLoader
 
             return asset is null ? null : ResolveQualifiedAsset(packageInstallPath, asset);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Xml.XmlException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                              or System.Xml.XmlException)
         {
             return null;
         }
@@ -77,8 +81,10 @@ internal static partial class PackagedTileAssetLoader
 
     private static string? ResolveQualifiedAsset(string packageInstallPath, string relativePath)
     {
-        var root = Path.GetFullPath(packageInstallPath).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var unqualifiedPath = Path.GetFullPath(Path.Combine(packageInstallPath, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+        var root = Path.GetFullPath(packageInstallPath).TrimEnd(Path.DirectorySeparatorChar) +
+                   Path.DirectorySeparatorChar;
+        var unqualifiedPath =
+            Path.GetFullPath(Path.Combine(packageInstallPath, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
         if (!unqualifiedPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
         {
             return null;

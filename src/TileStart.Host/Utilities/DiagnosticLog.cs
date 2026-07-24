@@ -4,7 +4,9 @@ namespace TileStart.Host.Utilities;
 
 public static class DiagnosticLog
 {
-    private static readonly string DirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+    private static readonly string DirectoryPath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
+
     private static readonly string LogPath = Path.Combine(DirectoryPath, "TileStart.log");
     private static readonly object Sync = new();
 

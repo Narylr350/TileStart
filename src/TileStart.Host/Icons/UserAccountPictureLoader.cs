@@ -9,7 +9,8 @@ namespace TileStart.Host.Icons;
 
 public static class UserAccountPictureLoader
 {
-    private static readonly string[] RegistryValueNames = ["Image96", "Image48", "Image40", "Image32", "Image192", "Image240", "Image448"];
+    private static readonly string[] RegistryValueNames =
+        ["Image96", "Image48", "Image40", "Image32", "Image192", "Image240", "Image448"];
 
     public static ImageSource? Load()
     {

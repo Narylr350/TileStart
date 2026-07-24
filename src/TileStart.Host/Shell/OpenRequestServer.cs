@@ -45,10 +45,10 @@ public sealed class OpenRequestServer
         while (!cancellationToken.IsCancellationRequested)
         {
             await using var pipe = new NamedPipeServerStream(PipeName,
-                                                             PipeDirection.InOut,
-                                                             1,
-                                                             PipeTransmissionMode.Message,
-                                                             PipeOptions.Asynchronous);
+                PipeDirection.InOut,
+                1,
+                PipeTransmissionMode.Message,
+                PipeOptions.Asynchronous);
             try
             {
                 await pipe.WaitForConnectionAsync(cancellationToken);
@@ -63,8 +63,7 @@ public sealed class OpenRequestServer
                     }
 
                     await message.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
-                }
-                while (!pipe.IsMessageComplete);
+                } while (!pipe.IsMessageComplete);
 
                 var accepted = HostRequest.TryDecode(message.ToArray(), out var request);
                 if (accepted)

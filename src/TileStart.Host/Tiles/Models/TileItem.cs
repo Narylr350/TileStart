@@ -67,11 +67,13 @@ public sealed class TileItem : INotifyPropertyChanged
     public TileTargetType TargetType { get; set; }
     public string Arguments { get; set; } = string.Empty;
     public string WorkingDirectory { get; set; } = string.Empty;
+
     public string IconPath
     {
         get => _iconPath;
         set => SetText(ref _iconPath, value);
     }
+
     public CustomIconSourceKind IconSourceKind { get; set; }
     public string IconSourceValue { get; set; } = string.Empty;
     public bool RunAsAdministrator { get; set; }
@@ -301,38 +303,28 @@ public sealed class TileItem : INotifyPropertyChanged
         }
     }
 
-    [JsonIgnore]
-    public double Left => Win10TileMetrics.Left(Column);
+    [JsonIgnore] public double Left => Win10TileMetrics.Left(Column);
 
-    [JsonIgnore]
-    public double Top => Win10TileMetrics.Top(Row);
+    [JsonIgnore] public double Top => Win10TileMetrics.Top(Row);
 
-    [JsonIgnore]
-    public double DisplayTop => Top + _layoutOffsetY;
+    [JsonIgnore] public double DisplayTop => Top + _layoutOffsetY;
 
-    [JsonIgnore]
-    public double FolderRegionTop => _folderRegionTop;
+    [JsonIgnore] public double FolderRegionTop => _folderRegionTop;
 
-    [JsonIgnore]
-    public double FolderRegionHeight => _folderRegionHeight;
+    [JsonIgnore] public double FolderRegionHeight => _folderRegionHeight;
 
-    [JsonIgnore]
-    public double FolderContentHeight => _folderContentHeight;
+    [JsonIgnore] public double FolderContentHeight => _folderContentHeight;
 
-    [JsonIgnore]
-    public double PixelWidth => Win10TileMetrics.Width(Size);
+    [JsonIgnore] public double PixelWidth => Win10TileMetrics.Width(Size);
 
-    [JsonIgnore]
-    public double PixelHeight => Win10TileMetrics.Height(Size);
+    [JsonIgnore] public double PixelHeight => Win10TileMetrics.Height(Size);
 
     [JsonIgnore]
     public string Initial => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[0].ToString().ToUpperInvariant();
 
-    [JsonIgnore]
-    public MediaBrush BackgroundBrush => ParseBrush(BackgroundColor, DefaultBackgroundBrush);
+    [JsonIgnore] public MediaBrush BackgroundBrush => ParseBrush(BackgroundColor, DefaultBackgroundBrush);
 
-    [JsonIgnore]
-    public MediaBrush ForegroundBrush => ParseBrush(ForegroundColor, MediaBrushes.White);
+    [JsonIgnore] public MediaBrush ForegroundBrush => ParseBrush(ForegroundColor, MediaBrushes.White);
 
     [JsonIgnore]
     public ImageSource? Icon

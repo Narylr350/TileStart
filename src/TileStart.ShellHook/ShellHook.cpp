@@ -2,115 +2,116 @@
 
 namespace
 {
-constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
-constexpr char kOpenCommand[] = "OPEN";
-constexpr DWORD kPipeTimeoutMilliseconds = 75;
+    constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
+    constexpr char kOpenCommand[] = "OPEN";
+    constexpr DWORD kPipeTimeoutMilliseconds = 75;
 
-HMODULE g_module = nullptr;
-HANDLE g_worker_thread = nullptr;
-HANDLE g_stop_event = nullptr;
-HANDLE g_ready_event = nullptr;
-HHOOK g_mouse_hook = nullptr;
-HWND g_start_button = nullptr;
-LONG g_started = 0;
-LONG g_install_succeeded = 0;
+    HMODULE g_module = nullptr;
+    HANDLE g_worker_thread = nullptr;
+    HANDLE g_stop_event = nullptr;
+    HANDLE g_ready_event = nullptr;
+    HHOOK g_mouse_hook = nullptr;
+    HWND g_start_button = nullptr;
+    LONG g_started = 0;
+    LONG g_install_succeeded = 0;
 
-BOOL RequestHostOpen()
-{
-    if (!WaitNamedPipeW(kPipeName, kPipeTimeoutMilliseconds))
+    BOOL RequestHostOpen()
     {
-        return FALSE;
-    }
-
-    const HANDLE pipe = CreateFileW(kPipeName,
-                                    GENERIC_READ | GENERIC_WRITE,
-                                    0,
-                                    nullptr,
-                                    OPEN_EXISTING,
-                                    0,
-                                    nullptr);
-    if (pipe == INVALID_HANDLE_VALUE)
-    {
-        return FALSE;
-    }
-
-    ULONG server_process = 0;
-    if (GetNamedPipeServerProcessId(pipe, &server_process) && server_process != 0)
-    {
-        AllowSetForegroundWindow(server_process);
-    }
-
-    BYTE response = 0;
-    DWORD written = 0;
-    DWORD response_size = 0;
-    const BOOL delivered = WriteFile(pipe,
-                                     kOpenCommand,
-                                     sizeof(kOpenCommand) - 1,
-                                     &written,
-                                     nullptr)
-                           && written == sizeof(kOpenCommand) - 1
-                           && ReadFile(pipe,
-                                       &response,
-                                       sizeof(response),
-                                       &response_size,
-                                       nullptr);
-    CloseHandle(pipe);
-    return delivered && response_size == sizeof(response) && response == 1;
-}
-
-void RefreshStartButton()
-{
-    const HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
-    g_start_button = taskbar == nullptr ? nullptr : FindWindowExW(taskbar, nullptr, L"Start", nullptr);
-}
-
-LRESULT CALLBACK MouseHook(int code, WPARAM message, LPARAM data)
-{
-    if (code == HC_ACTION && message == WM_LBUTTONDOWN && g_start_button != nullptr)
-    {
-        const auto* mouse = reinterpret_cast<const MSLLHOOKSTRUCT*>(data);
-        RECT start_button_rect{};
-        if (GetWindowRect(g_start_button, &start_button_rect) && PtInRect(&start_button_rect, mouse->pt) && RequestHostOpen())
+        if (!WaitNamedPipeW(kPipeName, kPipeTimeoutMilliseconds))
         {
-            return 1;
-        }
-    }
-
-    return CallNextHookEx(g_mouse_hook, code, message, data);
-}
-
-DWORD WINAPI WorkerThread(LPVOID)
-{
-    MSG message{};
-    PeekMessageW(&message, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
-    RefreshStartButton();
-    g_mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, g_module, 0);
-    if (g_mouse_hook != nullptr && g_start_button != nullptr)
-    {
-        InterlockedExchange(&g_install_succeeded, 1);
-    }
-    SetEvent(g_ready_event);
-
-    const HANDLE stop_handle[] = {g_stop_event};
-    while (MsgWaitForMultipleObjects(1, stop_handle, FALSE, 250, QS_ALLINPUT) != WAIT_OBJECT_0)
-    {
-        while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&message);
-            DispatchMessageW(&message);
+            return FALSE;
         }
 
+        const HANDLE pipe = CreateFileW(kPipeName,
+                                        GENERIC_READ | GENERIC_WRITE,
+                                        0,
+                                        nullptr,
+                                        OPEN_EXISTING,
+                                        0,
+                                        nullptr);
+        if (pipe == INVALID_HANDLE_VALUE)
+        {
+            return FALSE;
+        }
+
+        ULONG server_process = 0;
+        if (GetNamedPipeServerProcessId(pipe, &server_process) && server_process != 0)
+        {
+            AllowSetForegroundWindow(server_process);
+        }
+
+        BYTE response = 0;
+        DWORD written = 0;
+        DWORD response_size = 0;
+        const BOOL delivered = WriteFile(pipe,
+                                         kOpenCommand,
+                                         sizeof(kOpenCommand) - 1,
+                                         &written,
+                                         nullptr)
+            && written == sizeof(kOpenCommand) - 1
+            && ReadFile(pipe,
+                        &response,
+                        sizeof(response),
+                        &response_size,
+                        nullptr);
+        CloseHandle(pipe);
+        return delivered && response_size == sizeof(response) && response == 1;
+    }
+
+    void RefreshStartButton()
+    {
+        const HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
+        g_start_button = taskbar == nullptr ? nullptr : FindWindowExW(taskbar, nullptr, L"Start", nullptr);
+    }
+
+    LRESULT CALLBACK MouseHook(int code, WPARAM message, LPARAM data)
+    {
+        if (code == HC_ACTION && message == WM_LBUTTONDOWN && g_start_button != nullptr)
+        {
+            const auto* mouse = reinterpret_cast<const MSLLHOOKSTRUCT*>(data);
+            RECT start_button_rect{};
+            if (GetWindowRect(g_start_button, &start_button_rect) && PtInRect(&start_button_rect, mouse->pt) &&
+                RequestHostOpen())
+            {
+                return 1;
+            }
+        }
+
+        return CallNextHookEx(g_mouse_hook, code, message, data);
+    }
+
+    DWORD WINAPI WorkerThread(LPVOID)
+    {
+        MSG message{};
+        PeekMessageW(&message, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
         RefreshStartButton();
-    }
+        g_mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, g_module, 0);
+        if (g_mouse_hook != nullptr && g_start_button != nullptr)
+        {
+            InterlockedExchange(&g_install_succeeded, 1);
+        }
+        SetEvent(g_ready_event);
 
-    if (g_mouse_hook != nullptr)
-    {
-        UnhookWindowsHookEx(g_mouse_hook);
-        g_mouse_hook = nullptr;
-    }
+        const HANDLE stop_handle[] = {g_stop_event};
+        while (MsgWaitForMultipleObjects(1, stop_handle, FALSE, 250, QS_ALLINPUT) != WAIT_OBJECT_0)
+        {
+            while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&message);
+                DispatchMessageW(&message);
+            }
 
-    return 0;
-}
+            RefreshStartButton();
+        }
+
+        if (g_mouse_hook != nullptr)
+        {
+            UnhookWindowsHookEx(g_mouse_hook);
+            g_mouse_hook = nullptr;
+        }
+
+        return 0;
+    }
 } // namespace
 
 extern "C" __declspec(dllexport) BOOL TileStartTryOpenMenu()

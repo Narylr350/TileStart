@@ -1,6 +1,5 @@
 using System.Windows;
 using TileStart.Host.Shell;
-using TileStart.Host.Windowing;
 using TileStart.Host.Utilities;
 
 namespace TileStart.Host;
@@ -17,7 +16,8 @@ public partial class App : System.Windows.Application
     public App()
     {
         DispatcherUnhandledException += (_, args) => DiagnosticLog.Write($"Dispatcher exception: {args.Exception}");
-        AppDomain.CurrentDomain.UnhandledException += (_, args) => DiagnosticLog.Write($"Unhandled exception: {args.ExceptionObject}");
+        AppDomain.CurrentDomain.UnhandledException +=
+            (_, args) => DiagnosticLog.Write($"Unhandled exception: {args.ExceptionObject}");
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -59,14 +59,16 @@ public partial class App : System.Windows.Application
         {
             DiagnosticLog.Write("Shell integration could not be started; native Start-button behavior remains active.");
         }
+
         _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
-                                 SetPaused,
-                                 WinKeyHook.OpenNativeStartMenu,
-                                 ExitApplication);
+            SetPaused,
+            WinKeyHook.OpenNativeStartMenu,
+            ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
         {
             Dispatcher.BeginInvoke(() => HandleHostRequest(startupRequest));
         }
+
         DiagnosticLog.Write("Host startup completed.");
     }
 
@@ -146,6 +148,7 @@ public partial class App : System.Windows.Application
         {
             await _server.StopAsync();
         }
+
         _shellIntegration?.Dispose();
         _singleInstance?.Dispose();
 

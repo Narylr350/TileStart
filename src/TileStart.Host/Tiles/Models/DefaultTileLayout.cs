@@ -108,7 +108,8 @@ public static class DefaultTileLayout
 
         foreach (var name in names.Where(name => name.Length > 2))
         {
-            var partial = apps.FirstOrDefault(app => app.Name.Contains(name, StringComparison.CurrentCultureIgnoreCase));
+            var partial =
+                apps.FirstOrDefault(app => app.Name.Contains(name, StringComparison.CurrentCultureIgnoreCase));
             if (partial is not null)
             {
                 return partial;

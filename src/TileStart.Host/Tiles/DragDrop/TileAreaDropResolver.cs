@@ -1,4 +1,3 @@
-using TileStart.Host;
 using TileStart.Host.Tiles.Layout;
 
 namespace TileStart.Host.Tiles.DragDrop;
@@ -255,5 +254,4 @@ public static class TileAreaDropResolver
             : x > zone.Left + zone.Width
                 ? x - zone.Left - zone.Width
                 : 0;
-
 }

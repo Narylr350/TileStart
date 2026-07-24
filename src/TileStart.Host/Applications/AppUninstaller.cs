@@ -12,7 +12,7 @@ public static class AppUninstaller
     public static bool CanUninstall(TileItem tile, IReadOnlyList<AppEntry> apps) =>
         tile.TargetType == TileTargetType.Application
         && apps.Any(app => !app.IsCustom
-                          && app.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
+                           && app.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
 
     internal static string SettingsUri(string appUserModelId)
     {

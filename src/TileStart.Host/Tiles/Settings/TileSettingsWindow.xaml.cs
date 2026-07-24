@@ -37,7 +37,8 @@ public partial class TileSettingsWindow : Window
         _subtitle = tile.Subtitle;
         _targetType = tile.TargetType;
         _previewSize = tile.Size;
-        _iconSourceKind = tile.IconSourceKind == CustomIconSourceKind.Default && !string.IsNullOrWhiteSpace(tile.IconPath)
+        _iconSourceKind = tile.IconSourceKind == CustomIconSourceKind.Default &&
+                          !string.IsNullOrWhiteSpace(tile.IconPath)
             ? CustomIconSourceKind.LocalFile
             : tile.IconSourceKind;
         _iconSourceValue = string.IsNullOrWhiteSpace(tile.IconSourceValue) ? tile.IconPath : tile.IconSourceValue;
@@ -342,9 +343,10 @@ public partial class TileSettingsWindow : Window
         PreviewTile.BackgroundImage = ShellIconLoader.LoadImage(BackgroundImagePath);
         PreviewTile.ShowTitle = ShowTitle;
         PreviewTile.IconSize = IconSize;
-        PreviewTile.IconPosition = Enum.TryParse<TileIconPosition>(IconPositionBox.SelectedValue as string, out var iconPosition)
-            ? iconPosition
-            : TileIconPosition.Center;
+        PreviewTile.IconPosition =
+            Enum.TryParse<TileIconPosition>(IconPositionBox.SelectedValue as string, out var iconPosition)
+                ? iconPosition
+                : TileIconPosition.Center;
         PreviewTile.Size = Enum.TryParse<TileSize>(SizeBox.SelectedValue as string, out var size)
             ? size
             : TileSize.Medium;
@@ -360,7 +362,8 @@ public partial class TileSettingsWindow : Window
             PreviewTile.UsesFullTileLogo = false;
         }
 
-        PreviewSizeText.Text = $"{TileSizeLabel(PreviewTile.Size)} · {PreviewTile.PixelWidth:0} × {PreviewTile.PixelHeight:0} DIP";
+        PreviewSizeText.Text =
+            $"{TileSizeLabel(PreviewTile.Size)} · {PreviewTile.PixelWidth:0} × {PreviewTile.PixelHeight:0} DIP";
         IconSourceText.Text = _iconSourceKind switch
         {
             CustomIconSourceKind.Network => $"网络 · {_iconSourceValue}",
@@ -431,7 +434,8 @@ public partial class TileSettingsWindow : Window
 
         if (!IsValidColor(BackgroundColor) || !IsValidColor(ForegroundColor))
         {
-            MessageBox.Show(this, "颜色必须是 #RRGGBB、#AARRGGBB 或 WPF 颜色名称。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, "颜色必须是 #RRGGBB、#AARRGGBB 或 WPF 颜色名称。", "TileStart", MessageBoxButton.OK,
+                MessageBoxImage.Warning);
             return;
         }
 

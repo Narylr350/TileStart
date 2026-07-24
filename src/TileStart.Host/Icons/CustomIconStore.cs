@@ -24,7 +24,8 @@ public static class CustomIconStore
             throw new InvalidOperationException("请输入有效的 HTTP 或 HTTPS 图片地址。");
         }
 
-        using var response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response =
+            await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentLength is > MaximumNetworkIconBytes)
         {

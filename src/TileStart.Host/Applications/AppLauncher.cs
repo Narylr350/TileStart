@@ -7,7 +7,8 @@ namespace TileStart.Host.Applications;
 
 public static class AppLauncher
 {
-    public static bool Launch(AppEntry app) => Launch(app.Name, new ProcessStartInfo(app.LaunchTarget) { UseShellExecute = true });
+    public static bool Launch(AppEntry app) =>
+        Launch(app.Name, new ProcessStartInfo(app.LaunchTarget) { UseShellExecute = true });
 
     public static bool Launch(TileItem tile) => Launch(tile.Name, CreateStartInfo(tile));
 
@@ -29,7 +30,7 @@ public static class AppLauncher
     public static bool OpenFileLocation(AppEntry app)
     {
         return app.CanOpenFileLocation && File.Exists(app.LaunchTarget)
-            && Launch(app.Name, CreateOpenFileLocationStartInfo(app.LaunchTarget));
+                                       && Launch(app.Name, CreateOpenFileLocationStartInfo(app.LaunchTarget));
     }
 
     public static bool CanOpenFileLocation(TileItem tile, IReadOnlyList<AppEntry> apps) =>
@@ -80,11 +81,13 @@ public static class AppLauncher
 
     internal static ProcessStartInfo CreateStartInfo(TileItem tile, bool forceAdministrator = false)
     {
-        var isPowerShellScript = Path.GetExtension(tile.LaunchTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);
+        var isPowerShellScript =
+            Path.GetExtension(tile.LaunchTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);
         var startInfo = isPowerShellScript
             ? new ProcessStartInfo("powershell.exe")
             {
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tile.LaunchTarget}\"{AppendArguments(tile.Arguments)}",
+                Arguments =
+                    $"-NoProfile -ExecutionPolicy Bypass -File \"{tile.LaunchTarget}\"{AppendArguments(tile.Arguments)}",
                 UseShellExecute = true,
             }
             : new ProcessStartInfo(tile.LaunchTarget)

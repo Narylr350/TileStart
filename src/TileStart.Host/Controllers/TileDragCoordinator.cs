@@ -1,14 +1,11 @@
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Button = System.Windows.Controls.Button;
-using Canvas = System.Windows.Controls.Canvas;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
@@ -25,14 +22,10 @@ using Size = System.Windows.Size;
 using Vector = System.Windows.Vector;
 using TileStart.Host.Applications;
 using TileStart.Host.Persistence;
-using TileStart.Host.Shell;
 using TileStart.Host.Tiles.DragDrop;
-using TileStart.Host.Tiles.Folders;
 using TileStart.Host.Tiles.Layout;
 using TileStart.Host.Tiles.Models;
-using TileStart.Host.Tiles.Settings;
 using TileStart.Host.Utilities;
-using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Controllers;
 

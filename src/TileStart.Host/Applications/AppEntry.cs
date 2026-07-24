@@ -18,6 +18,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     public required string SortLetter { get; init; }
     public required string Initial { get; init; }
     public required DateTime AddedAt { get; init; }
+
     public ImageSource? Icon
     {
         get => _icon;
@@ -32,6 +33,7 @@ public sealed class AppEntry : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
     public string PackageInstallPath { get; init; } = string.Empty;
     public string AppUserModelId { get; init; } = string.Empty;
     public bool IsCustom { get; init; }
@@ -49,10 +51,10 @@ public sealed class AppEntry : INotifyPropertyChanged
         {
             var extension = Path.GetExtension(LaunchTarget);
             return !IsFolder
-                && ((IsCustom && File.Exists(LaunchTarget))
-                    || extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
-                    || extension.Equals(".url", StringComparison.OrdinalIgnoreCase)
-                    || extension.Equals(".appref-ms", StringComparison.OrdinalIgnoreCase));
+                   && ((IsCustom && File.Exists(LaunchTarget))
+                       || extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+                       || extension.Equals(".url", StringComparison.OrdinalIgnoreCase)
+                       || extension.Equals(".appref-ms", StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -77,7 +79,7 @@ public sealed class AppEntry : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public static AppEntry Application(string name, string launchTarget, DateTime addedAt, ImageSource? icon = null,
-                                       string packageInstallPath = "", string appUserModelId = "", bool isCustom = false)
+        string packageInstallPath = "", string appUserModelId = "", bool isCustom = false)
     {
         var (initial, sortLetter) = GetIndex(name);
         return new AppEntry

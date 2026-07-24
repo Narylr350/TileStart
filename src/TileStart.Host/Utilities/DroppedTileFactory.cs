@@ -31,7 +31,9 @@ public static class DroppedTileFactory
             var type = Classify(fullPath, isDirectory);
             var name = isDirectory
                 ? new DirectoryInfo(fullPath).Name
-                : type == TileTargetType.File ? Path.GetFileName(fullPath) : Path.GetFileNameWithoutExtension(fullPath);
+                : type == TileTargetType.File
+                    ? Path.GetFileName(fullPath)
+                    : Path.GetFileNameWithoutExtension(fullPath);
             if (string.IsNullOrWhiteSpace(name))
             {
                 name = fullPath;
@@ -46,7 +48,8 @@ public static class DroppedTileFactory
                 Icon = iconLoader(fullPath),
             };
         }
-        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException
+                                              or UnauthorizedAccessException)
         {
             DiagnosticLog.Write($"Unable to pin dropped target '{path}': {exception.Message}");
             return null;

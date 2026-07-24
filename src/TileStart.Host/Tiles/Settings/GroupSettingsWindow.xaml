@@ -553,7 +553,8 @@
                                                       DataContext="{Binding Second}"
                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}">
                                             <ToggleButton.Style>
-                                                <Style TargetType="ToggleButton" BasedOn="{StaticResource TilePickerCardStyle}">
+                                                <Style TargetType="ToggleButton"
+                                                       BasedOn="{StaticResource TilePickerCardStyle}">
                                                     <Style.Triggers>
                                                         <Trigger Property="DataContext" Value="{x:Null}">
                                                             <Setter Property="Visibility" Value="Hidden" />

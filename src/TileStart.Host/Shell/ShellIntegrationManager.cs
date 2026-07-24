@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 
 namespace TileStart.Host.Shell;
 
@@ -88,7 +87,9 @@ public sealed class ShellIntegrationManager : IDisposable
             return localPath;
         }
 
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
+             directory is not null;
+             directory = directory.Parent)
         {
             var releasePath = Path.Combine(directory.FullName, "artifacts", "Release", "x64", fileName);
             if (File.Exists(releasePath))

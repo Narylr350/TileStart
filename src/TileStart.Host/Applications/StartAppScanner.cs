@@ -59,9 +59,9 @@ public static class StartAppScanner
                     var parent = Path.GetDirectoryName(path) ?? directory;
                     var relativeFolder = Path.GetRelativePath(directory, parent);
                     shortcuts.Add(new StartMenuShortcut(name,
-                                                        path,
-                                                        File.GetCreationTime(path),
-                                                        relativeFolder == "." ? string.Empty : relativeFolder));
+                        path,
+                        File.GetCreationTime(path),
+                        relativeFolder == "." ? string.Empty : relativeFolder));
                 }
             }
             catch (IOException exception)
@@ -79,7 +79,8 @@ public static class StartAppScanner
 
     private static Task<IReadOnlyList<AppEntry>> ScanPackagedAppsAsync()
     {
-        var completion = new TaskCompletionSource<IReadOnlyList<AppEntry>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion =
+            new TaskCompletionSource<IReadOnlyList<AppEntry>>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
             var apps = new List<AppEntry>();
@@ -88,7 +89,8 @@ public static class StartAppScanner
             object? items = null;
             try
             {
-                var shellType = Type.GetTypeFromProgID("Shell.Application") ?? throw new InvalidOperationException("Shell.Application is unavailable.");
+                var shellType = Type.GetTypeFromProgID("Shell.Application") ??
+                                throw new InvalidOperationException("Shell.Application is unavailable.");
                 shell = Activator.CreateInstance(shellType);
                 dynamic shellApi = shell!;
                 folder = shellApi.NameSpace("shell:AppsFolder");
@@ -111,7 +113,8 @@ public static class StartAppScanner
                         dynamic app = item!;
                         var name = (string?)app.Name;
                         var appUserModelId = (string?)app.Path;
-                        var packageInstallPath = (string?)app.ExtendedProperty("System.AppUserModel.PackageInstallPath");
+                        var packageInstallPath =
+                            (string?)app.ExtendedProperty("System.AppUserModel.PackageInstallPath");
                         var packageFamilyName = (string?)app.ExtendedProperty("System.AppUserModel.PackageFamilyName");
                         if (!string.IsNullOrWhiteSpace(name) &&
                             !string.IsNullOrWhiteSpace(appUserModelId) &&

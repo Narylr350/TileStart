@@ -1,4 +1,3 @@
-using System.Windows;
 using System.Windows.Media.Animation;
 using TileStart.Host.Windowing;
 

@@ -29,7 +29,8 @@ public static class ExplorerContextMenuRegistration
 
             SHChangeNotify(0x08000000, 0, 0, 0);
         }
-        catch (Exception exception) when (exception is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        catch (Exception exception) when (exception is UnauthorizedAccessException or IOException
+                                              or System.Security.SecurityException)
         {
             DiagnosticLog.Write($"Explorer context menu registration failed: {exception.Message}");
         }

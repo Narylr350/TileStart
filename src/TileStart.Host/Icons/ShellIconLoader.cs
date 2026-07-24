@@ -27,7 +27,7 @@ public static class ShellIconLoader
         }
 
         var shortcutTarget = ResolveShortcutTargetWithoutIcon(displayName);
-            if (!string.IsNullOrWhiteSpace(shortcutTarget)
+        if (!string.IsNullOrWhiteSpace(shortcutTarget)
             && !shortcutTarget.Equals(displayName, StringComparison.OrdinalIgnoreCase))
         {
             var targetIcon = Load(shortcutTarget);
@@ -65,14 +65,16 @@ public static class ShellIconLoader
             }
 
             var fileInfo = new ShellFileInfo();
-            if (SHGetFileInfo(itemIdList, 0, ref fileInfo, (uint)Marshal.SizeOf<ShellFileInfo>(), ShgfiPidl | ShgfiIcon | ShgfiLargeIcon) == 0 || fileInfo.Icon == 0)
+            if (SHGetFileInfo(itemIdList, 0, ref fileInfo, (uint)Marshal.SizeOf<ShellFileInfo>(),
+                    ShgfiPidl | ShgfiIcon | ShgfiLargeIcon) == 0 || fileInfo.Icon == 0)
             {
                 return null;
             }
 
             try
             {
-                var image = Imaging.CreateBitmapSourceFromHIcon(fileInfo.Icon, Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(32, 32));
+                var image = Imaging.CreateBitmapSourceFromHIcon(fileInfo.Icon, Int32Rect.Empty,
+                    BitmapSizeOptions.FromWidthAndHeight(32, 32));
                 image.Freeze();
                 return IconImageNormalizer.NormalizeShellIcon(image);
             }
@@ -156,7 +158,8 @@ public static class ShellIconLoader
         }
         catch (Exception exception)
         {
-            DiagnosticLog.Write($"Shortcut icon target resolution failed: shortcut={displayName}, error={exception.Message}");
+            DiagnosticLog.Write(
+                $"Shortcut icon target resolution failed: shortcut={displayName}, error={exception.Message}");
             return null;
         }
         finally
@@ -186,12 +189,14 @@ public static class ShellIconLoader
                 return null;
             }
 
-            if (factory.GetImage(new NativeSize(size, size), SiigbfBiggerSizeOk | SiigbfIconOnly, out bitmap) != 0 || bitmap == 0)
+            if (factory.GetImage(new NativeSize(size, size), SiigbfBiggerSizeOk | SiigbfIconOnly, out bitmap) != 0 ||
+                bitmap == 0)
             {
                 return null;
             }
 
-            var image = Imaging.CreateBitmapSourceFromHBitmap(bitmap, 0, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            var image = Imaging.CreateBitmapSourceFromHBitmap(bitmap, 0, Int32Rect.Empty,
+                BitmapSizeOptions.FromEmptyOptions());
             image.Freeze();
             return image;
         }
@@ -257,18 +262,25 @@ public static class ShellIconLoader
         public nint Icon;
         public int IconIndex;
         public uint Attributes;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string DisplayName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] public string TypeName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string DisplayName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+        public string TypeName;
     }
 
     [DllImport("shell32.dll", PreserveSig = true)]
-    private static extern int SHCreateItemFromIDList(nint itemIdList, ref Guid interfaceId, [MarshalAs(UnmanagedType.Interface)] out IShellItemImageFactory? factory);
+    private static extern int SHCreateItemFromIDList(nint itemIdList, ref Guid interfaceId,
+        [MarshalAs(UnmanagedType.Interface)] out IShellItemImageFactory? factory);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
-    private static extern int SHParseDisplayName(string name, nint bindingContext, out nint itemIdList, uint attributes, out uint attributesOut);
+    private static extern int SHParseDisplayName(string name, nint bindingContext, out nint itemIdList, uint attributes,
+        out uint attributesOut);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-    private static extern nint SHGetFileInfo(nint path, uint fileAttributes, ref ShellFileInfo fileInfo, uint fileInfoSize, uint flags);
+    private static extern nint SHGetFileInfo(nint path, uint fileAttributes, ref ShellFileInfo fileInfo,
+        uint fileInfoSize, uint flags);
 
     [DllImport("gdi32.dll")]
     private static extern bool DeleteObject(nint value);
@@ -277,5 +289,6 @@ public static class ShellIconLoader
     private static extern bool DestroyIcon(nint icon);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-    private static extern uint ExtractIconEx(string file, int iconIndex, nint[]? largeIcons, nint[]? smallIcons, uint iconCount);
+    private static extern uint ExtractIconEx(string file, int iconIndex, nint[]? largeIcons, nint[]? smallIcons,
+        uint iconCount);
 }

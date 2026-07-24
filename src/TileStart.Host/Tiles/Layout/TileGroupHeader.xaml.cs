@@ -1,13 +1,11 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using SolidColorBrush = System.Windows.Media.SolidColorBrush;
-using TileStart.Host;
 using TileStart.Host.Tiles.Models;
 
 namespace TileStart.Host.Tiles.Layout;

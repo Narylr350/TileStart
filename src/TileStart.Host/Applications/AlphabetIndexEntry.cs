@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace TileStart.Host.Applications;
 
@@ -56,12 +55,15 @@ public static class AlphabetIndex
         new("\uE128", isGlyph: true),
     ];
 
-    public static void UpdateAvailability(IEnumerable<AlphabetIndexEntry> entries, IEnumerable<AppEntry> apps, bool hasRecentApps)
+    public static void UpdateAvailability(IEnumerable<AlphabetIndexEntry> entries, IEnumerable<AppEntry> apps,
+        bool hasRecentApps)
     {
         var available = apps.Select(app => app.SortLetter).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var entry in entries)
         {
-            entry.IsAvailable = entry.IsRecent ? hasRecentApps : entry.TargetLetter is not null && available.Contains(entry.TargetLetter);
+            entry.IsAvailable = entry.IsRecent
+                ? hasRecentApps
+                : entry.TargetLetter is not null && available.Contains(entry.TargetLetter);
         }
     }
 }
