@@ -1,6 +1,7 @@
 <Window x:Class="TileStart.Host.NetworkIconWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="网络图标"
         Width="500"
         Height="330"
@@ -70,6 +71,7 @@
                         BorderThickness="1">
                     <Image x:Name="PreviewImage"
                            Margin="8"
+                           gif:ImageBehavior.RepeatBehavior="Forever"
                            RenderOptions.BitmapScalingMode="HighQuality"
                            Stretch="Uniform" />
                 </Border>

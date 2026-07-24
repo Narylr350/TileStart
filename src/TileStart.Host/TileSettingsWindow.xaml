@@ -495,8 +495,15 @@
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
-                                                <Image Source="{Binding Icon}"
+                                                <Image gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                       gif:ImageBehavior.RepeatBehavior="Forever"
                                                        RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Source>
+                                                        <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                            <Binding Path="Icon" />
+                                                            <Binding Path="IconPath" />
+                                                        </MultiBinding>
+                                                    </Image.Source>
                                                     <Image.Style>
                                                          <Style TargetType="Image">
                                                              <Setter Property="Width" Value="{Binding IconSize}" />
@@ -569,9 +576,17 @@
                                                         <DataTemplate>
                                                             <Border Margin="1" Background="{Binding BackgroundBrush}">
                                                                 <Image Margin="3"
-                                                                       Source="{Binding Icon}"
+                                                                       gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                       gif:ImageBehavior.RepeatBehavior="Forever"
                                                                        RenderOptions.BitmapScalingMode="HighQuality"
-                                                                       Stretch="Uniform" />
+                                                                       Stretch="Uniform">
+                                                                    <Image.Source>
+                                                                        <MultiBinding Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                            <Binding Path="Icon" />
+                                                                            <Binding Path="IconPath" />
+                                                                        </MultiBinding>
+                                                                    </Image.Source>
+                                                                </Image>
                                                             </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>

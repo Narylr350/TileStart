@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace TileStart.Host;
@@ -9,9 +10,12 @@ public sealed class GifImageSourceConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not string path
-            || !path.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)
-            || !File.Exists(path))
+        return value is string path ? Load(path) : null;
+    }
+
+    public static ImageSource? Load(string path)
+    {
+        if (!path.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) || !File.Exists(path))
         {
             return null;
         }
