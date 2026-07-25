@@ -54,6 +54,7 @@ internal sealed class TileWorkspaceController : IDisposable
     private readonly Action<string> _tryDismissAfterForegroundChange;
     private readonly Action<bool> _setOpenContextMenuState;
     private readonly Func<long> _getSuppressTileActivationUntil;
+    private ContextMenu? _openContextMenu;
 
     public TileWorkspaceController(
         Window window,
@@ -96,6 +97,7 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
+        _openContextMenu = menu;
         if (GetContextMenuPopupBorder(menu) is { } border)
         {
             var opensUpward = ContextMenuOpensUpward(menu, border);
@@ -312,6 +314,11 @@ internal sealed class TileWorkspaceController : IDisposable
     public void StartContextMenu_Closed(object sender, RoutedEventArgs e)
     {
         _setOpenContextMenuState(false);
+        if (ReferenceEquals(_openContextMenu, sender))
+        {
+            _openContextMenu = null;
+        }
+
         if (sender is ContextMenu menu && GetContextMenuPopupBorder(menu) is { } border)
         {
             border.ClearValue(UIElement.ClipProperty);
@@ -331,6 +338,29 @@ internal sealed class TileWorkspaceController : IDisposable
                 }
             },
             System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    public void CloseOpenContextMenu()
+    {
+        var menu = _openContextMenu;
+        _openContextMenu = null;
+        CloseContextMenu(menu, _setOpenContextMenuState);
+    }
+
+    internal static void CloseContextMenu(ContextMenu? menu, Action<bool> setOpenContextMenuState)
+    {
+        setOpenContextMenuState(false);
+        if (menu is null)
+        {
+            return;
+        }
+
+        foreach (var item in EnumerateMenuItems(menu))
+        {
+            item.IsSubmenuOpen = false;
+        }
+
+        menu.IsOpen = false;
     }
 
     // ── Pin / unpin ───────────────────────────────────────────────

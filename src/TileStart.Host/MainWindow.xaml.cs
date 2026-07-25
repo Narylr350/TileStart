@@ -113,6 +113,7 @@ public partial class MainWindow : Window
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
             hasOpenContextMenu: () => _hasOpenContextMenu);
+        _controller.WindowDismissing += _tileWorkspaceController.CloseOpenContextMenu;
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
