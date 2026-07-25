@@ -1,3 +1,4 @@
+using System.IO;
 using System.IO.Pipes;
 using System.Windows.Threading;
 using TileStart.Host;
@@ -7,6 +8,47 @@ namespace TileStart.Host.Tests;
 [Collection("Host pipe")]
 public sealed class OpenRequestServerTests
 {
+    [Fact]
+    public async Task SecondaryInstanceWaitsForPrimaryPipeStartup()
+    {
+        var pipeName = $"TileStart.Host.Tests.{Guid.NewGuid():N}";
+        var expected = new HostRequest(HostRequestKind.Open);
+        var serverTask = Task.Run<HostRequest?>(async () =>
+        {
+            await Task.Delay(350);
+            await using var pipe = new NamedPipeServerStream(
+                pipeName,
+                PipeDirection.InOut,
+                1,
+                PipeTransmissionMode.Message,
+                PipeOptions.Asynchronous);
+            await pipe.WaitForConnectionAsync();
+            await using var message = new MemoryStream();
+            var buffer = new byte[256];
+            do
+            {
+                var count = await pipe.ReadAsync(buffer);
+                if (count == 0)
+                {
+                    break;
+                }
+
+                await message.WriteAsync(buffer.AsMemory(0, count));
+            } while (!pipe.IsMessageComplete);
+
+            return HostRequest.TryDecode(message.ToArray(), out var request) ? request : null;
+        });
+
+        var delivered = await Task.Run(() => SingleInstanceGuard.NotifyPrimaryInstance(
+            expected,
+            pipeName,
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromMilliseconds(25)));
+
+        Assert.True(delivered);
+        Assert.Equal(expected, await serverTask.WaitAsync(TimeSpan.FromSeconds(2)));
+    }
+
     [Theory]
     [InlineData("OPEN", 1)]
     [InlineData("EXIT", 1)]

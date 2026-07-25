@@ -38,7 +38,11 @@ public partial class App : System.Windows.Application
         _singleInstance = new SingleInstanceGuard();
         if (!_singleInstance.IsPrimaryInstance)
         {
-            SingleInstanceGuard.NotifyPrimaryInstance(startupRequest);
+            if (!SingleInstanceGuard.NotifyPrimaryInstance(startupRequest))
+            {
+                DiagnosticLog.Write($"Unable to notify primary Host instance: request={startupRequest.Kind}.");
+            }
+
             Shutdown();
             return;
         }
