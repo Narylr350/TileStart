@@ -50,4 +50,41 @@ public sealed class TileDragHitGeometryTests
             100,
             100));
     }
+
+    [Fact]
+    public void UpdatedPositionsRecognizeTheProvisionalGroupInsteadOfTheFormerLowerGroup()
+    {
+        var geometry = new TileDragHitGeometry(
+        [
+            new TileGroupDropZone("upper", 0, 0, 412, 204, GroupColumn: 0, GroupRow: 0),
+            new TileGroupDropZone("lower", 0, 204, 412, 204, GroupColumn: 0, GroupRow: 1),
+        ]);
+
+        geometry.Update(
+        [
+            new TileGroupDropZone("upper", 0, 0, 412, 204, GroupColumn: 0, GroupRow: 0),
+            new TileGroupDropZone("provisional", 0, 204, 412, 100, GroupColumn: 0, GroupRow: 1),
+            new TileGroupDropZone("lower", 0, 408, 412, 204, GroupColumn: 0, GroupRow: 2),
+        ]);
+
+        var target = geometry.FindTarget(0, 204, 100, 100);
+
+        Assert.Equal("provisional", target?.GroupId);
+    }
+
+    [Fact]
+    public void UpdatingPositionsStillKeepsTheInitialDetachmentHeight()
+    {
+        var geometry = new TileDragHitGeometry(
+        [
+            new TileGroupDropZone("first", 0, 0, 412, 204, GroupColumn: 0, GroupRow: 0),
+        ]);
+        geometry.Update(
+        [
+            new TileGroupDropZone("first", 0, 0, 412, 412, GroupColumn: 0, GroupRow: 0),
+        ]);
+        var draggedCenter = 204 + TileAreaDropResolver.NewGroupCreationBand + 1;
+
+        Assert.Null(geometry.FindTarget(156, draggedCenter - 50, 100, 100));
+    }
 }

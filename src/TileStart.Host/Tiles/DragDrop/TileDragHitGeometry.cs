@@ -2,17 +2,18 @@ namespace TileStart.Host.Tiles.DragDrop;
 
 public sealed class TileDragHitGeometry
 {
-    private readonly TileGroupDropZone[] _zones;
+    private readonly Dictionary<string, double> _detachmentHeights = [];
+    private TileGroupDropZone[] _zones = [];
 
     public TileDragHitGeometry(IEnumerable<TileGroupDropZone> zones)
     {
+        Update(zones);
+    }
+
+    public void Update(IEnumerable<TileGroupDropZone> zones)
+    {
         _zones = zones
-            .Select(zone => zone with
-            {
-                DetachmentHeight = double.IsNaN(zone.DetachmentHeight)
-                    ? zone.Height
-                    : zone.DetachmentHeight,
-            })
+            .Select(zone => zone with { DetachmentHeight = GetDetachmentHeight(zone) })
             .ToArray();
     }
 
@@ -41,4 +42,18 @@ public sealed class TileDragHitGeometry
             draggedHeight,
             columnSpan,
             groupColumns);
+
+    private double GetDetachmentHeight(TileGroupDropZone zone)
+    {
+        if (_detachmentHeights.TryGetValue(zone.GroupId, out var height))
+        {
+            return height;
+        }
+
+        height = double.IsNaN(zone.DetachmentHeight)
+            ? zone.Height
+            : zone.DetachmentHeight;
+        _detachmentHeights.Add(zone.GroupId, height);
+        return height;
+    }
 }

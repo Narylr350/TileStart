@@ -509,6 +509,7 @@ internal sealed class TileDragCoordinator : IDisposable
             var previousGroupPositions = CaptureGroupReorderPositions();
             _dragTransaction.PreviewNewGroup(newGroupTarget);
             _window.UpdateLayout();
+            RefreshTileDragHitGeometry();
             var movedGroups = AnimateGroupReorderFrom(previousGroupPositions);
             AnimateReorderFrom(previousPositions, movedGroups);
         }
@@ -1134,6 +1135,7 @@ internal sealed class TileDragCoordinator : IDisposable
                 if (!ReferenceEquals(previousTarget, newGroup))
                 {
                     _window.UpdateLayout();
+                    RefreshTileDragHitGeometry();
                 }
 
                 e.Effects = DragDropEffects.Move;
@@ -1469,6 +1471,7 @@ internal sealed class TileDragCoordinator : IDisposable
         if (previewed)
         {
             _window.UpdateLayout();
+            RefreshTileDragHitGeometry();
             AnimateReorderFrom(previousPositions);
         }
 
@@ -1585,6 +1588,7 @@ internal sealed class TileDragCoordinator : IDisposable
         if (previewed)
         {
             _window.UpdateLayout();
+            RefreshTileDragHitGeometry();
             AnimateReorderFrom(previousPositions);
         }
 
@@ -1595,6 +1599,11 @@ internal sealed class TileDragCoordinator : IDisposable
     {
         _tileReflowTimer.Stop();
         _tileReflowTimer.Start();
+    }
+
+    private void RefreshTileDragHitGeometry()
+    {
+        _tileDragHitGeometry?.Update(CaptureTileAreaDropZones());
     }
 
     private void TileReflowTimer_Tick(object? sender, EventArgs e)
