@@ -21,11 +21,13 @@ namespace
     constexpr DWORD kPipeTimeoutMilliseconds = 75;
     constexpr WORD kShellRegisterHotKeyOrdinal = 2671;
     constexpr int kShellStandaloneWinHotKeyId = 1;
+    constexpr wchar_t kNativeStartBypassEventName[] = L"Local\\TileStart.NativeStart.Bypass";
 
     HMODULE g_module = nullptr;
     HANDLE g_worker_thread = nullptr;
     HANDLE g_stop_event = nullptr;
     HANDLE g_ready_event = nullptr;
+    HANDLE g_native_start_bypass_event = nullptr;
     HHOOK g_mouse_hook = nullptr;
     HHOOK g_progman_hook = nullptr;
     HWND g_start_button = nullptr;
@@ -333,6 +335,13 @@ namespace
             auto* message = reinterpret_cast<MSG*>(data);
             if (message->message == WM_SYSCOMMAND && (message->wParam & 0xFFF0) == SC_TASKLIST)
             {
+                if (g_native_start_bypass_event != nullptr &&
+                    WaitForSingleObject(g_native_start_bypass_event, 0) == WAIT_OBJECT_0)
+                {
+                    WriteShellLog("SC_TASKLIST bypassed for an explicit native Start-menu request.");
+                    return CallNextHookEx(g_progman_hook, code, remove_message, data);
+                }
+
                 const BOOL delivered = RequestHostOpen();
                 char diagnostic[160]{};
                 sprintf_s(diagnostic,
@@ -356,6 +365,7 @@ namespace
     {
         MSG message{};
         PeekMessageW(&message, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
+        g_native_start_bypass_event = CreateEventW(nullptr, FALSE, FALSE, kNativeStartBypassEventName);
         RefreshStartButton();
         g_mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, g_module, 0);
         const HWND progman = FindWindowW(L"Progman", nullptr);
@@ -466,6 +476,11 @@ extern "C" __declspec(dllexport) DWORD WINAPI TileStartStopHook(LPVOID)
     {
         CloseHandle(g_ready_event);
         g_ready_event = nullptr;
+    }
+    if (g_native_start_bypass_event != nullptr)
+    {
+        CloseHandle(g_native_start_bypass_event);
+        g_native_start_bypass_event = nullptr;
     }
 
     g_start_button = nullptr;

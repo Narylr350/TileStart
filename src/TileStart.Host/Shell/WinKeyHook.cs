@@ -17,6 +17,7 @@ public sealed class WinKeyHook : IDisposable
     private const uint KeyEventKeyUp = 0x0002;
     private const uint LlkhfExtended = 0x00000001;
     private const uint LlkhfInjected = 0x00000010;
+    private const string NativeStartBypassEventName = @"Local\TileStart.NativeStart.Bypass";
 
     private static readonly nuint TileStartInjectionMarker = IntPtr.Size == 8
         ? unchecked((nuint)0x54494C4553544152UL)
@@ -47,6 +48,7 @@ public sealed class WinKeyHook : IDisposable
 
     public static void OpenNativeStartMenu()
     {
+        SignalNativeStartBypass();
         InjectKey((ushort)VkLwin, 0, KeyEventExtendedKey);
         InjectKey((ushort)VkLwin, 0, KeyEventExtendedKey | KeyEventKeyUp);
     }
@@ -160,6 +162,29 @@ public sealed class WinKeyHook : IDisposable
     private static void InjectKey(ushort virtualKey, ushort scanCode, uint flags)
     {
         keybd_event((byte)virtualKey, (byte)scanCode, flags, TileStartInjectionMarker);
+    }
+
+    private static void SignalNativeStartBypass()
+    {
+        try
+        {
+            var bypassEvent = EventWaitHandle.OpenExisting(NativeStartBypassEventName);
+            bypassEvent.Set();
+            ThreadPool.QueueUserWorkItem(static state =>
+            {
+                using var eventHandle = (EventWaitHandle)state!;
+                Thread.Sleep(1000);
+                eventHandle.Reset();
+            }, bypassEvent);
+        }
+        catch (WaitHandleCannotBeOpenedException)
+        {
+            // No ShellHook is active, so the injected Win key already reaches the native menu.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Fail open: injection still gives Windows a chance to handle the native menu.
+        }
     }
 
     private static void QueueDiagnostic(string message) =>
