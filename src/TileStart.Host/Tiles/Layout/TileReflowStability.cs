@@ -25,6 +25,18 @@ public sealed class TileReflowStability
         return true;
     }
 
+    public bool ObserveTarget(string targetKey)
+    {
+        if (_targetKey == targetKey)
+        {
+            return false;
+        }
+
+        _targetKey = targetKey;
+        _timerAnchor = default;
+        return true;
+    }
+
     public void Reset()
     {
         _targetKey = null;

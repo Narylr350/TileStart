@@ -87,4 +87,18 @@ public sealed class TileDragHitGeometryTests
 
         Assert.Null(geometry.FindTarget(156, draggedCenter - 50, 100, 100));
     }
+
+    [Fact]
+    public void ShortGroupAcceptsDropsInsideTheVisualHeightOfItsOuterRow()
+    {
+        var geometry = new TileDragHitGeometry(
+        [
+            new TileGroupDropZone("short", 0, 0, 412, 100, GroupColumn: 0, GroupRow: 0),
+            new TileGroupDropZone("tall", 428, 0, 412, 204, GroupColumn: 4, GroupRow: 0),
+        ]);
+
+        var target = geometry.FindTarget(156, 104, 100, 100);
+
+        Assert.Equal("short", target?.GroupId);
+    }
 }

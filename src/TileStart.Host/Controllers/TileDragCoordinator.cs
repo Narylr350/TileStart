@@ -1584,7 +1584,7 @@ internal sealed class TileDragCoordinator : IDisposable
             _pendingDropFolder = folder;
             _pendingDropPosition = position;
             _pendingDropTile = tile;
-            if (_tileReflowStability.Observe(key, position))
+            if (_tileReflowStability.ObserveTarget(key))
             {
                 RestartTileReflowTimer();
             }
@@ -1662,7 +1662,7 @@ internal sealed class TileDragCoordinator : IDisposable
             _pendingDropFolder = null;
             _pendingDropPosition = position;
             _pendingDropTile = tile;
-            var restartTimer = _tileReflowStability.Observe(key, position);
+            var restartTimer = _tileReflowStability.ObserveTarget(key);
 #if DEBUG
             if (restartTimer)
             {

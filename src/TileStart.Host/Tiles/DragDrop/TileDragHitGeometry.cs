@@ -12,8 +12,20 @@ public sealed class TileDragHitGeometry
 
     public void Update(IEnumerable<TileGroupDropZone> zones)
     {
-        _zones = zones
-            .Select(zone => zone with { DetachmentHeight = GetDetachmentHeight(zone) })
+        var current = zones.ToArray();
+        var rowHeights = current
+            .Where(zone => zone.GroupRow >= 0)
+            .GroupBy(zone => zone.GroupRow)
+            .ToDictionary(
+                row => row.Key,
+                row => row.Max(EffectiveDetachmentHeight));
+        _zones = current
+            .Select(zone => zone with
+            {
+                DetachmentHeight = GetDetachmentHeight(
+                    zone,
+                    rowHeights.GetValueOrDefault(zone.GroupRow, EffectiveDetachmentHeight(zone))),
+            })
             .ToArray();
     }
 
@@ -43,17 +55,20 @@ public sealed class TileDragHitGeometry
             columnSpan,
             groupColumns);
 
-    private double GetDetachmentHeight(TileGroupDropZone zone)
+    private double GetDetachmentHeight(TileGroupDropZone zone, double rowHeight)
     {
         if (_detachmentHeights.TryGetValue(zone.GroupId, out var height))
         {
             return height;
         }
 
-        height = double.IsNaN(zone.DetachmentHeight)
-            ? zone.Height
-            : zone.DetachmentHeight;
+        height = Math.Max(EffectiveDetachmentHeight(zone), rowHeight);
         _detachmentHeights.Add(zone.GroupId, height);
         return height;
     }
+
+    private static double EffectiveDetachmentHeight(TileGroupDropZone zone) =>
+        double.IsNaN(zone.DetachmentHeight)
+            ? zone.Height
+            : zone.DetachmentHeight;
 }

@@ -31,6 +31,16 @@ public sealed class TileReflowStabilityTests
     }
 
     [Fact]
+    public void TargetOnlyObservationKeepsTheTimerWhileMovingInsideTheSameCell()
+    {
+        var stability = new TileReflowStability();
+
+        Assert.True(stability.ObserveTarget("group:0:0"));
+        Assert.False(stability.ObserveTarget("group:0:0"));
+        Assert.True(stability.ObserveTarget("group:2:0"));
+    }
+
+    [Fact]
     public void CustomDriftAllowsFolderCandidateMicroMovement()
     {
         var stability = new TileReflowStability(12);
