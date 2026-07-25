@@ -82,7 +82,9 @@ public static class TileAreaDropResolver
             .Where(zone => zone.GroupColumn == groupColumn)
             .OrderBy(zone => zone.GroupRow)
             .ToArray();
-        var followingIndex = Array.FindIndex(column, zone => zone.Top > centerY);
+        var followingIndex = Array.FindIndex(
+            column,
+            zone => zone.Top >= centerY - NewGroupCreationBand);
         var groupRow = followingIndex >= 0
             ? column[followingIndex].GroupRow
             : column.Length;
@@ -153,6 +155,24 @@ public static class TileAreaDropResolver
             })
             .OrderBy(row => row.Top)
             .ToArray();
+        if (useDetachmentHeight)
+        {
+            for (var index = 0; index < rows.Length - 1; index++)
+            {
+                var upperBottom = rows[index].Bottom;
+                var lowerTop = rows[index + 1].Top;
+                var gap = lowerTop - upperBottom;
+                var isInsertionBand = gap >= maximumVerticalDistance * 2
+                    ? targetY > upperBottom + maximumVerticalDistance
+                      && targetY < lowerTop - maximumVerticalDistance
+                    : Math.Abs(targetY - (upperBottom + lowerTop) / 2) <= maximumVerticalDistance;
+                if (isInsertionBand)
+                {
+                    return null;
+                }
+            }
+        }
+
         for (var index = 0; index < rows.Length - 1; index++)
         {
             if (targetY > rows[index].Bottom + maximumVerticalDistance

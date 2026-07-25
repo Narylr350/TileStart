@@ -46,6 +46,27 @@ public sealed class Win10GroupGridLayoutTests
     }
 
     [Fact]
+    public void InsertingWithRowShiftMovesOnlyTheOverlappingColumnChain()
+    {
+        var upperLeft = Group(0, 0);
+        var lowerLeft = Group(0, 1);
+        var bottomLeft = Group(0, 2);
+        var lowerMiddle = Group(4, 1);
+        var inserted = new TileGroup();
+        var layout = new TileLayout
+        {
+            Groups = [upperLeft, lowerLeft, bottomLeft, lowerMiddle, inserted],
+        };
+
+        Win10GroupGridLayout.InsertWithRowShift(layout, inserted, new TileGroupCell(0, 1), 12);
+
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(inserted));
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(lowerLeft));
+        Assert.Equal(new TileGroupCell(0, 3), Win10GroupGridLayout.GetCell(bottomLeft));
+        Assert.Equal(new TileGroupCell(4, 1), Win10GroupGridLayout.GetCell(lowerMiddle));
+    }
+
+    [Fact]
     public void MovingOntoAnOccupiedRegionSwapsEqualWidthGroups()
     {
         var first = Group(0, 0);
@@ -73,6 +94,27 @@ public sealed class Win10GroupGridLayoutTests
         Assert.Equal(new TileGroupCell(4, 0), Win10GroupGridLayout.GetCell(upperMiddle));
         Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(lowerLeft));
         Assert.Equal(new TileGroupCell(0, 0), Win10GroupGridLayout.FindAppendCell(layout, 12));
+    }
+
+    [Fact]
+    public void RemovingAnEmptiedGroupRestoresTheShiftedColumnChain()
+    {
+        var upperLeft = Group(0, 0);
+        var lowerLeft = Group(0, 1);
+        var bottomLeft = Group(0, 2);
+        var lowerMiddle = Group(4, 1);
+        var inserted = new TileGroup();
+        var layout = new TileLayout
+        {
+            Groups = [upperLeft, lowerLeft, bottomLeft, lowerMiddle, inserted],
+        };
+
+        Win10GroupGridLayout.InsertWithRowShift(layout, inserted, new TileGroupCell(0, 1), 12);
+        Assert.True(Win10GroupGridLayout.RemoveAndShiftRowsUp(layout, inserted));
+
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(lowerLeft));
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(bottomLeft));
+        Assert.Equal(new TileGroupCell(4, 1), Win10GroupGridLayout.GetCell(lowerMiddle));
     }
 
     [Fact]

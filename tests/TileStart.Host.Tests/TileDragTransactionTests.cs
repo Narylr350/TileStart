@@ -124,9 +124,47 @@ public sealed class TileDragTransactionTests
         using var transaction = new TileDragTransaction(layout, source, moving, groupColumns: 12);
         var created = transaction.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 6, 0));
 
-        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(created));
-        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(following));
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(created));
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(following));
         Assert.Equal((6, 0), (moving.Column, moving.Row));
+    }
+
+    [Fact]
+    public void MovingTheOnlyTileBackDeletesTheCreatedGroupAndRestoresShiftedRows()
+    {
+        var moving = Tile("moving", TileSize.Medium, 0, 0);
+        var source = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 0,
+            Tiles = [moving, Tile("remaining", TileSize.Medium, 2, 0)],
+        };
+        var following = new TileGroup
+        {
+            GroupColumn = 0,
+            GroupRow = 1,
+            Tiles = [Tile("following", TileSize.Medium, 0, 0)],
+        };
+        var layout = new TileLayout { Groups = [source, following] };
+
+        TileGroup created;
+        using (var create = new TileDragTransaction(layout, source, moving, groupColumns: 12))
+        {
+            created = create.PreviewNewGroup(new TileNewGroupDropTarget(0, 1, 0, 0));
+            create.Commit();
+        }
+
+        Assert.Equal(new TileGroupCell(0, 2), Win10GroupGridLayout.GetCell(following));
+
+        using (var moveBack = new TileDragTransaction(layout, created, moving, groupColumns: 12))
+        {
+            Assert.True(moveBack.Preview(source, 4, 0));
+            moveBack.Commit();
+        }
+
+        Assert.DoesNotContain(created, layout.Groups);
+        Assert.Contains(moving, source.Tiles);
+        Assert.Equal(new TileGroupCell(0, 1), Win10GroupGridLayout.GetCell(following));
     }
 
     [Fact]

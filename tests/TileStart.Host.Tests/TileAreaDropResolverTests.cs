@@ -73,6 +73,15 @@ public sealed class TileAreaDropResolverTests
     }
 
     [Fact]
+    public void BoundaryBetweenAdjacentVisualRowsCreatesANewGroupTarget()
+    {
+        var upper = new TileGroupDropZone("upper", 0, 0, 412, 204, 204, 0, 0);
+        var lower = new TileGroupDropZone("lower", 0, 204, 412, 204, 204, 0, 1);
+
+        Assert.Null(TileAreaDropResolver.FindTargetForDraggedTile([upper, lower], 156, 154, 100, 100));
+    }
+
+    [Fact]
     public void NewGroupTargetPreservesTheHorizontalCellAndInsertsBeforeTheFollowingRow()
     {
         var upper = new TileGroupDropZone("upper", 0, 0, 412, 204, 204, 0, 0);
@@ -82,6 +91,23 @@ public sealed class TileAreaDropResolverTests
             [upper, lower],
             Win10TileMetrics.Left(6),
             212,
+            100,
+            columnSpan: 2,
+            groupColumns: 12);
+
+        Assert.Equal(new TileNewGroupDropTarget(0, 1, 6, 0), target);
+    }
+
+    [Fact]
+    public void NewGroupTargetAtAdjacentRowBoundaryInsertsBeforeTheLowerRow()
+    {
+        var upper = new TileGroupDropZone("upper", 0, 0, 412, 204, 204, 0, 0);
+        var lower = new TileGroupDropZone("lower", 0, 204, 412, 204, 204, 0, 1);
+
+        var target = TileAreaDropResolver.FindNewGroupTargetForDraggedTile(
+            [upper, lower],
+            Win10TileMetrics.Left(6),
+            154,
             100,
             columnSpan: 2,
             groupColumns: 12);

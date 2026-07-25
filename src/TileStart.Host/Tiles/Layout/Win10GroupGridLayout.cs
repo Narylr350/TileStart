@@ -58,6 +58,24 @@ public static class Win10GroupGridLayout
         SetCell(group, cell);
     }
 
+    public static void InsertWithRowShift(TileLayout layout, TileGroup group, TileGroupCell target, int columns)
+    {
+        if (!layout.Groups.Contains(group))
+        {
+            throw new ArgumentException("The inserted group must belong to the layout.", nameof(group));
+        }
+
+        columns = NormalizeColumns(layout.Groups, columns);
+        var others = layout.Groups.Where(candidate => !ReferenceEquals(candidate, group)).ToArray();
+        EnsureCoordinates(new TileLayout { Groups = [.. others] }, columns);
+        var span = Math.Clamp(group.WidthUnits, 1, columns);
+        var cell = new TileGroupCell(
+            Math.Clamp(target.Column, 0, columns - span),
+            Math.Max(0, target.Row));
+        ShiftConflictsDown(others, cell.Column, span, cell.Row);
+        SetCell(group, cell);
+    }
+
     public static bool Move(TileLayout layout, TileGroup group, TileGroupCell target, int columns)
     {
         if (!layout.Groups.Contains(group))
@@ -111,6 +129,24 @@ public static class Win10GroupGridLayout
     }
 
     public static bool Remove(TileLayout layout, TileGroup group) => layout.Groups.Remove(group);
+
+    public static bool RemoveAndShiftRowsUp(TileLayout layout, TileGroup group)
+    {
+        if (!layout.Groups.Contains(group))
+        {
+            return false;
+        }
+
+        var vacatedCell = GetCell(group);
+        var vacatedSpan = Math.Max(1, group.WidthUnits);
+        if (!layout.Groups.Remove(group))
+        {
+            return false;
+        }
+
+        ShiftGroupsUpIntoVacancy(layout.Groups.ToArray(), vacatedCell.Column, vacatedSpan, vacatedCell.Row);
+        return true;
+    }
 
     public static TileGroupCell GetCell(TileGroup group) => new(group.GroupColumn, group.GroupRow);
 
@@ -238,4 +274,86 @@ public static class Win10GroupGridLayout
         first.Row == second.Row
         && first.Column < second.Column + secondSpan
         && first.Column + firstSpan > second.Column;
+
+    private static void ShiftConflictsDown(
+        IReadOnlyList<TileGroup> groups,
+        int column,
+        int span,
+        int row,
+        TileGroup? ignored = null)
+    {
+        var target = new TileGroupCell(column, row);
+        var conflicts = groups
+            .Where(candidate => !ReferenceEquals(candidate, ignored)
+                                && Overlaps(
+                                    target,
+                                    span,
+                                    GetCell(candidate),
+                                    candidate.WidthUnits))
+            .ToArray();
+        foreach (var conflict in conflicts)
+        {
+            var current = GetCell(conflict);
+            ShiftConflictsDown(
+                groups,
+                current.Column,
+                conflict.WidthUnits,
+                current.Row + 1,
+                conflict);
+            SetCell(conflict, new TileGroupCell(current.Column, current.Row + 1));
+        }
+    }
+
+    private static void ShiftGroupsUpIntoVacancy(
+        IReadOnlyList<TileGroup> groups,
+        int column,
+        int span,
+        int row)
+    {
+        var vacancies = new[] { (Column: column, Span: span) };
+        for (var sourceRow = row + 1; vacancies.Length > 0; sourceRow++)
+        {
+            var candidates = groups
+                .Where(candidate => GetCell(candidate).Row == sourceRow
+                                    && vacancies.Any(vacancy => HorizontalOverlaps(
+                                        vacancy.Column,
+                                        vacancy.Span,
+                                        candidate.GroupColumn,
+                                        candidate.WidthUnits)))
+                .ToArray();
+            if (candidates.Length == 0)
+            {
+                return;
+            }
+
+            var destinationOccupants = groups
+                .Where(candidate => GetCell(candidate).Row == sourceRow - 1
+                                    && !candidates.Contains(candidate))
+                .ToArray();
+            var movable = candidates
+                .Where(candidate => destinationOccupants.All(occupant => !HorizontalOverlaps(
+                    candidate.GroupColumn,
+                    candidate.WidthUnits,
+                    occupant.GroupColumn,
+                    occupant.WidthUnits)))
+                .ToArray();
+            if (movable.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var candidate in movable)
+            {
+                SetCell(candidate, new TileGroupCell(candidate.GroupColumn, sourceRow - 1));
+            }
+
+            vacancies = movable
+                .Select(candidate => (candidate.GroupColumn, Math.Max(1, candidate.WidthUnits)))
+                .ToArray();
+        }
+    }
+
+    private static bool HorizontalOverlaps(int firstColumn, int firstSpan, int secondColumn, int secondSpan) =>
+        firstColumn < secondColumn + Math.Max(1, secondSpan)
+        && firstColumn + Math.Max(1, firstSpan) > secondColumn;
 }

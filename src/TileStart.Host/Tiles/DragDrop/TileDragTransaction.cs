@@ -276,7 +276,7 @@ public sealed class TileDragTransaction : IDisposable
         _affectedGroups.Add(_source);
         var group = new TileGroup();
         _layout.Groups.Add(group);
-        Win10GroupGridLayout.Insert(_layout, group, groupCell, _groupColumns);
+        Win10GroupGridLayout.InsertWithRowShift(_layout, group, groupCell, _groupColumns);
         var moved = _sourceFolder is null
             ? Win10GroupLayout.Move(_source, group, _tile, target.TileColumn, target.TileRow)
             : MoveFolderChildToGroup(group, target.TileColumn, target.TileRow);
@@ -303,7 +303,7 @@ public sealed class TileDragTransaction : IDisposable
 
         if (_previewTarget is not null && _previewTarget != _source && _source.Tiles.Count == 0)
         {
-            Win10GroupGridLayout.Remove(_layout, _source);
+            Win10GroupGridLayout.RemoveAndShiftRowsUp(_layout, _source);
         }
 
         foreach (var group in _layout.Groups)
