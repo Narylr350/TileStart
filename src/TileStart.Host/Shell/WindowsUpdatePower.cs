@@ -20,11 +20,15 @@ internal static class WindowsUpdatePower
     private const string ShutdownPrivilege = "SeShutdownPrivilege";
 
     public static bool IsRestartRequired() =>
-        ReadRestartRequired(() =>
-        {
-            var type = Type.GetTypeFromProgID("Microsoft.Update.SystemInfo", throwOnError: false);
-            return type is null ? null : Activator.CreateInstance(type);
-        });
+        ReadRestartRequired(
+            () => CreateComObject("Microsoft.Update.SystemInfo"),
+            () => CreateComObject("Microsoft.Update.Session"));
+
+    internal static bool ReadRestartRequired(
+        Func<object?> createSystemInfo,
+        Func<object?> createUpdateSession) =>
+        ReadRestartRequired(createSystemInfo)
+        || ReadPendingUpdateRestartRequired(createUpdateSession);
 
     internal static bool ReadRestartRequired(Func<object?> createSystemInfo)
     {
@@ -56,6 +60,103 @@ internal static class WindowsUpdatePower
             {
                 Marshal.FinalReleaseComObject(systemInfo);
             }
+        }
+    }
+
+    internal static bool ReadPendingUpdateRestartRequired(Func<object?> createUpdateSession)
+    {
+        object? session = null;
+        object? searcher = null;
+        object? result = null;
+        object? updates = null;
+        object? update = null;
+        try
+        {
+            session = createUpdateSession();
+            if (session is null)
+            {
+                return false;
+            }
+
+            searcher = session.GetType().InvokeMember(
+                "CreateUpdateSearcher",
+                BindingFlags.InvokeMethod,
+                binder: null,
+                target: session,
+                args: null);
+            if (searcher is null)
+            {
+                return false;
+            }
+
+            searcher.GetType().InvokeMember(
+                "Online",
+                BindingFlags.SetProperty,
+                binder: null,
+                target: searcher,
+                args: [false]);
+            result = searcher.GetType().InvokeMember(
+                "Search",
+                BindingFlags.InvokeMethod,
+                binder: null,
+                target: searcher,
+                args: ["IsInstalled=0 and IsHidden=0"]);
+            updates = result?.GetType().InvokeMember(
+                "Updates",
+                BindingFlags.GetProperty,
+                binder: null,
+                target: result,
+                args: null);
+            if (updates is null)
+            {
+                return false;
+            }
+
+            var count = updates.GetType().InvokeMember(
+                "Count",
+                BindingFlags.GetProperty,
+                binder: null,
+                target: updates,
+                args: null) is int value
+                ? value
+                : 0;
+            for (var index = 0; index < count; index++)
+            {
+                update = updates.GetType().InvokeMember(
+                    "Item",
+                    BindingFlags.GetProperty | BindingFlags.InvokeMethod,
+                    binder: null,
+                    target: updates,
+                    args: [index]);
+                var rebootRequired = update?.GetType().InvokeMember(
+                    "RebootRequired",
+                    BindingFlags.GetProperty,
+                    binder: null,
+                    target: update,
+                    args: null) is true;
+                ReleaseComObject(ref update);
+                if (rebootRequired)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception exception) when (exception is COMException or TargetInvocationException
+                                                    or InvalidComObjectException or MemberAccessException
+                                                    or MissingMethodException)
+        {
+            DiagnosticLog.Write($"Unable to query pending Windows Updates: {exception}");
+            return false;
+        }
+        finally
+        {
+            ReleaseComObject(ref update);
+            ReleaseComObject(ref updates);
+            ReleaseComObject(ref result);
+            ReleaseComObject(ref searcher);
+            ReleaseComObject(ref session);
         }
     }
 
@@ -92,6 +193,22 @@ internal static class WindowsUpdatePower
 
     internal static uint ShutdownFlags(bool restart) =>
         ShutdownInstallUpdates | (restart ? ShutdownRestart : ShutdownPowerOff);
+
+    private static object? CreateComObject(string programmaticId)
+    {
+        var type = Type.GetTypeFromProgID(programmaticId, throwOnError: false);
+        return type is null ? null : Activator.CreateInstance(type);
+    }
+
+    private static void ReleaseComObject(ref object? value)
+    {
+        if (value is not null && Marshal.IsComObject(value))
+        {
+            Marshal.FinalReleaseComObject(value);
+        }
+
+        value = null;
+    }
 
     private static bool EnableShutdownPrivilege()
     {

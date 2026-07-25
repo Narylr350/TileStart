@@ -17,9 +17,36 @@ public sealed class WindowsUpdatePowerTests
     }
 
     [Fact]
+    public void PendingUpdateRequirementIsUsedWhenGlobalFlagIsFalse()
+    {
+        var session = new FakeUpdateSession(false, true);
+
+        Assert.True(WindowsUpdatePower.ReadRestartRequired(
+            () => new FakeSystemInfo(false),
+            () => session));
+        Assert.False(session.Searcher.Online);
+        Assert.Equal("IsInstalled=0 and IsHidden=0", session.Searcher.Query);
+    }
+
+    [Fact]
+    public void GlobalRestartRequirementSkipsPendingUpdateSearch()
+    {
+        var sessionCreated = false;
+
+        Assert.True(WindowsUpdatePower.ReadRestartRequired(
+            () => new FakeSystemInfo(true),
+            () =>
+            {
+                sessionCreated = true;
+                return new FakeUpdateSession();
+            }));
+        Assert.False(sessionCreated);
+    }
+
+    [Fact]
     public void MissingWindowsUpdateAgentIsNotReportedAsPending()
     {
-        Assert.False(WindowsUpdatePower.ReadRestartRequired(() => null));
+        Assert.False(WindowsUpdatePower.ReadRestartRequired(() => null, () => null));
     }
 
     [Fact]
@@ -103,6 +130,42 @@ public sealed class WindowsUpdatePowerTests
     }
 
     private sealed class FakeSystemInfo(bool rebootRequired)
+    {
+        public bool RebootRequired { get; } = rebootRequired;
+    }
+
+    private sealed class FakeUpdateSession(params bool[] rebootRequired)
+    {
+        public FakeUpdateSearcher Searcher { get; } = new(rebootRequired);
+
+        public FakeUpdateSearcher CreateUpdateSearcher() => Searcher;
+    }
+
+    private sealed class FakeUpdateSearcher(bool[] rebootRequired)
+    {
+        public bool Online { get; set; } = true;
+        public string Query { get; private set; } = string.Empty;
+
+        public FakeSearchResult Search(string query)
+        {
+            Query = query;
+            return new FakeSearchResult(rebootRequired);
+        }
+    }
+
+    private sealed class FakeSearchResult(bool[] rebootRequired)
+    {
+        public FakeUpdateCollection Updates { get; } = new(rebootRequired);
+    }
+
+    private sealed class FakeUpdateCollection(bool[] rebootRequired)
+    {
+        public int Count => rebootRequired.Length;
+
+        public FakeUpdate Item(int index) => new(rebootRequired[index]);
+    }
+
+    private sealed class FakeUpdate(bool rebootRequired)
     {
         public bool RebootRequired { get; } = rebootRequired;
     }

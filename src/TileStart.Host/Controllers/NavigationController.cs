@@ -29,6 +29,7 @@ internal sealed class NavigationController : IDisposable
     private int _semanticZoomAnimationGeneration;
     private bool _isLetterIndexActive;
     private bool _isSemanticZoomAnimating;
+    private Task<bool>? _windowsUpdateRefreshTask;
     private bool _isDisposed;
 
     private readonly Grid _navigationPane;
@@ -289,7 +290,20 @@ internal sealed class NavigationController : IDisposable
 
     public async Task RefreshWindowsUpdateStateAsync()
     {
-        var restartRequired = await Task.Run(WindowsUpdatePower.IsRestartRequired);
+        var refreshTask = _windowsUpdateRefreshTask ??= Task.Run(WindowsUpdatePower.IsRestartRequired);
+        bool restartRequired;
+        try
+        {
+            restartRequired = await refreshTask;
+        }
+        finally
+        {
+            if (ReferenceEquals(_windowsUpdateRefreshTask, refreshTask))
+            {
+                _windowsUpdateRefreshTask = null;
+            }
+        }
+
         if (_isDisposed)
         {
             return;
