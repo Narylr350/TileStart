@@ -169,6 +169,13 @@ internal static class WindowsUpdatePower
                 return false;
             }
 
+            if (!PrepareUpdatesForShutdown(
+                    () => CreateComObject("Microsoft.Update.SystemInfo"),
+                    () => CreateComObject("Microsoft.Update.Session")))
+            {
+                return false;
+            }
+
             var result = InitiateShutdown(
                 machineName: null,
                 message: null,
@@ -188,6 +195,59 @@ internal static class WindowsUpdatePower
         {
             DiagnosticLog.Write($"Unable to initiate Windows Update shutdown: {exception}");
             return false;
+        }
+    }
+
+    internal static bool PrepareUpdatesForShutdown(
+        Func<object?> createSystemInfo,
+        Func<object?> createUpdateSession)
+    {
+        if (ReadRestartRequired(createSystemInfo))
+        {
+            return true;
+        }
+
+        object? session = null;
+        object? installer = null;
+        try
+        {
+            session = createUpdateSession();
+            if (session is null)
+            {
+                return false;
+            }
+
+            installer = session.GetType().InvokeMember(
+                "CreateUpdateInstaller",
+                BindingFlags.InvokeMethod,
+                binder: null,
+                target: session,
+                args: null);
+            if (installer is null)
+            {
+                return false;
+            }
+
+            installer.GetType().InvokeMember(
+                "Commit",
+                BindingFlags.InvokeMethod,
+                binder: null,
+                target: installer,
+                args: [0u]);
+            DiagnosticLog.Write("Committed pending Windows feature update before shutdown.");
+            return true;
+        }
+        catch (Exception exception) when (exception is COMException or TargetInvocationException
+                                                or InvalidComObjectException or MemberAccessException
+                                                or MissingMethodException)
+        {
+            DiagnosticLog.Write($"Unable to commit pending Windows Update before shutdown: {exception}");
+            return false;
+        }
+        finally
+        {
+            ReleaseComObject(ref installer);
+            ReleaseComObject(ref session);
         }
     }
 

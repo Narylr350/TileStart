@@ -61,6 +61,40 @@ public sealed class WindowsUpdatePowerTests
     }
 
     [Fact]
+    public void SystemRestartRequirementSkipsFeatureUpdateCommit()
+    {
+        var sessionCreated = false;
+
+        Assert.True(WindowsUpdatePower.PrepareUpdatesForShutdown(
+            () => new FakeSystemInfo(true),
+            () =>
+            {
+                sessionCreated = true;
+                return new FakeUpdateSession();
+            }));
+        Assert.False(sessionCreated);
+    }
+
+    [Fact]
+    public void PendingFeatureUpdateIsCommittedBeforeShutdown()
+    {
+        var session = new FakeUpdateSession();
+
+        Assert.True(WindowsUpdatePower.PrepareUpdatesForShutdown(
+            () => new FakeSystemInfo(false),
+            () => session));
+        Assert.Equal(0u, session.Installer.CommitFlags);
+    }
+
+    [Fact]
+    public void MissingUpdateInstallerStopsOrdinaryRestart()
+    {
+        Assert.False(WindowsUpdatePower.PrepareUpdatesForShutdown(
+            () => new FakeSystemInfo(false),
+            () => null));
+    }
+
+    [Fact]
     public void PendingUpdateShowsBadgeAndBothPowerActions()
     {
         RunOnSta(() =>
@@ -137,8 +171,18 @@ public sealed class WindowsUpdatePowerTests
     private sealed class FakeUpdateSession(params bool[] rebootRequired)
     {
         public FakeUpdateSearcher Searcher { get; } = new(rebootRequired);
+        public FakeUpdateInstaller Installer { get; } = new();
 
         public FakeUpdateSearcher CreateUpdateSearcher() => Searcher;
+
+        public FakeUpdateInstaller CreateUpdateInstaller() => Installer;
+    }
+
+    private sealed class FakeUpdateInstaller
+    {
+        public uint? CommitFlags { get; private set; }
+
+        public void Commit(uint flags) => CommitFlags = flags;
     }
 
     private sealed class FakeUpdateSearcher(bool[] rebootRequired)
