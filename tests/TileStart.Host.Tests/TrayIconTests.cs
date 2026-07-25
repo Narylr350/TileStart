@@ -18,6 +18,7 @@ public sealed class TrayIconTests
                 var nativeCount = 0;
                 var updateCount = 0;
                 var backupCount = 0;
+                var aboutCount = 0;
                 var exitCount = 0;
                 var pauseStates = new List<bool>();
                 using var tray = new TrayIcon(
@@ -30,6 +31,7 @@ public sealed class TrayIconTests
                         return Task.CompletedTask;
                     },
                     () => backupCount++,
+                    () => aboutCount++,
                     () => exitCount++);
 
                 var notifyIcon = Assert.IsType<Forms.NotifyIcon>(
@@ -45,12 +47,14 @@ public sealed class TrayIconTests
                 Assert.False(pause.Checked);
                 Find(menu, "检查更新…").PerformClick();
                 Find(menu, "备份与恢复…").PerformClick();
+                Find(menu, "关于 TileStart").PerformClick();
                 Find(menu, "退出").PerformClick();
 
                 Assert.Equal(1, showCount);
                 Assert.Equal(1, nativeCount);
                 Assert.Equal(1, updateCount);
                 Assert.Equal(1, backupCount);
+                Assert.Equal(1, aboutCount);
                 Assert.Equal(1, exitCount);
                 Assert.Equal([true, false], pauseStates);
                 Assert.NotNull(menu.Items.OfType<Forms.ToolStripMenuItem>().Single(item => item.Text == "登录时启动"));

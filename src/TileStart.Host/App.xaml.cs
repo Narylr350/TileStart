@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using TileStart.Host.About;
 using TileStart.Host.Backup;
 using TileStart.Host.Shell;
 using TileStart.Host.Updates;
@@ -72,6 +73,7 @@ public partial class App : System.Windows.Application
             WinKeyHook.OpenNativeStartMenu,
             CheckForUpdatesAsync,
             OpenBackupAndRestore,
+            OpenAbout,
             ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
         {
@@ -151,6 +153,24 @@ public partial class App : System.Windows.Application
             if (MainWindow?.IsVisible == true)
             {
                 dialog.Owner = MainWindow;
+            }
+
+            dialog.ShowDialog();
+        });
+    }
+
+    private void OpenAbout()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            var dialog = new AboutWindow();
+            if (MainWindow?.IsVisible == true)
+            {
+                dialog.Owner = MainWindow;
+            }
+            else
+            {
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
             dialog.ShowDialog();

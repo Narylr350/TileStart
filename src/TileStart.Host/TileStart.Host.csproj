@@ -22,4 +22,8 @@
         <PackageReference Include="WpfAnimatedGif" Version="2.0.2"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Resource Include="Assets\TileStart-icon-master.png" />
+    </ItemGroup>
+
 </Project>

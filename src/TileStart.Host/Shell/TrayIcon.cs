@@ -11,7 +11,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Drawing.Font _menuFont;
 
     public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Func<Task> checkForUpdates,
-        Action openBackupAndRestore, Action exit)
+        Action openBackupAndRestore, Action openAbout, Action exit)
     {
         _menuFont = new Drawing.Font("Segoe UI", 10, Drawing.FontStyle.Regular, Drawing.GraphicsUnit.Point);
         var menu = CreateContextMenu(_menuFont);
@@ -40,6 +40,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(startupItem);
         menu.Items.Add(CreateMenuItem("检查更新…", async (_, _) => await checkForUpdates()));
         menu.Items.Add(CreateMenuItem("备份与恢复…", (_, _) => openBackupAndRestore()));
+        menu.Items.Add(CreateMenuItem("关于 TileStart", (_, _) => openAbout()));
         menu.Items.Add(CreateSeparator());
         menu.Items.Add(CreateMenuItem("退出", (_, _) => exit()));
 
