@@ -62,7 +62,7 @@ internal sealed class NavigationController : IDisposable
     private readonly Action<bool> _dismissWindow;
     private readonly Func<bool> _cancelCurrentDrag;
     private readonly Func<IList<AppEntry>> _getAllApps;
-    private readonly Func<int> _getOpenContextMenuCount;
+    private readonly Func<bool> _hasOpenContextMenu;
     private readonly Func<bool> _lockWorkStation;
     private readonly Func<bool, bool, bool, bool> _setSuspendState;
 
@@ -97,7 +97,7 @@ internal sealed class NavigationController : IDisposable
         Action<bool> dismissWindow,
         Func<bool> cancelCurrentDrag,
         Func<IList<AppEntry>> getAllApps,
-        Func<int> getOpenContextMenuCount,
+        Func<bool> hasOpenContextMenu,
         Func<bool> lockWorkStation,
         Func<bool, bool, bool, bool> setSuspendState)
     {
@@ -131,7 +131,7 @@ internal sealed class NavigationController : IDisposable
         _dismissWindow = dismissWindow;
         _cancelCurrentDrag = cancelCurrentDrag;
         _getAllApps = getAllApps;
-        _getOpenContextMenuCount = getOpenContextMenuCount;
+        _hasOpenContextMenu = hasOpenContextMenu;
         _lockWorkStation = lockWorkStation;
         _setSuspendState = setSuspendState;
 
@@ -172,7 +172,7 @@ internal sealed class NavigationController : IDisposable
     public void NavigationPaneMouseLeave()
     {
         _navigationHoverTimer.Stop();
-        if (!_navigationPinnedOpen && _getOpenContextMenuCount() == 0)
+        if (!_navigationPinnedOpen && !_hasOpenContextMenu())
         {
             SetNavigationExpanded(false);
         }

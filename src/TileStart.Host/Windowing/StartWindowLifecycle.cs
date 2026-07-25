@@ -22,6 +22,9 @@ public sealed class StartWindowLifecycle
         _foreignForegroundObservations = 0;
     }
 
+    public void ObserveNativeDeactivation() =>
+        ObserveNativeActivation();
+
     public bool ObserveForeground(
         bool foregroundKnown,
         bool foregroundBelongsToStart,

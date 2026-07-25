@@ -59,17 +59,30 @@ public sealed class PerformanceGuardTests
     }
 
     [Fact]
-    public void StartWindowPositionsBeforeApplyingAcrylicMaterial()
+    public void StartWindowAppliesAcrylicBeforePositioningTheNativeWindow()
+    {
+        var showMethod = ReadShowFromShellMethod();
+        var materialIndex = showMethod.IndexOf("ApplyWindowMaterial();", StringComparison.Ordinal);
+        var positionIndex = showMethod.IndexOf("PositionOnCurrentMonitor();", StringComparison.Ordinal);
+
+        Assert.True(materialIndex >= 0);
+        Assert.True(positionIndex > materialIndex);
+    }
+
+    [Fact]
+    public void StartWindowRebuildsTheNativeFrameAfterPositioning()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+
+        Assert.Contains("SwpNoActivate | SwpFrameChanged", source, StringComparison.Ordinal);
+    }
+
+    private static string ReadShowFromShellMethod()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
         var source = File.ReadAllText(path);
         var showMethod = source[source.IndexOf("public void ShowFromShell()", StringComparison.Ordinal)..];
-        showMethod = showMethod[..showMethod.IndexOf("public void AllowClose()", StringComparison.Ordinal)];
-
-        var positionIndex = showMethod.IndexOf("PositionOnCurrentMonitor();", StringComparison.Ordinal);
-        var materialIndex = showMethod.IndexOf("ApplyWindowMaterial();", StringComparison.Ordinal);
-
-        Assert.True(positionIndex >= 0);
-        Assert.True(materialIndex > positionIndex);
+        return showMethod[..showMethod.IndexOf("public void AllowClose()", StringComparison.Ordinal)];
     }
 }

@@ -52,8 +52,7 @@ internal sealed class TileWorkspaceController : IDisposable
     private readonly ItemsControl _appsList;
     private readonly Action<bool> _dismissWindow;
     private readonly Action<string> _tryDismissAfterForegroundChange;
-    private readonly Func<int> _getOpenContextMenuCount;
-    private readonly Action<int> _setOpenContextMenuCount;
+    private readonly Action<bool> _setOpenContextMenuState;
     private readonly Func<long> _getSuppressTileActivationUntil;
 
     public TileWorkspaceController(
@@ -67,8 +66,7 @@ internal sealed class TileWorkspaceController : IDisposable
         ItemsControl appsList,
         Action<bool> dismissWindow,
         Action<string> tryDismissAfterForegroundChange,
-        Func<int> getOpenContextMenuCount,
-        Action<int> setOpenContextMenuCount,
+        Action<bool> setOpenContextMenuState,
         Func<long> getSuppressTileActivationUntil)
     {
         _lifetimeToken = _lifetimeCancellation.Token;
@@ -82,8 +80,7 @@ internal sealed class TileWorkspaceController : IDisposable
         _appsList = appsList;
         _dismissWindow = dismissWindow;
         _tryDismissAfterForegroundChange = tryDismissAfterForegroundChange;
-        _getOpenContextMenuCount = getOpenContextMenuCount;
-        _setOpenContextMenuCount = setOpenContextMenuCount;
+        _setOpenContextMenuState = setOpenContextMenuState;
         _getSuppressTileActivationUntil = getSuppressTileActivationUntil;
     }
 
@@ -93,7 +90,7 @@ internal sealed class TileWorkspaceController : IDisposable
 
     public void StartContextMenu_Opened(object sender, RoutedEventArgs e)
     {
-        _setOpenContextMenuCount(_getOpenContextMenuCount() + 1);
+        _setOpenContextMenuState(true);
         if (sender is not ContextMenu menu)
         {
             return;
@@ -314,7 +311,7 @@ internal sealed class TileWorkspaceController : IDisposable
 
     public void StartContextMenu_Closed(object sender, RoutedEventArgs e)
     {
-        _setOpenContextMenuCount(Math.Max(0, _getOpenContextMenuCount() - 1));
+        _setOpenContextMenuState(false);
         if (sender is ContextMenu menu && GetContextMenuPopupBorder(menu) is { } border)
         {
             border.ClearValue(UIElement.ClipProperty);

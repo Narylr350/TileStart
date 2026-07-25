@@ -80,7 +80,7 @@ public partial class MainWindow : Window
             dismissWindow: DismissWindow,
             cancelCurrentDrag: () => _tileDragCoordinator?.CancelCurrentDrag() ?? false,
             getAllApps: () => _appController.AllApps,
-            getOpenContextMenuCount: () => _openContextMenuCount,
+            hasOpenContextMenu: () => _hasOpenContextMenu,
             lockWorkStation: () => LockWorkStation(),
             setSuspendState: (h, f, d) => SetSuspendState(h, f, d));
         _tileWorkspaceController = new Controllers.TileWorkspaceController(
@@ -94,8 +94,7 @@ public partial class MainWindow : Window
             AppsList,
             dismissWindow: DismissWindow,
             tryDismissAfterForegroundChange: TryDismissAfterForegroundChange,
-            getOpenContextMenuCount: () => _openContextMenuCount,
-            setOpenContextMenuCount: value => _openContextMenuCount = value,
+            setOpenContextMenuState: value => _hasOpenContextMenu = value,
             getSuppressTileActivationUntil: () => _suppressTileActivationUntil);
         _controller = new StartWindowController(
             this,
@@ -103,6 +102,7 @@ public partial class MainWindow : Window
             MainSurface,
             beforeShow: () =>
             {
+                _hasOpenContextMenu = false;
                 _ = _navigationController.RefreshWindowsUpdateStateAsync();
                 if (_appController.CheckAndRemoveMissingApps())
                     _appController.RefreshApplicationCollection();
@@ -112,7 +112,7 @@ public partial class MainWindow : Window
             captureGroupReorderPositions: () => _tileDragCoordinator.CaptureGroupReorderPositions(),
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
-            hasOpenContextMenu: () => _openContextMenuCount > 0);
+            hasOpenContextMenu: () => _hasOpenContextMenu);
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);

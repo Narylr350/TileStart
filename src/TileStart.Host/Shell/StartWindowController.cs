@@ -17,6 +17,7 @@ public class StartWindowController : IDisposable
     private const uint MonitorDefaultToNearest = 2;
     private const int MdtEffectiveDpi = 0;
     private const uint SwpNoActivate = 0x0010;
+    private const uint SwpFrameChanged = 0x0020;
     private const uint AwHide = 0x00010000;
     private const uint AwBlend = 0x00080000;
     private const int DismissDurationMilliseconds = 150;
@@ -118,9 +119,9 @@ public class StartWindowController : IDisposable
         _beforeShow();
 
         StopEntranceCache();
+        ApplyWindowMaterial();
         _foregroundLifecycle.Reset();
         PositionOnCurrentMonitor();
-        ApplyWindowMaterial();
         PrepareMotionElements();
         var animationsEnabled = SystemParameters.ClientAreaAnimation;
         _ = RenderFrameProbe.Start(
@@ -214,6 +215,7 @@ public class StartWindowController : IDisposable
 
     public void WindowDeactivated()
     {
+        _foregroundLifecycle.ObserveNativeDeactivation();
         RequestDismissAfterForegroundChange("deactivated");
     }
 
@@ -373,7 +375,7 @@ public class StartWindowController : IDisposable
         }
 
         var positioned = SetWindowPos(handle, HwndTopmost, placement.Left, placement.Top, placement.Width,
-            placement.Height, SwpNoActivate);
+            placement.Height, SwpNoActivate | SwpFrameChanged);
         DiagnosticLog.Write(
             $"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, taskbar={taskbarRect}, edge={edge}, target={placement}, positioned={positioned}, error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
     }
@@ -512,6 +514,7 @@ public class StartWindowController : IDisposable
             return 0;
         }
 
+        _foregroundLifecycle.ObserveNativeDeactivation();
         RequestDismissAfterForegroundChange("wm-activate");
         return 0;
     }

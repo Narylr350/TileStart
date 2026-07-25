@@ -28,6 +28,17 @@ public sealed class StartWindowLifecycleTests
     }
 
     [Fact]
+    public void NativeDeactivationArmsDismissalWhenActivationSamplingWasMissed()
+    {
+        var lifecycle = new StartWindowLifecycle();
+        lifecycle.ObserveNativeDeactivation();
+
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+        Assert.False(lifecycle.ObserveForeground(true, false, false, false));
+        Assert.True(lifecycle.ObserveForeground(true, false, false, false));
+    }
+
+    [Fact]
     public void ForegroundOwnershipAcquiresAndResetsForeignObservationCount()
     {
         var lifecycle = new StartWindowLifecycle();
