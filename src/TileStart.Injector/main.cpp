@@ -16,6 +16,7 @@ namespace
     {
         Win10_19045 = 1,
         Win11_22631 = 2,
+        Win11_26200 = 3,
     };
 
     std::optional<ShellAdapter> GetShellAdapter(DWORD build)
@@ -26,6 +27,8 @@ namespace
             return ShellAdapter::Win10_19045;
         case 22631:
             return ShellAdapter::Win11_22631;
+        case 26200:
+            return ShellAdapter::Win11_26200;
         default:
             return std::nullopt;
         }
@@ -39,6 +42,8 @@ namespace
             return L"Win10-19045";
         case ShellAdapter::Win11_22631:
             return L"Win11-22631";
+        case ShellAdapter::Win11_26200:
+            return L"Win11-26200";
         }
 
         return L"unknown";

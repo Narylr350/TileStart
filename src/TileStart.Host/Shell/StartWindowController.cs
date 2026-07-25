@@ -14,6 +14,8 @@ namespace TileStart.Host.Shell;
 
 public class StartWindowController : IDisposable
 {
+    private const int WmDisplayChange = 0x007E;
+    private const int WmDpiChanged = 0x02E0;
     private const uint MonitorDefaultToNearest = 2;
     private const int MdtEffectiveDpi = 0;
     private const uint SwpNoActivate = 0x0010;
@@ -48,6 +50,11 @@ public class StartWindowController : IDisposable
         Interval = TimeSpan.FromMilliseconds(50),
     };
 
+    private readonly System.Windows.Threading.DispatcherTimer _displayChangeRefreshTimer = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(250),
+    };
+
     private readonly StartWindowLifecycle _foregroundLifecycle = new();
     private TaskbarEdge _taskbarEdge = TaskbarEdge.Bottom;
     private int _foregroundActivationGeneration;
@@ -57,6 +64,7 @@ public class StartWindowController : IDisposable
     private bool _isDisposed;
 
     private bool _isWindowWidthSnapAnimating;
+    private bool _isDisplayChangePending;
     private long _windowWidthSnapStartedAt;
     private double _windowWidthSnapFrom;
     private double _windowWidthSnapTo;
@@ -93,6 +101,7 @@ public class StartWindowController : IDisposable
         _hasOpenContextMenu = hasOpenContextMenu;
 
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
+        _displayChangeRefreshTimer.Tick += DisplayChangeRefreshTimer_Tick;
     }
 
     public void SetWindowSource(HwndSource? source)
@@ -190,6 +199,8 @@ public class StartWindowController : IDisposable
         StopEntranceCache();
         _foregroundWatchdogTimer.Stop();
         _foregroundWatchdogTimer.Tick -= ForegroundWatchdogTimer_Tick;
+        _displayChangeRefreshTimer.Stop();
+        _displayChangeRefreshTimer.Tick -= DisplayChangeRefreshTimer_Tick;
         _windowSource?.RemoveHook(WindowMessageHook);
         _windowSource = null;
         WindowDismissing = null;
@@ -325,7 +336,7 @@ public class StartWindowController : IDisposable
         _mainSurface.CacheMode = null;
     }
 
-    private void PositionOnCurrentMonitor()
+    private void PositionOnCurrentMonitor((double Width, double Height)? preferredSize = null)
     {
         if (!GetCursorPos(out var cursor))
         {
@@ -352,10 +363,11 @@ public class StartWindowController : IDisposable
             logicalWorkWidth);
         _window.MaxWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
         _window.MaxHeight = Math.Max(_window.MinHeight, logicalWorkHeight);
-        var logicalWidth = StartWindowSizing.SnapWidth(_window.ActualWidth > 0 ? _window.ActualWidth : _window.Width,
-            logicalWorkWidth);
+        var requestedWidth = preferredSize?.Width ?? (_window.ActualWidth > 0 ? _window.ActualWidth : _window.Width);
+        var requestedHeight = preferredSize?.Height ?? (_window.ActualHeight > 0 ? _window.ActualHeight : _window.Height);
+        var logicalWidth = StartWindowSizing.SnapWidth(requestedWidth, logicalWorkWidth);
         var logicalHeight = StartWindowSizing.ClampHeight(
-            _window.ActualHeight > 0 ? _window.ActualHeight : _window.Height,
+            requestedHeight,
             _window.MinHeight,
             logicalWorkHeight);
         var placement = StartWindowPlacement.Calculate(
@@ -435,6 +447,11 @@ public class StartWindowController : IDisposable
 
     private void SaveCurrentSize()
     {
+        if (_isDisplayChangePending)
+        {
+            return;
+        }
+
         if (_window.ActualWidth > 0 && _window.ActualHeight > 0)
         {
             WindowSizeStore.Save(_window.ActualWidth, _window.ActualHeight);
@@ -462,7 +479,10 @@ public class StartWindowController : IDisposable
         WindowDismissing?.Invoke();
         _foregroundWatchdogTimer.Stop();
         StopEntranceCache();
-        SaveCurrentSize();
+        if (!_isDisplayChangePending)
+        {
+            SaveCurrentSize();
+        }
         _clearSearch();
         var wasTopmost = _window.Topmost;
         if (yieldTopmost)
@@ -496,6 +516,12 @@ public class StartWindowController : IDisposable
     {
         if (_isDisposed)
         {
+            return 0;
+        }
+
+        if (message is WmDisplayChange or WmDpiChanged)
+        {
+            RequestDisplayChangeRefresh();
             return 0;
         }
 
@@ -652,6 +678,36 @@ public class StartWindowController : IDisposable
         }
 
         SaveCurrentSize();
+    }
+
+    private void RequestDisplayChangeRefresh()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisplayChangePending = true;
+        _displayChangeRefreshTimer.Stop();
+        _displayChangeRefreshTimer.Start();
+    }
+
+    private void DisplayChangeRefreshTimer_Tick(object? sender, EventArgs e)
+    {
+        _displayChangeRefreshTimer.Stop();
+        if (_isDisposed)
+        {
+            _isDisplayChangePending = false;
+            return;
+        }
+
+        if (_window.IsVisible)
+        {
+            PositionOnCurrentMonitor(WindowSizeStore.Load());
+            _window.UpdateLayout();
+        }
+
+        _isDisplayChangePending = false;
     }
 
     private void StopWindowWidthSnapAnimation()

@@ -9,6 +9,7 @@ namespace
         None = 0,
         Win10_19045 = 1,
         Win11_22631 = 2,
+        Win11_26200 = 3,
     };
 
     constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
@@ -93,6 +94,7 @@ namespace
             g_start_button = FindWin10StartButton(taskbar);
             break;
         case ShellAdapter::Win11_22631:
+        case ShellAdapter::Win11_26200:
             g_start_button = FindWin11StartButton(taskbar);
             break;
         default:
@@ -159,7 +161,7 @@ extern "C" __declspec(dllexport) BOOL TileStartTryOpenMenu()
 extern "C" __declspec(dllexport) DWORD WINAPI TileStartInstallHook(LPVOID parameter)
 {
     const auto adapter = static_cast<ShellAdapter>(reinterpret_cast<std::uintptr_t>(parameter));
-    if (adapter != ShellAdapter::Win10_19045 && adapter != ShellAdapter::Win11_22631)
+    if (adapter != ShellAdapter::Win10_19045 && adapter != ShellAdapter::Win11_22631 && adapter != ShellAdapter::Win11_26200)
     {
         return FALSE;
     }
