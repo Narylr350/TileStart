@@ -31,6 +31,21 @@ public sealed class InstallerSafetyTests
     }
 
     [Fact]
+    public void InstallerTracksContextMenusForAllFilesAndDirectories()
+    {
+        var source = File.ReadAllText(InstallerSource);
+
+        Assert.Contains("Software\\Classes\\*\\shell\\TileStart.AddToAppList", source, StringComparison.Ordinal);
+        Assert.Contains("Software\\Classes\\*\\shell\\TileStart.PinTile", source, StringComparison.Ordinal);
+        Assert.Contains("Software\\Classes\\Directory\\shell\\TileStart.AddToAppList", source,
+            StringComparison.Ordinal);
+        Assert.Contains("Software\\Classes\\Directory\\shell\\TileStart.PinTile", source,
+            StringComparison.Ordinal);
+        Assert.Contains("SystemFileAssociations\\.exe\\shell\\TileStart.AddToAppList\"; Flags: deletekey",
+            source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InstallerAlwaysRegistersLoginStartup()
     {
         var source = File.ReadAllText(InstallerSource);

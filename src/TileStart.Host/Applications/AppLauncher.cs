@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using TileStart.Host.Tiles.Models;
 using TileStart.Host.Utilities;
 
@@ -7,8 +9,11 @@ namespace TileStart.Host.Applications;
 
 public static class AppLauncher
 {
+    private static readonly string[] DirectLaunchExtensions =
+        [".exe", ".lnk", ".appref-ms", ".bat", ".cmd", ".url"];
+
     public static bool Launch(AppEntry app) =>
-        Launch(app.Name, new ProcessStartInfo(app.LaunchTarget) { UseShellExecute = true });
+        Launch(app.Name, CreateShellTargetStartInfo(app.LaunchTarget));
 
     public static bool Launch(TileItem tile) => Launch(tile.Name, CreateStartInfo(tile));
 
@@ -90,11 +95,7 @@ public static class AppLauncher
                     $"-NoProfile -ExecutionPolicy Bypass -File \"{tile.LaunchTarget}\"{AppendArguments(tile.Arguments)}",
                 UseShellExecute = true,
             }
-            : new ProcessStartInfo(tile.LaunchTarget)
-            {
-                Arguments = tile.Arguments,
-                UseShellExecute = true,
-            };
+            : CreateShellTargetStartInfo(tile.LaunchTarget, tile.Arguments);
 
         if (!string.IsNullOrWhiteSpace(tile.WorkingDirectory))
         {
@@ -109,10 +110,61 @@ public static class AppLauncher
         return startInfo;
     }
 
+    internal static ProcessStartInfo CreateShellTargetStartInfo(
+        string target,
+        string arguments = "",
+        bool? hasFileAssociation = null)
+    {
+        if (Directory.Exists(target))
+        {
+            return new ProcessStartInfo("explorer.exe")
+            {
+                Arguments = $"\"{target}\"",
+                UseShellExecute = true,
+            };
+        }
+
+        if (File.Exists(target) && ShouldOpenFileLocation(target, hasFileAssociation))
+        {
+            return CreateOpenFileLocationStartInfo(target);
+        }
+
+        return new ProcessStartInfo(target)
+        {
+            Arguments = arguments,
+            UseShellExecute = true,
+        };
+    }
+
+    private static bool ShouldOpenFileLocation(string path, bool? hasFileAssociation)
+    {
+        var extension = Path.GetExtension(path);
+        if (string.IsNullOrEmpty(extension))
+        {
+            return true;
+        }
+
+        if (DirectLaunchExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return !(hasFileAssociation ?? HasDefaultFileAssociation(path));
+    }
+
+    private static bool HasDefaultFileAssociation(string path)
+    {
+        var executable = new StringBuilder(1024);
+        return FindExecutableW(path, null, executable).ToInt64() > 32;
+    }
+
     private static string AppendArguments(string arguments)
     {
         return string.IsNullOrWhiteSpace(arguments) ? string.Empty : $" {arguments}";
     }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern nint FindExecutableW(string file, string? directory, StringBuilder result);
 
     private static bool Launch(string name, ProcessStartInfo startInfo)
     {

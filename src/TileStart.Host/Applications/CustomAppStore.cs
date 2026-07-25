@@ -18,7 +18,7 @@ public static class CustomAppStore
         "TileStart",
         "custom-apps.json");
 
-    private static readonly string[] SupportedExtensions = [".exe", ".lnk", ".appref-ms"];
+    private static readonly string[] ApplicationExtensions = [".exe", ".lnk", ".appref-ms"];
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public static IReadOnlyList<AppEntry> Load()
@@ -65,7 +65,7 @@ public static class CustomAppStore
 
             var definition = new CustomAppDefinition
             {
-                Name = Path.GetFileNameWithoutExtension(normalizedPath),
+                Name = GetDisplayName(normalizedPath),
                 LaunchTarget = normalizedPath,
                 AddedAt = DateTime.Now,
             };
@@ -135,8 +135,7 @@ public static class CustomAppStore
     }
 
     internal static bool Supports(string path) =>
-        File.Exists(path)
-        && SupportedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+        File.Exists(path) || Directory.Exists(path);
 
     private static string? NormalizePath(string path)
     {
@@ -150,6 +149,19 @@ public static class CustomAppStore
         {
             return null;
         }
+    }
+
+    private static string GetDisplayName(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            return new DirectoryInfo(path).Name;
+        }
+
+        var extension = Path.GetExtension(path);
+        return ApplicationExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase)
+            ? Path.GetFileNameWithoutExtension(path)
+            : Path.GetFileName(path);
     }
 
     private static bool IsValid(CustomAppDefinition definition) =>

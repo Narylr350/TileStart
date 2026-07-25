@@ -219,13 +219,13 @@ internal sealed class ApplicationPaneController : IDisposable
     private void PinExternalTile(string path)
     {
         var tile = DroppedTileFactory.Create(path);
-        if (tile is null || tile.TargetType != TileTargetType.Application)
+        if (tile is null)
         {
             return;
         }
 
         var identity = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
-        if (!CustomAppStore.Contains(path))
+        if (tile.TargetType == TileTargetType.Application && !CustomAppStore.Contains(path))
         {
             AppVisibilityStore.Hide(identity);
             RemoveApplicationFromList(identity);
@@ -350,7 +350,9 @@ internal sealed class ApplicationPaneController : IDisposable
 
         try
         {
-            return Path.IsPathFullyQualified(app.LaunchTarget) && !File.Exists(app.LaunchTarget);
+            return Path.IsPathFullyQualified(app.LaunchTarget)
+                   && !File.Exists(app.LaunchTarget)
+                   && !Directory.Exists(app.LaunchTarget);
         }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException
                                               or PathTooLongException)

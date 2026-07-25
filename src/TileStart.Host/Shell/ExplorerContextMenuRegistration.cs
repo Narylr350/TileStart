@@ -7,7 +7,8 @@ namespace TileStart.Host.Shell;
 
 public static class ExplorerContextMenuRegistration
 {
-    private static readonly string[] SupportedExtensions = [".exe", ".lnk", ".appref-ms"];
+    internal static readonly string[] RegistrationClasses = ["*", "Directory"];
+    private static readonly string[] LegacyExtensions = [".exe", ".lnk", ".appref-ms"];
 
     public static void EnsureRegistered()
     {
@@ -19,11 +20,12 @@ public static class ExplorerContextMenuRegistration
 
         try
         {
-            foreach (var extension in SupportedExtensions)
+            RemoveLegacyRegistrations();
+            foreach (var registrationClass in RegistrationClasses)
             {
-                RegisterCommand(extension, "TileStart.AddToAppList", "添加到 TileStart 应用列表", executablePath,
-                    "--add-app-list");
-                RegisterCommand(extension, "TileStart.PinTile", "添加到 TileStart 磁贴区", executablePath,
+                RegisterCommand(registrationClass, "TileStart.AddToAppList", "添加到 TileStart 应用列表",
+                    executablePath, "--add-app-list");
+                RegisterCommand(registrationClass, "TileStart.PinTile", "添加到 TileStart 磁贴区", executablePath,
                     "--pin-tile");
             }
 
@@ -37,18 +39,29 @@ public static class ExplorerContextMenuRegistration
     }
 
     private static void RegisterCommand(
-        string extension,
+        string registrationClass,
         string commandKey,
         string label,
         string executablePath,
         string argument)
     {
-        var keyPath = $@"Software\Classes\SystemFileAssociations\{extension}\shell\{commandKey}";
+        var keyPath = $@"Software\Classes\{registrationClass}\shell\{commandKey}";
         using var menuKey = Registry.CurrentUser.CreateSubKey(keyPath);
         menuKey.SetValue(null, label);
         menuKey.SetValue("Icon", executablePath);
         using var command = menuKey.CreateSubKey("command");
         command.SetValue(null, $"\"{executablePath}\" {argument} \"%1\"");
+    }
+
+    private static void RemoveLegacyRegistrations()
+    {
+        foreach (var extension in LegacyExtensions)
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(
+                $@"Software\Classes\SystemFileAssociations\{extension}\shell\TileStart.AddToAppList", false);
+            Registry.CurrentUser.DeleteSubKeyTree(
+                $@"Software\Classes\SystemFileAssociations\{extension}\shell\TileStart.PinTile", false);
+        }
     }
 
     [DllImport("shell32.dll")]

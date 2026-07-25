@@ -1,3 +1,4 @@
+using System.IO;
 using TileStart.Host;
 
 namespace TileStart.Host.Tests;
@@ -32,8 +33,22 @@ public sealed class HostRequestTests
     }
 
     [Fact]
-    public void CustomApplicationsSupportPortableExecutable()
+    public void CustomApplicationsSupportAnyExistingFileOrDirectory()
     {
-        Assert.True(CustomAppStore.Supports(Environment.ProcessPath!));
+        var directory = Directory.CreateTempSubdirectory("TileStart-CustomApp-");
+        var file = Path.Combine(directory.FullName, "notes.unknown-extension");
+        File.WriteAllText(file, string.Empty);
+
+        try
+        {
+            Assert.True(CustomAppStore.Supports(Environment.ProcessPath!));
+            Assert.True(CustomAppStore.Supports(file));
+            Assert.True(CustomAppStore.Supports(directory.FullName));
+            Assert.False(CustomAppStore.Supports(Path.Combine(directory.FullName, "missing")));
+        }
+        finally
+        {
+            directory.Delete(true);
+        }
     }
 }

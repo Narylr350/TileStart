@@ -95,6 +95,46 @@ public sealed class AppLauncherTests
     }
 
     [Fact]
+    public void ShellTargetsUseDefaultAssociationOrExplorerFallback()
+    {
+        var directory = Directory.CreateTempSubdirectory("TileStart-Launch-");
+        var associatedFile = Path.Combine(directory.FullName, "notes.txt");
+        var unknownFile = Path.Combine(directory.FullName, "notes.unknown-extension");
+        var extensionlessFile = Path.Combine(directory.FullName, "README");
+        var executable = Path.Combine(directory.FullName, "tool.exe");
+        File.WriteAllText(associatedFile, string.Empty);
+        File.WriteAllText(unknownFile, string.Empty);
+        File.WriteAllText(extensionlessFile, string.Empty);
+        File.WriteAllText(executable, string.Empty);
+
+        try
+        {
+            var folderStartInfo = AppLauncher.CreateShellTargetStartInfo(directory.FullName);
+            var associatedStartInfo = AppLauncher.CreateShellTargetStartInfo(
+                associatedFile, hasFileAssociation: true);
+            var unknownStartInfo = AppLauncher.CreateShellTargetStartInfo(
+                unknownFile, hasFileAssociation: false);
+            var extensionlessStartInfo = AppLauncher.CreateShellTargetStartInfo(
+                extensionlessFile, hasFileAssociation: true);
+            var executableStartInfo = AppLauncher.CreateShellTargetStartInfo(
+                executable, hasFileAssociation: false);
+
+            Assert.Equal("explorer.exe", folderStartInfo.FileName);
+            Assert.Equal($"\"{directory.FullName}\"", folderStartInfo.Arguments);
+            Assert.Equal(associatedFile, associatedStartInfo.FileName);
+            Assert.Equal("explorer.exe", unknownStartInfo.FileName);
+            Assert.Equal($"/select,\"{unknownFile}\"", unknownStartInfo.Arguments);
+            Assert.Equal("explorer.exe", extensionlessStartInfo.FileName);
+            Assert.Equal($"/select,\"{extensionlessFile}\"", extensionlessStartInfo.Arguments);
+            Assert.Equal(executable, executableStartInfo.FileName);
+        }
+        finally
+        {
+            directory.Delete(true);
+        }
+    }
+
+    [Fact]
     public void CreateStartInfoSupportsCustomCommand()
     {
         var tile = new TileItem
