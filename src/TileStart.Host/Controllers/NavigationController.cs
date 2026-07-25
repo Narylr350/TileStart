@@ -483,10 +483,42 @@ internal sealed class NavigationController : IDisposable
         SmoothScroll.Cancel(_appsList);
         _appsList.ScrollIntoView(firstItem);
         _appsList.UpdateLayout();
-        if (_appsList.ItemContainerGenerator.ContainerFromItem(group) is FrameworkElement groupContainer)
+        AlignRealizedGroupToTop(_appsList, group);
+    }
+
+    internal static bool AlignRealizedGroupToTop(ListBox appsList, CollectionViewGroup group)
+    {
+        if (appsList.ItemContainerGenerator.ContainerFromItem(group) is not FrameworkElement groupContainer
+            || FindVisualDescendant<ScrollViewer>(appsList) is not { } scrollViewer)
         {
-            groupContainer.BringIntoView();
+            return false;
         }
+
+        var groupTop = groupContainer.TranslatePoint(new System.Windows.Point(), scrollViewer).Y;
+        scrollViewer.ScrollToVerticalOffset(Math.Max(0, scrollViewer.VerticalOffset + groupTop));
+        scrollViewer.UpdateLayout();
+        return true;
+    }
+
+    private static T? FindVisualDescendant<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is T match)
+            {
+                return match;
+            }
+
+            var nested = FindVisualDescendant<T>(child);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 
     private void HideLetterIndex(bool animate = true, CollectionViewGroup? focusGroup = null)
