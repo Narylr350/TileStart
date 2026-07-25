@@ -54,6 +54,7 @@ Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.appref-ms\shell\Ti
 Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.appref-ms\shell\TileStart.PinTile"; Flags: deletekey
 
 [Run]
+Filename: "{app}\{#AppExeName}"; Parameters: "--configure-nvidia-overlay"; Flags: runhidden waituntilterminated; StatusMsg: "正在配置 NVIDIA Overlay 兼容性..."
 Filename: "{app}\{#AppExeName}"; Description: "启动 TileStart"; Flags: nowait postinstall skipifsilent
 
 [Code]
@@ -102,10 +103,17 @@ begin
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
 begin
   if CurUninstallStep = usUninstall then
   begin
     StopTileStart;
+    if FileExists(ExpandConstant('{app}\TileStart.Host.exe')) then
+    begin
+      Exec(ExpandConstant('{app}\TileStart.Host.exe'), '--remove-nvidia-overlay-configuration', '', SW_HIDE,
+        ewWaitUntilTerminated, ResultCode);
+    end;
     RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'TileStart');
   end;
 end;

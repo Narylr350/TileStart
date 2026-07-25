@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using TileStart.Host.About;
 using TileStart.Host.Backup;
+using TileStart.Host.Compatibility;
 using TileStart.Host.Shell;
 using TileStart.Host.Updates;
 using TileStart.Host.Utilities;
@@ -31,6 +32,12 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        if (TryHandleCompatibilityCommand(e.Args))
+        {
+            return;
+        }
+
         DiagnosticLog.Write("Host startup started.");
 
         var startupRequest = HostRequest.FromArguments(e.Args);
@@ -85,6 +92,24 @@ public partial class App : System.Windows.Application
         }
 
         DiagnosticLog.Write("Host startup completed.");
+    }
+
+    private bool TryHandleCompatibilityCommand(IReadOnlyList<string> arguments)
+    {
+        var remove = arguments.Contains("--remove-nvidia-overlay-configuration",
+            StringComparer.OrdinalIgnoreCase);
+        if (!remove && !arguments.Contains("--configure-nvidia-overlay", StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var success = remove
+            ? NvidiaOverlayCompatibility.TryRemove(out var detail)
+            : NvidiaOverlayCompatibility.TryApply(out detail);
+        DiagnosticLog.Write($"NVIDIA Overlay compatibility command: success={success}, remove={remove}, {detail}");
+        DiagnosticLog.Flush();
+        Shutdown(success ? 0 : 1);
+        return true;
     }
 
     private void HandleHostRequest(HostRequest request)
