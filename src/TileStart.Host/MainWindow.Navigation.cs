@@ -69,6 +69,12 @@ public partial class MainWindow
     private void Restart_Click(object sender, RoutedEventArgs e) =>
         _navigationController.RestartClick();
 
+    private void UpdateAndShutDown_Click(object sender, RoutedEventArgs e) =>
+        _navigationController.UpdateAndShutDownClick();
+
+    private void UpdateAndRestart_Click(object sender, RoutedEventArgs e) =>
+        _navigationController.UpdateAndRestartClick();
+
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e) =>
         _navigationController.WindowPreviewKeyDown(sender, e);
 

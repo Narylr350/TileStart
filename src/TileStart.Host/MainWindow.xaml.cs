@@ -62,6 +62,9 @@ public partial class MainWindow : Window
             NetworkNavigationButton,
             SettingsNavigationButton,
             PowerNavigationButton,
+            PowerUpdateBadge,
+            UpdateAndShutDownMenuItem,
+            UpdateAndRestartMenuItem,
             LetterIndexPanel,
             SearchPanel,
             SearchBox,
@@ -100,6 +103,7 @@ public partial class MainWindow : Window
             MainSurface,
             beforeShow: () =>
             {
+                _ = _navigationController.RefreshWindowsUpdateStateAsync();
                 if (_appController.CheckAndRemoveMissingApps())
                     _appController.RefreshApplicationCollection();
             },

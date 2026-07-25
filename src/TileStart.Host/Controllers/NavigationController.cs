@@ -11,6 +11,7 @@ using ListBox = System.Windows.Controls.ListBox;
 using TextBox = System.Windows.Controls.TextBox;
 using TileStart.Host.Applications;
 using TileStart.Host.Navigation;
+using TileStart.Host.Shell;
 using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Controllers;
@@ -42,6 +43,9 @@ internal sealed class NavigationController : IDisposable
     private readonly Button _networkNavigationButton;
     private readonly Button _settingsNavigationButton;
     private readonly Button _powerNavigationButton;
+    private readonly FrameworkElement _powerUpdateBadge;
+    private readonly MenuItem _updateAndShutDownMenuItem;
+    private readonly MenuItem _updateAndRestartMenuItem;
     private readonly Border _letterIndexPanel;
     private readonly Border _searchPanel;
     private readonly TextBox _searchBox;
@@ -75,6 +79,9 @@ internal sealed class NavigationController : IDisposable
         Button networkNavigationButton,
         Button settingsNavigationButton,
         Button powerNavigationButton,
+        FrameworkElement powerUpdateBadge,
+        MenuItem updateAndShutDownMenuItem,
+        MenuItem updateAndRestartMenuItem,
         Border letterIndexPanel,
         Border searchPanel,
         TextBox searchBox,
@@ -106,6 +113,9 @@ internal sealed class NavigationController : IDisposable
         _networkNavigationButton = networkNavigationButton;
         _settingsNavigationButton = settingsNavigationButton;
         _powerNavigationButton = powerNavigationButton;
+        _powerUpdateBadge = powerUpdateBadge;
+        _updateAndShutDownMenuItem = updateAndShutDownMenuItem;
+        _updateAndRestartMenuItem = updateAndRestartMenuItem;
         _letterIndexPanel = letterIndexPanel;
         _searchPanel = searchPanel;
         _searchBox = searchBox;
@@ -127,6 +137,7 @@ internal sealed class NavigationController : IDisposable
 
         _navigationHoverTimer.Tick += NavigationHoverTimer_Tick;
         _semanticZoomViewport.SizeChanged += SemanticZoomViewport_SizeChanged;
+        _ = RefreshWindowsUpdateStateAsync();
     }
 
     public bool IsNavigationPinnedOpen => _navigationPinnedOpen;
@@ -270,8 +281,41 @@ internal sealed class NavigationController : IDisposable
     public void UserNavigationButtonClick() =>
         OpenButtonContextMenu(_userNavigationButton);
 
-    public void PowerNavigationButtonClick() =>
+    public void PowerNavigationButtonClick()
+    {
+        _ = RefreshWindowsUpdateStateAsync();
         OpenButtonContextMenu(_powerNavigationButton);
+    }
+
+    public async Task RefreshWindowsUpdateStateAsync()
+    {
+        var restartRequired = await Task.Run(WindowsUpdatePower.IsRestartRequired);
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        ApplyWindowsUpdateAvailability(
+            _powerNavigationButton,
+            _powerUpdateBadge,
+            _updateAndShutDownMenuItem,
+            _updateAndRestartMenuItem,
+            restartRequired);
+    }
+
+    internal static void ApplyWindowsUpdateAvailability(
+        Button powerButton,
+        FrameworkElement updateBadge,
+        MenuItem updateAndShutDownMenuItem,
+        MenuItem updateAndRestartMenuItem,
+        bool restartRequired)
+    {
+        var visibility = restartRequired ? Visibility.Visible : Visibility.Collapsed;
+        updateBadge.Visibility = visibility;
+        updateAndShutDownMenuItem.Visibility = visibility;
+        updateAndRestartMenuItem.Visibility = visibility;
+        powerButton.ToolTip = restartRequired ? "电源（Windows 更新需要重启）" : "电源";
+    }
 
     private static void OpenButtonContextMenu(Button button)
     {
@@ -341,6 +385,21 @@ internal sealed class NavigationController : IDisposable
     {
         _dismissWindow(true);
         AppLauncher.LaunchProcess("重启", "shutdown.exe", "/r /t 0");
+    }
+
+    public void UpdateAndShutDownClick() =>
+        InstallWindowsUpdates(restart: false);
+
+    public void UpdateAndRestartClick() =>
+        InstallWindowsUpdates(restart: true);
+
+    private void InstallWindowsUpdates(bool restart)
+    {
+        _dismissWindow(true);
+        if (!WindowsUpdatePower.TryInstallUpdatesAndShutDown(restart))
+        {
+            AppLauncher.LaunchShellTarget("Windows 更新", "ms-settings:windowsupdate");
+        }
     }
 
     private void LaunchNavigationTarget(string name, string target)

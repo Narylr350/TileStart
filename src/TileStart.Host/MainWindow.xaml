@@ -742,17 +742,44 @@
                             Click="SettingsNavigationButton_Click" />
                     <Button x:Name="PowerNavigationButton"
                             Style="{StaticResource RailButtonStyle}"
-                            Content="&#xE7E8;"
                             Tag="电源"
                             ToolTip="电源"
                             Click="PowerNavigationButton_Click">
+                        <Button.Content>
+                            <Grid Width="48" Height="48">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Text="&#xE7E8;" />
+                                <Ellipse x:Name="PowerUpdateBadge"
+                                         Width="6"
+                                         Height="6"
+                                         Margin="0,9,9,0"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Top"
+                                         Fill="#FFFFB900"
+                                         IsHitTestVisible="False"
+                                         Visibility="Collapsed" />
+                            </Grid>
+                        </Button.Content>
                         <Button.ContextMenu>
                             <ContextMenu Style="{StaticResource StartContextMenuStyle}"
                                          Opened="StartContextMenu_Opened"
                                          Closed="StartContextMenu_Closed">
                                 <MenuItem Header="睡眠" Style="{StaticResource StartMenuItemStyle}" Click="Sleep_Click" />
+                                <MenuItem x:Name="UpdateAndShutDownMenuItem"
+                                          Header="更新并关机"
+                                          Style="{StaticResource StartMenuItemStyle}"
+                                          Visibility="Collapsed"
+                                          Click="UpdateAndShutDown_Click" />
                                 <MenuItem Header="关机" Style="{StaticResource StartMenuItemStyle}"
                                           Click="ShutDown_Click" />
+                                <MenuItem x:Name="UpdateAndRestartMenuItem"
+                                          Header="更新并重启"
+                                          Style="{StaticResource StartMenuItemStyle}"
+                                          Visibility="Collapsed"
+                                          Click="UpdateAndRestart_Click" />
                                 <MenuItem Header="重启" Style="{StaticResource StartMenuItemStyle}" Click="Restart_Click" />
                             </ContextMenu>
                         </Button.ContextMenu>
