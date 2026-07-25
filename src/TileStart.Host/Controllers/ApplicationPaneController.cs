@@ -621,13 +621,19 @@ internal sealed class ApplicationPaneController : IDisposable
     public bool AddAppTile(TileGroup target, AppEntry app, System.Windows.Point position,
         System.Windows.Point dragAnchor)
     {
-        var tile = CreateAppTile(app);
+        return AddAppTile(target, CreateAppTile(app), position, dragAnchor);
+    }
+
+    public bool AddAppTile(TileGroup target, TileItem tile, System.Windows.Point position,
+        System.Windows.Point dragAnchor)
+    {
         var (column, row) = TileDropResolver.GetCell(position, dragAnchor, tile, target.ContentColumns);
         if (!Win10GroupLayout.Add(target, tile, column, row))
         {
             return false;
         }
 
+        _updateLayout();
         TileLayoutStore.Save(_tileLayout);
         return true;
     }

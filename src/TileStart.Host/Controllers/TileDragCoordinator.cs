@@ -49,6 +49,7 @@ internal sealed class TileDragCoordinator : IDisposable
     private Point _dragStart;
     private Point _appDragStart;
     private Point _appDragAnchor;
+    private Point _appDragTileAnchor;
 
     private readonly DispatcherTimer _tileReflowTimer = new()
     {
@@ -77,6 +78,9 @@ internal sealed class TileDragCoordinator : IDisposable
     private TileItem? _dragTile;
     private AppEntry? _appDragEntry;
     private Button? _appDragSourceElement;
+    private BitmapSource? _appDragSourcePreview;
+    private TileItem? _appDragTile;
+    private bool _appDragShowsTilePreview;
     private TileGroup? _dragSource;
     private TileItem? _dragSourceFolder;
     private Button? _dragSourceElement;
@@ -176,6 +180,9 @@ internal sealed class TileDragCoordinator : IDisposable
         ClearGroupDragState();
         _appDragEntry = null;
         _appDragSourceElement = null;
+        _appDragSourcePreview = null;
+        _appDragTile = null;
+        _appDragShowsTilePreview = false;
         _isInternalAppDrag = false;
         Mouse.Capture(null);
     }
@@ -241,6 +248,9 @@ internal sealed class TileDragCoordinator : IDisposable
         _appDragAnchor = _appDragSourceElement is null
             ? new Point()
             : e.GetPosition(_appDragSourceElement);
+        _appDragSourcePreview = null;
+        _appDragTile = null;
+        _appDragShowsTilePreview = false;
     }
 
     public void AppButton_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -260,30 +270,64 @@ internal sealed class TileDragCoordinator : IDisposable
             return;
         }
 
+        _appDragTile = _appController.CreateAppTile(_appDragEntry);
+        _appDragSourcePreview = _captureElement(_appDragSourceElement);
+        _appDragTileAnchor = ScaleAnchor(
+            _appDragAnchor,
+            _appDragSourceElement.ActualWidth,
+            _appDragSourceElement.ActualHeight,
+            _appDragTile.PixelWidth,
+            _appDragTile.PixelHeight);
         ShowInternalDragPreview(
-            _captureElement(_appDragSourceElement),
+            _appDragSourcePreview,
             _appDragSourceElement.ActualWidth,
             _appDragSourceElement.ActualHeight);
         _isInternalAppDrag = true;
-        MoveAppDragPreview(e.GetPosition(_mainSurface));
+        UpdateAppDragPreview(e.GetPosition(_mainSurface));
         Mouse.Capture(_window, CaptureMode.SubTree);
         e.Handled = true;
     }
 
-    private void MoveAppDragPreview(Point position)
+    private void UpdateAppDragPreview(Point position)
     {
-        MoveInternalDragPreview(position, _appDragAnchor);
+        var showTile = IsInsideTilePane(position);
+        if (showTile != _appDragShowsTilePreview)
+        {
+            if (showTile && _appDragTile is not null)
+            {
+                ShowInternalDragPreview(
+                    CaptureAppTilePreview(_appDragTile),
+                    _appDragTile.PixelWidth,
+                    _appDragTile.PixelHeight);
+            }
+            else if (_appDragSourcePreview is not null && _appDragSourceElement is not null)
+            {
+                ShowInternalDragPreview(
+                    _appDragSourcePreview,
+                    _appDragSourceElement.ActualWidth,
+                    _appDragSourceElement.ActualHeight);
+            }
+
+            _appDragShowsTilePreview = showTile;
+        }
+
+        MoveInternalDragPreview(position, showTile ? _appDragTileAnchor : _appDragAnchor);
     }
 
     private void EndInternalAppDrag(bool commit, Point position)
     {
-        if (commit && _appDragEntry is { IsFolder: false } app)
+        if (commit
+            && _appDragEntry is { IsFolder: false }
+            && _appDragTile is { } tile)
         {
             var groupsPosition = _mainSurface.TranslatePoint(position, _tileGroupsControl);
             if (TryResolveTileAreaGroup(groupsPosition, out var target, out var groupControl))
             {
-                _appController.AddAppTile(target, app, _tileGroupsControl.TranslatePoint(groupsPosition, groupControl),
-                    _appDragAnchor);
+                _appController.AddAppTile(
+                    target,
+                    tile,
+                    _tileGroupsControl.TranslatePoint(groupsPosition, groupControl),
+                    _appDragTileAnchor);
             }
             else
             {
@@ -294,7 +338,10 @@ internal sealed class TileDragCoordinator : IDisposable
                     && panePosition.Y < _tilePane.ActualHeight)
                 {
                     var group = TileGroupManager.Add(_tileLayout);
-                    _appController.AddAppTile(group, app, new Point(), _appDragAnchor);
+                    if (!_appController.AddAppTile(group, tile, _appDragTileAnchor, _appDragTileAnchor))
+                    {
+                        TileGroupManager.Remove(_tileLayout, group);
+                    }
                 }
             }
         }
@@ -304,7 +351,86 @@ internal sealed class TileDragCoordinator : IDisposable
         _isInternalAppDrag = false;
         _appDragEntry = null;
         _appDragSourceElement = null;
+        _appDragSourcePreview = null;
+        _appDragTile = null;
+        _appDragShowsTilePreview = false;
         _setSuppressTileActivationUntil(Environment.TickCount64 + 300);
+    }
+
+    internal static Point ScaleAnchor(
+        Point anchor,
+        double sourceWidth,
+        double sourceHeight,
+        double targetWidth,
+        double targetHeight)
+    {
+        var xRatio = sourceWidth > 0 ? Math.Clamp(anchor.X / sourceWidth, 0, 1) : 0.5;
+        var yRatio = sourceHeight > 0 ? Math.Clamp(anchor.Y / sourceHeight, 0, 1) : 0.5;
+        return new Point(targetWidth * xRatio, targetHeight * yRatio);
+    }
+
+    private bool IsInsideTilePane(Point position)
+    {
+        var panePosition = _mainSurface.TranslatePoint(position, _tilePane);
+        return panePosition.X >= 0
+               && panePosition.Y >= 0
+               && panePosition.X < _tilePane.ActualWidth
+               && panePosition.Y < _tilePane.ActualHeight;
+    }
+
+    private BitmapSource CaptureAppTilePreview(TileItem tile)
+    {
+        var grid = new Grid { ClipToBounds = true };
+        if (tile.Icon is not null)
+        {
+            var icon = new Image
+            {
+                Source = tile.Icon,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Stretch = tile.UsesFullTileLogo ? Stretch.Fill : Stretch.Uniform,
+            };
+            if (tile.UsesFullTileLogo)
+            {
+                icon.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
+                icon.VerticalAlignment = VerticalAlignment.Stretch;
+            }
+            else
+            {
+                icon.Width = tile.IconSize;
+                icon.Height = tile.IconSize;
+            }
+
+            grid.Children.Add(icon);
+        }
+
+        if (tile.ShowTitle)
+        {
+            grid.Children.Add(new TextBlock
+            {
+                Text = tile.Name,
+                Margin = new Thickness(7, 0, 7, 5),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Foreground = tile.ForegroundBrush,
+                FontSize = 11,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            });
+        }
+
+        var preview = new Border
+        {
+            Width = tile.PixelWidth,
+            Height = tile.PixelHeight,
+            Background = tile.BackgroundBrush,
+            Child = grid,
+            SnapsToDevicePixels = true,
+        };
+        var size = new Size(tile.PixelWidth, tile.PixelHeight);
+        preview.Measure(size);
+        preview.Arrange(new Rect(size));
+        preview.UpdateLayout();
+        return _captureElement(preview);
     }
 
     // =============================================
@@ -367,7 +493,7 @@ internal sealed class TileDragCoordinator : IDisposable
                 return;
             }
 
-            MoveAppDragPreview(e.GetPosition(_mainSurface));
+            UpdateAppDragPreview(e.GetPosition(_mainSurface));
             e.Handled = true;
             return;
         }

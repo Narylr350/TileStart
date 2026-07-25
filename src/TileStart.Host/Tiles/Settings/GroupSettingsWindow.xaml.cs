@@ -147,7 +147,7 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private static ObservableCollection<GroupTileOption> CreateOptions(
+    internal static ObservableCollection<GroupTileOption> CreateOptions(
         TileGroup group,
         IReadOnlyList<AppEntry> apps)
     {
@@ -158,7 +158,7 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
             var key = TileKey(tile.LaunchTarget, tile.Id);
             if (!string.IsNullOrWhiteSpace(tile.LaunchTarget))
             {
-                existingTargets.Add(tile.LaunchTarget);
+                existingTargets.Add(LaunchTargetIdentity.GetKey(tile.LaunchTarget));
             }
 
             options.Add(new GroupTileOption
@@ -173,9 +173,9 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
         foreach (var app in AppEntry.FlattenApplications(apps)
                      .Where(app => !string.IsNullOrWhiteSpace(app.LaunchTarget))
-                     .GroupBy(app => app.LaunchTarget, StringComparer.OrdinalIgnoreCase)
+                     .GroupBy(app => LaunchTargetIdentity.GetKey(app.LaunchTarget), StringComparer.OrdinalIgnoreCase)
                      .Select(grouping => grouping.First())
-                     .Where(app => !existingTargets.Contains(app.LaunchTarget))
+                     .Where(app => !existingTargets.Contains(LaunchTargetIdentity.GetKey(app.LaunchTarget)))
                      .OrderBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase))
         {
             options.Add(new GroupTileOption

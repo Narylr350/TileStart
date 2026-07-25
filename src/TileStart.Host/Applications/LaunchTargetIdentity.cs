@@ -8,7 +8,7 @@ internal static class LaunchTargetIdentity
 {
     public static string GetKey(string launchTarget)
     {
-        var normalized = TaskbarPinner.NormalizeDisplayName(launchTarget);
+        var normalized = NormalizeDisplayName(launchTarget);
         var shortcutTarget = ResolveShortcutTarget(normalized);
         if (!string.IsNullOrWhiteSpace(shortcutTarget))
         {
@@ -28,6 +28,24 @@ internal static class LaunchTargetIdentity
         }
 
         return normalized.Trim().ToUpperInvariant();
+    }
+
+    private static string NormalizeDisplayName(string launchTarget)
+    {
+        var normalized = TaskbarPinner.NormalizeDisplayName(launchTarget);
+        const string appsFolderPrefix = "shell:AppsFolder\\";
+        if (!normalized.Equals(launchTarget, StringComparison.Ordinal)
+            || !launchTarget.StartsWith(appsFolderPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        var nestedTarget = launchTarget[appsFolderPrefix.Length..];
+        var extension = Path.GetExtension(nestedTarget);
+        return extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+            ? nestedTarget
+            : normalized;
     }
 
     private static string? ResolveShortcutTarget(string path)
