@@ -12,6 +12,38 @@ namespace
 {
     using OpenMenuFunction = BOOL(WINAPI*)();
 
+    enum class ShellAdapter : std::uintptr_t
+    {
+        Win10_19045 = 1,
+        Win11_22631 = 2,
+    };
+
+    std::optional<ShellAdapter> GetShellAdapter(DWORD build)
+    {
+        switch (build)
+        {
+        case 19045:
+            return ShellAdapter::Win10_19045;
+        case 22631:
+            return ShellAdapter::Win11_22631;
+        default:
+            return std::nullopt;
+        }
+    }
+
+    std::wstring_view AdapterName(ShellAdapter adapter)
+    {
+        switch (adapter)
+        {
+        case ShellAdapter::Win10_19045:
+            return L"Win10-19045";
+        case ShellAdapter::Win11_22631:
+            return L"Win11-22631";
+        }
+
+        return L"unknown";
+    }
+
     void PrintUsage()
     {
         std::wcout << L"Usage:\n"
@@ -168,15 +200,8 @@ namespace
         return acknowledged ? 0 : 3;
     }
 
-    int Inject(const std::filesystem::path& dll_path, DWORD process_id)
+    int InjectWithAdapter(const std::filesystem::path& dll_path, DWORD process_id, ShellAdapter adapter)
     {
-        const auto build = GetWindowsBuildNumber();
-        if (!build || *build != 19045)
-        {
-            std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
-            return 1;
-        }
-
         const std::wstring absolute_path = std::filesystem::absolute(dll_path).wstring();
         const HANDLE process = OpenProcess(
             PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ |
@@ -197,7 +222,10 @@ namespace
         }
 
         const auto install_export = FindRemoteExport(process_id, absolute_path, "TileStartInstallHook");
-        const auto result = install_export ? CallRemoteExport(process, *install_export) : std::nullopt;
+        const auto adapter_parameter = reinterpret_cast<LPVOID>(static_cast<std::uintptr_t>(adapter));
+        const auto result = install_export
+                                ? CallRemoteExport(process, *install_export, adapter_parameter)
+                                : std::nullopt;
         CloseHandle(process);
         if (!result || *result == 0)
         {
@@ -205,8 +233,24 @@ namespace
             return 1;
         }
 
-        std::wcout << std::format(L"Injected and started '{}' in PID {}.\n", absolute_path, process_id);
+        std::wcout << std::format(L"Injected and started '{}' in PID {} using the {} adapter.\n",
+                                  absolute_path,
+                                  process_id,
+                                  AdapterName(adapter));
         return 0;
+    }
+
+    int Inject(const std::filesystem::path& dll_path, DWORD process_id)
+    {
+        const auto build = GetWindowsBuildNumber();
+        const auto adapter = build ? GetShellAdapter(*build) : std::nullopt;
+        if (!adapter)
+        {
+            std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
+            return 1;
+        }
+
+        return InjectWithAdapter(dll_path, process_id, *adapter);
     }
 
     int Stop(const std::filesystem::path& dll_path, DWORD process_id)
@@ -249,7 +293,8 @@ namespace
     int Watch(const std::filesystem::path& dll_path, DWORD host_process_id, const wchar_t* stop_event_name)
     {
         const auto build = GetWindowsBuildNumber();
-        if (!build || *build != 19045)
+        const auto adapter = build ? GetShellAdapter(*build) : std::nullopt;
+        if (!adapter)
         {
             std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
             return 1;
@@ -281,7 +326,8 @@ namespace
             {
                 injected_process_id = 0;
             }
-            else if (*shell_process_id != injected_process_id && Inject(dll_path, *shell_process_id) == 0)
+            else if (*shell_process_id != injected_process_id &&
+                InjectWithAdapter(dll_path, *shell_process_id, *adapter) == 0)
             {
                 injected_process_id = *shell_process_id;
             }

@@ -63,4 +63,18 @@ public sealed class WinKeyHookTests
         Assert.Equal(WinKeyAction.None, hook.ProcessKey(E, keyDown: true, keyUp: false));
         Assert.Equal(WinKeyAction.None, hook.ProcessKey(E, keyDown: false, keyUp: true));
     }
+
+    [Fact]
+    public void ForeignInjectedKeysAreHandled()
+    {
+        Assert.False(WinKeyHook.ShouldIgnoreInjectedEvent(0x10, 0));
+    }
+
+    [Fact]
+    public void TileStartReinjectedKeysAreIgnored()
+    {
+        Assert.True(WinKeyHook.ShouldIgnoreInjectedEvent(0x10, IntPtr.Size == 8
+            ? unchecked((nuint)0x54494C4553544152UL)
+            : (nuint)0x54535452U));
+    }
 }

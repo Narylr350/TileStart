@@ -29,4 +29,15 @@ public sealed class InstallerSafetyTests
         Assert.Contains("if StopTileStart then", source, StringComparison.Ordinal);
         Assert.Contains("安装已中止", source, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void InstallerAlwaysRegistersLoginStartup()
+    {
+        var source = File.ReadAllText(InstallerSource);
+
+        var startupRegistration = Assert.Single(source.Split('\n'),
+            line => line.Contains("ValueName: \"TileStart\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("Tasks:", startupRegistration, StringComparison.Ordinal);
+        Assert.DoesNotContain("Name: \"autostart\"", source, StringComparison.Ordinal);
+    }
 }

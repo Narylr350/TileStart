@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Shell;
 
@@ -16,6 +17,11 @@ public sealed class WinKeyHook : IDisposable
     private const uint KeyEventKeyUp = 0x0002;
     private const uint LlkhfExtended = 0x00000001;
     private const uint LlkhfInjected = 0x00000010;
+
+    private static readonly nuint TileStartInjectionMarker = IntPtr.Size == 8
+        ? unchecked((nuint)0x54494C4553544152UL)
+        : (nuint)0x54535452U;
+
     private readonly Action _onStandaloneWinKey;
     private readonly HookProcedure _callback;
     private nint _hook;
@@ -71,7 +77,7 @@ public sealed class WinKeyHook : IDisposable
         }
 
         var key = Marshal.PtrToStructure<KeyboardData>(data);
-        if ((key.Flags & LlkhfInjected) != 0)
+        if (ShouldIgnoreInjectedEvent(key.Flags, key.ExtraInfo))
         {
             return CallNextHookEx(_hook, code, message, data);
         }
@@ -94,6 +100,13 @@ public sealed class WinKeyHook : IDisposable
         if (action.HasFlag(WinKeyAction.InjectWinUp))
         {
             InjectKey((ushort)key.VirtualKey, 0, KeyEventExtendedKey | KeyEventKeyUp);
+        }
+
+        if (key.VirtualKey is VkLwin or VkRwin)
+        {
+            QueueDiagnostic(
+                $"Win-key event: message=0x{message.ToInt64():X}, vk=0x{key.VirtualKey:X}, flags=0x{key.Flags:X}, " +
+                $"extra=0x{key.ExtraInfo:X}, action={action}.");
         }
 
         if (action.HasFlag(WinKeyAction.OpenTileStart))
@@ -141,10 +154,16 @@ public sealed class WinKeyHook : IDisposable
         return WinKeyAction.None;
     }
 
+    internal static bool ShouldIgnoreInjectedEvent(uint flags, nuint extraInfo) =>
+        (flags & LlkhfInjected) != 0 && extraInfo == TileStartInjectionMarker;
+
     private static void InjectKey(ushort virtualKey, ushort scanCode, uint flags)
     {
-        keybd_event((byte)virtualKey, (byte)scanCode, flags, 0);
+        keybd_event((byte)virtualKey, (byte)scanCode, flags, TileStartInjectionMarker);
     }
+
+    private static void QueueDiagnostic(string message) =>
+        ThreadPool.QueueUserWorkItem(static state => DiagnosticLog.Write((string)state!), message);
 
     private delegate nint HookProcedure(int code, nint message, nint data);
 

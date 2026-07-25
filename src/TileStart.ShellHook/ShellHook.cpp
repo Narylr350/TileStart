@@ -1,7 +1,16 @@
 #include <windows.h>
 
+#include <cstdint>
+
 namespace
 {
+    enum class ShellAdapter : std::uintptr_t
+    {
+        None = 0,
+        Win10_19045 = 1,
+        Win11_22631 = 2,
+    };
+
     constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
     constexpr char kOpenCommand[] = "OPEN";
     constexpr DWORD kPipeTimeoutMilliseconds = 75;
@@ -12,6 +21,7 @@ namespace
     HANDLE g_ready_event = nullptr;
     HHOOK g_mouse_hook = nullptr;
     HWND g_start_button = nullptr;
+    ShellAdapter g_adapter = ShellAdapter::None;
     LONG g_started = 0;
     LONG g_install_succeeded = 0;
 
@@ -58,10 +68,37 @@ namespace
         return delivered && response_size == sizeof(response) && response == 1;
     }
 
+    HWND FindWin10StartButton(HWND taskbar)
+    {
+        return FindWindowExW(taskbar, nullptr, L"Start", nullptr);
+    }
+
+    HWND FindWin11StartButton(HWND taskbar)
+    {
+        return FindWindowExW(taskbar, nullptr, L"Start", nullptr);
+    }
+
     void RefreshStartButton()
     {
         const HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
-        g_start_button = taskbar == nullptr ? nullptr : FindWindowExW(taskbar, nullptr, L"Start", nullptr);
+        if (taskbar == nullptr)
+        {
+            g_start_button = nullptr;
+            return;
+        }
+
+        switch (g_adapter)
+        {
+        case ShellAdapter::Win10_19045:
+            g_start_button = FindWin10StartButton(taskbar);
+            break;
+        case ShellAdapter::Win11_22631:
+            g_start_button = FindWin11StartButton(taskbar);
+            break;
+        default:
+            g_start_button = nullptr;
+            break;
+        }
     }
 
     LRESULT CALLBACK MouseHook(int code, WPARAM message, LPARAM data)
@@ -119,12 +156,20 @@ extern "C" __declspec(dllexport) BOOL TileStartTryOpenMenu()
     return RequestHostOpen();
 }
 
-extern "C" __declspec(dllexport) DWORD WINAPI TileStartInstallHook(LPVOID)
+extern "C" __declspec(dllexport) DWORD WINAPI TileStartInstallHook(LPVOID parameter)
 {
+    const auto adapter = static_cast<ShellAdapter>(reinterpret_cast<std::uintptr_t>(parameter));
+    if (adapter != ShellAdapter::Win10_19045 && adapter != ShellAdapter::Win11_22631)
+    {
+        return FALSE;
+    }
+
     if (InterlockedCompareExchange(&g_started, 1, 0) != 0)
     {
-        return InterlockedCompareExchange(&g_install_succeeded, 0, 0) != 0;
+        return g_adapter == adapter && InterlockedCompareExchange(&g_install_succeeded, 0, 0) != 0;
     }
+
+    g_adapter = adapter;
 
     g_stop_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
     g_ready_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
@@ -169,6 +214,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI TileStartStopHook(LPVOID)
     }
 
     g_start_button = nullptr;
+    g_adapter = ShellAdapter::None;
     g_install_succeeded = 0;
     g_started = 0;
     return stopped;

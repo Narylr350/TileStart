@@ -75,7 +75,7 @@ Windows 11 23H2 build 22631.6199
 
 当前 Windows 11 环境已确认 Computer Use 可用，需要桌面自动化时按对应 skill 初始化后直接使用。只有实际失败、恢复后仍阻塞验证时才记录具体限制和未覆盖项，不在每轮重复说明可用性或降级策略。
 
-Windows 11 build 22631 上已确认安装版 Host 可启动，单独 `Win` 键可触发 TileStart 窗口定位与前台激活；当前 Injector 仍因 build 白名单安全退出，所以任务栏开始按钮接管和 Win11 Shell Adapter 尚未验证通过。
+Windows 11 build 22631 上已确认 Win11 Shell Adapter 可由 Release Injector 自动注入：单独 `Win` 键和任务栏开始按钮均可打开 TileStart，`Win+E` 保持系统行为；Explorer 重启后 Watcher 能向新的桌面 Shell 自动重新注入，Host 正常退出后 Injector 随之退出并卸载 ShellHook，Explorer 保持响应。
 
 ## Shell 集成验证
 
