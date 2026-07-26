@@ -78,9 +78,23 @@ public sealed class TrayIcon : IDisposable
         if (!Forms.SystemInformation.HighContrast)
         {
             menu.Renderer = new TileStartTrayRenderer();
+            menu.Opened += (_, _) => ApplyRoundedRegion(menu);
+            menu.SizeChanged += (_, _) => ApplyRoundedRegion(menu);
         }
 
         return menu;
+    }
+
+    private static void ApplyRoundedRegion(Forms.ContextMenuStrip menu)
+    {
+        if (menu.Width <= 0 || menu.Height <= 0)
+        {
+            return;
+        }
+
+        var previous = menu.Region;
+        menu.Region = TileStartTrayRenderer.CreateRoundedRegion(menu.Size);
+        previous?.Dispose();
     }
 
     private static Forms.ToolStripMenuItem CreateMenuItem(string text, EventHandler? click = null)

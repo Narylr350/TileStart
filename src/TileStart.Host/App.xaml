@@ -5,6 +5,10 @@
              xmlns:icons="clr-namespace:TileStart.Host.Icons"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/TileStart.Host;component/Themes/Win11Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         <icons:GifImageSourceConverter x:Key="GifImageSourceConverter" />
         <icons:NonGifImageSourceConverter x:Key="NonGifImageSourceConverter" />
 
@@ -13,7 +17,7 @@
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
@@ -21,13 +25,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="CloseButtonBackground" Background="{TemplateBinding Background}">
+                        <Border x:Name="CloseButtonBackground"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CloseButtonBackground" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                <Setter TargetName="CloseButtonBackground" Property="Background" Value="#C42B1C" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="CloseButtonBackground" Property="Opacity" Value="0.72" />
@@ -39,16 +44,17 @@
         </Style>
 
         <Style x:Key="TileStartDarkExpanderStyle" TargetType="Expander">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#242424" />
-            <Setter Property="BorderBrush" Value="#3D3D3D" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Expander">
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -82,7 +88,8 @@
                                             </Grid>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="HeaderBackground" Property="Background" Value="#2E2E2E" />
+                                                     <Setter TargetName="HeaderBackground" Property="Background"
+                                                             Value="{StaticResource TileStartSubtleFillHoverBrush}" />
                                                 </Trigger>
                                                 <Trigger Property="IsChecked" Value="True">
                                                     <Setter TargetName="Chevron" Property="Text" Value="&#xE70E;" />
@@ -107,5 +114,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

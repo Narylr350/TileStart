@@ -9,85 +9,55 @@
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Background="#1F1F1F"
-        Foreground="#F2F2F2"
-        FontFamily="Segoe UI, Microsoft YaHei UI"
-        FontSize="12"
-        SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display"
-        TextOptions.TextRenderingMode="Grayscale">
+        Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                                  CornerRadius="0"
+                                   CornerRadius="8"
                                   GlassFrameThickness="0"
                                   ResizeBorderThickness="0"
                                   UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="CardBackground" Color="#262626" />
-        <SolidColorBrush x:Key="CardBorder" Color="#404040" />
-        <SolidColorBrush x:Key="MutedText" Color="#B8B8B8" />
+        <SolidColorBrush x:Key="CardBackground" Color="#2D2D2D" />
+        <SolidColorBrush x:Key="CardBorder" Color="#45FFFFFF" />
+        <SolidColorBrush x:Key="MutedText" Color="#C5FFFFFF" />
 
-        <Style x:Key="BaseButtonStyle" TargetType="Button">
+        <Style x:Key="BaseButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartButtonStyle}">
             <Setter Property="Height" Value="36" />
             <Setter Property="MinWidth" Value="112" />
             <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#343434" />
-            <Setter Property="BorderBrush" Value="#606060" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              TextElement.Foreground="{TemplateBinding Foreground}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.88" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.72" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.45" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-            <Setter Property="Background" Value="#D23888" />
-            <Setter Property="BorderBrush" Value="#D23888" />
+        <Style x:Key="PrimaryButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartPrimaryButtonStyle}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Padding" Value="16,0" />
         </Style>
 
-        <Style x:Key="OptionCheckBoxStyle" TargetType="CheckBox">
+        <Style x:Key="OptionCheckBoxStyle"
+               TargetType="CheckBox"
+               BasedOn="{StaticResource TileStartCheckBoxStyle}">
             <Setter Property="MinHeight" Value="32" />
             <Setter Property="Margin" Value="0,2" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="#F2F2F2" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>
 
         <Style x:Key="BackupExpanderStyle"
                TargetType="Expander"
                BasedOn="{StaticResource TileStartDarkExpanderStyle}">
             <Setter Property="Margin" Value="0,16,0,0" />
-            <Setter Property="Background" Value="#242424" />
-            <Setter Property="BorderBrush" Value="#404040" />
+            <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
         </Style>
     </Window.Resources>
 
-    <Border Background="#1F1F1F" BorderBrush="#454545" BorderThickness="1">
+    <Border Style="{StaticResource TileStartDialogSurfaceStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="42" />
@@ -95,7 +65,7 @@
                 <RowDefinition Height="54" />
             </Grid.RowDefinitions>
 
-            <Grid Background="#252525">
+            <Grid Background="{StaticResource TileStartLayerBackgroundBrush}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -250,10 +220,11 @@
                         </Grid>
                         <Border Margin="0,12,0,14"
                                 Padding="11,9"
-                                Background="#202020"
-                                BorderBrush="#383838"
-                                BorderThickness="1">
-                            <TextBlock Foreground="#AFAFAF"
+                                Background="{StaticResource TileStartLayerBackgroundBrush}"
+                                BorderBrush="{StaticResource TileStartDividerBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
+                            <TextBlock Foreground="{StaticResource TileStartTextTertiaryBrush}"
                                        FontSize="11"
                                        TextWrapping="Wrap"
                                        Text="日志和旧备份始终排除。恢复前会自动创建安全快照。" />
@@ -273,8 +244,8 @@
 
             <Border Grid.Row="2"
                     Padding="20,9"
-                    Background="#252525"
-                    BorderBrush="#383838"
+                    Background="{StaticResource TileStartLayerBackgroundBrush}"
+                    BorderBrush="{StaticResource TileStartDividerBrush}"
                     BorderThickness="0,1,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -282,10 +253,11 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                        <Ellipse Width="6" Height="6" Margin="0,0,8,0" Fill="#69C56D" />
+                        <Ellipse Width="6" Height="6" Margin="0,0,8,0"
+                                 Fill="{StaticResource TileStartSuccessBrush}" />
                         <TextBlock x:Name="StatusText"
                                    VerticalAlignment="Center"
-                                   Foreground="#C8C8C8"
+                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    Text="就绪" />
                     </StackPanel>
                     <Button Grid.Column="1"

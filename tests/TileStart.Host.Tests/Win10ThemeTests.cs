@@ -6,23 +6,48 @@ namespace TileStart.Host.Tests;
 public sealed class Win10ThemeTests
 {
     [Fact]
-    public void ReadDarkAccentUsesTheDarkestStartAccentPaletteEntry()
+    public void ResolveAccentColorDecodesWindowsMenuAccentDword()
+    {
+        var color = Win10Theme.ResolveAccentColor(unchecked((int)0xFF6F639D), null, Colors.Blue);
+
+        Assert.Equal(Color.FromRgb(0x9D, 0x63, 0x6F), color);
+    }
+
+    [Fact]
+    public void ResolveAccentColorUsesMainPaletteEntryWhenMenuAccentIsUnavailable()
     {
         var palette = new byte[32];
-        palette[24] = 0xD2;
-        palette[25] = 0x41;
-        palette[26] = 0x87;
+        palette[12] = 0xD2;
+        palette[13] = 0x41;
+        palette[14] = 0x87;
 
-        var color = Win10Theme.ReadDarkAccent(palette, Colors.Blue);
+        var color = Win10Theme.ResolveAccentColor(null, palette, Colors.Blue);
 
         Assert.Equal(Color.FromRgb(0xD2, 0x41, 0x87), color);
     }
 
     [Fact]
-    public void ReadDarkAccentFallsBackWhenPaletteIsUnavailable()
+    public void ResolveAccentColorFallsBackWhenRegistryValuesAreUnavailable()
     {
-        Assert.Equal(Colors.Blue, Win10Theme.ReadDarkAccent(null, Colors.Blue));
-        Assert.Equal(Colors.Blue, Win10Theme.ReadDarkAccent(new byte[8], Colors.Blue));
+        Assert.Equal(Colors.Blue, Win10Theme.ResolveAccentColor(null, null, Colors.Blue));
+        Assert.Equal(Colors.Blue, Win10Theme.ResolveAccentColor("invalid", new byte[8], Colors.Blue));
+    }
+
+    [Fact]
+    public void BlendCreatesStableAccentInteractionColors()
+    {
+        var source = Color.FromRgb(100, 120, 140);
+
+        Assert.Equal(Color.FromRgb(116, 134, 152), Win10Theme.Blend(source, Colors.White, 0.10));
+        Assert.Equal(Color.FromRgb(88, 106, 123), Win10Theme.Blend(source, Colors.Black, 0.12));
+    }
+
+    [Theory]
+    [InlineData(245, 245, 245, true)]
+    [InlineData(20, 20, 20, false)]
+    public void AccentForegroundChoosesReadableText(byte red, byte green, byte blue, bool expectedDark)
+    {
+        Assert.Equal(expectedDark, Win10Theme.UseDarkForeground(Color.FromRgb(red, green, blue)));
     }
 
     [Fact]

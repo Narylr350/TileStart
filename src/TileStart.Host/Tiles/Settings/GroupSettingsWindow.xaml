@@ -14,47 +14,37 @@
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Background="#1F1F1F"
-        Foreground="White"
-        FontFamily="Segoe UI, Microsoft YaHei UI"
-        FontSize="12"
-        SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
+        Style="{StaticResource TileStartDialogWindowStyle}"
         Loaded="Window_Loaded">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="44"
-                            CornerRadius="0"
+                            CornerRadius="8"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
-        <SolidColorBrush x:Key="PanelBrush" Color="#272727" />
-        <SolidColorBrush x:Key="ControlBrush" Color="#303030" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#555555" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#B8B8B8" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#2D2D2D" />
+        <SolidColorBrush x:Key="ControlBrush" Color="#2D2D2D" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#45FFFFFF" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#C5FFFFFF" />
 
-        <Style TargetType="TextBox">
+        <Style TargetType="TextBox" BasedOn="{StaticResource TileStartTextBoxStyle}">
             <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="CaretBrush" Value="White" />
-            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <Style TargetType="ComboBoxItem">
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#232323" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartPopupBackgroundBrush}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
                             <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -73,7 +63,7 @@
 
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="34" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="{StaticResource ControlBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -82,9 +72,10 @@
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
                             <Border x:Name="ComboBorder"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                     Background="{TemplateBinding Background}"
+                                     BorderBrush="{TemplateBinding BorderBrush}"
+                                     BorderThickness="{TemplateBinding BorderThickness}"
+                                     CornerRadius="{StaticResource TileStartControlCornerRadius}">
                                 <Grid>
                                     <ContentPresenter Margin="10,0,36,0"
                                                       VerticalAlignment="Center"
@@ -119,9 +110,10 @@
                                         MaxHeight="260"
                                         Padding="0,4"
                                         Opacity="0"
-                                        Background="#232323"
-                                        BorderBrush="#171717"
-                                        BorderThickness="1"
+                                         Background="{StaticResource TileStartPopupBackgroundBrush}"
+                                         BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
+                                         BorderThickness="1"
+                                         CornerRadius="{StaticResource TileStartOverlayCornerRadius}"
                                         RenderTransformOrigin="0.5,0">
                                     <Border.RenderTransform>
                                         <ScaleTransform ScaleY="0.96" />
@@ -138,7 +130,8 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#909090" />
+                                <Setter TargetName="ComboBorder" Property="BorderBrush"
+                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="ComboBorder" Property="BorderBrush"
@@ -187,10 +180,11 @@
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
                                     <Thumb x:Name="ScrollThumb" Width="3" MinHeight="24"
-                                           HorizontalAlignment="Right" Background="#70FFFFFF">
+                                            HorizontalAlignment="Right"
+                                            Background="{StaticResource TileStartTextTertiaryBrush}">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" />
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="2" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -204,7 +198,8 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ScrollThumb" Property="Width" Value="7" />
-                                <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
+                                <Setter TargetName="ScrollThumb" Property="Background"
+                                        Value="{StaticResource TileStartTextSecondaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -216,18 +211,19 @@
             <Setter Property="Height" Value="58" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#282828" />
-            <Setter Property="BorderBrush" Value="#444444" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <Border x:Name="CardBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                RenderTransformOrigin="0.5,0.5">
+                                 Background="{TemplateBinding Background}"
+                                 BorderBrush="{TemplateBinding BorderBrush}"
+                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                 CornerRadius="{StaticResource TileStartOverlayCornerRadius}"
+                                 RenderTransformOrigin="0.5,0.5">
                             <Border.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1" />
                             </Border.RenderTransform>
@@ -244,16 +240,18 @@
                                     </Grid.ColumnDefinitions>
                                     <Image Width="32" Height="32" Source="{Binding Icon}" Stretch="Uniform" />
                                     <TextBlock Grid.Column="1" Margin="8,0,20,0" VerticalAlignment="Center"
-                                               Foreground="White" Text="{Binding Name}"
+                                               Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="{Binding Name}"
                                                TextTrimming="CharacterEllipsis" />
                                     <Border x:Name="SelectedBadge" Grid.Column="1" Width="18" Height="18"
-                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}"
-                                            Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                             HorizontalAlignment="Right" VerticalAlignment="Top"
+                                             Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}"
+                                             CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                             Opacity="0" RenderTransformOrigin="0.5,0.5">
                                         <Border.RenderTransform>
                                             <ScaleTransform ScaleX="0.72" ScaleY="0.72" />
                                         </Border.RenderTransform>
                                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{x:Static local:Win10Theme.AccentForegroundBrush}"
                                                    FontFamily="Segoe MDL2 Assets" FontSize="10" Text="&#xE73E;" />
                                     </Border>
                                 </Grid>
@@ -261,8 +259,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CardBorder" Property="Background" Value="#343434" />
-                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#777777" />
+                                <Setter TargetName="CardBorder" Property="Background"
+                                        Value="{StaticResource TileStartControlHoverBrush}" />
+                                <Setter TargetName="CardBorder" Property="BorderBrush"
+                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
@@ -305,7 +305,8 @@
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CardBorder" Property="Background" Value="#283B4E" />
+                                <Setter TargetName="CardBorder" Property="Background"
+                                        Value="{StaticResource TileStartControlPressedBrush}" />
                                 <Setter TargetName="CardBorder" Property="BorderBrush"
                                         Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
                                 <Setter TargetName="CardBorder" Property="BorderThickness" Value="2" />
@@ -354,46 +355,26 @@
             </Setter>
         </Style>
 
-        <Style x:Key="DialogButtonStyle" TargetType="Button">
+        <Style x:Key="DialogButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartButtonStyle}">
             <Setter Property="Height" Value="34" />
             <Setter Property="MinWidth" Value="82" />
             <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="BorderBrush" Value="#666666" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#444444" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#505050" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
-            <Setter Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-            <Setter Property="BorderBrush" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+        <Style x:Key="PrimaryButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartPrimaryButtonStyle}">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="MinWidth" Value="82" />
+            <Setter Property="Padding" Value="16,0" />
         </Style>
     </Window.Resources>
 
-    <Border x:Name="DialogSurface" Opacity="0" BorderBrush="#4A4A4A" BorderThickness="1"
+    <Border x:Name="DialogSurface"
+            Style="{StaticResource TileStartDialogSurfaceStyle}"
+            Opacity="0"
             RenderTransformOrigin="0.5,0.5">
         <Border.RenderTransform>
             <TransformGroup>
@@ -408,7 +389,9 @@
                 <RowDefinition Height="60" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Background="#252525" MouseLeftButtonDown="WindowHeader_MouseLeftButtonDown">
+            <Grid Grid.Row="0"
+                  Background="{StaticResource TileStartLayerBackgroundBrush}"
+                  MouseLeftButtonDown="WindowHeader_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="44" />
@@ -435,10 +418,10 @@
 
                 <StackPanel Grid.Column="0">
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="组属性" />
-                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="名称" />
+                    <TextBlock Margin="0,18,0,6" Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="名称" />
                     <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged" />
 
-                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="宽度" />
+                    <TextBlock Margin="0,18,0,6" Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="宽度" />
                     <ComboBox x:Name="WidthBox" SelectedValuePath="Tag" SelectionChanged="Settings_Changed">
                         <ComboBoxItem Content="1 列" Tag="1" />
                         <ComboBoxItem Content="2 列" Tag="2" />
@@ -450,7 +433,7 @@
                         <ComboBoxItem Content="8 列" Tag="8" />
                     </ComboBox>
 
-                    <TextBlock Margin="0,18,0,6" Foreground="#F0F0F0" Text="高度" />
+                    <TextBlock Margin="0,18,0,6" Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="高度" />
                     <ComboBox x:Name="HeightBox" SelectedValuePath="Tag" SelectionChanged="Settings_Changed">
                         <ComboBoxItem Content="自动（兼容旧组）" Tag="0" />
                         <ComboBoxItem Content="1 行" Tag="1" />
@@ -464,8 +447,8 @@
                     </ComboBox>
 
                     <StackPanel Margin="0,22,0,0">
-                        <TextBlock Foreground="#E5E5E5" FontWeight="SemiBold" Text="尺寸说明" />
-                        <Border Height="1" Margin="0,8,0,9" Background="#3A3A3A" />
+                    <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}" FontWeight="SemiBold" Text="尺寸说明" />
+                    <Border Height="1" Margin="0,8,0,9" Background="{StaticResource TileStartDividerBrush}" />
                         <TextBlock Foreground="{StaticResource MutedBrush}" LineHeight="19" TextWrapping="Wrap"
                                    Text="每个单位对应一个中磁贴。小、宽和大磁贴会按实际占格自动排布。" />
                     </StackPanel>
@@ -490,8 +473,10 @@
                     <Grid Grid.Row="1" Margin="0,14,0,10">
                         <TextBox x:Name="SearchBox" Padding="36,0,10,0" TextChanged="SearchBox_TextChanged" />
                         <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets"
-                                   Foreground="#B8B8B8" FontSize="14" Text="&#xE721;" IsHitTestVisible="False" />
-                        <TextBlock Margin="36,0,0,0" VerticalAlignment="Center" Foreground="#8F8F8F"
+                                   Foreground="{StaticResource TileStartTextSecondaryBrush}" FontSize="14"
+                                   Text="&#xE721;" IsHitTestVisible="False" />
+                        <TextBlock Margin="36,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TileStartTextTertiaryBrush}"
                                    Text="搜索应用和磁贴" IsHitTestVisible="False">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -511,7 +496,12 @@
                         <Button HorizontalAlignment="Right" Height="28" MinWidth="58" Padding="10,0"
                                 Style="{StaticResource DialogButtonStyle}" Content="清空" Click="ClearSelection_Click" />
                     </Grid>
-                    <Border Grid.Row="3" Padding="10" Background="#1D1D1D" BorderBrush="#3F3F3F" BorderThickness="1">
+                    <Border Grid.Row="3"
+                            Padding="10"
+                            Background="{StaticResource TileStartLayerBackgroundBrush}"
+                            BorderBrush="{StaticResource TileStartControlStrokeBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource TileStartControlCornerRadius}">
                         <ListBox ItemsSource="{Binding TileOptionRows}"
                                  Background="Transparent"
                                  BorderThickness="0"
@@ -586,10 +576,16 @@
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="实时预览" />
                     <TextBlock x:Name="PreviewSizeText" Grid.Row="1" Margin="0,6,0,12"
                                Foreground="{StaticResource MutedBrush}" />
-                    <Border Grid.Row="2" Padding="16" Background="#151515" BorderBrush="#383838" BorderThickness="1">
+                    <Border Grid.Row="2"
+                            Padding="16"
+                            Background="{StaticResource TileStartWindowBackgroundBrush}"
+                            BorderBrush="{StaticResource TileStartControlStrokeBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
                         <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
                             <StackPanel Width="{Binding PreviewGroup.VisualWidth}">
-                                <TextBlock Height="32" VerticalAlignment="Center" Foreground="White"
+                                <TextBlock Height="32" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TileStartTextPrimaryBrush}"
                                            FontSize="14" Text="{Binding PreviewGroup.Name}"
                                            TextTrimming="CharacterEllipsis" />
                                 <Canvas Width="{Binding PreviewGroup.PixelWidth}"
@@ -631,12 +627,17 @@
                             </StackPanel>
                         </Viewbox>
                     </Border>
-                    <TextBlock Grid.Row="3" Margin="0,12,0,0" MinHeight="18" Foreground="#FF8C8C"
+                    <TextBlock Grid.Row="3" Margin="0,12,0,0" MinHeight="18"
+                               Foreground="{StaticResource TileStartErrorBrush}"
                                Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
                 </Grid>
             </Grid>
 
-            <Border Grid.Row="2" Padding="20,12" Background="#252525" BorderBrush="#3A3A3A" BorderThickness="0,1,0,0">
+            <Border Grid.Row="2"
+                    Padding="20,12"
+                    Background="{StaticResource TileStartLayerBackgroundBrush}"
+                    BorderBrush="{StaticResource TileStartDividerBrush}"
+                    BorderThickness="0,1,0,0">
                 <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                     <Button Margin="0,0,10,0" Style="{StaticResource DialogButtonStyle}" Content="取消"
                             Click="Close_Click" />

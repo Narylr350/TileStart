@@ -13,46 +13,37 @@
         ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
-        Background="#1F1F1F"
-        Foreground="#F2F2F2"
-        FontFamily="Segoe UI, Microsoft YaHei UI"
-        FontSize="12"
-        FontWeight="Normal"
-        SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display"
-        TextOptions.TextHintingMode="Fixed"
-        TextOptions.TextRenderingMode="Grayscale">
+        Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                            CornerRadius="0"
+                            CornerRadius="8"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="ControlBackground" Color="#2B2B2B" />
-        <SolidColorBrush x:Key="ControlReadOnlyBackground" Color="#252525" />
-        <SolidColorBrush x:Key="ControlBorder" Color="#686868" />
-        <SolidColorBrush x:Key="ControlBorderHover" Color="#A0A0A0" />
-        <SolidColorBrush x:Key="HoverBackground" Color="#3B3B3B" />
-        <SolidColorBrush x:Key="PressedBackground" Color="#484848" />
-        <SolidColorBrush x:Key="MutedText" Color="#B8B8B8" />
-        <SolidColorBrush x:Key="Divider" Color="#3A3A3A" />
+        <SolidColorBrush x:Key="ControlBackground" Color="#2D2D2D" />
+        <SolidColorBrush x:Key="ControlReadOnlyBackground" Color="#272727" />
+        <SolidColorBrush x:Key="ControlBorder" Color="#45FFFFFF" />
+        <SolidColorBrush x:Key="ControlBorderHover" Color="#70FFFFFF" />
+        <SolidColorBrush x:Key="HoverBackground" Color="#383838" />
+        <SolidColorBrush x:Key="PressedBackground" Color="#323232" />
+        <SolidColorBrush x:Key="MutedText" Color="#C5FFFFFF" />
+        <SolidColorBrush x:Key="Divider" Color="#18FFFFFF" />
 
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>
 
         <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,5" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="Foreground" Value="#F0F0F0" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>
 
         <Style x:Key="FieldHintStyle" TargetType="TextBlock">
@@ -65,9 +56,10 @@
         <Style x:Key="SettingsCardStyle" TargetType="Border">
             <Setter Property="Margin" Value="0,0,0,14" />
             <Setter Property="Padding" Value="16" />
-            <Setter Property="Background" Value="#242424" />
-            <Setter Property="BorderBrush" Value="#3D3D3D" />
+            <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource TileStartOverlayCornerRadius}" />
         </Style>
 
         <Style x:Key="SettingsExpanderStyle"
@@ -90,10 +82,11 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
                         <Border x:Name="TextBoxBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                SnapsToDevicePixels="True">
+                                 Background="{TemplateBinding Background}"
+                                 BorderBrush="{TemplateBinding BorderBrush}"
+                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                 CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                 SnapsToDevicePixels="True">
                             <ScrollViewer x:Name="PART_ContentHost"
                                           Padding="{TemplateBinding Padding}"
                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -110,7 +103,7 @@
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="TextBoxBorder" Property="BorderBrush"
                                         Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                                <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="1,1,1,2" />
                             </Trigger>
                             <Trigger Property="IsReadOnly" Value="True">
                                 <Setter Property="Foreground" Value="{StaticResource MutedText}" />
@@ -125,62 +118,17 @@
             </Setter>
         </Style>
 
-        <Style x:Key="DialogButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="32" />
+        <Style x:Key="DialogButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartButtonStyle}">
             <Setter Property="MinWidth" Value="72" />
-            <Setter Property="Padding" Value="14,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="BorderBrush" Value="#777777" />
-            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background"
-                                        Value="{StaticResource HoverBackground}" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush"
-                                        Value="{StaticResource ControlBorderHover}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background"
-                                        Value="{StaticResource PressedBackground}" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="White" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
-            <Setter Property="Background" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-            <Setter Property="BorderBrush" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Opacity" Value="0.9" />
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Opacity" Value="0.75" />
-                </Trigger>
-            </Style.Triggers>
+        <Style x:Key="PrimaryButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource TileStartPrimaryButtonStyle}">
+            <Setter Property="MinWidth" Value="72" />
         </Style>
 
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
@@ -193,58 +141,23 @@
             </Style.Triggers>
         </Style>
 
-        <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#F0F0F0" />
+        <Style TargetType="CheckBox" BasedOn="{StaticResource TileStartCheckBoxStyle}">
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal">
-                            <Border x:Name="CheckBorder"
-                                    Width="18"
-                                    Height="18"
-                                    Margin="0,0,9,0"
-                                    Background="{StaticResource ControlBackground}"
-                                    BorderBrush="{StaticResource ControlBorder}"
-                                    BorderThickness="1">
-                                <TextBlock x:Name="CheckGlyph"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="11"
-                                           Text="&#xE73E;"
-                                           Visibility="Collapsed" />
-                            </Border>
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CheckBorder" Property="BorderBrush"
-                                        Value="{StaticResource ControlBorderHover}" />
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CheckBorder" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                                <Setter TargetName="CheckBorder" Property="BorderBrush"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                                <Setter TargetName="CheckGlyph" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
         <Style TargetType="ComboBoxItem">
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#232323" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartPopupBackgroundBrush}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
                             <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -263,7 +176,7 @@
 
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="32" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="{StaticResource ControlBackground}" />
             <Setter Property="BorderBrush" Value="{StaticResource ControlBorder}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -272,9 +185,10 @@
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
                             <Border x:Name="ComboBorder"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                     Background="{TemplateBinding Background}"
+                                     BorderBrush="{TemplateBinding BorderBrush}"
+                                     BorderThickness="{TemplateBinding BorderThickness}"
+                                     CornerRadius="{StaticResource TileStartControlCornerRadius}">
                                 <Grid>
                                     <ContentPresenter Margin="10,0,36,0"
                                                       VerticalAlignment="Center"
@@ -308,9 +222,10 @@
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                     MaxHeight="240"
                                     Padding="0,4"
-                                    Background="#232323"
-                                    BorderBrush="#171717"
-                                    BorderThickness="1">
+                                     Background="{StaticResource TileStartPopupBackgroundBrush}"
+                                     BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
+                                     BorderThickness="1"
+                                     CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
                                     <ScrollViewer CanContentScroll="False"
                                                   PanningMode="VerticalOnly"
                                                   utilities:SmoothScroll.IsEnabled="True">
@@ -346,7 +261,8 @@
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
                                                 <Border Height="3" VerticalAlignment="Center"
-                                                        Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                                        Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}"
+                                                        CornerRadius="2" />
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
@@ -355,8 +271,10 @@
                                     <Thumb Width="12" Height="20" Background="White">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" BorderBrush="#8A8A8A"
-                                                        BorderThickness="1" />
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{StaticResource TileStartControlStrokeHoverBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -365,7 +283,9 @@
                                     <RepeatButton Command="{x:Static Slider.IncreaseLarge}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="3" VerticalAlignment="Center" Background="#666666" />
+                                                <Border Height="3" VerticalAlignment="Center"
+                                                        Background="{StaticResource TileStartControlStrokeHoverBrush}"
+                                                        CornerRadius="2" />
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
@@ -395,11 +315,11 @@
                                            Width="2"
                                            MinHeight="24"
                                            HorizontalAlignment="Right"
-                                           Background="#70FFFFFF"
+                                           Background="{StaticResource TileStartTextTertiaryBrush}"
                                            Opacity="0.72">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" />
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="1" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -414,7 +334,8 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ScrollThumb" Property="Width" Value="6" />
                                 <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
-                                <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
+                                <Setter TargetName="ScrollThumb" Property="Background"
+                                        Value="{StaticResource TileStartTextSecondaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -423,7 +344,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#1F1F1F" BorderBrush="#454545" BorderThickness="1">
+    <Border Style="{StaticResource TileStartDialogSurfaceStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="42" />
@@ -431,7 +352,7 @@
                 <RowDefinition Height="58" />
             </Grid.RowDefinitions>
 
-            <Grid Background="#252525">
+            <Grid Background="{StaticResource TileStartLayerBackgroundBrush}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -458,8 +379,8 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Padding="22"
-                        Background="#181818"
-                        BorderBrush="#383838"
+                        Background="{StaticResource TileStartLayerBackgroundBrush}"
+                        BorderBrush="{StaticResource TileStartDividerBrush}"
                         BorderThickness="0,0,1,0">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -470,7 +391,7 @@
                         <StackPanel>
                             <TextBlock FontSize="15"
                                        FontWeight="SemiBold"
-                                       Foreground="White"
+                                       Foreground="{StaticResource TileStartTextPrimaryBrush}"
                                        Text="实时预览" />
                             <TextBlock x:Name="PreviewSizeText"
                                        Margin="0,5,0,0"
@@ -480,9 +401,10 @@
                         </StackPanel>
 
                         <Grid Grid.Row="1" Margin="0,20,0,20">
-                            <Border Background="#101010"
-                                    BorderBrush="#303030"
-                                    BorderThickness="1">
+                            <Border Background="{StaticResource TileStartWindowBackgroundBrush}"
+                                    BorderBrush="{StaticResource TileStartControlStrokeBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
                                 <Grid Margin="16">
                                     <Viewbox Stretch="Uniform"
                                              StretchDirection="DownOnly">
@@ -826,10 +748,11 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}" Text="图标" />
                                 <Border Margin="0,0,0,10"
-                                        Padding="10"
-                                        Background="{StaticResource ControlReadOnlyBackground}"
-                                        BorderBrush="#3E3E3E"
-                                        BorderThickness="1">
+                                 Padding="10"
+                                 Background="{StaticResource ControlReadOnlyBackground}"
+                                 BorderBrush="{StaticResource TileStartControlStrokeBrush}"
+                                 BorderThickness="1"
+                                 CornerRadius="{StaticResource TileStartControlCornerRadius}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="42" />
@@ -838,9 +761,10 @@
                                         <Border Width="34"
                                                 Height="34"
                                                 HorizontalAlignment="Left"
-                                                Background="#202020"
-                                                BorderBrush="#4A4A4A"
-                                                BorderThickness="1">
+                                                Background="{StaticResource TileStartWindowBackgroundBrush}"
+                                                BorderBrush="{StaticResource TileStartControlStrokeBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
                                             <Grid Margin="4">
                                                 <Image RenderOptions.BitmapScalingMode="HighQuality"
                                                        Stretch="Uniform">
@@ -860,7 +784,8 @@
                                             </Grid>
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Foreground="White" FontSize="12" Text="当前图标" />
+                                            <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}"
+                                                       FontSize="12" Text="当前图标" />
                                             <TextBlock x:Name="IconSourceText"
                                                        Margin="0,3,0,0"
                                                        Foreground="{StaticResource MutedText}"
@@ -1065,7 +990,7 @@
 
             <Border Grid.Row="2"
                     Padding="20,12"
-                    Background="#252525"
+                    Background="{StaticResource TileStartLayerBackgroundBrush}"
                     BorderBrush="{StaticResource Divider}"
                     BorderThickness="0,1,0,0">
                 <Grid>

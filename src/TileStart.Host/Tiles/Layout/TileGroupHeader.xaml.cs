@@ -223,13 +223,13 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
 
         if (_isEditing)
         {
-            var accent = SystemParameters.WindowGlassColor;
+            var accent = Win10Theme.AccentColor;
             InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
             InteractionBorder.BorderBrush = CreateBrush(0xd0, accent.R, accent.G, accent.B);
         }
         else if (_isDragging || _isPressed)
         {
-            var accent = SystemParameters.WindowGlassColor;
+            var accent = Win10Theme.AccentColor;
             InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
             InteractionBorder.BorderBrush = TransparentBrush;
         }

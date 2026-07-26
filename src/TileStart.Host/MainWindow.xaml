@@ -15,10 +15,10 @@
         MinWidth="680"
         MinHeight="480"
         Background="Transparent"
-        FontFamily="Segoe UI"
+        FontFamily="{StaticResource TileStartContentFont}"
         FontSize="14"
-        FontWeight="Medium"
-        Foreground="White"
+        FontWeight="Normal"
+        Foreground="{StaticResource TileStartTextPrimaryBrush}"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
         SnapsToDevicePixels="True"
@@ -36,7 +36,7 @@
         PreviewTextInput="Window_PreviewTextInput">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
-                            CornerRadius="0"
+                            CornerRadius="8"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="0"
                             UseAeroCaptionButtons="False" />
@@ -44,11 +44,11 @@
 
     <Window.Resources>
         <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
-        <SolidColorBrush x:Key="SubtleText" Color="#D9FFFFFF" />
+        <SolidColorBrush x:Key="SubtleText" Color="#C5FFFFFF" />
         <SolidColorBrush x:Key="ExpandedNavigationBackground" Color="#EE202020" />
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>
 
         <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
@@ -70,11 +70,11 @@
                                            Width="2"
                                            MinHeight="24"
                                            HorizontalAlignment="Right"
-                                           Background="#70FFFFFF"
+                                            Background="{StaticResource TileStartTextTertiaryBrush}"
                                            Opacity="0.72">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" />
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="1" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -90,7 +90,8 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ScrollThumb" Property="Width" Value="6" />
                                 <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
-                                <Setter TargetName="ScrollThumb" Property="Background" Value="#A8FFFFFF" />
+                                <Setter TargetName="ScrollThumb" Property="Background"
+                                        Value="{StaticResource TileStartTextSecondaryBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -132,7 +133,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -141,6 +142,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
+                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       RevealRadius="88">
                             <Grid>
@@ -159,8 +161,8 @@
                                 <TextBlock Grid.Column="1"
                                            Margin="12,0,16,0"
                                            VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           FontFamily="Segoe UI, Microsoft YaHei UI"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            FontFamily="{StaticResource TileStartContentFont}"
                                            FontSize="14"
                                            Text="{TemplateBinding Tag}"
                                            TextTrimming="CharacterEllipsis" />
@@ -175,7 +177,7 @@
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AllAppsRowHeight}" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
@@ -185,6 +187,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
+                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       RevealRadius="104">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
@@ -200,7 +203,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="{StaticResource TileBackground}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -209,6 +212,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="TileBorder"
                                                       Background="{TemplateBinding Background}"
+                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
                                                       HoverFillOpacity="0"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       PressedFillOpacity="0"
@@ -229,9 +233,9 @@
             <EventSetter Event="Opened" Handler="StartContextMenu_Opened" />
             <EventSetter Event="Closed" Handler="StartContextMenu_Closed" />
             <Setter Property="MinWidth" Value="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}" />
-            <Setter Property="Background" Value="#FC232323" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#171717" />
+            <Setter Property="Background" Value="{StaticResource TileStartPopupBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartPopupStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}" />
             <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
@@ -246,6 +250,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource TileStartOverlayCornerRadius}"
                                 SnapsToDevicePixels="True">
                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
                         </Border>
@@ -257,9 +262,9 @@
         <Style x:Key="StartMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuItemPadding}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI" />
+            <Setter Property="FontFamily" Value="{StaticResource TileStartContentFont}" />
             <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.ContextMenuFontSize}" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
@@ -268,9 +273,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Grid x:Name="MenuItemRoot"
-                              Height="{TemplateBinding Height}"
-                              Background="{TemplateBinding Background}">
+                        <Border x:Name="MenuItemRoot"
+                                Height="{TemplateBinding Height}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
+                            <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition x:Name="CheckColumn" Width="0" />
                                 <ColumnDefinition
@@ -313,13 +320,15 @@
                                    PopupAnimation="None">
                                 <Border MinWidth="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}"
                                         Padding="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}"
-                                        Background="#FC232323"
-                                        BorderBrush="#171717"
-                                        BorderThickness="1">
+                                         Background="{StaticResource TileStartPopupBackgroundBrush}"
+                                         BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
+                                         BorderThickness="1"
+                                         CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
                                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
                                 </Border>
                             </Popup>
-                        </Grid>
+                            </Grid>
+                        </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsCheckable" Value="True">
                                 <Setter TargetName="CheckColumn"
@@ -355,7 +364,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Separator">
-                        <Border Background="#70FFFFFF" />
+                        <Border Background="{StaticResource TileStartDividerBrush}" />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -367,7 +376,7 @@
             <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPadding}" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="VerticalContentAlignment" Value="Bottom" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderFontSize}" />
@@ -377,6 +386,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
+                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       RevealRadius="84">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
@@ -392,7 +402,7 @@
             <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.AlphabetCellSize}" />
             <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.AlphabetCellSize}" />
             <Setter Property="Margin" Value="0,0,4,4" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontSize" Value="{x:Static local:Win10VisualMetrics.AlphabetFontSize}" />
@@ -402,6 +412,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
+                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       RevealRadius="72">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -548,7 +559,7 @@
                         <TextBlock Grid.Column="1"
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"
-                                   FontFamily="Segoe UI, Microsoft YaHei UI"
+                                   FontFamily="{StaticResource TileStartContentFont}"
                                    FontSize="14"
                                    FontWeight="Medium"
                                    LineHeight="17"
@@ -758,7 +769,7 @@
                                          Margin="0,9,9,0"
                                          HorizontalAlignment="Right"
                                          VerticalAlignment="Top"
-                                         Fill="#FFFFB900"
+                                         Fill="{StaticResource TileStartWarningBrush}"
                                          IsHitTestVisible="False"
                                          Visibility="Collapsed" />
                             </Grid>
@@ -796,9 +807,10 @@
                 <Border x:Name="SearchPanel"
                         Margin="8,8,8,4"
                         Height="36"
-                        Background="#2D2D2D"
-                        BorderBrush="#707070"
+                        Background="{StaticResource TileStartControlBackgroundBrush}"
+                        BorderBrush="{StaticResource TileStartControlStrokeHoverBrush}"
                         BorderThickness="1"
+                        CornerRadius="{StaticResource TileStartControlCornerRadius}"
                         Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -813,10 +825,10 @@
                         <TextBox x:Name="SearchBox"
                                  Grid.Column="1"
                                  Padding="0,7,4,0"
-                                 Foreground="White"
+                                  Foreground="{StaticResource TileStartTextPrimaryBrush}"
                                  Background="Transparent"
                                  BorderThickness="0"
-                                 FontFamily="Segoe UI"
+                                  FontFamily="{StaticResource TileStartContentFont}"
                                  FontSize="14"
                                  TextChanged="SearchBox_TextChanged" />
                     </Grid>
@@ -914,7 +926,7 @@
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
                                         <Setter Property="Focusable" Value="False" />
-                                        <Setter Property="Foreground" Value="White" />
+                                        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         <Setter Property="Padding" Value="0" />
                                         <Setter Property="Template">
@@ -1345,7 +1357,7 @@
                                                                 <TextBlock x:Name="TileTitle"
                                                                            HorizontalAlignment="Left"
                                                                            VerticalAlignment="Bottom"
-                                                                           FontFamily="Segoe UI, Microsoft YaHei UI"
+                                                                            FontFamily="{StaticResource TileStartContentFont}"
                                                                            FontSize="12"
                                                                            FontWeight="SemiBold"
                                                                            Text="{Binding Name}"
@@ -1500,7 +1512,7 @@
                                                                      Foreground="White"
                                                                      Background="Transparent"
                                                                      BorderThickness="0"
-                                                                     FontFamily="Segoe UI"
+                                                                     FontFamily="{StaticResource TileStartContentFont}"
                                                                      FontSize="12"
                                                                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                                                             <ItemsControl Grid.Row="2"
@@ -1547,7 +1559,7 @@
                                                                                 <TextBlock Margin="8,0,8,5"
                                                                                     HorizontalAlignment="Left"
                                                                                     VerticalAlignment="Bottom"
-                                                                                    FontFamily="Segoe UI, Microsoft YaHei UI"
+                                                                                    FontFamily="{StaticResource TileStartContentFont}"
                                                                                     FontSize="12"
                                                                                     FontWeight="SemiBold"
                                                                                     Text="{Binding Name}"

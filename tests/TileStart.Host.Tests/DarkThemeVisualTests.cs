@@ -7,7 +7,7 @@ namespace TileStart.Host.Tests;
 public sealed class DarkThemeVisualTests
 {
     [Fact]
-    public void MainWindowProvidesAWhiteDefaultForTextBlocks()
+    public void MainWindowUsesTheSharedPrimaryTextBrushForTextBlocks()
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -22,7 +22,9 @@ public sealed class DarkThemeVisualTests
             style.Elements(presentation + "Setter"),
             setter =>
                 (string?)setter.Attribute("Property") == "Foreground"
-                && (string?)setter.Attribute("Value") == "White");
+                 && (string?)setter.Attribute("Value") == "{StaticResource TileStartTextPrimaryBrush}");
+
+        Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("TileStartTextPrimaryBrush"));
     }
 
     [Fact]
@@ -72,7 +74,7 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void SharedExpanderTemplatePropagatesWhiteForegroundIntoHeaderAndChevron()
+    public void SharedExpanderTemplatePropagatesPrimaryForegroundIntoHeaderAndChevron()
     {
         var document = LoadXaml("App.xaml");
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -82,7 +84,7 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Key") == "TileStartDarkExpanderStyle");
         Assert.Contains(style.Elements(presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "Foreground"
-            && (string?)setter.Attribute("Value") == "White");
+            && (string?)setter.Attribute("Value") == "{StaticResource TileStartTextPrimaryBrush}");
 
         var toggle = style.Descendants(presentation + "ToggleButton").Single();
         Assert.Equal("{TemplateBinding Foreground}", (string?)toggle.Attribute("Foreground"));
@@ -115,4 +117,14 @@ public sealed class DarkThemeVisualTests
 
     private static XDocument LoadXaml(string fileName) =>
         XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", fileName));
+
+    private static string? ReadThemeBrushColor(string key)
+    {
+        var document = LoadXaml("Win11Theme.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        return document.Descendants(presentation + "SolidColorBrush")
+            .Single(element => (string?)element.Attribute(x + "Key") == key)
+            .Attribute("Color")?.Value;
+    }
 }
