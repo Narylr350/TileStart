@@ -12,17 +12,13 @@
         Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                                   CornerRadius="8"
+                                   CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                                   GlassFrameThickness="0"
                                   ResizeBorderThickness="0"
                                   UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="CardBackground" Color="#2D2D2D" />
-        <SolidColorBrush x:Key="CardBorder" Color="#45FFFFFF" />
-        <SolidColorBrush x:Key="MutedText" Color="#C5FFFFFF" />
-
         <Style x:Key="BaseButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource TileStartButtonStyle}">
@@ -90,7 +86,7 @@
             <StackPanel Grid.Row="1" Margin="26,22,26,20">
                 <TextBlock FontSize="20" FontWeight="SemiBold" Text="保护你的 TileStart" />
                 <TextBlock Margin="0,5,0,0"
-                           Foreground="{StaticResource MutedText}"
+                           Foreground="{StaticResource TileStartTextSecondaryBrush}"
                            TextWrapping="Wrap"
                            Text="一键保存布局、应用、偏好与图标资源；需要时也可以精确选择。" />
 
@@ -102,8 +98,8 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Padding="18"
-                            Background="{StaticResource CardBackground}"
-                            BorderBrush="{StaticResource CardBorder}"
+                            Background="{StaticResource TileStartCardBackgroundBrush}"
+                            BorderBrush="{StaticResource TileStartControlStrokeBrush}"
                             BorderThickness="1">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -124,7 +120,7 @@
                             <TextBlock Grid.Row="2"
                                        Margin="0,5,0,16"
                                        MinHeight="36"
-                                       Foreground="{StaticResource MutedText}"
+                                       Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                        TextWrapping="Wrap"
                                        Text="生成可迁移的单文件备份，外部图片也会一并收集。" />
                             <Button x:Name="QuickBackupButton"
@@ -138,8 +134,8 @@
 
                     <Border Grid.Column="2"
                             Padding="18"
-                            Background="{StaticResource CardBackground}"
-                            BorderBrush="{StaticResource CardBorder}"
+                            Background="{StaticResource TileStartCardBackgroundBrush}"
+                            BorderBrush="{StaticResource TileStartControlStrokeBrush}"
                             BorderThickness="1">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -160,7 +156,7 @@
                             <TextBlock Grid.Row="2"
                                        Margin="0,5,0,16"
                                        MinHeight="36"
-                                       Foreground="{StaticResource MutedText}"
+                                       Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                        TextWrapping="Wrap"
                                        Text="恢复前自动保存当前状态，完成后重新启动 TileStart。" />
                             <Button x:Name="QuickRestoreButton"
@@ -177,7 +173,7 @@
                           Header="自定义备份内容">
                     <StackPanel>
                         <TextBlock Margin="0,0,0,10"
-                                   Foreground="{StaticResource MutedText}"
+                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    Text="只备份或恢复勾选的类别。"
                                    TextWrapping="Wrap" />
                         <Grid>

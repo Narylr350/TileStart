@@ -16,22 +16,13 @@
         Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                            CornerRadius="8"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="ControlBackground" Color="#2D2D2D" />
-        <SolidColorBrush x:Key="ControlReadOnlyBackground" Color="#272727" />
-        <SolidColorBrush x:Key="ControlBorder" Color="#45FFFFFF" />
-        <SolidColorBrush x:Key="ControlBorderHover" Color="#70FFFFFF" />
-        <SolidColorBrush x:Key="HoverBackground" Color="#383838" />
-        <SolidColorBrush x:Key="PressedBackground" Color="#323232" />
-        <SolidColorBrush x:Key="MutedText" Color="#C5FFFFFF" />
-        <SolidColorBrush x:Key="Divider" Color="#18FFFFFF" />
-
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="FontSize" Value="14" />
@@ -49,7 +40,7 @@
         <Style x:Key="FieldHintStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,5,0,0" />
             <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextSecondaryBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
@@ -72,8 +63,8 @@
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="9,0" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ControlBorder}" />
+            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CaretBrush" Value="White" />
             <Setter Property="SelectionBrush" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
@@ -98,7 +89,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="TextBoxBorder" Property="BorderBrush"
-                                        Value="{StaticResource ControlBorderHover}" />
+                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="TextBoxBorder" Property="BorderBrush"
@@ -106,8 +97,8 @@
                                 <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="1,1,1,2" />
                             </Trigger>
                             <Trigger Property="IsReadOnly" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource MutedText}" />
-                                <Setter Property="Background" Value="{StaticResource ControlReadOnlyBackground}" />
+                                <Setter Property="Foreground" Value="{StaticResource TileStartTextSecondaryBrush}" />
+                                <Setter Property="Background" Value="{StaticResource TileStartLayerBackgroundBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45" />
@@ -177,8 +168,8 @@
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="32" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ControlBorder}" />
+            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -237,7 +228,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ComboBorder" Property="BorderBrush"
-                                        Value="{StaticResource ControlBorderHover}" />
+                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="ComboBorder" Property="BorderBrush"
@@ -395,7 +386,7 @@
                                        Text="实时预览" />
                             <TextBlock x:Name="PreviewSizeText"
                                        Margin="0,5,0,0"
-                                       Foreground="{StaticResource MutedText}"
+                                       Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                        FontSize="11"
                                        Text="中 · 144 × 144 DIP" />
                         </StackPanel>
@@ -649,7 +640,7 @@
                         </Grid>
 
                         <StackPanel Grid.Row="2">
-                            <TextBlock Foreground="{StaticResource MutedText}"
+                            <TextBlock Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                        FontSize="11"
                                        Text="预览使用与开始菜单一致的尺寸、颜色和图标布局参数。"
                                        TextWrapping="Wrap" />
@@ -749,7 +740,7 @@
                                 <TextBlock Style="{StaticResource SectionTitleStyle}" Text="图标" />
                                 <Border Margin="0,0,0,10"
                                  Padding="10"
-                                 Background="{StaticResource ControlReadOnlyBackground}"
+                                 Background="{StaticResource TileStartLayerBackgroundBrush}"
                                  BorderBrush="{StaticResource TileStartControlStrokeBrush}"
                                  BorderThickness="1"
                                  CornerRadius="{StaticResource TileStartControlCornerRadius}">
@@ -788,7 +779,7 @@
                                                        FontSize="12" Text="当前图标" />
                                             <TextBlock x:Name="IconSourceText"
                                                        Margin="0,3,0,0"
-                                                       Foreground="{StaticResource MutedText}"
+                                                       Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                                        FontSize="11"
                                                        Text="应用默认图标"
                                                        TextTrimming="CharacterEllipsis" />
@@ -858,7 +849,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="背景缩放" />
                                     <TextBlock Grid.Column="1"
-                                               Foreground="{StaticResource MutedText}"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                                Text="{Binding Value, ElementName=BackgroundImageScaleBox, StringFormat={}{0:P0}}" />
                                 </Grid>
                                 <Slider x:Name="BackgroundImageScaleBox"
@@ -973,7 +964,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="图标大小" />
                                     <TextBlock Grid.Column="1"
-                                               Foreground="{StaticResource MutedText}"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                                Text="{Binding Value, ElementName=IconSizeBox, StringFormat={}{0:0} DIP}" />
                                 </Grid>
                                 <Slider x:Name="IconSizeBox"
@@ -991,7 +982,7 @@
             <Border Grid.Row="2"
                     Padding="20,12"
                     Background="{StaticResource TileStartLayerBackgroundBrush}"
-                    BorderBrush="{StaticResource Divider}"
+                    BorderBrush="{StaticResource TileStartDividerBrush}"
                     BorderThickness="0,1,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>

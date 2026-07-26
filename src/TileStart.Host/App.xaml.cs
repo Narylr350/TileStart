@@ -4,6 +4,7 @@ using TileStart.Host.About;
 using TileStart.Host.Backup;
 using TileStart.Host.Compatibility;
 using TileStart.Host.Shell;
+using TileStart.Host.Themes;
 using TileStart.Host.Updates;
 using TileStart.Host.Utilities;
 using MessageBox = System.Windows.MessageBox;
@@ -21,6 +22,7 @@ public partial class App : System.Windows.Application
     private readonly GitHubUpdateService _updateService = new();
     private bool _isPaused;
     private bool _isCheckingForUpdates;
+    private AppearancePreferences _appearancePreferences = new();
 
     public App()
     {
@@ -35,6 +37,12 @@ public partial class App : System.Windows.Application
 
         if (TryHandleCompatibilityCommand(e.Args))
         {
+            return;
+        }
+
+        if (!WaitForPreviousProcess(e.Args))
+        {
+            Shutdown(1);
             return;
         }
 
@@ -59,6 +67,9 @@ public partial class App : System.Windows.Application
             Shutdown();
             return;
         }
+
+        _appearancePreferences = AppearancePreferencesStore.Load();
+        AppThemeManager.Apply(Resources, _appearancePreferences.ThemeStyle);
 
         DiagnosticLog.Write("Creating main window.");
         MainWindow = new MainWindow();
@@ -85,6 +96,8 @@ public partial class App : System.Windows.Application
             CheckForUpdatesAsync,
             OpenBackupAndRestore,
             OpenAbout,
+            _appearancePreferences.ThemeStyle,
+            ChangeThemeStyle,
             ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
         {
@@ -287,6 +300,67 @@ public partial class App : System.Windows.Application
         Shutdown();
     }
 
+    private void ChangeThemeStyle(AppThemeStyle themeStyle)
+    {
+        if (_appearancePreferences.ThemeStyle == themeStyle)
+        {
+            return;
+        }
+
+        _appearancePreferences.ThemeStyle = themeStyle;
+        AppearancePreferencesStore.Save(_appearancePreferences);
+        if (Environment.ProcessPath is { } executablePath)
+        {
+            Process.Start(new ProcessStartInfo(
+                executablePath,
+                $"--wait-for-process {Environment.ProcessId}")
+            {
+                UseShellExecute = true,
+            });
+        }
+
+        ((MainWindow)MainWindow).AllowClose();
+        Shutdown();
+    }
+
+    private static bool WaitForPreviousProcess(IReadOnlyList<string> arguments)
+    {
+        var processId = ReadWaitProcessId(arguments);
+        if (processId is null || processId == Environment.ProcessId)
+        {
+            return true;
+        }
+
+        try
+        {
+            using var process = Process.GetProcessById(processId.Value);
+            return process.WaitForExit(TimeSpan.FromSeconds(15));
+        }
+        catch (ArgumentException)
+        {
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
+    internal static int? ReadWaitProcessId(IReadOnlyList<string> arguments)
+    {
+        for (var index = 0; index < arguments.Count - 1; index++)
+        {
+            if (arguments[index].Equals("--wait-for-process", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(arguments[index + 1], out var processId)
+                && processId > 0)
+            {
+                return processId;
+            }
+        }
+
+        return null;
+    }
+
     protected override async void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
@@ -319,7 +393,7 @@ public partial class App : System.Windows.Application
 
         if (_pendingRestore is not null && Environment.ProcessPath is { } executablePath)
         {
-            if (restoreError is not null)
+            if (_pendingRestore is not null && restoreError is not null)
             {
                 MessageBox.Show($"恢复失败：{restoreError.Message}", "TileStart", MessageBoxButton.OK,
                     MessageBoxImage.Error);

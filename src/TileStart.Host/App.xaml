@@ -17,7 +17,7 @@
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
@@ -27,7 +27,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="CloseButtonBackground"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
+                                CornerRadius="{DynamicResource TileStartControlCornerRadius}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -44,9 +44,9 @@
         </Style>
 
         <Style x:Key="TileStartDarkExpanderStyle" TargetType="Expander">
-            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TileStartCardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -54,7 +54,7 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
+                                CornerRadius="{DynamicResource TileStartOverlayCornerRadius}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -89,7 +89,7 @@
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                      <Setter TargetName="HeaderBackground" Property="Background"
-                                                             Value="{StaticResource TileStartSubtleFillHoverBrush}" />
+                                                             Value="{DynamicResource TileStartSubtleFillHoverBrush}" />
                                                 </Trigger>
                                                 <Trigger Property="IsChecked" Value="True">
                                                     <Setter TargetName="Chevron" Property="Text" Value="&#xE70E;" />

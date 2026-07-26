@@ -11,14 +11,13 @@
         Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                                   CornerRadius="8"
+                                   CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                                   GlassFrameThickness="0"
                                   ResizeBorderThickness="0"
                                   UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="MutedText" Color="#C5FFFFFF" />
         <Style x:Key="AboutButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource TileStartButtonStyle}">
@@ -94,7 +93,7 @@
                         <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
                             <TextBlock x:Name="VersionText"
                                        VerticalAlignment="Center"
-                                       Foreground="{StaticResource MutedText}" />
+                                       Foreground="{StaticResource TileStartTextSecondaryBrush}" />
                             <Border Margin="10,0,0,0"
                                     Padding="8,3"
                                     Background="{StaticResource TileStartControlBackgroundBrush}"
@@ -105,7 +104,7 @@
                             </Border>
                         </StackPanel>
                         <TextBlock Margin="0,10,0,0"
-                                   Foreground="{StaticResource MutedText}"
+                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    Text="为 Windows 10 与 Windows 11 重建熟悉的磁贴开始菜单。"
                                    TextWrapping="Wrap" />
                     </StackPanel>
@@ -125,10 +124,10 @@
                             <RowDefinition Height="10" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Foreground="{StaticResource MutedText}" Text="支持系统" />
+                        <TextBlock Foreground="{StaticResource TileStartTextSecondaryBrush}" Text="支持系统" />
                         <TextBlock Grid.Column="1" Text="Windows 10 / Windows 11 · x64" />
                         <TextBlock Grid.Row="2"
-                                   Foreground="{StaticResource MutedText}"
+                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    Text="项目作者" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="Narylr350" />
                     </Grid>

@@ -14,7 +14,7 @@
         Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
-                            CornerRadius="8"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />

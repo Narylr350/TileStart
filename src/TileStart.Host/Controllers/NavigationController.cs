@@ -194,7 +194,7 @@ internal sealed class NavigationController : IDisposable
         if (expanded)
         {
             _navigationPane.Background =
-                (System.Windows.Media.Brush)_navigationPane.FindResource("ExpandedNavigationBackground");
+                (System.Windows.Media.Brush)_navigationPane.FindResource("TileStartNavigationOverlayBrush");
         }
 
         if (!SystemParameters.ClientAreaAnimation)

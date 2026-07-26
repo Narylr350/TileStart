@@ -1129,9 +1129,7 @@ internal sealed class TileWorkspaceController : IDisposable
 
             if (collapseRegion is not null)
             {
-                collapseRegion.BeginAnimation(FrameworkElement.HeightProperty, null);
-                collapseRegionContainer?.BeginAnimation(Canvas.TopProperty, null);
-                collapseRegion.ClearValue(UIElement.VisibilityProperty);
+                CompleteTileFolderCollapse(collapseRegion, collapseRegionContainer);
             }
 
             if (!await WaitForAnimationAsync(Math.Max(
@@ -1206,6 +1204,11 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
+        if (expanding)
+        {
+            PrepareTileFolderExpansion(region);
+        }
+
         var scale = new ScaleTransform(1, 1);
         region.RenderTransformOrigin = new System.Windows.Point(0.5, 0);
         region.RenderTransform = scale;
@@ -1234,6 +1237,20 @@ internal sealed class TileWorkspaceController : IDisposable
                 Win10FolderMotion.StandardSpline,
                 fillBehavior),
             HandoffBehavior.SnapshotAndReplace);
+    }
+
+    internal static void CompleteTileFolderCollapse(
+        System.Windows.Controls.Border region,
+        FrameworkElement? regionContainer)
+    {
+        region.Visibility = Visibility.Collapsed;
+        region.BeginAnimation(FrameworkElement.HeightProperty, null);
+        regionContainer?.BeginAnimation(Canvas.TopProperty, null);
+    }
+
+    internal static void PrepareTileFolderExpansion(System.Windows.Controls.Border region)
+    {
+        region.ClearValue(UIElement.VisibilityProperty);
     }
 
     private System.Windows.Controls.Border? FindTileFolderRegion(TileItem folder) =>

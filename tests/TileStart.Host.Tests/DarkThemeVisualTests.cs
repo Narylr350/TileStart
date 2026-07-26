@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.IO;
 using System.Xml.Linq;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
 
@@ -65,12 +66,29 @@ public sealed class DarkThemeVisualTests
     public void TrayMenuColorTableUsesDarkSurfaceAndAccentSelection()
     {
         var highlight = Color.FromArgb(12, 34, 56);
-        var colors = new TileStartTrayColorTable(highlight);
+        var palette = TileStartTrayRenderer.GetPalette(AppThemeStyle.Windows11);
+        var colors = new TileStartTrayColorTable(highlight, palette);
 
-        Assert.Equal(TileStartTrayRenderer.BackgroundColor, colors.ToolStripDropDownBackground);
-        Assert.Equal(TileStartTrayRenderer.BorderColor, colors.MenuBorder);
-        Assert.Equal(TileStartTrayRenderer.SeparatorColor, colors.SeparatorDark);
+        Assert.Equal(palette.Background, colors.ToolStripDropDownBackground);
+        Assert.Equal(palette.Border, colors.MenuBorder);
+        Assert.Equal(palette.Separator, colors.SeparatorDark);
         Assert.Equal(highlight, colors.MenuItemSelected);
+    }
+
+    [Fact]
+    public void TileButtonsUseDedicatedSquareGeometry()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "TileStyle");
+        var border = style.Descendants(XName.Get("Win10InteractionBorder", "clr-namespace:TileStart.Host"))
+            .Single(element => (string?)element.Attribute(x + "Name") == "TileBorder");
+
+        Assert.Equal("{StaticResource TileStartTileCornerRadius}", (string?)border.Attribute("CornerRadius"));
+        Assert.Equal("0", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+        Assert.Equal("0", ReadThemeResourceValue("Win10Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
     }
 
     [Fact]
@@ -84,7 +102,7 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Key") == "TileStartDarkExpanderStyle");
         Assert.Contains(style.Elements(presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "Foreground"
-            && (string?)setter.Attribute("Value") == "{StaticResource TileStartTextPrimaryBrush}");
+            && (string?)setter.Attribute("Value") == "{DynamicResource TileStartTextPrimaryBrush}");
 
         var toggle = style.Descendants(presentation + "ToggleButton").Single();
         Assert.Equal("{TemplateBinding Foreground}", (string?)toggle.Attribute("Foreground"));
@@ -126,5 +144,15 @@ public sealed class DarkThemeVisualTests
         return document.Descendants(presentation + "SolidColorBrush")
             .Single(element => (string?)element.Attribute(x + "Key") == key)
             .Attribute("Color")?.Value;
+    }
+
+    private static string? ReadThemeResourceValue(string fileName, string elementName, string key)
+    {
+        var document = LoadXaml(fileName);
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        return document.Descendants(presentation + elementName)
+            .Single(element => (string?)element.Attribute(x + "Key") == key)
+            .Value;
     }
 }

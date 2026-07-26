@@ -1,6 +1,7 @@
 using System.Reflection;
 using Forms = System.Windows.Forms;
 using TileStart.Host;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
 
@@ -21,6 +22,7 @@ public sealed class TrayIconTests
                 var aboutCount = 0;
                 var exitCount = 0;
                 var pauseStates = new List<bool>();
+                var themeStyles = new List<AppThemeStyle>();
                 using var tray = new TrayIcon(
                     () => showCount++,
                     paused => pauseStates.Add(paused),
@@ -32,6 +34,8 @@ public sealed class TrayIconTests
                     },
                     () => backupCount++,
                     () => aboutCount++,
+                    AppThemeStyle.Windows11,
+                    style => themeStyles.Add(style),
                     () => exitCount++);
 
                 var notifyIcon = Assert.IsType<Forms.NotifyIcon>(
@@ -53,6 +57,14 @@ public sealed class TrayIconTests
                 Find(menu, "检查更新…").PerformClick();
                 Find(menu, "备份与恢复…").PerformClick();
                 Find(menu, "关于 TileStart").PerformClick();
+                var appearance = Find(menu, "界面风格");
+                var windows10 = appearance.DropDownItems.OfType<Forms.ToolStripMenuItem>()
+                    .Single(item => item.Text == "Windows 10");
+                var windows11 = appearance.DropDownItems.OfType<Forms.ToolStripMenuItem>()
+                    .Single(item => item.Text == "Windows 11");
+                Assert.False(windows10.Checked);
+                Assert.True(windows11.Checked);
+                windows10.PerformClick();
                 Find(menu, "退出").PerformClick();
 
                 Assert.Equal(1, showCount);
@@ -62,6 +74,7 @@ public sealed class TrayIconTests
                 Assert.Equal(1, aboutCount);
                 Assert.Equal(1, exitCount);
                 Assert.Equal([true, false], pauseStates);
+                Assert.Equal([AppThemeStyle.Windows10], themeStyles);
                 Assert.NotNull(menu.Items.OfType<Forms.ToolStripMenuItem>().Single(item => item.Text == "登录时启动"));
             }
             catch (Exception exception)

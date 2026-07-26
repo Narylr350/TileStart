@@ -52,6 +52,9 @@
     <Content Include="..\..\src\TileStart.Host\Themes\Win11Theme.xaml"
              Link="TestData\Xaml\Win11Theme.xaml"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Themes\Win10Theme.xaml"
+             Link="TestData\Xaml\Win10Theme.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\Backup\BackupRestoreWindow.xaml"
              Link="TestData\Xaml\BackupRestoreWindow.xaml"
              CopyToOutputDirectory="PreserveNewest" />

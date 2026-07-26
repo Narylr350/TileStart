@@ -1,41 +1,78 @@
 using Drawing = System.Drawing;
 using Drawing2D = System.Drawing.Drawing2D;
 using Forms = System.Windows.Forms;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Shell;
+
+internal readonly record struct TileStartTrayPalette(
+    Drawing.Color Background,
+    Drawing.Color Border,
+    Drawing.Color Separator,
+    Drawing.Color DisabledText);
 
 internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRenderer
 {
     private const int MenuCornerRadius = 8;
     private const int ItemCornerRadius = 4;
     private readonly Drawing.Color _highlightColor;
+    private readonly TileStartTrayPalette _palette;
+    private readonly bool _rounded;
 
-    internal static readonly Drawing.Color BackgroundColor = Drawing.Color.FromArgb(0xFC, 0x2C, 0x2C, 0x2C);
-    internal static readonly Drawing.Color BorderColor = Drawing.Color.FromArgb(0x56, 0x56, 0x56);
-    internal static readonly Drawing.Color SeparatorColor = Drawing.Color.FromArgb(0x4A, 0x4A, 0x4A);
-    internal static readonly Drawing.Color DisabledTextColor = Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF);
+    public TileStartTrayRenderer(AppThemeStyle themeStyle)
+        : this(themeStyle, GetPalette(themeStyle))
+    {
+    }
 
-    public TileStartTrayRenderer()
-        : base(new TileStartTrayColorTable(ToDrawingColor(Win10Theme.ContextMenuHighlightBrush.Color)))
+    private TileStartTrayRenderer(AppThemeStyle themeStyle, TileStartTrayPalette palette)
+        : base(new TileStartTrayColorTable(ToDrawingColor(Win10Theme.ContextMenuHighlightBrush.Color), palette))
     {
         _highlightColor = ToDrawingColor(Win10Theme.ContextMenuHighlightBrush.Color);
+        _palette = palette;
+        _rounded = themeStyle == AppThemeStyle.Windows11;
         RoundedEdges = false;
     }
 
+    internal static TileStartTrayPalette GetPalette(AppThemeStyle themeStyle) => themeStyle switch
+    {
+        AppThemeStyle.Windows10 => new TileStartTrayPalette(
+            Drawing.Color.FromArgb(0xFC, 0x23, 0x23, 0x23),
+            Drawing.Color.FromArgb(0x45, 0x45, 0x45),
+            Drawing.Color.FromArgb(0x58, 0x58, 0x58),
+            Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF)),
+        _ => new TileStartTrayPalette(
+            Drawing.Color.FromArgb(0xFC, 0x2C, 0x2C, 0x2C),
+            Drawing.Color.FromArgb(0x56, 0x56, 0x56),
+            Drawing.Color.FromArgb(0x4A, 0x4A, 0x4A),
+            Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF)),
+    };
+
     protected override void OnRenderToolStripBackground(Forms.ToolStripRenderEventArgs e)
     {
+        using var brush = new Drawing.SolidBrush(_palette.Background);
+        if (!_rounded)
+        {
+            e.Graphics.FillRectangle(brush, e.AffectedBounds);
+            return;
+        }
+
         e.Graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
         using var path = CreateRoundedPath(e.AffectedBounds, MenuCornerRadius);
-        using var brush = new Drawing.SolidBrush(BackgroundColor);
         e.Graphics.FillPath(brush, path);
     }
 
     protected override void OnRenderToolStripBorder(Forms.ToolStripRenderEventArgs e)
     {
         var bounds = Drawing.Rectangle.Inflate(e.AffectedBounds, -1, -1);
+        using var pen = new Drawing.Pen(_palette.Border);
+        if (!_rounded)
+        {
+            e.Graphics.DrawRectangle(pen, bounds);
+            return;
+        }
+
         e.Graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
         using var path = CreateRoundedPath(bounds, MenuCornerRadius - 1);
-        using var pen = new Drawing.Pen(BorderColor);
         e.Graphics.DrawPath(pen, path);
     }
 
@@ -46,22 +83,28 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
             return;
         }
 
+        using var brush = new Drawing.SolidBrush(_highlightColor);
+        if (!_rounded)
+        {
+            e.Graphics.FillRectangle(brush, e.Item.ContentRectangle);
+            return;
+        }
+
         var bounds = new Drawing.Rectangle(4, 1, Math.Max(1, e.Item.Width - 8), Math.Max(1, e.Item.Height - 2));
         e.Graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
         using var path = CreateRoundedPath(bounds, ItemCornerRadius);
-        using var brush = new Drawing.SolidBrush(_highlightColor);
         e.Graphics.FillPath(brush, path);
     }
 
     protected override void OnRenderItemText(Forms.ToolStripItemTextRenderEventArgs e)
     {
-        e.TextColor = e.Item.Enabled ? Drawing.Color.White : DisabledTextColor;
+        e.TextColor = e.Item.Enabled ? Drawing.Color.White : _palette.DisabledText;
         base.OnRenderItemText(e);
     }
 
     protected override void OnRenderArrow(Forms.ToolStripArrowRenderEventArgs e)
     {
-        e.ArrowColor = e.Item?.Enabled != false ? Drawing.Color.White : DisabledTextColor;
+        e.ArrowColor = e.Item?.Enabled != false ? Drawing.Color.White : _palette.DisabledText;
         base.OnRenderArrow(e);
     }
 
@@ -95,7 +138,7 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
     protected override void OnRenderSeparator(Forms.ToolStripSeparatorRenderEventArgs e)
     {
         var y = e.Item.Height / 2;
-        using var pen = new Drawing.Pen(SeparatorColor);
+        using var pen = new Drawing.Pen(_palette.Separator);
         e.Graphics.DrawLine(pen, 10, y, e.Item.Width - 10, y);
     }
 
@@ -132,13 +175,14 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
         Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
 }
 
-internal sealed class TileStartTrayColorTable(Drawing.Color highlightColor) : Forms.ProfessionalColorTable
+internal sealed class TileStartTrayColorTable(Drawing.Color highlightColor, TileStartTrayPalette palette)
+    : Forms.ProfessionalColorTable
 {
-    public override Drawing.Color ToolStripDropDownBackground => TileStartTrayRenderer.BackgroundColor;
-    public override Drawing.Color ImageMarginGradientBegin => TileStartTrayRenderer.BackgroundColor;
-    public override Drawing.Color ImageMarginGradientMiddle => TileStartTrayRenderer.BackgroundColor;
-    public override Drawing.Color ImageMarginGradientEnd => TileStartTrayRenderer.BackgroundColor;
-    public override Drawing.Color MenuBorder => TileStartTrayRenderer.BorderColor;
+    public override Drawing.Color ToolStripDropDownBackground => palette.Background;
+    public override Drawing.Color ImageMarginGradientBegin => palette.Background;
+    public override Drawing.Color ImageMarginGradientMiddle => palette.Background;
+    public override Drawing.Color ImageMarginGradientEnd => palette.Background;
+    public override Drawing.Color MenuBorder => palette.Border;
     public override Drawing.Color MenuItemBorder => highlightColor;
     public override Drawing.Color MenuItemSelected => highlightColor;
     public override Drawing.Color MenuItemSelectedGradientBegin => highlightColor;
@@ -146,9 +190,9 @@ internal sealed class TileStartTrayColorTable(Drawing.Color highlightColor) : Fo
     public override Drawing.Color MenuItemPressedGradientBegin => highlightColor;
     public override Drawing.Color MenuItemPressedGradientMiddle => highlightColor;
     public override Drawing.Color MenuItemPressedGradientEnd => highlightColor;
-    public override Drawing.Color SeparatorDark => TileStartTrayRenderer.SeparatorColor;
-    public override Drawing.Color SeparatorLight => TileStartTrayRenderer.SeparatorColor;
-    public override Drawing.Color CheckBackground => TileStartTrayRenderer.BackgroundColor;
+    public override Drawing.Color SeparatorDark => palette.Separator;
+    public override Drawing.Color SeparatorLight => palette.Separator;
+    public override Drawing.Color CheckBackground => palette.Background;
     public override Drawing.Color CheckSelectedBackground => highlightColor;
     public override Drawing.Color CheckPressedBackground => highlightColor;
 }

@@ -18,17 +18,12 @@
         Loaded="Window_Loaded">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="44"
-                            CornerRadius="8"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
-        <SolidColorBrush x:Key="PanelBrush" Color="#2D2D2D" />
-        <SolidColorBrush x:Key="ControlBrush" Color="#2D2D2D" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#45FFFFFF" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#C5FFFFFF" />
-
         <Style TargetType="TextBox" BasedOn="{StaticResource TileStartTextBoxStyle}">
             <Setter Property="Height" Value="34" />
         </Style>
@@ -64,8 +59,8 @@
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="34" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -268,14 +263,14 @@
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetName="CardBorder"
                                                              Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                             To="1.015" Duration="0:0:0.12">
+                                                             To="1" Duration="0:0:0.12">
                                                 <DoubleAnimation.EasingFunction>
                                                     <CubicEase EasingMode="EaseOut" />
                                                 </DoubleAnimation.EasingFunction>
                                             </DoubleAnimation>
                                             <DoubleAnimation Storyboard.TargetName="CardBorder"
                                                              Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                             To="1.015" Duration="0:0:0.12">
+                                                             To="1" Duration="0:0:0.12">
                                                 <DoubleAnimation.EasingFunction>
                                                     <CubicEase EasingMode="EaseOut" />
                                                 </DoubleAnimation.EasingFunction>
@@ -398,7 +393,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Margin="16,0" VerticalAlignment="Center">
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="自定义组" />
-                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource MutedBrush}" FontSize="10"
+                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource TileStartTextSecondaryBrush}" FontSize="10"
                                Text="设置容器跨度并选择要放入的磁贴" />
                 </StackPanel>
                 <Button Grid.Column="1"
@@ -449,7 +444,7 @@
                     <StackPanel Margin="0,22,0,0">
                     <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}" FontWeight="SemiBold" Text="尺寸说明" />
                     <Border Height="1" Margin="0,8,0,9" Background="{StaticResource TileStartDividerBrush}" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" LineHeight="19" TextWrapping="Wrap"
+                        <TextBlock Foreground="{StaticResource TileStartTextSecondaryBrush}" LineHeight="19" TextWrapping="Wrap"
                                    Text="每个单位对应一个中磁贴。小、宽和大磁贴会按实际占格自动排布。" />
                     </StackPanel>
                 </StackPanel>
@@ -467,7 +462,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择磁贴" />
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    Text="{Binding SelectedCountText}" />
                     </Grid>
                     <Grid Grid.Row="1" Margin="0,14,0,10">
@@ -491,7 +486,7 @@
                         </TextBlock>
                     </Grid>
                     <Grid Grid.Row="2" Margin="0,0,0,10">
-                        <TextBlock VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock VerticalAlignment="Center" Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                    FontSize="11" Text="已选磁贴始终置顶" />
                         <Button HorizontalAlignment="Right" Height="28" MinWidth="58" Padding="10,0"
                                 Style="{StaticResource DialogButtonStyle}" Content="清空" Click="ClearSelection_Click" />
@@ -575,7 +570,7 @@
                     </Grid.RowDefinitions>
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="实时预览" />
                     <TextBlock x:Name="PreviewSizeText" Grid.Row="1" Margin="0,6,0,12"
-                               Foreground="{StaticResource MutedBrush}" />
+                               Foreground="{StaticResource TileStartTextSecondaryBrush}" />
                     <Border Grid.Row="2"
                             Padding="16"
                             Background="{StaticResource TileStartWindowBackgroundBrush}"

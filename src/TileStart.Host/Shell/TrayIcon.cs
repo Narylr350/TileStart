@@ -1,5 +1,6 @@
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Shell;
 
@@ -9,12 +10,19 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _pauseItem;
     private readonly Drawing.Icon? _applicationIcon;
     private readonly Drawing.Font _menuFont;
+    private readonly TileStartTrayPalette _palette;
 
     public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Func<Task> checkForUpdates,
-        Action openBackupAndRestore, Action openAbout, Action exit)
+        Action openBackupAndRestore, Action openAbout, AppThemeStyle themeStyle,
+        Action<AppThemeStyle> setThemeStyle, Action exit)
     {
-        _menuFont = new Drawing.Font("Segoe UI", 10, Drawing.FontStyle.Regular, Drawing.GraphicsUnit.Point);
-        var menu = CreateContextMenu(_menuFont);
+        _palette = TileStartTrayRenderer.GetPalette(themeStyle);
+        _menuFont = new Drawing.Font(
+            themeStyle == AppThemeStyle.Windows11 ? "Segoe UI Variable Text" : "Segoe UI",
+            10,
+            Drawing.FontStyle.Regular,
+            Drawing.GraphicsUnit.Point);
+        var menu = CreateContextMenu(_menuFont, themeStyle);
         menu.Items.Add(CreateMenuItem("打开 TileStart", (_, _) => showWindow()));
         menu.Items.Add(CreateMenuItem("打开原生开始菜单", (_, _) => openNativeStart()));
         menu.Items.Add(CreateSeparator());
@@ -38,6 +46,19 @@ public sealed class TrayIcon : IDisposable
             }
         };
         menu.Items.Add(startupItem);
+
+        var appearanceItem = CreateMenuItem("界面风格");
+        var windows10Item = CreateMenuItem("Windows 10");
+        var windows11Item = CreateMenuItem("Windows 11");
+        windows10Item.Checked = themeStyle == AppThemeStyle.Windows10;
+        windows11Item.Checked = themeStyle == AppThemeStyle.Windows11;
+        windows10Item.Click += (_, _) => setThemeStyle(AppThemeStyle.Windows10);
+        windows11Item.Click += (_, _) => setThemeStyle(AppThemeStyle.Windows11);
+        appearanceItem.DropDownItems.Add(windows10Item);
+        appearanceItem.DropDownItems.Add(windows11Item);
+        ConfigureDropDown(appearanceItem.DropDown, themeStyle);
+        menu.Items.Add(appearanceItem);
+
         menu.Items.Add(CreateMenuItem("检查更新…", async (_, _) => await checkForUpdates()));
         menu.Items.Add(CreateMenuItem("备份与恢复…", (_, _) => openBackupAndRestore()));
         menu.Items.Add(CreateMenuItem("关于 TileStart", (_, _) => openAbout()));
@@ -64,7 +85,7 @@ public sealed class TrayIcon : IDisposable
         _menuFont.Dispose();
     }
 
-    private static Forms.ContextMenuStrip CreateContextMenu(Drawing.Font font)
+    private Forms.ContextMenuStrip CreateContextMenu(Drawing.Font font, AppThemeStyle themeStyle)
     {
         var menu = new Forms.ContextMenuStrip
         {
@@ -75,17 +96,30 @@ public sealed class TrayIcon : IDisposable
             ShowCheckMargin = true,
             ShowImageMargin = false,
         };
-        if (!Forms.SystemInformation.HighContrast)
-        {
-            menu.Renderer = new TileStartTrayRenderer();
-            menu.Opened += (_, _) => ApplyRoundedRegion(menu);
-            menu.SizeChanged += (_, _) => ApplyRoundedRegion(menu);
-        }
-
+        ConfigureDropDown(menu, themeStyle);
         return menu;
     }
 
-    private static void ApplyRoundedRegion(Forms.ContextMenuStrip menu)
+    private void ConfigureDropDown(Forms.ToolStripDropDown menu, AppThemeStyle themeStyle)
+    {
+        menu.BackColor = MenuBackgroundColor;
+        menu.ForeColor = MenuForegroundColor;
+        menu.Font = _menuFont;
+        menu.Padding = new Forms.Padding(4);
+        if (Forms.SystemInformation.HighContrast)
+        {
+            return;
+        }
+
+        menu.Renderer = new TileStartTrayRenderer(themeStyle);
+        if (themeStyle == AppThemeStyle.Windows11)
+        {
+            menu.Opened += (_, _) => ApplyRoundedRegion(menu);
+            menu.SizeChanged += (_, _) => ApplyRoundedRegion(menu);
+        }
+    }
+
+    private static void ApplyRoundedRegion(Forms.ToolStripDropDown menu)
     {
         if (menu.Width <= 0 || menu.Height <= 0)
         {
@@ -97,7 +131,7 @@ public sealed class TrayIcon : IDisposable
         previous?.Dispose();
     }
 
-    private static Forms.ToolStripMenuItem CreateMenuItem(string text, EventHandler? click = null)
+    private Forms.ToolStripMenuItem CreateMenuItem(string text, EventHandler? click = null)
     {
         var item = new Forms.ToolStripMenuItem(text)
         {
@@ -115,7 +149,7 @@ public sealed class TrayIcon : IDisposable
         return item;
     }
 
-    private static Forms.ToolStripSeparator CreateSeparator() =>
+    private Forms.ToolStripSeparator CreateSeparator() =>
         new()
         {
             AutoSize = false,
@@ -124,9 +158,9 @@ public sealed class TrayIcon : IDisposable
             Size = new Drawing.Size(220, 7),
         };
 
-    private static Drawing.Color MenuBackgroundColor => Forms.SystemInformation.HighContrast
+    private Drawing.Color MenuBackgroundColor => Forms.SystemInformation.HighContrast
         ? Drawing.SystemColors.Menu
-        : TileStartTrayRenderer.BackgroundColor;
+        : _palette.Background;
 
     private static Drawing.Color MenuForegroundColor => Forms.SystemInformation.HighContrast
         ? Drawing.SystemColors.MenuText

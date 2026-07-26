@@ -24,17 +24,19 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#18FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#F22C2C2C" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#6CCB7F" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#FCE100" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#FF99A4" />
 
     <CornerRadius x:Key="TileStartControlCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="TileStartTileCornerRadius">0</CornerRadius>
 
     <Style x:Key="TileStartDialogWindowStyle" TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource TileStartWindowBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="{StaticResource TileStartContentFont}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartWindowBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource TileStartContentFont}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -44,26 +46,26 @@
     </Style>
 
     <Style x:Key="TileStartDialogSurfaceStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource TileStartWindowBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource TileStartWindowStrokeBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartWindowBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TileStartWindowStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource TileStartOverlayCornerRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource TileStartOverlayCornerRadius}" />
     </Style>
 
     <Style x:Key="TileStartCardStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartCardBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource TileStartOverlayCornerRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource TileStartOverlayCornerRadius}" />
     </Style>
 
     <Style x:Key="TileStartButtonStyle" TargetType="Button">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinWidth" Value="76" />
         <Setter Property="Padding" Value="14,0" />
-        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartControlBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -73,7 +75,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource TileStartControlCornerRadius}">
+                            CornerRadius="{DynamicResource TileStartControlCornerRadius}">
                         <ContentPresenter Margin="{TemplateBinding Padding}"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
@@ -84,14 +86,14 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource TileStartControlHoverBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeHoverBrush}" />
+                <Setter Property="Background" Value="{DynamicResource TileStartControlHoverBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeHoverBrush}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{StaticResource TileStartControlPressedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource TileStartControlPressedBrush}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Foreground" Value="{StaticResource TileStartTextDisabledBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TileStartTextDisabledBrush}" />
                 <Setter Property="Opacity" Value="0.55" />
             </Trigger>
         </Style.Triggers>
@@ -119,11 +121,11 @@
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartControlBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CaretBrush" Value="{StaticResource TileStartTextPrimaryBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TileStartTextPrimaryBrush}" />
         <Setter Property="SelectionBrush" Value="{x:Static local:Win10Theme.AccentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -132,7 +134,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource TileStartControlCornerRadius}">
+                            CornerRadius="{DynamicResource TileStartControlCornerRadius}">
                         <ScrollViewer x:Name="PART_ContentHost"
                                       Padding="{TemplateBinding Padding}"
                                       HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -141,7 +143,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="TextBoxBorder" Property="BorderBrush"
-                                    Value="{StaticResource TileStartControlStrokeHoverBrush}" />
+                                    Value="{DynamicResource TileStartControlStrokeHoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="TextBoxBorder" Property="BorderBrush"
@@ -161,7 +163,7 @@
     </Style>
 
     <Style x:Key="TileStartCheckBoxStyle" TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -175,8 +177,8 @@
                         <Border x:Name="CheckBorder"
                                 Width="18"
                                 Height="18"
-                                Background="{StaticResource TileStartControlBackgroundBrush}"
-                                BorderBrush="{StaticResource TileStartControlStrokeHoverBrush}"
+                                Background="{DynamicResource TileStartControlBackgroundBrush}"
+                                BorderBrush="{DynamicResource TileStartControlStrokeHoverBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3">
                             <TextBlock x:Name="CheckGlyph"
@@ -195,7 +197,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="CheckBorder" Property="Background"
-                                    Value="{StaticResource TileStartControlHoverBrush}" />
+                                    Value="{DynamicResource TileStartControlHoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="CheckBorder" Property="Background"
