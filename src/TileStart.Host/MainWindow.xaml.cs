@@ -105,8 +105,15 @@ public partial class MainWindow : Window
             {
                 _hasOpenContextMenu = false;
                 _ = _navigationController.RefreshWindowsUpdateStateAsync();
-                if (_appController.CheckAndRemoveMissingApps())
-                    _appController.RefreshApplicationCollection();
+                // CheckAndRemoveMissingApps 对每个 app 调用 File.Exists，列表大时会
+                // 阻塞 UI 线程影响入场动画。推迟到 Background 优先级，让动画先启动。
+                Dispatcher.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.Background,
+                    () =>
+                    {
+                        if (_appController.CheckAndRemoveMissingApps())
+                            _appController.RefreshApplicationCollection();
+                    });
             },
             clearSearch: _navigationController.ClearSearch,
             ensureTileScrollBarClearance: () => _tileDragCoordinator.EnsureTileScrollBarClearance(),

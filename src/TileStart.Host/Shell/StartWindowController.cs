@@ -146,7 +146,7 @@ public class StartWindowController : IDisposable
             TimeSpan.FromMilliseconds(650));
         if (animationsEnabled)
         {
-            _mainSurface.CacheMode = new BitmapCache { EnableClearType = true, RenderAtScale = 1 };
+            _mainSurface.CacheMode = new BitmapCache { RenderAtScale = 1 };
         }
 
         StartMotion.StageEntrance(
