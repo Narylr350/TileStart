@@ -83,7 +83,7 @@ public sealed class Win10ThemeTests
             startColorMenu: unchecked((int)0x00574E84));
 
         Assert.True(material.UseAcrylic);
-        Assert.Equal(unchecked((int)0xCC574E84), material.AcrylicGradientColor);
+        Assert.Equal(unchecked((int)0xBF574E84), material.AcrylicGradientColor);
     }
 
     [Fact]
@@ -92,6 +92,22 @@ public sealed class Win10ThemeTests
         Assert.Equal(
             unchecked((int)0xCC1C1C1C),
             Win10Theme.ResolveWindows11GradientColor(startColorMenu: null));
+    }
+
+    [Fact]
+    public void StartSurfaceColorUnpacksWallpaperDerivedStartColor()
+    {
+        Assert.Equal(
+            Color.FromRgb(0x84, 0x4E, 0x57),
+            Win10Theme.ResolveStartSurfaceColor(unchecked((int)0x00574E84)));
+    }
+
+    [Fact]
+    public void StartSurfaceColorFallsBackToNeutralWithoutWallpaperColor()
+    {
+        Assert.Equal(
+            Color.FromRgb(0x1C, 0x1C, 0x1C),
+            Win10Theme.ResolveStartSurfaceColor(startColorMenu: null));
     }
 
     [Theory]

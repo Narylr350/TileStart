@@ -21,8 +21,11 @@ public static class Win10Theme
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
     private const int Windows11StartAcrylicGradientColor = unchecked((int)0xCC1C1C1C);
-    private const uint Windows11StartAcrylicTintAlpha = 0xCC;
+    // TintOpacity 0.75 from the StartDocked HostBackdrop acrylic; leaves enough of the
+    // blurred wallpaper visible instead of covering it.
+    private const uint Windows11StartAcrylicTintAlpha = 0xBF;
     private static readonly MediaColor StartFallbackColor = MediaColor.FromRgb(0x1F, 0x1F, 0x1F);
+    private static readonly MediaColor NeutralStartSurfaceColor = MediaColor.FromRgb(0x1C, 0x1C, 0x1C);
 
     public static MediaColor AccentColor { get; } = ReadAccentColor();
 
@@ -37,6 +40,28 @@ public static class Win10Theme
         CreateFrozenBrush(UseDarkForeground(AccentColor) ? Colors.Black : Colors.White);
 
     public static SolidColorBrush ContextMenuHighlightBrush => AccentBrush;
+
+    /// <summary>
+    /// Wallpaper-derived Start colour DWM publishes for the Start menu, or a neutral dark
+    /// tone when "automatically pick an accent colour from my background" is off. Used by the
+    /// Windows 11 theme for surfaces that sit over the acrylic and must share its hue.
+    /// </summary>
+    public static MediaColor StartSurfaceColor { get; } = ReadStartSurfaceColor();
+
+    /// <summary>
+    /// Windows 11 navigation overlay: the wallpaper-derived Start colour at the same opacity
+    /// the acrylic tint uses, so expanding the pane deepens the surface instead of covering it
+    /// with a flat grey.
+    /// </summary>
+    public static MediaColor StartSurfaceOverlayColor { get; } =
+        MediaColor.FromArgb(0xF2, StartSurfaceColor.R, StartSurfaceColor.G, StartSurfaceColor.B);
+
+    /// <summary>
+    /// Windows 11 tile face: the wallpaper-derived Start colour darkened so tiles stay readable
+    /// while still belonging to the surrounding surface.
+    /// </summary>
+    public static MediaColor StartTileBackgroundColor { get; } =
+        Blend(StartSurfaceColor, Colors.Black, 0.32);
 
     internal static MediaColor ResolveAccentColor(object? accentColorMenu, byte[]? palette, MediaColor fallback)
     {
@@ -120,6 +145,29 @@ public static class Win10Theme
             SystemParameters.HighContrast,
             themeStyle,
             startColorMenu);
+    }
+
+    private static MediaColor ReadStartSurfaceColor()
+    {
+        object? startColorMenu = null;
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(AccentRegistryPath);
+            startColorMenu = key?.GetValue("StartColorMenu");
+        }
+        catch (Exception)
+        {
+        }
+
+        return ResolveStartSurfaceColor(startColorMenu);
+    }
+
+    internal static MediaColor ResolveStartSurfaceColor(object? startColorMenu)
+    {
+        // StartColorMenu is packed as 0x00BBGGRR.
+        return TryReadPackedColor(startColorMenu, out var packed)
+            ? MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16))
+            : NeutralStartSurfaceColor;
     }
 
     private static MediaColor ReadAccentColor()

@@ -26,8 +26,10 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0AFFFFFF" />
-    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#F22C2C2C" />
-    <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
+    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush"
+                     Color="{x:Static local:Win10Theme.StartSurfaceOverlayColor}" />
+    <SolidColorBrush x:Key="TileBackground"
+                     Color="{x:Static local:Win10Theme.StartTileBackgroundColor}" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#6CCB7F" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#FCE100" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#FF99A4" />

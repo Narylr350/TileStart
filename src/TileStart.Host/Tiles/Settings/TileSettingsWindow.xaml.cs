@@ -212,7 +212,7 @@ public partial class TileSettingsWindow : Window
         IconPathBox.Clear();
         BackgroundImagePathBox.Clear();
         BackgroundImageScaleBox.Value = 1;
-        BackgroundColorBox.Text = "#3A3A3A";
+        BackgroundColorBox.Text = TileItem.ThemeDefaultBackgroundColor;
         ForegroundColorBox.Text = "#FFFFFF";
         ShowTitleBox.IsChecked = true;
         IconSizeBox.Value = 32;
@@ -335,7 +335,9 @@ public partial class TileSettingsWindow : Window
         }
 
         PreviewTile.Name = string.IsNullOrWhiteSpace(TileName) ? "磁贴名称" : TileName;
-        PreviewTile.BackgroundColor = IsValidColor(BackgroundColor) ? BackgroundColor : "#3A3A3A";
+        PreviewTile.BackgroundColor = IsValidColor(BackgroundColor)
+            ? BackgroundColor
+            : TileItem.ThemeDefaultBackgroundColor;
         PreviewTile.ForegroundColor = IsValidColor(ForegroundColor) ? ForegroundColor : "#FFFFFF";
         PreviewTile.IconPath = IconPath;
         PreviewTile.BackgroundImagePath = BackgroundImagePath;

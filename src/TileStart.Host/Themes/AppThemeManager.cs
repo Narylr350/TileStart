@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Media;
+using TileStart.Host.Tiles.Models;
 
 namespace TileStart.Host.Themes;
 
@@ -19,10 +21,25 @@ public static class AppThemeManager
         if (existing is null)
         {
             dictionaries.Insert(0, replacement);
-            return;
+        }
+        else
+        {
+            var index = dictionaries.IndexOf(existing);
+            dictionaries[index] = replacement;
         }
 
-        var index = dictionaries.IndexOf(existing);
-        dictionaries[index] = replacement;
+        ApplyTileDefaultBackground(resources);
+    }
+
+    /// <summary>
+    /// Feeds the theme's tile colour to <see cref="TileItem"/> so tiles the user never recoloured
+    /// follow the active theme.
+    /// </summary>
+    private static void ApplyTileDefaultBackground(ResourceDictionary resources)
+    {
+        if (resources["TileBackground"] is SolidColorBrush brush)
+        {
+            TileItem.SetThemeDefaultBackgroundColor(brush.Color.ToString());
+        }
     }
 }

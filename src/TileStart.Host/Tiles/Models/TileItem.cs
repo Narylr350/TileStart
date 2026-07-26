@@ -11,15 +11,38 @@ namespace TileStart.Host.Tiles.Models;
 
 public sealed class TileItem : INotifyPropertyChanged
 {
-    private static readonly MediaBrush DefaultBackgroundBrush = CreateFrozenBrush("#3A3A3A");
+    /// <summary>
+    /// Colour used by tiles the user has never recoloured. Set once at startup from the active
+    /// theme so switching themes restyles default tiles without touching customised ones.
+    /// </summary>
+    public static string ThemeDefaultBackgroundColor { get; private set; } = "#3A3A3A";
+
+    private static MediaBrush ThemeDefaultBackgroundBrush { get; set; } = CreateFrozenBrush("#3A3A3A");
+
+    /// <summary>
+    /// Applies the active theme's default tile colour. Tiles whose
+    /// <see cref="HasCustomBackgroundColor"/> is false follow it.
+    /// </summary>
+    public static void SetThemeDefaultBackgroundColor(string color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+        {
+            return;
+        }
+
+        ThemeDefaultBackgroundColor = color.Trim();
+        ThemeDefaultBackgroundBrush = CreateFrozenBrush(ThemeDefaultBackgroundColor);
+    }
+
     private int _column;
     private int _row;
     private TileSize _size;
     private string _name = string.Empty;
     private string _subtitle = string.Empty;
-    private string _backgroundColor = "#3A3A3A";
+    private string _backgroundColor = string.Empty;
+    private bool _hasCustomBackgroundColor;
     private string _foregroundColor = "#FFFFFF";
-    private MediaBrush _backgroundBrush = DefaultBackgroundBrush;
+    private MediaBrush _backgroundBrush = ThemeDefaultBackgroundBrush;
     private MediaBrush _foregroundBrush = MediaBrushes.White;
     private string _iconPath = string.Empty;
     private string _backgroundImagePath = string.Empty;
@@ -158,22 +181,75 @@ public sealed class TileItem : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Tile face colour. Assigning a value marks the tile as customised; assigning blank clears
+    /// the customisation so the tile follows <see cref="ThemeDefaultBackgroundColor"/> again.
+    /// </summary>
     public string BackgroundColor
     {
-        get => _backgroundColor;
+        get => _hasCustomBackgroundColor ? _backgroundColor : ThemeDefaultBackgroundColor;
         set
         {
-            value = string.IsNullOrWhiteSpace(value) ? "#3A3A3A" : value.Trim();
-            if (_backgroundColor == value)
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                ClearCustomBackgroundColor();
+                return;
+            }
+
+            value = value.Trim();
+            if (_hasCustomBackgroundColor && _backgroundColor == value)
             {
                 return;
             }
 
             _backgroundColor = value;
-            _backgroundBrush = ParseBrush(value, DefaultBackgroundBrush);
+            _hasCustomBackgroundColor = true;
+            _backgroundBrush = ParseBrush(value, ThemeDefaultBackgroundBrush);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(HasCustomBackgroundColor));
             OnPropertyChanged(nameof(BackgroundBrush));
         }
+    }
+
+    /// <summary>
+    /// True when the user picked this tile's colour explicitly. Persisted so a theme switch can
+    /// recolour default tiles while leaving customised ones alone. Absent in layouts written
+    /// before this field existed, which correctly reads as false.
+    /// </summary>
+    public bool HasCustomBackgroundColor
+    {
+        get => _hasCustomBackgroundColor;
+        set
+        {
+            if (_hasCustomBackgroundColor == value)
+            {
+                return;
+            }
+
+            _hasCustomBackgroundColor = value;
+            _backgroundBrush = value
+                ? ParseBrush(_backgroundColor, ThemeDefaultBackgroundBrush)
+                : ThemeDefaultBackgroundBrush;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(BackgroundColor));
+            OnPropertyChanged(nameof(BackgroundBrush));
+        }
+    }
+
+    /// <summary>Drops the per-tile colour so the tile follows the active theme again.</summary>
+    public void ClearCustomBackgroundColor()
+    {
+        if (!_hasCustomBackgroundColor && _backgroundBrush == ThemeDefaultBackgroundBrush)
+        {
+            return;
+        }
+
+        _hasCustomBackgroundColor = false;
+        _backgroundColor = string.Empty;
+        _backgroundBrush = ThemeDefaultBackgroundBrush;
+        OnPropertyChanged(nameof(BackgroundColor));
+        OnPropertyChanged(nameof(HasCustomBackgroundColor));
+        OnPropertyChanged(nameof(BackgroundBrush));
     }
 
     public string ForegroundColor

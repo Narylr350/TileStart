@@ -830,7 +830,17 @@ internal sealed class TileWorkspaceController : IDisposable
         tile.IconSourceValue = dialog.IconSourceValue;
         tile.BackgroundImagePath = dialog.BackgroundImagePath;
         tile.BackgroundImageScale = dialog.BackgroundImageScale;
-        tile.BackgroundColor = dialog.BackgroundColor;
+        // Saving the theme's own colour means "no custom colour", so the tile keeps following
+        // the active theme instead of freezing today's value.
+        if (string.Equals(dialog.BackgroundColor, TileItem.ThemeDefaultBackgroundColor,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            tile.ClearCustomBackgroundColor();
+        }
+        else
+        {
+            tile.BackgroundColor = dialog.BackgroundColor;
+        }
         tile.ForegroundColor = dialog.ForegroundColor;
         tile.ShowTitle = dialog.ShowTitle;
         tile.IconSize = dialog.IconSize;
