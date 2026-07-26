@@ -26,6 +26,8 @@ public sealed class Win10FolderMotionTests
         Assert.Equal(0, Win10FolderMotion.TileRegionExpandDelayMilliseconds);
         Assert.Equal(250, Win10FolderMotion.TileRegionExpandDurationMilliseconds);
         Assert.Equal(200, Win10FolderMotion.TileRegionCollapseDurationMilliseconds);
+        Assert.True(Win10FolderMotion.StandardSpline.IsFrozen);
+        Assert.True(Win10FolderMotion.TileExpandShiftSpline.IsFrozen);
         Assert.Equal(0.1, Win10FolderMotion.StandardSpline.ControlPoint1.X, 3);
         Assert.Equal(0.9, Win10FolderMotion.StandardSpline.ControlPoint1.Y, 3);
         Assert.Equal(0.9, Win10FolderMotion.TileExpandShiftSpline.ControlPoint1.X, 3);

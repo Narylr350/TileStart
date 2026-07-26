@@ -19,8 +19,8 @@ public static class Win10FolderMotion
     public const int TileRegionExpandDurationMilliseconds = 250;
     public const int TileRegionCollapseDurationMilliseconds = 200;
 
-    public static KeySpline StandardSpline { get; } = new(0.1, 0.9, 0.2, 1);
-    public static KeySpline TileExpandShiftSpline { get; } = new(0.9, 0.1, 1, 0.2);
+    public static KeySpline StandardSpline { get; } = CreateFrozenSpline(0.1, 0.9, 0.2, 1);
+    public static KeySpline TileExpandShiftSpline { get; } = CreateFrozenSpline(0.9, 0.1, 1, 0.2);
 
     public static int AppChildDelay(int index) => Math.Max(0, index) * AppChildDelayStepMilliseconds;
 
@@ -31,6 +31,13 @@ public static class Win10FolderMotion
 
     public static int AppChildrenDuration(int childCount) =>
         AppChildDurationMilliseconds + AppChildDelay(Math.Max(0, childCount - 1));
+
+    private static KeySpline CreateFrozenSpline(double x1, double y1, double x2, double y2)
+    {
+        var spline = new KeySpline(x1, y1, x2, y2);
+        spline.Freeze();
+        return spline;
+    }
 
     public static int TileShiftDuration(
         bool expanding,
