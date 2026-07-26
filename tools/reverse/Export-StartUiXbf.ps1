@@ -2,6 +2,7 @@ param(
     [string]$PriPath = 'C:\Windows\SystemResources\Windows.UI.ShellCommon\Windows.UI.ShellCommon.pri',
     [string]$WorkspaceRoot = (Join-Path $env:TEMP 'TileStart\reverse\startui-xbf'),
     [string]$MakePriPath,
+    [string]$ResourceFolder = 'StartUI',
     [string]$XbfToolsCommit = 'dbeadcd75f30fb8dea3109039e0082854cb9a89d',
     [switch]$Recreate
 )
@@ -44,15 +45,16 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $dumpPath)) {
 }
 
 [xml]$dump = Get-Content -LiteralPath $dumpPath -Raw
-$resources = @($dump.SelectNodes("//*[local-name()='NamedResource'][contains(@uri, '/Files/StartUI/') and substring(@uri, string-length(@uri) - 3) = '.xbf']"))
+$resourcePrefix = "/Files/$ResourceFolder/"
+$resources = @($dump.SelectNodes("//*[local-name()='NamedResource'][contains(@uri, '$resourcePrefix') and substring(@uri, string-length(@uri) - 3) = '.xbf']"))
 if ($resources.Count -eq 0) {
-    throw 'No embedded StartUI XBF resources were found in the PRI dump.'
+    throw "No embedded $ResourceFolder XBF resources were found in the PRI dump."
 }
 
 $extracted = foreach ($resource in $resources) {
     $base64 = $resource.SelectSingleNode(".//*[local-name()='Base64Value']")
     if ($null -eq $base64) { continue }
-    $relative = $resource.uri.Substring($resource.uri.IndexOf('/Files/StartUI/') + '/Files/StartUI/'.Length)
+    $relative = $resource.uri.Substring($resource.uri.IndexOf($resourcePrefix) + $resourcePrefix.Length)
     $path = Join-Path $xbfRoot ($relative -replace '/', '\')
     New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null
     [IO.File]::WriteAllBytes($path, [Convert]::FromBase64String($base64.InnerText.Trim()))
@@ -99,6 +101,7 @@ $manifest = [ordered]@{
     schemaVersion = 1
     generatedAt = [DateTimeOffset]::Now.ToString('o')
     pri = [ordered]@{ path = $PriPath; sha256 = Get-Sha256 $PriPath }
+    resourceFolder = $ResourceFolder
     makePri = [ordered]@{ path = $MakePriPath; fileVersion = (Get-Item $MakePriPath).VersionInfo.FileVersion }
     xbfTools = [ordered]@{ repository = 'https://github.com/chausner/XbfTools'; commit = $actualCommit; converterSha256 = Get-Sha256 $converter }
     extractedCount = $extracted.Count

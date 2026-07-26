@@ -65,7 +65,8 @@ Windows 10 Pro for Workstations
 ### 当前 Windows 11 适配环境
 
 ```text
-Windows 11 23H2 build 22631.6199
+Windows 11 25H2 build 26200.8875
+StartMenuExperienceHost 10.0.26100.4768
 2560 × 1600
 150% DPI
 任务栏位于底部
@@ -73,9 +74,11 @@ Windows 11 23H2 build 22631.6199
 
 注册表 `ProductName` 可能仍显示升级前的 Windows 10 字符串；平台判断和验证记录以系统 build 为准。
 
+Win11 开始菜单由 `StartDocked.dll` 实现，不是 Win10 的 `StartUI.dll`；`docs/win10-start-research.md` 与 `docs/startui-layout-symbols.md` 的符号、常量和布局公式只对 Win10 成立，不可直接迁移到 Win11。Win11 的编译期 XAML 资源位于 `Windows.UI.ShellCommon.pri` 的 `/Files/StartDocked/`，可用 `tools\reverse\Export-StartUiXbf.ps1 -ResourceFolder StartDocked` 导出。
+
 当前 Windows 11 环境已确认 Computer Use 可用，需要桌面自动化时按对应 skill 初始化后直接使用。只有实际失败、恢复后仍阻塞验证时才记录具体限制和未覆盖项，不在每轮重复说明可用性或降级策略。
 
-Windows 11 build 22631 上已确认 Win11 Shell Adapter 可由 Release Injector 自动注入：单独 `Win` 键和任务栏开始按钮均可打开 TileStart，`Win+E` 保持系统行为；Explorer 重启后 Watcher 能向新的桌面 Shell 自动重新注入，Host 正常退出后 Injector 随之退出并卸载 ShellHook，Explorer 保持响应。
+以下 Shell 接管结论来自升级前的 build 22631，尚未在当前 26200 实机复验：Windows 11 build 22631 上已确认 Win11 Shell Adapter 可由 Release Injector 自动注入：单独 `Win` 键和任务栏开始按钮均可打开 TileStart，`Win+E` 保持系统行为；Explorer 重启后 Watcher 能向新的桌面 Shell 自动重新注入，Host 正常退出后 Injector 随之退出并卸载 ShellHook，Explorer 保持响应。
 
 ## Shell 集成验证
 
