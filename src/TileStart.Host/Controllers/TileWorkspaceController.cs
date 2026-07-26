@@ -337,8 +337,7 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
-        var group = _tileLayout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));
-        if (group is null)
+        if (!FindTileLocation(tile, out var group, out var folder))
         {
             return;
         }
@@ -369,7 +368,17 @@ internal sealed class TileWorkspaceController : IDisposable
         }
 
         ApplyTileSettings(tile, dialog);
-        Win10GroupLayout.Normalize(group);
+        if (folder is null)
+        {
+            Win10GroupLayout.Normalize(group);
+        }
+        else
+        {
+            TileFolderLayout.Normalize(folder);
+            group.RefreshLayout();
+            _window.UpdateLayout();
+        }
+
         TileLayoutStore.Save(_tileLayout);
     }
 
@@ -717,6 +726,7 @@ internal sealed class TileWorkspaceController : IDisposable
         {
             tile.BackgroundColor = dialog.BackgroundColor;
         }
+
         tile.ForegroundColor = dialog.ForegroundColor;
         tile.ShowTitle = dialog.ShowTitle;
         tile.IconSize = dialog.IconSize;
@@ -966,30 +976,20 @@ internal sealed class TileWorkspaceController : IDisposable
             var collapsePreviousTops = group.Tiles.ToDictionary(item => item, item => item.DisplayTop);
             var collapsePreviousGroupPositions = _tileDragCoordinator.CaptureGroupReorderPositions();
             var collapseRegion = FindTileFolderRegion(folder);
-            var collapseRegionContainer = collapseRegion?.Parent as FrameworkElement;
+            var collapseRegionContainer = collapseRegion is null
+                ? null
+                : FindTileFolderRegionContainer(collapseRegion);
             if (collapseRegion is not null)
             {
-                collapseRegion.Visibility = Visibility.Visible;
-                collapseRegion.BeginAnimation(
-                    FrameworkElement.HeightProperty,
-                    Win10FolderMotion.CreateSplineAnimation(
-                        collapseRegion.ActualHeight,
-                        collapseRegion.ActualHeight,
-                        0,
-                        Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
-                        Win10FolderMotion.StandardSpline,
-                        FillBehavior.HoldEnd),
-                    HandoffBehavior.SnapshotAndReplace);
-                collapseRegionContainer?.BeginAnimation(
-                    Canvas.TopProperty,
-                    Win10FolderMotion.CreateSplineAnimation(
-                        folder.FolderRegionTop,
-                        folder.FolderRegionTop,
-                        0,
-                        Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
-                        Win10FolderMotion.StandardSpline,
-                        FillBehavior.HoldEnd),
-                    HandoffBehavior.SnapshotAndReplace);
+                var currentRegionTop = collapseRegionContainer is null
+                    ? folder.FolderRegionTop
+                    : Canvas.GetTop(collapseRegionContainer);
+                if (!double.IsFinite(currentRegionTop))
+                {
+                    currentRegionTop = folder.FolderRegionTop;
+                }
+
+                HoldTileFolderCollapseVisual(collapseRegion, collapseRegionContainer, currentRegionTop);
             }
 
             folder.IsFolderExpanded = false;
@@ -1125,6 +1125,38 @@ internal sealed class TileWorkspaceController : IDisposable
             HandoffBehavior.SnapshotAndReplace);
     }
 
+    internal static System.Windows.Controls.ContentPresenter? FindTileFolderRegionContainer(
+        System.Windows.Controls.Border region) =>
+        FindVisualAncestor<System.Windows.Controls.ContentPresenter>(region);
+
+    internal static void HoldTileFolderCollapseVisual(
+        System.Windows.Controls.Border region,
+        FrameworkElement? regionContainer,
+        double regionTop)
+    {
+        region.Visibility = Visibility.Visible;
+        region.BeginAnimation(
+            FrameworkElement.HeightProperty,
+            Win10FolderMotion.CreateSplineAnimation(
+                region.ActualHeight,
+                region.ActualHeight,
+                0,
+                Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
+                Win10FolderMotion.StandardSpline,
+                FillBehavior.HoldEnd),
+            HandoffBehavior.SnapshotAndReplace);
+        regionContainer?.BeginAnimation(
+            Canvas.TopProperty,
+            Win10FolderMotion.CreateSplineAnimation(
+                regionTop,
+                regionTop,
+                0,
+                Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
+                Win10FolderMotion.StandardSpline,
+                FillBehavior.HoldEnd),
+            HandoffBehavior.SnapshotAndReplace);
+    }
+
     internal static void CompleteTileFolderCollapse(
         System.Windows.Controls.Border region,
         FrameworkElement? regionContainer)
@@ -1137,6 +1169,21 @@ internal sealed class TileWorkspaceController : IDisposable
     internal static void PrepareTileFolderExpansion(System.Windows.Controls.Border region)
     {
         region.ClearValue(UIElement.VisibilityProperty);
+    }
+
+    private static T? FindVisualAncestor<T>(DependencyObject child)
+        where T : DependencyObject
+    {
+        for (var current = VisualTreeHelper.GetParent(child); current is not null;
+             current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private System.Windows.Controls.Border? FindTileFolderRegion(TileItem folder) =>

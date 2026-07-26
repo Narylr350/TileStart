@@ -66,6 +66,30 @@ public sealed class TileContextActionsTests
     }
 
     [Fact]
+    public void FolderChildCanBeResizedAndUnpinnedThroughTileActions()
+    {
+        var child = new TileItem { Size = TileSize.Medium };
+        var sibling = new TileItem { Size = TileSize.Medium };
+        var folder = new TileItem
+        {
+            IsTileFolder = true,
+            IsFolderExpanded = true,
+            FolderTiles = [child, sibling],
+        };
+        var group = new TileGroup { Tiles = [folder] };
+        var layout = new TileLayout { Groups = [group] };
+
+        Assert.True(TileContextActions.Resize(layout, child, TileSize.Wide));
+        Assert.Equal(TileSize.Wide, child.Size);
+        Assert.Contains(child, folder.FolderTiles);
+
+        Assert.True(TileContextActions.Unpin(layout, child));
+        Assert.DoesNotContain(child, folder.FolderTiles);
+        Assert.Same(sibling, Assert.Single(folder.FolderTiles));
+        Assert.Same(folder, Assert.Single(group.Tiles));
+    }
+
+    [Fact]
     public void DissolveFolderRestoresEveryChildNearTheFolderOrigin()
     {
         var blocker = new TileItem { Size = TileSize.Medium, Column = 0, Row = 0 };

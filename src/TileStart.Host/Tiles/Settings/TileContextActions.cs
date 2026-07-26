@@ -10,10 +10,17 @@ public static class TileContextActions
 
     public static bool Unpin(TileLayout layout, TileItem tile)
     {
-        var group = layout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));
-        if (group is null)
+        if (!TryFindLocation(layout, tile, out var group, out var folder))
         {
             return false;
+        }
+
+        if (folder is not null)
+        {
+            folder.FolderTiles.Remove(tile);
+            TileFolderLayout.Normalize(folder);
+            group.RefreshLayout();
+            return true;
         }
 
         group.Tiles.Remove(tile);
@@ -71,14 +78,52 @@ public static class TileContextActions
 
     public static bool Resize(TileLayout layout, TileItem tile, TileSize size)
     {
-        var group = layout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(tile));
-        if (group is null || tile.Size == size)
+        if (!TryFindLocation(layout, tile, out var group, out var folder) || tile.Size == size)
         {
             return false;
         }
 
         tile.Size = size;
-        Win10GroupLayout.Normalize(group);
+        if (folder is null)
+        {
+            Win10GroupLayout.Normalize(group);
+        }
+        else
+        {
+            TileFolderLayout.Normalize(folder);
+            group.RefreshLayout();
+        }
+
         return true;
+    }
+
+    private static bool TryFindLocation(
+        TileLayout layout,
+        TileItem tile,
+        out TileGroup group,
+        out TileItem? folder)
+    {
+        foreach (var candidate in layout.Groups)
+        {
+            if (candidate.Tiles.Contains(tile))
+            {
+                group = candidate;
+                folder = null;
+                return true;
+            }
+
+            var parentFolder = candidate.Tiles.FirstOrDefault(item =>
+                item.IsTileFolder && item.FolderTiles.Contains(tile));
+            if (parentFolder is not null)
+            {
+                group = candidate;
+                folder = parentFolder;
+                return true;
+            }
+        }
+
+        group = null!;
+        folder = null;
+        return false;
     }
 }

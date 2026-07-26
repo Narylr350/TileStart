@@ -14,13 +14,28 @@ public sealed class TileFolderVisualStateTests
         {
             try
             {
-                var region = new Border { Visibility = Visibility.Visible };
-                var container = new ContentPresenter();
+                var region = new Border { Visibility = Visibility.Visible, Height = 200 };
+                var container = new ContentPresenter { Content = region };
+                Canvas.SetTop(container, 40);
+                container.Measure(new Size(400, 400));
+                container.Arrange(new Rect(0, 0, 400, 400));
 
-                TileWorkspaceController.CompleteTileFolderCollapse(region, container);
+                var resolvedContainer = TileWorkspaceController.FindTileFolderRegionContainer(region);
+
+                Assert.Same(container, resolvedContainer);
+                TileWorkspaceController.HoldTileFolderCollapseVisual(
+                    region,
+                    resolvedContainer,
+                    Canvas.GetTop(resolvedContainer!));
+                Assert.True(region.HasAnimatedProperties);
+                Assert.True(container.HasAnimatedProperties);
+
+                TileWorkspaceController.CompleteTileFolderCollapse(region, resolvedContainer);
 
                 Assert.Equal(Visibility.Collapsed, region.Visibility);
                 Assert.Equal(Visibility.Collapsed, region.ReadLocalValue(UIElement.VisibilityProperty));
+                Assert.False(region.HasAnimatedProperties);
+                Assert.False(container.HasAnimatedProperties);
 
                 TileWorkspaceController.PrepareTileFolderExpansion(region);
 

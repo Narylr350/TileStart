@@ -225,8 +225,14 @@ public sealed class DarkThemeVisualTests
             .Single(item => (string?)item.Attribute("Click") == "TileSettings_Click");
         Assert.Equal("{Binding SettingsMenuHeader}", (string?)settingsItem.Attribute("Header"));
         var tileMenu = settingsItem.Ancestors(presentation + "ContextMenu").Single();
+        Assert.Equal("TileContextMenu", (string?)tileMenu.Attribute(x + "Key"));
         Assert.Equal("{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}",
             (string?)tileMenu.Attribute("DataContext"));
+
+        var menuUsers = document.Descendants(presentation + "Button")
+            .Where(button => (string?)button.Attribute("ContextMenu") == "{StaticResource TileContextMenu}")
+            .ToArray();
+        Assert.Equal(2, menuUsers.Length);
     }
 
     private static XDocument LoadMainWindow()
