@@ -91,6 +91,15 @@
     <Content Include="..\..\installer\TileStart.iss"
              Link="TestData\Installer\TileStart.iss"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\.github\workflows\local-hotfix.yml"
+             Link="TestData\Automation\local-hotfix.yml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\scripts\Build-Package.ps1"
+             Link="TestData\Automation\Build-Package.ps1"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\scripts\Install-Local-Hotfix.ps1"
+             Link="TestData\Automation\Install-Local-Hotfix.ps1"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

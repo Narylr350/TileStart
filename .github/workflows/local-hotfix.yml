@@ -1,0 +1,87 @@
+name: Local Hotfix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-hotfix-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve stable and hotfix versions
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = gh release view --repo $env:GITHUB_REPOSITORY --json tagName --jq '.tagName'
+          $version = $tag.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Latest stable release has an invalid version: $tag"
+          }
+
+          $shortSha = $env:GITHUB_SHA.Substring(0, 7)
+          "STABLE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "INFORMATIONAL_VERSION=$version+hotfix.$shortSha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SHORT_SHA=$shortSha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Run tests
+        shell: pwsh
+        run: dotnet test tests\TileStart.Host.Tests\TileStart.Host.Tests.csproj -c Release
+
+      - name: Build local hotfix installer
+        shell: pwsh
+        run: >-
+          .\scripts\Build-Package.ps1
+          -Version $env:STABLE_VERSION
+          -InformationalVersion $env:INFORMATIONAL_VERSION
+
+      - name: Write hotfix metadata
+        shell: pwsh
+        run: |
+          $metadata = [ordered]@{
+            stableVersion = $env:STABLE_VERSION
+            informationalVersion = $env:INFORMATIONAL_VERSION
+            commitSha = $env:GITHUB_SHA
+            shortSha = $env:SHORT_SHA
+            runId = $env:GITHUB_RUN_ID
+            repository = $env:GITHUB_REPOSITORY
+            builtAtUtc = [DateTime]::UtcNow.ToString('O')
+          }
+          $json = $metadata | ConvertTo-Json
+          [IO.File]::WriteAllText(
+            'artifacts/installer/LOCAL-HOTFIX.json',
+            $json,
+            [Text.UTF8Encoding]::new($false))
+
+      - name: Upload local hotfix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TileStart-local-hotfix
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            artifacts/installer/TileStart-Setup-win-x64.exe
+            artifacts/installer/LOCAL-HOTFIX.json
+            artifacts/package/SHA256SUMS.txt

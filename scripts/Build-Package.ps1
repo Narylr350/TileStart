@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipInstaller,
-    [string]$Version
+    [string]$Version,
+    [string]$InformationalVersion
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,6 +30,14 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$')
 {
     throw "Version must use major.minor.patch format: $Version"
 }
+if ([string]::IsNullOrWhiteSpace($InformationalVersion))
+{
+    $InformationalVersion = $Version
+}
+if ($InformationalVersion -notmatch '^\d+\.\d+\.\d+(?:\+[0-9A-Za-z.-]+)?$')
+{
+    throw "InformationalVersion must use semantic version format: $InformationalVersion"
+}
 $assemblyVersion = "$Version.0"
 
 function Write-Checksums([string[]]$Paths)
@@ -49,7 +58,7 @@ if (-not $msbuild)
     throw 'MSBuild was not found.'
 }
 
-& $msbuild (Join-Path $repoRoot 'TileStart.sln') /restore /p:RestoreSources=$nugetSource /p:Configuration=Release /p:Platform=x64 /p:Version=$Version /p:AssemblyVersion=$assemblyVersion /p:FileVersion=$assemblyVersion /p:InformationalVersion=$Version /m /v:minimal
+& $msbuild (Join-Path $repoRoot 'TileStart.sln') /restore /p:RestoreSources=$nugetSource /p:Configuration=Release /p:Platform=x64 /p:Version=$Version /p:AssemblyVersion=$assemblyVersion /p:FileVersion=$assemblyVersion /p:InformationalVersion=$InformationalVersion /m /v:minimal
 if ($LASTEXITCODE -ne 0)
 {
     throw "MSBuild failed with exit code $LASTEXITCODE."
@@ -69,7 +78,7 @@ New-Item -ItemType Directory -Path $publishDirectory | Out-Null
     -p:Version=$Version `
     -p:AssemblyVersion=$assemblyVersion `
     -p:FileVersion=$assemblyVersion `
-    -p:InformationalVersion=$Version `
+    -p:InformationalVersion=$InformationalVersion `
     -o $publishDirectory
 if ($LASTEXITCODE -ne 0)
 {
