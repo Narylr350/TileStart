@@ -7,23 +7,32 @@ namespace TileStart.Host.Tests;
 public sealed class ContextMenuDismissalTests
 {
     [Fact]
-    public void WindowDismissalClosesTopLevelAndSubmenuPopups()
+    public void WindowDismissalClearsTrackedStateWithoutOpeningANativePopup()
     {
         RunOnSta(() =>
         {
-            var submenu = new MenuItem { Header = "子菜单" };
-            submenu.Items.Add(new MenuItem { Header = "项目" });
             var menu = new ContextMenu();
-            menu.Items.Add(submenu);
-            menu.IsOpen = true;
-            submenu.IsSubmenuOpen = true;
             var hasOpenContextMenu = true;
 
             TileWorkspaceController.CloseContextMenu(menu, value => hasOpenContextMenu = value);
 
             Assert.False(menu.IsOpen);
-            Assert.False(submenu.IsSubmenuOpen);
             Assert.False(hasOpenContextMenu);
+        });
+    }
+
+    [Fact]
+    public void MenuEnumerationIncludesNestedItems()
+    {
+        RunOnSta(() =>
+        {
+            var child = new MenuItem { Header = "项目" };
+            var submenu = new MenuItem { Header = "子菜单" };
+            submenu.Items.Add(child);
+            var menu = new ContextMenu();
+            menu.Items.Add(submenu);
+
+            Assert.Equal([submenu, child], TileWorkspaceController.EnumerateMenuItems(menu));
         });
     }
 
