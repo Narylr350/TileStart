@@ -226,8 +226,9 @@
                     <ColumnDefinition Width="44" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Margin="16,0" VerticalAlignment="Center">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="自定义组" />
-                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource TileStartTextSecondaryBrush}" FontSize="10"
+                    <TextBlock x:Name="DialogTitleText" FontSize="14" FontWeight="SemiBold" Text="自定义组" />
+                    <TextBlock x:Name="DialogDescriptionText" Margin="0,2,0,0"
+                               Foreground="{StaticResource TileStartTextSecondaryBrush}" FontSize="10"
                                Text="设置容器跨度并选择要放入的磁贴" />
                 </StackPanel>
                 <Button Grid.Column="1"
@@ -238,14 +239,14 @@
 
             <Grid Grid.Row="1" Margin="24,22">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="220" />
-                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition x:Name="GroupPropertiesColumn" Width="220" />
+                    <ColumnDefinition x:Name="PropertiesGapColumn" Width="24" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="24" />
                     <ColumnDefinition Width="350" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
+                <StackPanel x:Name="GroupPropertiesPanel" Grid.Column="0">
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="组属性" />
                     <TextBlock Margin="0,18,0,6" Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="名称" />
                     <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged" />

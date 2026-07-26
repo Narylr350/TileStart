@@ -93,6 +93,16 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     private bool _suspendOptionUpdates;
 
     public GroupSettingsWindow(TileGroup group, IReadOnlyList<AppEntry> apps)
+        : this(group, apps, isFolderContents: false)
+    {
+    }
+
+    public GroupSettingsWindow(TileItem folder, IReadOnlyList<AppEntry> apps)
+        : this(CreateFolderContentsGroup(folder), apps, isFolderContents: true)
+    {
+    }
+
+    private GroupSettingsWindow(TileGroup group, IReadOnlyList<AppEntry> apps, bool isFolderContents)
     {
         _options = CreateOptions(group, apps);
         foreach (var option in _options)
@@ -105,6 +115,16 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         NameBox.Text = group.Name;
         WidthBox.SelectedValue = group.WidthUnits.ToString();
         HeightBox.SelectedValue = group.HeightUnits.ToString();
+        if (isFolderContents)
+        {
+            Title = "文件夹内容";
+            DialogTitleText.Text = "文件夹内容";
+            DialogDescriptionText.Text = "选择要放入当前文件夹的应用和已有项目";
+            GroupPropertiesPanel.Visibility = Visibility.Collapsed;
+            GroupPropertiesColumn.Width = new GridLength(0);
+            PropertiesGapColumn.Width = new GridLength(0);
+        }
+
         _isReady = true;
         RefreshOptionRows();
         RefreshPreview();
@@ -146,6 +166,14 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     public string SelectedCountText => $"已选择 {SelectedOptions.Count} 项";
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    internal static TileGroup CreateFolderContentsGroup(TileItem folder) => new()
+    {
+        Name = string.IsNullOrWhiteSpace(folder.Name) ? "文件夹" : folder.Name,
+        WidthUnits = Win10TileMetrics.GroupColumns,
+        HeightUnits = 0,
+        Tiles = [.. folder.FolderTiles.Where(tile => !tile.IsTileFolder)],
+    };
 
     internal static ObservableCollection<GroupTileOption> CreateOptions(
         TileGroup group,

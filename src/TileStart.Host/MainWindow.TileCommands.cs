@@ -31,6 +31,9 @@ public partial class MainWindow
     private void DissolveFolder_Click(object sender, RoutedEventArgs e) =>
         _tileWorkspaceController.DissolveFolder_Click(sender, e);
 
+    private void FolderContents_Click(object sender, RoutedEventArgs e) =>
+        _tileWorkspaceController.FolderContents_Click(sender, e);
+
     private void ResizeTile_Click(object sender, RoutedEventArgs e) =>
         _tileWorkspaceController.ResizeTile_Click(sender, e);
 

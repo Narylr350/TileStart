@@ -401,6 +401,42 @@ internal sealed class TileWorkspaceController : IDisposable
         TileLayoutStore.Save(_tileLayout);
     }
 
+    public void FolderContents_Click(object sender, RoutedEventArgs e)
+    {
+        var folder = GetContextTile(sender);
+        if (folder?.IsTileFolder != true)
+        {
+            return;
+        }
+
+        var group = _tileLayout.Groups.FirstOrDefault(candidate => candidate.Tiles.Contains(folder));
+        if (group is null)
+        {
+            return;
+        }
+
+        var dialog = new GroupSettingsWindow(folder, _appController.LaunchableApps);
+        if (ShowGroupSettingsDialog(dialog) != true)
+        {
+            return;
+        }
+
+        var selectedTiles = dialog.SelectedOptions
+            .Select(option => option.ExistingTile ?? _appController.CreateAppTile(option.App!))
+            .Where(tile => !tile.IsTileFolder)
+            .ToArray();
+        folder.FolderTiles.Clear();
+        foreach (var tile in selectedTiles)
+        {
+            folder.FolderTiles.Add(tile);
+        }
+
+        TileFolderLayout.Normalize(folder);
+        group.RefreshLayout();
+        _window.UpdateLayout();
+        TileLayoutStore.Save(_tileLayout);
+    }
+
     public void ResizeTile_Click(object sender, RoutedEventArgs e)
     {
         var tile = GetContextTile(sender);
