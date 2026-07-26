@@ -43,8 +43,6 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
-
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>

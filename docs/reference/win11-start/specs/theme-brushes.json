@@ -68,6 +68,23 @@
       }
     }
   },
+  "hostBackdropVariant": {
+    "note": "TileStyles.xaml defines a HostBackdrop-sourced acrylic; this is the variant comparable to Win32 AccentPolicy, which composites over the desktop wallpaper rather than in-window content.",
+    "brushes": {
+      "HostBackdropAcrylicBackgroundBrush": {
+        "backgroundSource": "HostBackdrop",
+        "tintColor": "#FF101010",
+        "tintOpacity": 0.75,
+        "fallbackColor": "#FF1F1F1F"
+      }
+    },
+    "implication": "SystemControlAcrylicElementBrush uses BackgroundSource=Backdrop (in-window sampling) and is NOT the right reference for AccentPolicy tuning. The HostBackdrop values above (#101010 at 0.75 -> 0xBF101010) match what the Win10 path already uses, so both themes land on the same Win32 parameters.",
+    "source": {
+      "file": "TileStyles.xaml",
+      "xbfResource": "TileStyles.xbf",
+      "xbfSha256": "D35E3CACE5A09EC41B71030B8CBB74E13DA2A330FACC717510CC9B8EEBD95988"
+    }
+  },
   "unresolved": {
     "LauncherFrame_FallbackBackgroundBrush": "Referenced by LauncherFrame.xaml FallbackFullBleedBackground but not defined in any StartDocked XBF; resolved at runtime outside the XAML resource set.",
     "StartMenuHighContrastBorderBrush": "Referenced by StartSizingFrame.xaml HighContrastOuterBorder but not defined in any StartDocked XBF.",

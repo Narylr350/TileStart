@@ -21,11 +21,13 @@
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#29FFFFFF" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#F92C2C2C" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#33FFFFFF" />
-    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush" Color="#18FFFFFF" />
-    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#0FFFFFFF" />
-    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#18FFFFFF" />
-    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
+                     Color="{x:Static local:Win10Theme.AccentColor}" />
+    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0AFFFFFF" />
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#F22C2C2C" />
+    <SolidColorBrush x:Key="TileBackground" Color="#3A3A3A" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#6CCB7F" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#FCE100" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#FF99A4" />

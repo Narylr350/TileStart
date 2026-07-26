@@ -73,6 +73,27 @@ public sealed class Win10ThemeTests
         Assert.Equal(unchecked((int)0xCC1C1C1C), material.AcrylicGradientColor);
     }
 
+    [Fact]
+    public void Windows11StartMaterialTintsWithWallpaperDerivedStartColor()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows11,
+            startColorMenu: unchecked((int)0x00574E84));
+
+        Assert.True(material.UseAcrylic);
+        Assert.Equal(unchecked((int)0xCC574E84), material.AcrylicGradientColor);
+    }
+
+    [Fact]
+    public void Windows11StartMaterialFallsBackToNeutralTintWithoutWallpaperColor()
+    {
+        Assert.Equal(
+            unchecked((int)0xCC1C1C1C),
+            Win10Theme.ResolveWindows11GradientColor(startColorMenu: null));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(null)]

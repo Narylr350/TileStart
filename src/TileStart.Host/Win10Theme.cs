@@ -17,7 +17,11 @@ public static class Win10Theme
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
     private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
+
+    // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
+    // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
     private const int Windows11StartAcrylicGradientColor = unchecked((int)0xCC1C1C1C);
+    private const uint Windows11StartAcrylicTintAlpha = 0xCC;
     private static readonly MediaColor StartFallbackColor = MediaColor.FromRgb(0x1F, 0x1F, 0x1F);
 
     public static MediaColor AccentColor { get; } = ReadAccentColor();
@@ -54,14 +58,39 @@ public static class Win10Theme
         object? enableTransparency,
         bool highContrast,
         AppThemeStyle themeStyle)
+        => ResolveStartMaterial(enableTransparency, highContrast, themeStyle, startColorMenu: null);
+
+    internal static StartMaterialConfiguration ResolveStartMaterial(
+        object? enableTransparency,
+        bool highContrast,
+        AppThemeStyle themeStyle,
+        object? startColorMenu)
     {
         var transparencyEnabled = enableTransparency is int value && value != 0;
         return new StartMaterialConfiguration(
             transparencyEnabled && !highContrast,
             StartFallbackColor,
             themeStyle == AppThemeStyle.Windows11
-                ? Windows11StartAcrylicGradientColor
+                ? ResolveWindows11GradientColor(startColorMenu)
                 : StartAcrylicGradientColor);
+    }
+
+    /// <summary>
+    /// Windows 11 tints the Start surface with the wallpaper-derived colour DWM publishes as
+    /// StartColorMenu, so the menu picks up the desktop hue instead of a fixed grey. Falls back
+    /// to a neutral dark tint when the value is missing, which is the case when
+    /// "automatically pick an accent colour from my background" is off.
+    /// </summary>
+    internal static int ResolveWindows11GradientColor(object? startColorMenu)
+    {
+        if (!TryReadPackedColor(startColorMenu, out var packed))
+        {
+            return Windows11StartAcrylicGradientColor;
+        }
+
+        // StartColorMenu stores the colour as 0x00BBGGRR; AccentPolicy expects 0xAABBGGRR,
+        // so the existing tint's alpha is kept and only the colour channels are replaced.
+        return unchecked((int)((Windows11StartAcrylicTintAlpha << 24) | (packed & 0x00FFFFFF)));
     }
 
     internal static StartMaterialConfiguration ReadStartMaterial(AppThemeStyle themeStyle)
@@ -76,7 +105,21 @@ public static class Win10Theme
         {
         }
 
-        return ResolveStartMaterial(enableTransparency, SystemParameters.HighContrast, themeStyle);
+        object? startColorMenu = null;
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(AccentRegistryPath);
+            startColorMenu = key?.GetValue("StartColorMenu");
+        }
+        catch (Exception)
+        {
+        }
+
+        return ResolveStartMaterial(
+            enableTransparency,
+            SystemParameters.HighContrast,
+            themeStyle,
+            startColorMenu);
     }
 
     private static MediaColor ReadAccentColor()
@@ -99,18 +142,10 @@ public static class Win10Theme
 
     private static bool TryReadAccentColorMenu(object? value, out MediaColor color)
     {
-        uint packed;
-        switch (value)
+        if (!TryReadPackedColor(value, out var packed))
         {
-            case int signed:
-                packed = unchecked((uint)signed);
-                break;
-            case uint unsigned:
-                packed = unsigned;
-                break;
-            default:
-                color = default;
-                return false;
+            color = default;
+            return false;
         }
 
         color = MediaColor.FromRgb(
@@ -118,6 +153,22 @@ public static class Win10Theme
             (byte)(packed >> 8),
             (byte)(packed >> 16));
         return true;
+    }
+
+    private static bool TryReadPackedColor(object? value, out uint packed)
+    {
+        switch (value)
+        {
+            case int signed:
+                packed = unchecked((uint)signed);
+                return true;
+            case uint unsigned:
+                packed = unsigned;
+                return true;
+            default:
+                packed = 0;
+                return false;
+        }
     }
 
     internal static MediaColor Blend(MediaColor source, MediaColor target, double amount)

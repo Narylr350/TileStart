@@ -170,9 +170,10 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void Windows11ContextMenusUseInsetNeutralHighlightInsteadOfWin10AccentFill()
+    public void Windows11ContextMenusUseAccentColorHighlightWithInsetPadding()
     {
-        Assert.Equal("#18FFFFFF", ReadThemeBrushColor("TileStartContextMenuHighlightBrush"));
+        Assert.Equal("{x:Static local:Win10Theme.AccentColor}",
+            ReadThemeBrushColor("TileStartContextMenuHighlightBrush"));
         Assert.Equal("4", ReadThemeResourceValue(
             "Win11Theme.xaml",
             "Thickness",
