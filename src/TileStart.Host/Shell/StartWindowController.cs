@@ -7,6 +7,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Controls;
 using TileStart.Host.Tiles.Models;
+using TileStart.Host.Themes;
 using TileStart.Host.Utilities;
 using TileStart.Host.Windowing;
 
@@ -25,6 +26,9 @@ public class StartWindowController : IDisposable
     private const int DismissDurationMilliseconds = 150;
     private const int WcaAccentPolicy = 19;
     private const int AccentEnableAcrylicBlurBehind = 4;
+    private const int DwmWindowCornerPreference = 33;
+    private const int DwmWindowCornerDoNotRound = 1;
+    private const int DwmWindowCornerRound = 2;
     private const int WmActivate = 0x0006;
     private const int WaInactive = 0;
     private const int WmNcLButtonDown = 0x00A1;
@@ -44,6 +48,7 @@ public class StartWindowController : IDisposable
     private readonly Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> _animateGroupReorderFrom;
     private readonly Func<bool> _isAnyDragActive;
     private readonly Func<bool> _hasOpenContextMenu;
+    private readonly AppThemeStyle _themeStyle;
 
     private readonly System.Windows.Threading.DispatcherTimer _foregroundWatchdogTimer = new()
     {
@@ -87,7 +92,8 @@ public class StartWindowController : IDisposable
         Func<IReadOnlyDictionary<TileGroup, System.Windows.Point>> captureGroupReorderPositions,
         Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> animateGroupReorderFrom,
         Func<bool> isAnyDragActive,
-        Func<bool> hasOpenContextMenu)
+        Func<bool> hasOpenContextMenu,
+        AppThemeStyle themeStyle = AppThemeStyle.Windows11)
     {
         _window = window;
         _windowRoot = windowRoot;
@@ -99,6 +105,7 @@ public class StartWindowController : IDisposable
         _animateGroupReorderFrom = animateGroupReorderFrom;
         _isAnyDragActive = isAnyDragActive;
         _hasOpenContextMenu = hasOpenContextMenu;
+        _themeStyle = themeStyle;
 
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
         _displayChangeRefreshTimer.Tick += DisplayChangeRefreshTimer_Tick;
@@ -214,7 +221,8 @@ public class StartWindowController : IDisposable
             source.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
 
-        var material = Win10Theme.ReadStartMaterial();
+        ApplyWindowCornerPreference();
+        var material = Win10Theme.ReadStartMaterial(_themeStyle);
         var acrylicApplied = SetAccentPolicy(
             material.UseAcrylic ? AccentEnableAcrylicBlurBehind : 0,
             material.UseAcrylic ? 2 : 0,
@@ -222,6 +230,18 @@ public class StartWindowController : IDisposable
         _mainSurface.Background = material.UseAcrylic && acrylicApplied
             ? System.Windows.Media.Brushes.Transparent
             : new SolidColorBrush(material.FallbackColor);
+    }
+
+    private void ApplyWindowCornerPreference()
+    {
+        var preference = _themeStyle == AppThemeStyle.Windows11
+            ? DwmWindowCornerRound
+            : DwmWindowCornerDoNotRound;
+        _ = DwmSetWindowAttribute(
+            new WindowInteropHelper(_window).Handle,
+            DwmWindowCornerPreference,
+            ref preference,
+            sizeof(int));
     }
 
     public void WindowDeactivated()
@@ -364,7 +384,8 @@ public class StartWindowController : IDisposable
         _window.MaxWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
         _window.MaxHeight = Math.Max(_window.MinHeight, logicalWorkHeight);
         var requestedWidth = preferredSize?.Width ?? (_window.ActualWidth > 0 ? _window.ActualWidth : _window.Width);
-        var requestedHeight = preferredSize?.Height ?? (_window.ActualHeight > 0 ? _window.ActualHeight : _window.Height);
+        var requestedHeight =
+            preferredSize?.Height ?? (_window.ActualHeight > 0 ? _window.ActualHeight : _window.Height);
         var logicalWidth = StartWindowSizing.SnapWidth(requestedWidth, logicalWorkWidth);
         var logicalHeight = StartWindowSizing.ClampHeight(
             requestedHeight,
@@ -483,6 +504,7 @@ public class StartWindowController : IDisposable
         {
             SaveCurrentSize();
         }
+
         _clearSearch();
         var wasTopmost = _window.Topmost;
         if (yieldTopmost)
@@ -822,4 +844,7 @@ public class StartWindowController : IDisposable
 
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(nint window, ref WindowCompositionAttributeData data);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int valueSize);
 }

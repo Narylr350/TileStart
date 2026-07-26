@@ -1,0 +1,275 @@
+<Window x:Class="TileStart.Host.Settings.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TileStart.Host"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="TileStart 设置"
+        Width="640"
+        Height="560"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        Style="{StaticResource TileStartDialogWindowStyle}">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="44"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <Style x:Key="ThemeChoiceStyle" TargetType="RadioButton">
+            <Setter Property="Height" Value="72" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="ChoiceBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="22" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter VerticalAlignment="Center" />
+                                <Border x:Name="SelectionMark"
+                                        Grid.Column="1"
+                                        Width="18"
+                                        Height="18"
+                                        Background="Transparent"
+                                        BorderBrush="{StaticResource TileStartControlStrokeHoverBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="9">
+                                    <Ellipse x:Name="SelectionDot"
+                                             Width="8"
+                                             Height="8"
+                                             Fill="{x:Static local:Win10Theme.AccentForegroundBrush}"
+                                             Visibility="Collapsed" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ChoiceBorder" Property="Background"
+                                        Value="{StaticResource TileStartControlHoverBrush}" />
+                                <Setter TargetName="ChoiceBorder" Property="BorderBrush"
+                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ChoiceBorder" Property="BorderBrush"
+                                        Value="{x:Static local:Win10Theme.AccentBrush}" />
+                                <Setter TargetName="ChoiceBorder" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="SelectionMark" Property="Background"
+                                        Value="{x:Static local:Win10Theme.AccentBrush}" />
+                                <Setter TargetName="SelectionMark" Property="BorderBrush"
+                                        Value="{x:Static local:Win10Theme.AccentBrush}" />
+                                <Setter TargetName="SelectionDot" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource TileStartDialogSurfaceStyle}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="60" />
+            </Grid.RowDefinitions>
+
+            <Grid Background="{StaticResource TileStartLayerBackgroundBrush}"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="44" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="16,0" VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Margin="0,0,10,0"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="15"
+                               Text="&#xE713;" />
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Text="TileStart 设置" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        IsCancel="True"
+                        Content="&#xE8BB;" />
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24,22">
+                    <TextBlock Margin="0,0,0,10"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Text="常规" />
+                    <Border Padding="18,16" Style="{StaticResource TileStartCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock FontSize="13" Text="登录时启动" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                           FontSize="11"
+                                           Text="登录 Windows 后自动启动 Host 并恢复开始菜单接管。" />
+                            </StackPanel>
+                            <CheckBox x:Name="StartupBox"
+                                      Grid.Column="1"
+                                      VerticalAlignment="Center"
+                                      Style="{StaticResource TileStartCheckBoxStyle}" />
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Margin="0,22,0,10"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Text="界面风格" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <RadioButton x:Name="Windows10Choice"
+                                     GroupName="ThemeStyle"
+                                     Style="{StaticResource ThemeChoiceStyle}">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="Windows 10" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                           FontSize="11"
+                                           Text="直角控件与经典深色层级" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="Windows11Choice"
+                                     Grid.Column="2"
+                                     GroupName="ThemeStyle"
+                                     Style="{StaticResource ThemeChoiceStyle}">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="Windows 11" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                           FontSize="11"
+                                           Text="Fluent 表面、圆角与系统强调色" />
+                            </StackPanel>
+                        </RadioButton>
+                    </Grid>
+                    <TextBlock Margin="2,8,0,0"
+                               Foreground="{StaticResource TileStartTextTertiaryBrush}"
+                               FontSize="11"
+                               Text="切换界面风格后 TileStart 会自动重启。" />
+
+                    <TextBlock Margin="0,22,0,10"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Text="维护与信息" />
+                    <Border Padding="18,16" Style="{StaticResource TileStartCardStyle}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" Text="检查更新" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               FontSize="11"
+                                               Text="从 GitHub Release 检查并校验新版本。" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Width="92"
+                                        Style="{StaticResource TileStartButtonStyle}"
+                                        Content="检查…"
+                                        Click="CheckUpdates_Click" />
+                            </Grid>
+                            <Border Height="1" Margin="0,14" Background="{StaticResource TileStartDividerBrush}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" Text="备份与恢复" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               FontSize="11"
+                                               Text="备份布局、应用、偏好和图标资源。" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Width="92"
+                                        Style="{StaticResource TileStartButtonStyle}"
+                                        Content="打开…"
+                                        Click="BackupRestore_Click" />
+                            </Grid>
+                            <Border Height="1" Margin="0,14" Background="{StaticResource TileStartDividerBrush}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" Text="关于 TileStart" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               FontSize="11"
+                                               Text="查看版本、支持系统和项目地址。" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Width="92"
+                                        Style="{StaticResource TileStartButtonStyle}"
+                                        Content="查看…"
+                                        Click="About_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2"
+                    Padding="20,12"
+                    Background="{StaticResource TileStartLayerBackgroundBrush}"
+                    BorderBrush="{StaticResource TileStartDividerBrush}"
+                    BorderThickness="0,1,0,0">
+                <Grid>
+                    <TextBlock x:Name="StatusText"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TileStartErrorBrush}"
+                               FontSize="11" />
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <Button Width="78"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource TileStartButtonStyle}"
+                                IsCancel="True"
+                                Content="取消" />
+                        <Button Width="92"
+                                Style="{StaticResource TileStartPrimaryButtonStyle}"
+                                IsDefault="True"
+                                Content="保存"
+                                Click="Save_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

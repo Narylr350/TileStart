@@ -12,9 +12,8 @@ public sealed class TrayIcon : IDisposable
     private readonly Drawing.Font _menuFont;
     private readonly TileStartTrayPalette _palette;
 
-    public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, Func<Task> checkForUpdates,
-        Action openBackupAndRestore, Action openAbout, AppThemeStyle themeStyle,
-        Action<AppThemeStyle> setThemeStyle, Action exit)
+    public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, AppThemeStyle themeStyle,
+        Action openSettings, Action exit)
     {
         _palette = TileStartTrayRenderer.GetPalette(themeStyle);
         _menuFont = new Drawing.Font(
@@ -35,33 +34,7 @@ public sealed class TrayIcon : IDisposable
         };
         menu.Items.Add(_pauseItem);
 
-        var startupItem = CreateMenuItem("登录时启动");
-        startupItem.Checked = StartupRegistration.IsEnabled();
-        startupItem.Click += (_, _) =>
-        {
-            var enabled = !startupItem.Checked;
-            if (StartupRegistration.SetEnabled(enabled))
-            {
-                startupItem.Checked = enabled;
-            }
-        };
-        menu.Items.Add(startupItem);
-
-        var appearanceItem = CreateMenuItem("界面风格");
-        var windows10Item = CreateMenuItem("Windows 10");
-        var windows11Item = CreateMenuItem("Windows 11");
-        windows10Item.Checked = themeStyle == AppThemeStyle.Windows10;
-        windows11Item.Checked = themeStyle == AppThemeStyle.Windows11;
-        windows10Item.Click += (_, _) => setThemeStyle(AppThemeStyle.Windows10);
-        windows11Item.Click += (_, _) => setThemeStyle(AppThemeStyle.Windows11);
-        appearanceItem.DropDownItems.Add(windows10Item);
-        appearanceItem.DropDownItems.Add(windows11Item);
-        ConfigureDropDown(appearanceItem.DropDown, themeStyle);
-        menu.Items.Add(appearanceItem);
-
-        menu.Items.Add(CreateMenuItem("检查更新…", async (_, _) => await checkForUpdates()));
-        menu.Items.Add(CreateMenuItem("备份与恢复…", (_, _) => openBackupAndRestore()));
-        menu.Items.Add(CreateMenuItem("关于 TileStart", (_, _) => openAbout()));
+        menu.Items.Add(CreateMenuItem("TileStart 设置…", (_, _) => openSettings()));
         menu.Items.Add(CreateSeparator());
         menu.Items.Add(CreateMenuItem("退出", (_, _) => exit()));
 

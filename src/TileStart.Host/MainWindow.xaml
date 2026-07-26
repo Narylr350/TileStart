@@ -68,7 +68,7 @@
                                            Width="2"
                                            MinHeight="24"
                                            HorizontalAlignment="Right"
-                                            Background="{StaticResource TileStartTextTertiaryBrush}"
+                                           Background="{StaticResource TileStartTextTertiaryBrush}"
                                            Opacity="0.72">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
@@ -159,8 +159,8 @@
                                 <TextBlock Grid.Column="1"
                                            Margin="12,0,16,0"
                                            VerticalAlignment="Center"
-                                            Foreground="{TemplateBinding Foreground}"
-                                            FontFamily="{StaticResource TileStartContentFont}"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontFamily="{StaticResource TileStartContentFont}"
                                            FontSize="14"
                                            Text="{TemplateBinding Tag}"
                                            TextTrimming="CharacterEllipsis" />
@@ -235,7 +235,7 @@
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource TileStartPopupStrokeBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}" />
+            <Setter Property="Padding" Value="{DynamicResource TileStartContextMenuPresenterPadding}" />
             <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
             <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
             <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
@@ -276,55 +276,55 @@
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="{StaticResource TileStartControlCornerRadius}">
                             <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition x:Name="CheckColumn" Width="0" />
-                                <ColumnDefinition
-                                    Width="{x:Static local:Win10VisualMetrics.ContextMenuIconPlaceholderGridLength}" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="24" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="CheckMark"
-                                       Grid.Column="0"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12"
-                                       Text="&#xE73E;"
-                                       Visibility="Collapsed" />
-                            <ContentPresenter Grid.Column="1"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Content="{TemplateBinding Icon}" />
-                            <ContentPresenter Grid.Column="2"
-                                              Margin="{TemplateBinding Padding}"
-                                              VerticalAlignment="Center"
-                                              ContentSource="Header"
-                                              RecognizesAccessKey="True" />
-                            <TextBlock x:Name="SubmenuArrow"
-                                       Grid.Column="3"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="10"
-                                       Text="&#xE76C;"
-                                       Visibility="Collapsed" />
-                            <Popup x:Name="PART_Popup"
-                                   AllowsTransparency="True"
-                                   Focusable="False"
-                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Opened="SubmenuPopup_Opened"
-                                   Closed="SubmenuPopup_Closed"
-                                   Placement="Right"
-                                   PopupAnimation="None">
-                                <Border MinWidth="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}"
-                                        Padding="{x:Static local:Win10VisualMetrics.ContextMenuPresenterPadding}"
-                                         Background="{StaticResource TileStartPopupBackgroundBrush}"
-                                         BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
-                                         BorderThickness="1"
-                                         CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
-                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
-                                </Border>
-                            </Popup>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="CheckColumn" Width="0" />
+                                    <ColumnDefinition
+                                        Width="{x:Static local:Win10VisualMetrics.ContextMenuIconPlaceholderGridLength}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="24" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="CheckMark"
+                                           Grid.Column="0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="12"
+                                           Text="&#xE73E;"
+                                           Visibility="Collapsed" />
+                                <ContentPresenter Grid.Column="1"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Content="{TemplateBinding Icon}" />
+                                <ContentPresenter Grid.Column="2"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  RecognizesAccessKey="True" />
+                                <TextBlock x:Name="SubmenuArrow"
+                                           Grid.Column="3"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="10"
+                                           Text="&#xE76C;"
+                                           Visibility="Collapsed" />
+                                <Popup x:Name="PART_Popup"
+                                       AllowsTransparency="True"
+                                       Focusable="False"
+                                       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Opened="SubmenuPopup_Opened"
+                                       Closed="SubmenuPopup_Closed"
+                                       Placement="Right"
+                                       PopupAnimation="None">
+                                    <Border MinWidth="{x:Static local:Win10VisualMetrics.ContextMenuMinWidth}"
+                                            Padding="{DynamicResource TileStartContextMenuPresenterPadding}"
+                                            Background="{StaticResource TileStartPopupBackgroundBrush}"
+                                            BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                    </Border>
+                                </Popup>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -341,11 +341,11 @@
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="MenuItemRoot" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                        Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
                             </Trigger>
                             <Trigger Property="IsSubmenuOpen" Value="True">
                                 <Setter TargetName="MenuItemRoot" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                        Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.38" />
@@ -823,10 +823,10 @@
                         <TextBox x:Name="SearchBox"
                                  Grid.Column="1"
                                  Padding="0,7,4,0"
-                                  Foreground="{StaticResource TileStartTextPrimaryBrush}"
+                                 Foreground="{StaticResource TileStartTextPrimaryBrush}"
                                  Background="Transparent"
                                  BorderThickness="0"
-                                  FontFamily="{StaticResource TileStartContentFont}"
+                                 FontFamily="{StaticResource TileStartContentFont}"
                                  FontSize="14"
                                  TextChanged="SearchBox_TextChanged" />
                     </Grid>
@@ -924,7 +924,8 @@
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
                                         <Setter Property="Focusable" Value="False" />
-                                        <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
+                                        <Setter Property="Foreground"
+                                                Value="{StaticResource TileStartTextPrimaryBrush}" />
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         <Setter Property="Padding" Value="0" />
                                         <Setter Property="Template">
@@ -1004,8 +1005,10 @@
                     DragOver="TileArea_DragOver"
                     Drop="TileArea_Drop">
                 <Border.ContextMenu>
-                    <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
-                        <MenuItem Header="新建自定义磁贴…" Click="AddCommandTile_Click" />
+                    <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                        <MenuItem Header="新建自定义磁贴…"
+                                  Style="{StaticResource StartMenuItemStyle}"
+                                  Click="AddCommandTile_Click" />
                     </ContextMenu>
                 </Border.ContextMenu>
                 <ScrollViewer x:Name="TileScrollViewer"
@@ -1026,10 +1029,14 @@
                                 <StackPanel Width="{Binding VisualWidth}"
                                             Margin="0,0,0,24">
                                     <StackPanel.ContextMenu>
-                                        <ContextMenu Opened="StartContextMenu_Opened" Closed="StartContextMenu_Closed">
-                                            <MenuItem Header="TileStart 组设置…" Click="GroupSettings_Click" />
+                                        <ContextMenu Style="{StaticResource StartContextMenuStyle}">
+                                            <MenuItem Header="TileStart 组设置…"
+                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                      Click="GroupSettings_Click" />
                                             <Separator />
-                                            <MenuItem Header="删除组" Click="DeleteGroup_Click" />
+                                            <MenuItem Header="删除组"
+                                                      Style="{StaticResource StartMenuItemStyle}"
+                                                      Click="DeleteGroup_Click" />
                                         </ContextMenu>
                                     </StackPanel.ContextMenu>
                                     <layouts:TileGroupHeader
@@ -1355,7 +1362,7 @@
                                                                 <TextBlock x:Name="TileTitle"
                                                                            HorizontalAlignment="Left"
                                                                            VerticalAlignment="Bottom"
-                                                                            FontFamily="{StaticResource TileStartContentFont}"
+                                                                           FontFamily="{StaticResource TileStartContentFont}"
                                                                            FontSize="12"
                                                                            FontWeight="SemiBold"
                                                                            Text="{Binding Name}"

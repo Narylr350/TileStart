@@ -21,6 +21,7 @@
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#29FFFFFF" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#F92C2C2C" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush" Color="#18FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#18FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0DFFFFFF" />
@@ -32,6 +33,7 @@
     <CornerRadius x:Key="TileStartControlCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="TileStartTileCornerRadius">0</CornerRadius>
+    <Thickness x:Key="TileStartContextMenuPresenterPadding">4</Thickness>
 
     <Style x:Key="TileStartDialogWindowStyle" TargetType="Window">
         <Setter Property="Background" Value="{DynamicResource TileStartWindowBackgroundBrush}" />

@@ -158,7 +158,7 @@ public partial class BackupRestoreWindow : Window
         if (components.HasFlag(BackupComponents.Layout)) names.Add("磁贴布局");
         if (components.HasFlag(BackupComponents.CustomApplications)) names.Add("自定义应用");
         if (components.HasFlag(BackupComponents.ApplicationVisibility)) names.Add("应用可见性");
-        if (components.HasFlag(BackupComponents.Preferences)) names.Add("窗口与导航偏好");
+        if (components.HasFlag(BackupComponents.Preferences)) names.Add("窗口、导航与外观偏好");
         if (components.HasFlag(BackupComponents.ManagedIcons)) names.Add("受管图标");
         if (components.HasFlag(BackupComponents.ExternalVisuals)) names.Add("外部图标与背景");
         if (components.HasFlag(BackupComponents.TaskbarShortcuts)) names.Add("任务栏辅助快捷方式");

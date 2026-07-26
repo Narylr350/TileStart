@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using TileStart.Host.Applications;
 using TileStart.Host.Shell;
+using TileStart.Host.Themes;
 using TileStart.Host.Windowing;
 using TileStart.Host.Tiles.Models;
 
@@ -20,7 +21,7 @@ public partial class MainWindow : Window
     private readonly Controllers.TileWorkspaceController _tileWorkspaceController;
     private bool _controllersDisposed;
 
-    public MainWindow()
+    public MainWindow(AppThemeStyle themeStyle = AppThemeStyle.Windows11)
     {
         InitializeComponent();
         _appController = new Controllers.ApplicationPaneController(
@@ -112,7 +113,8 @@ public partial class MainWindow : Window
             captureGroupReorderPositions: () => _tileDragCoordinator.CaptureGroupReorderPositions(),
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
-            hasOpenContextMenu: () => _hasOpenContextMenu);
+            hasOpenContextMenu: () => _hasOpenContextMenu,
+            themeStyle);
         _controller.WindowDismissing += _tileWorkspaceController.CloseOpenContextMenu;
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;

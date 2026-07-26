@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Media;
+using TileStart.Host.Themes;
 using MediaColor = System.Windows.Media.Color;
 
 namespace TileStart.Host;
@@ -16,6 +17,7 @@ public static class Win10Theme
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
     private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
+    private const int Windows11StartAcrylicGradientColor = unchecked((int)0xCC1C1C1C);
     private static readonly MediaColor StartFallbackColor = MediaColor.FromRgb(0x1F, 0x1F, 0x1F);
 
     public static MediaColor AccentColor { get; } = ReadAccentColor();
@@ -24,7 +26,8 @@ public static class Win10Theme
 
     public static SolidColorBrush AccentHoverBrush { get; } = CreateFrozenBrush(Blend(AccentColor, Colors.White, 0.10));
 
-    public static SolidColorBrush AccentPressedBrush { get; } = CreateFrozenBrush(Blend(AccentColor, Colors.Black, 0.12));
+    public static SolidColorBrush AccentPressedBrush { get; } =
+        CreateFrozenBrush(Blend(AccentColor, Colors.Black, 0.12));
 
     public static SolidColorBrush AccentForegroundBrush { get; } =
         CreateFrozenBrush(UseDarkForeground(AccentColor) ? Colors.Black : Colors.White);
@@ -45,15 +48,23 @@ public static class Win10Theme
     }
 
     internal static StartMaterialConfiguration ResolveStartMaterial(object? enableTransparency, bool highContrast)
+        => ResolveStartMaterial(enableTransparency, highContrast, AppThemeStyle.Windows10);
+
+    internal static StartMaterialConfiguration ResolveStartMaterial(
+        object? enableTransparency,
+        bool highContrast,
+        AppThemeStyle themeStyle)
     {
         var transparencyEnabled = enableTransparency is int value && value != 0;
         return new StartMaterialConfiguration(
             transparencyEnabled && !highContrast,
             StartFallbackColor,
-            StartAcrylicGradientColor);
+            themeStyle == AppThemeStyle.Windows11
+                ? Windows11StartAcrylicGradientColor
+                : StartAcrylicGradientColor);
     }
 
-    internal static StartMaterialConfiguration ReadStartMaterial()
+    internal static StartMaterialConfiguration ReadStartMaterial(AppThemeStyle themeStyle)
     {
         object? enableTransparency = null;
         try
@@ -65,7 +76,7 @@ public static class Win10Theme
         {
         }
 
-        return ResolveStartMaterial(enableTransparency, SystemParameters.HighContrast);
+        return ResolveStartMaterial(enableTransparency, SystemParameters.HighContrast, themeStyle);
     }
 
     private static MediaColor ReadAccentColor()

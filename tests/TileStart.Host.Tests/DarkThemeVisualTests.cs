@@ -23,7 +23,7 @@ public sealed class DarkThemeVisualTests
             style.Elements(presentation + "Setter"),
             setter =>
                 (string?)setter.Attribute("Property") == "Foreground"
-                 && (string?)setter.Attribute("Value") == "{StaticResource TileStartTextPrimaryBrush}");
+                && (string?)setter.Attribute("Value") == "{StaticResource TileStartTextPrimaryBrush}");
 
         Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("TileStartTextPrimaryBrush"));
     }
@@ -126,6 +126,66 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Key") == styleKey);
 
         Assert.Equal("{StaticResource TileStartDarkExpanderStyle}", (string?)style.Attribute("BasedOn"));
+    }
+
+    [Fact]
+    public void TileStartSettingsContainsConsolidatedTrayActions()
+    {
+        var document = LoadXaml("SettingsWindow.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        Assert.NotNull(document.Descendants(presentation + "CheckBox")
+            .Single(element => (string?)element.Attribute(x + "Name") == "StartupBox"));
+        Assert.NotNull(document.Descendants(presentation + "RadioButton")
+            .Single(element => (string?)element.Attribute(x + "Name") == "Windows10Choice"));
+        Assert.NotNull(document.Descendants(presentation + "RadioButton")
+            .Single(element => (string?)element.Attribute(x + "Name") == "Windows11Choice"));
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "检查更新");
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "备份与恢复");
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "关于 TileStart");
+    }
+
+    [Fact]
+    public void TilePaneContextMenusUseTheSharedPopupAndItemStyles()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var menus = document.Descendants(presentation + "ContextMenu")
+            .Where(menu => menu.Descendants(presentation + "MenuItem").Any(item =>
+                (string?)item.Attribute("Header") is "新建自定义磁贴…" or "删除组"))
+            .ToArray();
+
+        Assert.NotEmpty(menus);
+        Assert.All(menus, menu =>
+        {
+            Assert.Equal("{StaticResource StartContextMenuStyle}", (string?)menu.Attribute("Style"));
+            Assert.All(menu.Descendants(presentation + "MenuItem"), item =>
+                Assert.Equal("{StaticResource StartMenuItemStyle}", (string?)item.Attribute("Style")));
+        });
+    }
+
+    [Fact]
+    public void Windows11ContextMenusUseInsetNeutralHighlightInsteadOfWin10AccentFill()
+    {
+        Assert.Equal("#18FFFFFF", ReadThemeBrushColor("TileStartContextMenuHighlightBrush"));
+        Assert.Equal("4", ReadThemeResourceValue(
+            "Win11Theme.xaml",
+            "Thickness",
+            "TileStartContextMenuPresenterPadding"));
+
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var contextMenuStyle = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "StartContextMenuStyle");
+        Assert.Contains(contextMenuStyle.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Padding"
+            && (string?)setter.Attribute("Value") == "{DynamicResource TileStartContextMenuPresenterPadding}");
     }
 
     private static XDocument LoadMainWindow()

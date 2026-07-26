@@ -48,6 +48,7 @@ public sealed class TileStartBackupServiceTests
         File.WriteAllText(Path.Combine(dataRoot, "layout.json"), TileLayoutStore.Serialize(layout));
         File.WriteAllText(Path.Combine(dataRoot, "custom-apps.json"), "[{\"Name\":\"Portable\"}]");
         File.WriteAllText(Path.Combine(dataRoot, "window.json"), "{\"Width\":900}");
+        File.WriteAllText(Path.Combine(dataRoot, "appearance.json"), "{\"ThemeStyle\":\"Windows10\"}");
         File.WriteAllText(Path.Combine(dataRoot, "TileStart.log"), "private diagnostics");
         Directory.CreateDirectory(Path.Combine(dataRoot, "backups"));
         File.WriteAllText(Path.Combine(dataRoot, "backups", "old.zip"), "nested backup");
@@ -60,15 +61,18 @@ public sealed class TileStartBackupServiceTests
         {
             Assert.NotNull(archive.GetEntry("manifest.json"));
             Assert.NotNull(archive.GetEntry("data/layout.json"));
+            Assert.NotNull(archive.GetEntry("data/appearance.json"));
             Assert.DoesNotContain(archive.Entries, entry => entry.FullName.Contains("TileStart.log"));
             Assert.DoesNotContain(archive.Entries, entry => entry.FullName.Contains("backups/"));
         }
 
         File.WriteAllText(Path.Combine(dataRoot, "custom-apps.json"), "changed");
+        File.WriteAllText(Path.Combine(dataRoot, "appearance.json"), "changed");
         File.Delete(managedIcon);
         service.Restore(archivePath, BackupComponents.Default, createSafetyBackup: false);
 
         Assert.Equal("[{\"Name\":\"Portable\"}]", File.ReadAllText(Path.Combine(dataRoot, "custom-apps.json")));
+        Assert.Equal("{\"ThemeStyle\":\"Windows10\"}", File.ReadAllText(Path.Combine(dataRoot, "appearance.json")));
         var restoredLayout = TileLayoutStore.Deserialize(File.ReadAllText(Path.Combine(dataRoot, "layout.json")));
         Assert.NotNull(restoredLayout);
         var tile = Assert.Single(Assert.Single(restoredLayout.Groups).Tiles);
@@ -88,16 +92,19 @@ public sealed class TileStartBackupServiceTests
         Directory.CreateDirectory(dataRoot);
         File.WriteAllText(Path.Combine(dataRoot, "custom-apps.json"), "backup apps");
         File.WriteAllText(Path.Combine(dataRoot, "window.json"), "backup window");
+        File.WriteAllText(Path.Combine(dataRoot, "appearance.json"), "backup appearance");
         var archivePath = Path.Combine(test.Path, "partial.tilestartbackup");
         var service = new TileStartBackupService(dataRoot);
         service.Create(archivePath, BackupComponents.CustomApplications | BackupComponents.Preferences);
 
         File.WriteAllText(Path.Combine(dataRoot, "custom-apps.json"), "current apps");
         File.WriteAllText(Path.Combine(dataRoot, "window.json"), "current window");
+        File.WriteAllText(Path.Combine(dataRoot, "appearance.json"), "current appearance");
         service.Restore(archivePath, BackupComponents.Preferences, createSafetyBackup: false);
 
         Assert.Equal("current apps", File.ReadAllText(Path.Combine(dataRoot, "custom-apps.json")));
         Assert.Equal("backup window", File.ReadAllText(Path.Combine(dataRoot, "window.json")));
+        Assert.Equal("backup appearance", File.ReadAllText(Path.Combine(dataRoot, "appearance.json")));
     }
 
     [Fact]
@@ -110,14 +117,12 @@ public sealed class TileStartBackupServiceTests
             archive.CreateEntry("../outside.txt");
             var manifest = archive.CreateEntry("manifest.json");
             using var writer = new StreamWriter(manifest.Open());
-            writer.Write("{\"FormatVersion\":1,\"CreatedAtUtc\":\"2026-07-24T00:00:00Z\",\"AppVersion\":\"test\",\"Components\":\"Layout\",\"Assets\":[]}");
+            writer.Write(
+                "{\"FormatVersion\":1,\"CreatedAtUtc\":\"2026-07-24T00:00:00Z\",\"AppVersion\":\"test\",\"Components\":\"Layout\",\"Assets\":[]}");
         }
 
         var service = new TileStartBackupService(Path.Combine(test.Path, "data"));
-        Assert.Throws<InvalidDataException>(() =>
-        {
-            service.Inspect(archivePath);
-        });
+        Assert.Throws<InvalidDataException>(() => { service.Inspect(archivePath); });
     }
 
     private sealed class TemporaryDirectory : IDisposable

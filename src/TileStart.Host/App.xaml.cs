@@ -3,6 +3,7 @@ using System.Windows;
 using TileStart.Host.About;
 using TileStart.Host.Backup;
 using TileStart.Host.Compatibility;
+using TileStart.Host.Settings;
 using TileStart.Host.Shell;
 using TileStart.Host.Themes;
 using TileStart.Host.Updates;
@@ -72,7 +73,7 @@ public partial class App : System.Windows.Application
         AppThemeManager.Apply(Resources, _appearancePreferences.ThemeStyle);
 
         DiagnosticLog.Write("Creating main window.");
-        MainWindow = new MainWindow();
+        MainWindow = new MainWindow(_appearancePreferences.ThemeStyle);
         PrimeHiddenWindow(MainWindow);
         DiagnosticLog.Write("Main window created.");
         _server = new OpenRequestServer(HandleHostRequest, Dispatcher);
@@ -93,11 +94,8 @@ public partial class App : System.Windows.Application
         _trayIcon = new TrayIcon(((MainWindow)MainWindow).ShowFromShell,
             SetPaused,
             WinKeyHook.OpenNativeStartMenu,
-            CheckForUpdatesAsync,
-            OpenBackupAndRestore,
-            OpenAbout,
             _appearancePreferences.ThemeStyle,
-            ChangeThemeStyle,
+            OpenSettings,
             ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
         {
@@ -195,6 +193,29 @@ public partial class App : System.Windows.Application
             if (MainWindow?.IsVisible == true)
             {
                 dialog.Owner = MainWindow;
+            }
+
+            dialog.ShowDialog();
+        });
+    }
+
+    private void OpenSettings()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            var dialog = new SettingsWindow(
+                _appearancePreferences.ThemeStyle,
+                ChangeThemeStyle,
+                CheckForUpdatesAsync,
+                OpenBackupAndRestore,
+                OpenAbout);
+            if (MainWindow?.IsVisible == true)
+            {
+                dialog.Owner = MainWindow;
+            }
+            else
+            {
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
             dialog.ShowDialog();

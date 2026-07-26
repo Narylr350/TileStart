@@ -17,29 +17,20 @@ public sealed class TrayIconTests
             {
                 var showCount = 0;
                 var nativeCount = 0;
-                var updateCount = 0;
-                var backupCount = 0;
-                var aboutCount = 0;
+                var settingsCount = 0;
                 var exitCount = 0;
                 var pauseStates = new List<bool>();
-                var themeStyles = new List<AppThemeStyle>();
                 using var tray = new TrayIcon(
                     () => showCount++,
                     paused => pauseStates.Add(paused),
                     () => nativeCount++,
-                    () =>
-                    {
-                        updateCount++;
-                        return Task.CompletedTask;
-                    },
-                    () => backupCount++,
-                    () => aboutCount++,
                     AppThemeStyle.Windows11,
-                    style => themeStyles.Add(style),
+                    () => settingsCount++,
                     () => exitCount++);
 
                 var notifyIcon = Assert.IsType<Forms.NotifyIcon>(
-                    typeof(TrayIcon).GetField("_notifyIcon", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tray));
+                    typeof(TrayIcon).GetField("_notifyIcon", BindingFlags.Instance | BindingFlags.NonPublic)!
+                        .GetValue(tray));
                 var menu = Assert.IsType<Forms.ContextMenuStrip>(notifyIcon.ContextMenuStrip);
                 var renderer = Assert.IsType<TileStartTrayRenderer>(menu.Renderer);
                 var accent = Win10Theme.AccentColor;
@@ -54,28 +45,17 @@ public sealed class TrayIconTests
                 Assert.True(pause.Checked);
                 pause.PerformClick();
                 Assert.False(pause.Checked);
-                Find(menu, "检查更新…").PerformClick();
-                Find(menu, "备份与恢复…").PerformClick();
-                Find(menu, "关于 TileStart").PerformClick();
-                var appearance = Find(menu, "界面风格");
-                var windows10 = appearance.DropDownItems.OfType<Forms.ToolStripMenuItem>()
-                    .Single(item => item.Text == "Windows 10");
-                var windows11 = appearance.DropDownItems.OfType<Forms.ToolStripMenuItem>()
-                    .Single(item => item.Text == "Windows 11");
-                Assert.False(windows10.Checked);
-                Assert.True(windows11.Checked);
-                windows10.PerformClick();
+                Find(menu, "TileStart 设置…").PerformClick();
                 Find(menu, "退出").PerformClick();
 
                 Assert.Equal(1, showCount);
                 Assert.Equal(1, nativeCount);
-                Assert.Equal(1, updateCount);
-                Assert.Equal(1, backupCount);
-                Assert.Equal(1, aboutCount);
+                Assert.Equal(1, settingsCount);
                 Assert.Equal(1, exitCount);
                 Assert.Equal([true, false], pauseStates);
-                Assert.Equal([AppThemeStyle.Windows10], themeStyles);
-                Assert.NotNull(menu.Items.OfType<Forms.ToolStripMenuItem>().Single(item => item.Text == "登录时启动"));
+                Assert.Equal(
+                    ["打开 TileStart", "打开原生开始菜单", "暂停接管", "TileStart 设置…", "退出"],
+                    menu.Items.OfType<Forms.ToolStripMenuItem>().Select(item => item.Text ?? string.Empty).ToArray());
             }
             catch (Exception exception)
             {

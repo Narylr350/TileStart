@@ -90,6 +90,7 @@ public sealed class TileStartBackupService
                 {
                     AddFile(archive, Path.Combine(_dataRoot, "window.json"), "data/window.json", addedEntries);
                     AddFile(archive, Path.Combine(_dataRoot, "navigation.json"), "data/navigation.json", addedEntries);
+                    AddFile(archive, Path.Combine(_dataRoot, "appearance.json"), "data/appearance.json", addedEntries);
                 }
 
                 if (components.HasFlag(BackupComponents.ManagedIcons) && Directory.Exists(_iconsRoot))
@@ -163,6 +164,7 @@ public sealed class TileStartBackupService
         {
             RestoreFile(archive, "data/window.json", Path.Combine(_dataRoot, "window.json"));
             RestoreFile(archive, "data/navigation.json", Path.Combine(_dataRoot, "navigation.json"));
+            RestoreFile(archive, "data/appearance.json", Path.Combine(_dataRoot, "appearance.json"));
         }
 
         if (components.HasFlag(BackupComponents.ManagedIcons))

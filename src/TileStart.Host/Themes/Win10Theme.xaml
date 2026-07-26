@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:TileStart.Host">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/TileStart.Host;component/Themes/Win11Theme.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -24,6 +25,8 @@
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#454545" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FC232323" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#171717" />
+    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
+                     Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#12FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#20FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#18FFFFFF" />
@@ -35,4 +38,5 @@
     <CornerRadius x:Key="TileStartControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="TileStartTileCornerRadius">0</CornerRadius>
+    <Thickness x:Key="TileStartContextMenuPresenterPadding">0,4,0,4</Thickness>
 </ResourceDictionary>

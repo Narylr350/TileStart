@@ -198,7 +198,7 @@
                                 <CheckBox x:Name="PreferencesBox"
                                           Style="{StaticResource OptionCheckBoxStyle}"
                                           IsChecked="True"
-                                          Content="窗口尺寸与导航偏好" />
+                                          Content="窗口、导航与外观偏好" />
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <CheckBox x:Name="ManagedIconsBox"

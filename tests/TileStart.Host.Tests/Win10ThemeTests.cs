@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using TileStart.Host;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
 
@@ -58,6 +59,18 @@ public sealed class Win10ThemeTests
         Assert.True(material.UseAcrylic);
         Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.FallbackColor);
         Assert.Equal(unchecked((int)0xBF101010), material.AcrylicGradientColor);
+    }
+
+    [Fact]
+    public void Windows11StartMaterialKeepsWallpaperColorVisibleThroughAcrylic()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows11);
+
+        Assert.True(material.UseAcrylic);
+        Assert.Equal(unchecked((int)0xCC1C1C1C), material.AcrylicGradientColor);
     }
 
     [Theory]
