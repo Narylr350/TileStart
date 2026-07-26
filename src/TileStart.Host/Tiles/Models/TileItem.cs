@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using System.Windows.Media;
@@ -55,6 +56,8 @@ public sealed class TileItem : INotifyPropertyChanged
     private bool _usesFullTileLogo;
     private bool _isTileFolder;
     private ObservableCollection<TileItem> _folderTiles = [];
+    private readonly ObservableCollection<TileItem> _folderPreviewTiles = [];
+    private readonly HashSet<TileItem> _folderChildSubscriptions = [];
     private bool _isFolderExpanded;
     private bool _isDragging;
     private bool _isFolderDropTarget;
@@ -62,6 +65,12 @@ public sealed class TileItem : INotifyPropertyChanged
     private double _folderRegionTop;
     private double _folderRegionHeight;
     private double _folderContentHeight;
+
+    public TileItem()
+    {
+        FolderPreviewTiles = new ReadOnlyObservableCollection<TileItem>(_folderPreviewTiles);
+        AttachFolderTiles(_folderTiles);
+    }
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -115,6 +124,7 @@ public sealed class TileItem : INotifyPropertyChanged
 
             _isTileFolder = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SettingsMenuHeader));
         }
     }
 
@@ -176,10 +186,19 @@ public sealed class TileItem : INotifyPropertyChanged
                 return;
             }
 
+            DetachFolderTiles(_folderTiles);
             _folderTiles = value ?? [];
+            AttachFolderTiles(_folderTiles);
+            RebuildFolderPreview();
             OnPropertyChanged();
         }
     }
+
+    [JsonIgnore]
+    public ReadOnlyObservableCollection<TileItem> FolderPreviewTiles { get; }
+
+    [JsonIgnore]
+    public string SettingsMenuHeader => IsTileFolder ? "文件夹设置…" : "TileStart 设置…";
 
     /// <summary>
     /// Tile face colour. Assigning a value marks the tile as customised; assigning blank clears
@@ -454,6 +473,73 @@ public sealed class TileItem : INotifyPropertyChanged
         }
     }
 
+    private void AttachFolderTiles(ObservableCollection<TileItem> tiles)
+    {
+        tiles.CollectionChanged += FolderTiles_CollectionChanged;
+        SynchronizeFolderChildSubscriptions();
+        RebuildFolderPreview();
+    }
+
+    private void DetachFolderTiles(ObservableCollection<TileItem> tiles)
+    {
+        tiles.CollectionChanged -= FolderTiles_CollectionChanged;
+        foreach (var tile in _folderChildSubscriptions)
+        {
+            tile.PropertyChanged -= FolderChild_PropertyChanged;
+        }
+
+        _folderChildSubscriptions.Clear();
+    }
+
+    private void FolderTiles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SynchronizeFolderChildSubscriptions();
+        RebuildFolderPreview();
+    }
+
+    private void SynchronizeFolderChildSubscriptions()
+    {
+        var current = _folderTiles.ToHashSet();
+        foreach (var tile in _folderChildSubscriptions.Except(current).ToArray())
+        {
+            tile.PropertyChanged -= FolderChild_PropertyChanged;
+            _folderChildSubscriptions.Remove(tile);
+        }
+
+        foreach (var tile in current.Except(_folderChildSubscriptions))
+        {
+            tile.PropertyChanged += FolderChild_PropertyChanged;
+            _folderChildSubscriptions.Add(tile);
+        }
+    }
+
+    private void FolderChild_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(Row) or nameof(Column))
+        {
+            RebuildFolderPreview();
+        }
+    }
+
+    private void RebuildFolderPreview()
+    {
+        var preview = _folderTiles
+            .OrderBy(tile => tile.Row)
+            .ThenBy(tile => tile.Column)
+            .Take(4)
+            .ToArray();
+        if (_folderPreviewTiles.SequenceEqual(preview))
+        {
+            return;
+        }
+
+        _folderPreviewTiles.Clear();
+        foreach (var tile in preview)
+        {
+            _folderPreviewTiles.Add(tile);
+        }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     internal void SetLayoutOffset(double offsetY)
@@ -525,9 +611,9 @@ public sealed class TileItem : INotifyPropertyChanged
         OnPropertyChanged(propertyName);
     }
 
-    private void NotifyLayoutChanged()
+    private void NotifyLayoutChanged([CallerMemberName] string? propertyName = null)
     {
-        OnPropertyChanged();
+        OnPropertyChanged(propertyName);
         OnPropertyChanged(nameof(Left));
         OnPropertyChanged(nameof(Top));
         OnPropertyChanged(nameof(DisplayTop));

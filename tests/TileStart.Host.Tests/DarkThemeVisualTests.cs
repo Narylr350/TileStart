@@ -204,6 +204,31 @@ public sealed class DarkThemeVisualTests
             && (string?)setter.Attribute("Value") == "{DynamicResource TileStartContextMenuPresenterPadding}");
     }
 
+    [Fact]
+    public void FolderTilesUseAStableLimitedPreviewAndSpecificSettingsLabel()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var preview = document.Descendants(presentation + "ItemsControl")
+            .Single(element => (string?)element.Attribute(x + "Name") == "FolderPreview");
+        Assert.Equal("{Binding FolderPreviewTiles}", (string?)preview.Attribute("ItemsSource"));
+        var counts = preview.Descendants(presentation + "DataTrigger")
+            .Where(trigger => (string?)trigger.Attribute("Binding") == "{Binding FolderPreviewTiles.Count}")
+            .Select(trigger => (string?)trigger.Attribute("Value"))
+            .ToArray();
+        Assert.Contains("1", counts);
+        Assert.Contains("2", counts);
+
+        var settingsItem = document.Descendants(presentation + "MenuItem")
+            .Single(item => (string?)item.Attribute("Click") == "TileSettings_Click");
+        Assert.Equal("{Binding SettingsMenuHeader}", (string?)settingsItem.Attribute("Header"));
+        var tileMenu = settingsItem.Ancestors(presentation + "ContextMenu").Single();
+        Assert.Equal("{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}",
+            (string?)tileMenu.Attribute("DataContext"));
+    }
+
     private static XDocument LoadMainWindow()
     {
         return LoadXaml("MainWindow.xaml");

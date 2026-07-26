@@ -929,7 +929,7 @@
                                                             Click="TileButton_Click"
                                                             PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
                                                         <Button.ContextMenu>
-                                                            <ContextMenu>
+                                                            <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                                                 <MenuItem Header="从“开始”屏幕取消固定"
                                                                           Click="UnpinTile_Click">
                                                                     <MenuItem.Icon>
@@ -1011,7 +1011,7 @@
                                                                     </MenuItem>
                                                                 </MenuItem>
                                                                 <Separator />
-                                                                <MenuItem Header="TileStart 设置…"
+                                                                <MenuItem Header="{Binding SettingsMenuHeader}"
                                                                           Click="TileSettings_Click">
                                                                     <MenuItem.Icon>
                                                                         <TextBlock Foreground="{DynamicResource TileStartTextPrimaryBrush}"
@@ -1116,18 +1116,47 @@
                                                             <ItemsControl x:Name="FolderPreview"
                                                                           Grid.Row="0"
                                                                           Grid.RowSpan="2"
-                                                                          Width="52"
-                                                                          Height="52"
                                                                           HorizontalAlignment="Center"
                                                                           VerticalAlignment="Center"
                                                                           ClipToBounds="True"
-                                                                          ItemsSource="{Binding FolderTiles}"
+                                                                          ItemsSource="{Binding FolderPreviewTiles}"
                                                                           Visibility="Collapsed">
-                                                                <ItemsControl.ItemsPanel>
-                                                                    <ItemsPanelTemplate>
-                                                                        <UniformGrid Columns="2" />
-                                                                    </ItemsPanelTemplate>
-                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.Style>
+                                                                    <Style TargetType="ItemsControl">
+                                                                        <Setter Property="Width" Value="52" />
+                                                                        <Setter Property="Height" Value="52" />
+                                                                        <Setter Property="ItemsPanel">
+                                                                            <Setter.Value>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <UniformGrid Rows="2" Columns="2" />
+                                                                                </ItemsPanelTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FolderPreviewTiles.Count}" Value="1">
+                                                                                <Setter Property="Width" Value="32" />
+                                                                                <Setter Property="Height" Value="32" />
+                                                                                <Setter Property="ItemsPanel">
+                                                                                    <Setter.Value>
+                                                                                        <ItemsPanelTemplate>
+                                                                                            <UniformGrid Rows="1" Columns="1" />
+                                                                                        </ItemsPanelTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding FolderPreviewTiles.Count}" Value="2">
+                                                                                <Setter Property="Height" Value="26" />
+                                                                                <Setter Property="ItemsPanel">
+                                                                                    <Setter.Value>
+                                                                                        <ItemsPanelTemplate>
+                                                                                            <UniformGrid Rows="1" Columns="2" />
+                                                                                        </ItemsPanelTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </ItemsControl.Style>
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <Border Margin="1"
