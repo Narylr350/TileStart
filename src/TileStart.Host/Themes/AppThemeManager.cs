@@ -15,8 +15,7 @@ public static class AppThemeManager
     public static void Apply(ResourceDictionary resources, AppThemeStyle style)
     {
         var dictionaries = resources.MergedDictionaries;
-        var existing = dictionaries.FirstOrDefault(dictionary =>
-            dictionary.Source?.OriginalString.StartsWith(ThemePathPrefix, StringComparison.OrdinalIgnoreCase) == true);
+        var existing = dictionaries.FirstOrDefault(dictionary => IsThemeDictionary(dictionary.Source));
         var replacement = new ResourceDictionary { Source = GetThemeUri(style) };
         if (existing is null)
         {
@@ -29,6 +28,14 @@ public static class AppThemeManager
         }
 
         ApplyTileDefaultBackground(resources);
+    }
+
+    private static bool IsThemeDictionary(Uri? source)
+    {
+        var path = source?.OriginalString;
+        return path is not null
+               && (path.Equals(ThemePathPrefix + "Win10Theme.xaml", StringComparison.OrdinalIgnoreCase)
+                   || path.Equals(ThemePathPrefix + "Win11Theme.xaml", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

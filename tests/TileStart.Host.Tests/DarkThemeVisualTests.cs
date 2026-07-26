@@ -94,7 +94,7 @@ public sealed class DarkThemeVisualTests
     [Fact]
     public void SharedExpanderTemplatePropagatesPrimaryForegroundIntoHeaderAndChevron()
     {
-        var document = LoadXaml("App.xaml");
+        var document = LoadXaml("SharedStyles.xaml");
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
 
@@ -163,10 +163,25 @@ public sealed class DarkThemeVisualTests
         Assert.NotEmpty(menus);
         Assert.All(menus, menu =>
         {
-            Assert.Equal("{StaticResource StartContextMenuStyle}", (string?)menu.Attribute("Style"));
+            Assert.Null(menu.Attribute("Style"));
             Assert.All(menu.Descendants(presentation + "MenuItem"), item =>
-                Assert.Equal("{StaticResource StartMenuItemStyle}", (string?)item.Attribute("Style")));
+                Assert.Null(item.Attribute("Style")));
         });
+
+        var sharedStyles = LoadXaml("SharedStyles.xaml");
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var implicitContextMenuStyle = sharedStyles.Descendants(presentation + "Style")
+            .Single(element =>
+                (string?)element.Attribute("TargetType") == "ContextMenu"
+                && element.Attribute(x + "Key") is null);
+        var implicitMenuItemStyle = sharedStyles.Descendants(presentation + "Style")
+            .Single(element =>
+                (string?)element.Attribute("TargetType") == "MenuItem"
+                && element.Attribute(x + "Key") is null);
+        Assert.Equal("{StaticResource TileStartContextMenuStyle}",
+            (string?)implicitContextMenuStyle.Attribute("BasedOn"));
+        Assert.Equal("{StaticResource TileStartMenuItemStyle}",
+            (string?)implicitMenuItemStyle.Attribute("BasedOn"));
     }
 
     [Fact]
@@ -179,11 +194,11 @@ public sealed class DarkThemeVisualTests
             "Thickness",
             "TileStartContextMenuPresenterPadding"));
 
-        var document = LoadMainWindow();
+        var document = LoadXaml("SharedStyles.xaml");
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         var contextMenuStyle = document.Descendants(presentation + "Style")
-            .Single(element => (string?)element.Attribute(x + "Key") == "StartContextMenuStyle");
+            .Single(element => (string?)element.Attribute(x + "Key") == "TileStartContextMenuStyle");
         Assert.Contains(contextMenuStyle.Elements(presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "Padding"
             && (string?)setter.Attribute("Value") == "{DynamicResource TileStartContextMenuPresenterPadding}");

@@ -59,54 +59,8 @@
             <Setter Property="Margin" Value="0,0,0,14" />
         </Style>
 
-        <Style TargetType="TextBox">
-            <Setter Property="Height" Value="32" />
+        <Style TargetType="TextBox" BasedOn="{StaticResource TileStartTextBoxStyle}">
             <Setter Property="Padding" Value="9,0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CaretBrush" Value="White" />
-            <Setter Property="SelectionBrush" Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="TextBoxBorder"
-                                 Background="{TemplateBinding Background}"
-                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                 CornerRadius="{StaticResource TileStartControlCornerRadius}"
-                                 SnapsToDevicePixels="True">
-                            <ScrollViewer x:Name="PART_ContentHost"
-                                          Padding="{TemplateBinding Padding}"
-                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          HorizontalScrollBarVisibility="Hidden"
-                                          VerticalScrollBarVisibility="Hidden"
-                                          Focusable="False" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TextBoxBorder" Property="BorderBrush"
-                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="TextBoxBorder" Property="BorderBrush"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                                <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="1,1,1,2" />
-                            </Trigger>
-                            <Trigger Property="IsReadOnly" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource TileStartTextSecondaryBrush}" />
-                                <Setter Property="Background" Value="{StaticResource TileStartLayerBackgroundBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
         <Style x:Key="DialogButtonStyle"
@@ -137,108 +91,9 @@
             <Setter Property="FontSize" Value="12" />
         </Style>
 
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource TileStartPopupBackgroundBrush}" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="{StaticResource TileStartControlCornerRadius}">
-                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource TileStartComboBoxItemStyle}" />
 
-        <Style TargetType="ComboBox">
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource TileStartControlBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource TileStartControlStrokeBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <Border x:Name="ComboBorder"
-                                     Background="{TemplateBinding Background}"
-                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                     CornerRadius="{StaticResource TileStartControlCornerRadius}">
-                                <Grid>
-                                    <ContentPresenter Margin="10,0,36,0"
-                                                      VerticalAlignment="Center"
-                                                      Content="{TemplateBinding SelectionBoxItem}"
-                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
-                                    <TextBlock Margin="0,0,12,0"
-                                               HorizontalAlignment="Right"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe MDL2 Assets"
-                                               FontSize="9"
-                                               Text="&#xE70D;" />
-                                    <ToggleButton Background="Transparent"
-                                                  BorderThickness="0"
-                                                  Focusable="False"
-                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                        <ToggleButton.Template>
-                                            <ControlTemplate TargetType="ToggleButton">
-                                                <Border Background="Transparent" />
-                                            </ControlTemplate>
-                                        </ToggleButton.Template>
-                                    </ToggleButton>
-                                </Grid>
-                            </Border>
-                            <Popup x:Name="PART_Popup"
-                                   AllowsTransparency="True"
-                                   Focusable="False"
-                                   IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   Placement="Bottom"
-                                   PopupAnimation="None">
-                                <Border
-                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                    MaxHeight="240"
-                                    Padding="0,4"
-                                     Background="{StaticResource TileStartPopupBackgroundBrush}"
-                                     BorderBrush="{StaticResource TileStartPopupStrokeBrush}"
-                                     BorderThickness="1"
-                                     CornerRadius="{StaticResource TileStartOverlayCornerRadius}">
-                                    <ScrollViewer CanContentScroll="False"
-                                                  PanningMode="VerticalOnly"
-                                                  utilities:SmoothScroll.IsEnabled="True">
-                                        <StackPanel IsItemsHost="True" />
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ComboBorder" Property="BorderBrush"
-                                        Value="{StaticResource TileStartControlStrokeHoverBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="ComboBorder" Property="BorderBrush"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource TileStartComboBoxStyle}" />
 
         <Style TargetType="Slider">
             <Setter Property="Height" Value="24" />

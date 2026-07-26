@@ -7,12 +7,6 @@ public partial class MainWindow
     private void StartContextMenu_Opened(object sender, RoutedEventArgs e) =>
         _tileWorkspaceController.StartContextMenu_Opened(sender, e);
 
-    private void SubmenuPopup_Opened(object? sender, EventArgs e) =>
-        _tileWorkspaceController.SubmenuPopup_Opened(sender, e);
-
-    private void SubmenuPopup_Closed(object? sender, EventArgs e) =>
-        _tileWorkspaceController.SubmenuPopup_Closed(sender, e);
-
     private void StartContextMenu_Closed(object sender, RoutedEventArgs e) =>
         _tileWorkspaceController.StartContextMenu_Closed(sender, e);
 

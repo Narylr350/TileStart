@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -24,16 +23,6 @@ namespace TileStart.Host.Controllers;
 
 internal sealed class TileWorkspaceController : IDisposable
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Point
-    {
-        public int X;
-        public int Y;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern bool GetCursorPos(out Point point);
-
     private int _appFolderAnimationGeneration;
     private int _tileFolderAnimationGeneration;
     private bool _isAppFolderAnimating;
@@ -98,16 +87,7 @@ internal sealed class TileWorkspaceController : IDisposable
         }
 
         _openContextMenu = menu;
-        if (GetContextMenuPopupBorder(menu) is { } border)
-        {
-            var opensUpward = ContextMenuOpensUpward(menu, border);
-            AnimateMenuPopupBorder(
-                border,
-                Win10MenuPopupMotion.TopLevelClosedRatio,
-                opensUpward,
-                opensUpward ? null : PointerOriginY(border),
-                useSubmenuDirection: true);
-        }
+        MenuPopupAnimator.OpenTopLevel(menu);
 
         if (menu.PlacementTarget is Button { Tag: TileItem tile })
         {
@@ -171,146 +151,6 @@ internal sealed class TileWorkspaceController : IDisposable
         }
     }
 
-    public void SubmenuPopup_Opened(object? sender, EventArgs e)
-    {
-        if (!SystemParameters.ClientAreaAnimation
-            || sender is not System.Windows.Controls.Primitives.Popup
-            {
-                Child: System.Windows.Controls.Border border,
-            } popup)
-        {
-            return;
-        }
-
-        border.UpdateLayout();
-        if (border.ActualWidth <= 0 || border.ActualHeight <= 0)
-        {
-            return;
-        }
-
-        var submenuOpensUpward = false;
-        double? pointerOriginY = null;
-        if (popup.PlacementTarget is FrameworkElement placementTarget)
-        {
-            try
-            {
-                submenuOpensUpward = border.PointToScreen(new System.Windows.Point()).Y
-                                     < placementTarget.PointToScreen(new System.Windows.Point()).Y - 0.5;
-            }
-            catch (InvalidOperationException)
-            {
-            }
-        }
-
-        if (!submenuOpensUpward)
-        {
-            pointerOriginY = PointerOriginY(border);
-        }
-
-        AnimateMenuPopupBorder(
-            border,
-            Win10MenuPopupMotion.SubmenuClosedRatio,
-            submenuOpensUpward,
-            pointerOriginY,
-            useSubmenuDirection: true);
-    }
-
-    private static void AnimateMenuPopupBorder(
-        System.Windows.Controls.Border border,
-        double closedRatio,
-        bool popupOpensUpward,
-        double? pointerOriginY = null,
-        bool useSubmenuDirection = false)
-    {
-        if (!SystemParameters.ClientAreaAnimation)
-        {
-            return;
-        }
-
-        border.UpdateLayout();
-        if (border.ActualWidth <= 0 || border.ActualHeight <= 0)
-        {
-            return;
-        }
-
-        var fullRect = new System.Windows.Rect(0, 0, border.ActualWidth, border.ActualHeight);
-        var clip = new RectangleGeometry(fullRect);
-        border.Clip = clip;
-        var animation = Win10MenuPopupMotion.CreateOpenAnimation(
-            border.ActualWidth,
-            border.ActualHeight,
-            closedRatio,
-            popupOpensUpward,
-            pointerOriginY,
-            useSubmenuDirection);
-        animation.Completed += (_, _) =>
-        {
-            if (ReferenceEquals(border.Clip, clip))
-            {
-                border.ClearValue(UIElement.ClipProperty);
-            }
-        };
-        clip.BeginAnimation(
-            RectangleGeometry.RectProperty,
-            animation,
-            HandoffBehavior.SnapshotAndReplace);
-    }
-
-    private static System.Windows.Controls.Border? GetContextMenuPopupBorder(ContextMenu menu) =>
-        menu.Template.FindName("ContextMenuPopupBorder", menu) as System.Windows.Controls.Border;
-
-    private static double? PointerOriginY(FrameworkElement popup)
-    {
-        if (!GetCursorPos(out var cursor))
-        {
-            return null;
-        }
-
-        try
-        {
-            var localPointer = popup.PointFromScreen(new System.Windows.Point(cursor.X, cursor.Y));
-            return localPointer.Y >= 0 && localPointer.Y <= popup.ActualHeight
-                ? localPointer.Y
-                : null;
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static bool ContextMenuOpensUpward(
-        ContextMenu menu,
-        System.Windows.Controls.Border border)
-    {
-        try
-        {
-            var menuTop = border.PointToScreen(new System.Windows.Point()).Y;
-            if (menu.Placement == System.Windows.Controls.Primitives.PlacementMode.Right
-                && menu.PlacementTarget is FrameworkElement placementTarget)
-            {
-                return menuTop < placementTarget.PointToScreen(new System.Windows.Point()).Y - 0.5;
-            }
-
-            return GetCursorPos(out var cursor) && menuTop < cursor.Y - 0.5;
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
-    }
-
-    public void SubmenuPopup_Closed(object? sender, EventArgs e)
-    {
-        if (sender is System.Windows.Controls.Primitives.Popup
-            {
-                Child: System.Windows.Controls.Border border,
-            })
-        {
-            border.ClearValue(UIElement.ClipProperty);
-        }
-    }
-
     public void StartContextMenu_Closed(object sender, RoutedEventArgs e)
     {
         _setOpenContextMenuState(false);
@@ -319,9 +159,9 @@ internal sealed class TileWorkspaceController : IDisposable
             _openContextMenu = null;
         }
 
-        if (sender is ContextMenu menu && GetContextMenuPopupBorder(menu) is { } border)
+        if (sender is ContextMenu menu)
         {
-            border.ClearValue(UIElement.ClipProperty);
+            MenuPopupAnimator.CloseTopLevel(menu);
         }
 
         if (!_navigationController.IsNavigationPinnedOpen && !_navigationPane.IsMouseOver)
