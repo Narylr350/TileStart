@@ -33,6 +33,7 @@ public sealed class LocalHotfixAutomationTests
         var script = ReadAutomationFile("Install-Local-Hotfix.ps1");
 
         Assert.Contains("Get-FileHash", script);
+        Assert.Contains("TrimStart('*')", script);
         Assert.Contains("& $installedHost --shutdown", script);
         Assert.Contains("LOCAL-HOTFIX.json", script);
         Assert.Contains("$env:ProgramFiles", script);

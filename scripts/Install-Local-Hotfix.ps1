@@ -116,15 +116,19 @@ try
         throw 'Local Hotfix metadata does not match the selected workflow run.'
     }
 
-    $checksumLine = Get-Content -LiteralPath $checksumPath |
-        Where-Object { $_ -match "^[0-9a-fA-F]{64} \\*$([Regex]::Escape($installerName))$" } |
-        Select-Object -First 1
-    if ($null -eq $checksumLine)
+    $checksumEntry = Get-Content -LiteralPath $checksumPath | ForEach-Object {
+        $parts = $_.Trim() -split '\s+', 2
+        if (($parts.Count -eq 2) -and ($parts[0] -match '^[0-9a-fA-F]{64}$') -and ($parts[1].TrimStart('*').Equals($installerName, [StringComparison]::OrdinalIgnoreCase)))
+        {
+            [PSCustomObject]@{ Hash = $parts[0]; Name = $parts[1].TrimStart('*') }
+        }
+    } | Select-Object -First 1
+    if ($null -eq $checksumEntry)
     {
         throw "Checksum manifest does not contain $installerName."
     }
 
-    $expectedHash = ($checksumLine -split '\s+', 2)[0]
+    $expectedHash = $checksumEntry.Hash
     $actualHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
     if (-not $actualHash.Equals($expectedHash, [StringComparison]::OrdinalIgnoreCase))
     {
@@ -165,8 +169,8 @@ try
     $hostShouldBeRunning = $false
     $processes = @(Get-Process | Where-Object { $_.ProcessName -like 'TileStart*' })
     $unexpectedProcess = $processes | Where-Object {
-        [string]::IsNullOrWhiteSpace($_.Path)
-        -or -not $_.Path.StartsWith($installedDirectory, [StringComparison]::OrdinalIgnoreCase)
+        [string]::IsNullOrWhiteSpace($_.Path) -or
+        (-not $_.Path.StartsWith($installedDirectory, [StringComparison]::OrdinalIgnoreCase))
     }
     if ($unexpectedProcess)
     {
