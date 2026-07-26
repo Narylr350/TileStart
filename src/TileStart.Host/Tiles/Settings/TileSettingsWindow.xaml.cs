@@ -2,12 +2,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ColorDialog = System.Windows.Forms.ColorDialog;
 using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushConverter = System.Windows.Media.BrushConverter;
 using MediaBrushes = System.Windows.Media.Brushes;
 using MediaColorConverter = System.Windows.Media.ColorConverter;
-using FormsDialogResult = System.Windows.Forms.DialogResult;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using OpenFolderDialog = Microsoft.Win32.OpenFolderDialog;
@@ -275,12 +273,12 @@ public partial class TileSettingsWindow : Window
         ChooseColor(ForegroundColorBox);
     }
 
-    private static void ChooseColor(System.Windows.Controls.TextBox target)
+    private void ChooseColor(System.Windows.Controls.TextBox target)
     {
-        using var dialog = new ColorDialog { FullOpen = true };
-        if (dialog.ShowDialog() == FormsDialogResult.OK)
+        var picker = new ColorPickerWindow(target.Text) { Owner = this };
+        if (picker.ShowDialog() == true)
         {
-            target.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+            target.Text = picker.SelectedHex;
         }
     }
 
