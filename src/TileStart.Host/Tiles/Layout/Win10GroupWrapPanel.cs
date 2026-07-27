@@ -72,17 +72,29 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
             resolved.Add((item with { ColumnSpan = span }, cell));
         }
 
-        var rowHeights = resolved
-            .GroupBy(entry => entry.Cell.Row)
-            .ToDictionary(row => row.Key, row => row.Max(entry => entry.Item.Height));
-        var rowTops = new Dictionary<int, double>();
-        var top = 0d;
-        for (var row = 0; row <= rowHeights.Keys.DefaultIfEmpty(-1).Max(); row++)
+        var columnBottoms = new double[columns];
+        var itemTops = new Dictionary<int, double>(resolved.Count);
+        foreach (var row in resolved.GroupBy(entry => entry.Cell.Row).OrderBy(row => row.Key))
         {
-            rowTops[row] = top;
-            if (rowHeights.TryGetValue(row, out var height))
+            var placements = row
+                .Select(entry =>
+                {
+                    var top = Enumerable.Range(entry.Cell.Column, entry.Item.ColumnSpan)
+                        .Max(column => columnBottoms[column]);
+                    return (Entry: entry, Top: top);
+                })
+                .ToArray();
+
+            foreach (var placement in placements)
             {
-                top += height;
+                itemTops[placement.Entry.Item.Index] = placement.Top;
+                var bottom = placement.Top + placement.Entry.Item.Height;
+                for (var column = placement.Entry.Cell.Column;
+                     column < placement.Entry.Cell.Column + placement.Entry.Item.ColumnSpan;
+                     column++)
+                {
+                    columnBottoms[column] = bottom;
+                }
             }
         }
 
@@ -95,7 +107,7 @@ public sealed class Win10GroupWrapPanel : System.Windows.Controls.Panel
                     entry.Cell.Row,
                     entry.Item.ColumnSpan,
                     TileWorkspaceMetrics.Left(entry.Cell.Column),
-                    rowTops[entry.Cell.Row],
+                    itemTops[entry.Item.Index],
                     entry.Item.Width,
                     entry.Item.Height))
                 .OrderBy(slot => slot.Index),

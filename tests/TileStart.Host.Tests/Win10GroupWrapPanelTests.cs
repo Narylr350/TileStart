@@ -45,19 +45,39 @@ public sealed class Win10GroupWrapPanelTests
     }
 
     [Fact]
-    public void ShelfRowsUseTheTallestGroupInThePreviousRow()
+    public void TallerGroupOnlyPushesGroupsBelowItsCoveredColumns()
+    {
+        var slots = Win10GroupWrapPanel.CalculateSlots(
+            [
+                new Win10GroupPanelItem(0, 0, 0, 1, 100, 432),
+                new Win10GroupPanelItem(1, 1, 0, 1, 100, 232),
+                new Win10GroupPanelItem(2, 2, 0, 1, 100, 232),
+                new Win10GroupPanelItem(3, 0, 1, 1, 100, 232),
+                new Win10GroupPanelItem(4, 1, 1, 1, 100, 232),
+                new Win10GroupPanelItem(5, 2, 1, 1, 100, 232),
+            ],
+            columns: 3);
+
+        Assert.Equal(432, slots[3].Top);
+        Assert.Equal(232, slots[4].Top);
+        Assert.Equal(232, slots[5].Top);
+    }
+
+    [Fact]
+    public void SpanningGroupStartsBelowTheLowestCoveredColumn()
     {
         var slots = Win10GroupWrapPanel.CalculateSlots(
             [
                 new Win10GroupPanelItem(0, 0, 0, 1, 100, 232),
                 new Win10GroupPanelItem(1, 1, 0, 1, 100, 432),
-                new Win10GroupPanelItem(2, 0, 1, 1, 100, 232),
-                new Win10GroupPanelItem(3, 1, 1, 1, 100, 232),
+                new Win10GroupPanelItem(2, 2, 0, 1, 100, 132),
+                new Win10GroupPanelItem(3, 0, 1, 2, 204, 232),
+                new Win10GroupPanelItem(4, 2, 1, 1, 100, 232),
             ],
-            columns: 2);
+            columns: 3);
 
-        Assert.Equal(432, slots[2].Top);
         Assert.Equal(432, slots[3].Top);
+        Assert.Equal(132, slots[4].Top);
     }
 
     [Fact]
