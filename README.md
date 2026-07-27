@@ -9,6 +9,7 @@
 [![Release](https://img.shields.io/github/v/release/Narylr350/TileStart?display_name=tag&style=flat-square)](https://github.com/Narylr350/TileStart/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
+![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-451%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
@@ -95,7 +96,7 @@ Windows 10 的磁贴开始菜单已经停止维护，Windows 11 又移除了这�
 
 ## 下载与安装
 
-最新版本：**v0.1.11**
+最新版本：**v0.1.12**
 
 | 文件 | 用途 |
 | --- | --- |
@@ -167,15 +168,15 @@ Windows 10 Pro for Workstations
 TileStart 的目标平台是 Windows 10 / 11 x64，但 Shell 接管与 Windows build 强相关：
 
 - Windows 10 build 19045 已完成基线实机验证。
-- 当前 Windows 11 界面与核心功能验证环境为 25H2 build 26200.8875，使用独立的 Win11 适配路径。
-- Windows 11 Shell 接管曾在 build 22631 上完成实机验证，当前 build 26200 仍需重新覆盖完整接管回归。
+- 当前 Windows 11 界面、核心功能和 Shell 注入环境为 25H2 build 26200.8875，使用独立的 Win11 适配路径。
+- 当前 build 26200 已验证 Injector 能选择 Win11-modern 适配器并完成 ShellHook 注入；不同 Windows build、任务栏布局和全屏场景仍需持续实机回归。
 - Windows build 用于选择最接近的 Win10 / Win11 适配器族，不再作为精确白名单门禁；未知或未来 build 会先尝试兼容路径，并在日志中记录实际 build 与适配器选择。
 - Host 或 Hook 不可用时必须保留原生开始菜单作为回退。
 
 ## 已知限制
 
 - 安装器和可执行文件尚未进行 Authenticode 代码签名。
-- Windows 11 Shell 接管尚未完成与 Win10 同等级别的实机覆盖。
+- 不同 Windows build、任务栏布局、DPI 和全屏场景的 Shell 接管覆盖仍在持续扩大。
 - 全屏游戏中的单独 `Win` 键接管仍需继续验证。
 - 高刷新率屏幕上的动画流畅度仍低于 Windows 原生开始菜单。
 - NVIDIA App Overlay 的自动 DRS 配置 helper 尚未集成到安装器。
@@ -265,16 +266,16 @@ artifacts\installer\TileStart-Setup-win-x64.exe
 推送符合 `v主版本.次版本.修订号` 格式的标签后，GitHub Actions 会自动运行测试、构建完整 x64 解决方案、生成便携包与安装器、计算 SHA-256，并创建 GitHub Release：
 
 ```powershell
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.12
+git push origin v0.1.12
 ```
 
-也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.1`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
+也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.12`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
 
 本地为指定版本生成相同产物：
 
 ```powershell
-.\scripts\Build-Package.ps1 -Version 0.1.1
+.\scripts\Build-Package.ps1 -Version 0.1.12
 ```
 
 ## 项目结构
@@ -282,39 +283,26 @@ git push origin v0.1.1
 ```text
 src/TileStart.Host/          WPF Host、应用扫描、磁贴、设置、备份与托盘
 src/TileStart.ShellHook/     Explorer 内的最小原生 Hook
-src/TileStart.Injector/      Hook 挂载、版本检查与 Explorer 生命周期
+src/TileStart.Injector/      Hook 挂载、兼容适配与 Explorer 生命周期
 src/TileStart.ShellProbe/    Shell / IPC 验证工具
 tests/TileStart.Host.Tests/  托管单元、行为与 XAML 回归测试
 installer/                   Inno Setup 安装配置
 scripts/                     构建和打包脚本
-tools/reverse/               可复现的 Win10 StartUI 研究工具
-docs/                        设计、验证和逆向证据
+docs/                        设计、验证和用户反馈资料
 ```
-
-## 实现边界
-
-TileStart 不修改或分发微软 `StartUI.dll`。项目使用公开 PDB、二进制静态分析、XAML Diagnostics、WinDbg、ETW 和实机观察理解原版行为，但生产代码在本仓库中独立编写。
-
-仓库不提交微软 DLL / PDB、系统 PRI、反编译数据库、Ghidra 工程或第三方逆向工具二进制，只保存版本哈希、符号锚点、行为观察、派生规格和自主实现。
-
-研究资料：
-
-- [Win10 开始菜单研究记录](docs/win10-start-research.md)
-- [Win10 Motion 逆向记录](docs/win10-start-motion-reverse.md)
-- [StartUI 布局符号记录](docs/startui-layout-symbols.md)
-- [可复现参考数据](docs/reference/win10-start/)
 
 ## 参与开发
 
 欢迎通过 Issues 或 Pull Requests 提交可复现的问题、Windows build 信息、性能采样和改进建议。涉及 Shell 接管、动画、视觉或不同 DPI 的变更，请同时说明 Windows build、DPI、任务栏位置和验证方式。
 
-> [!NOTE]
-> 仓库当前未附带开源许可证。未经明确许可，不代表自动授予复制、修改或再分发权限。
+## 许可证
+
+TileStart 使用 [Apache License 2.0](LICENSE)，允许个人和商业使用、修改与再发布，但必须保留许可证和版权声明，并遵守 Apache-2.0 的专利与署名条款。项目版权声明见 [NOTICE](NOTICE)。
 
 ---
 
 <div align="center">
 
-**TileStart v0.1.11 · Built for the tile workspace that Windows left behind.**
+**TileStart v0.1.12 · Built for the tile workspace that Windows left behind.**
 
 </div>
