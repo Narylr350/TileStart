@@ -39,7 +39,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="42" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="58" />
+                <RowDefinition Height="60" />
             </Grid.RowDefinitions>
 
             <Grid Background="{StaticResource TileStartLayerBackgroundBrush}"

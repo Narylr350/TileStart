@@ -19,6 +19,7 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource TileStartDialogScrollBarStyle}" />
         <Style x:Key="ThemeChoiceStyle" TargetType="RadioButton">
             <Setter Property="Height" Value="72" />
             <Setter Property="Padding" Value="16,0" />

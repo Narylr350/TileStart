@@ -167,11 +167,19 @@ public sealed class DarkThemeVisualTests
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "关于 TileStart");
 
+        var settingsScrollBarStyle = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute("TargetType") == "ScrollBar"
+                && element.Attribute(x + "Key") is null);
+        Assert.Equal("{StaticResource TileStartDialogScrollBarStyle}",
+            (string?)settingsScrollBarStyle.Attribute("BasedOn"));
+
         var about = LoadXaml("AboutWindow.xaml");
         Assert.Contains(about.Descendants(presentation + "Button"),
             element => (string?)element.Attribute("Content") == "检查更新");
         Assert.Contains(about.Descendants(presentation + "Button"),
             element => (string?)element.Attribute("Content") == "返回设置");
+        Assert.Contains(about.Descendants(presentation + "RowDefinition"),
+            element => (string?)element.Attribute("Height") == "60");
     }
 
     [Fact]
