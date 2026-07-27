@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="src/TileStart.Host/Assets/TileStart-icon-master.png" alt="TileStart 图标" width="144">
+
 # TileStart
 
 **把 Windows 10 的磁贴开始菜单带到 Windows 10 / 11，并让每一块磁贴真正属于你。**
@@ -7,7 +9,7 @@
 [![Release](https://img.shields.io/github/v/release/Narylr350/TileStart?display_name=tag&style=flat-square)](https://github.com/Narylr350/TileStart/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
-![Tests](https://img.shields.io/badge/tests-326%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-449%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -22,7 +24,7 @@ TileStart 是一个面向 Windows x64 的 **Windows 10 风格磁贴开始菜单�
 > [!WARNING]
 > 当前安装器和可执行文件尚未进行 Authenticode 代码签名，Windows Defender SmartScreen 可能显示“未知发布者”。请只从本仓库的 [Releases](https://github.com/Narylr350/TileStart/releases) 页面下载，并可使用随 Release 提供的 `SHA256SUMS.txt` 校验文件。
 
-![TileStart Win10 风格开始菜单](docs/tilestart-win10-start-menu.png)
+![TileStart 深色主题下的 Win10 风格开始菜单](docs/tilestart-win10-start-menu.png)
 
 ## 为什么做 TileStart
 
@@ -53,7 +55,8 @@ Windows 10 的磁贴开始菜单已经停止维护，Windows 11 又移除了这�
 - Win10 风格磁贴组、组命名和二维组布局。
 - 小 `1×1`、中 `2×2`、宽 `4×2`、大 `4×4` 四种磁贴尺寸。
 - 组内重排、跨组移动、自动让位、边缘滚动和整组拖动。
-- 将磁贴组成文件夹，或从现有组拆分为新组。
+- 将磁贴组成文件夹，管理文件夹内容并单独编辑其中的子磁贴，或从现有组拆分为新组。
+- 文件夹预览随实际内容更新；展开时只推动发生重叠的后续分组列。
 - 固定 `.exe`、`.lnk`、普通文件、文件夹、批处理、PowerShell、URL、UWP/MSIX 与自定义命令。
 - 设置启动参数、工作目录和管理员运行。
 
@@ -63,8 +66,9 @@ Windows 10 的磁贴开始菜单已经停止维护，Windows 11 又移除了这�
 - 支持 PNG、JPEG、BMP、ICO、GIF 和 SVG。
 - 支持主动下载网络图标。
 - 静态图片与 GIF 可作为磁贴背景。
+- 界面风格与颜色模式可分别设置，支持 Windows 10 / Windows 11 风格，以及随系统、浅色、深色模式。
 - 自定义背景色、文字色、图标大小、图标位置、标题显示与背景缩放。
-- 磁贴设置窗口提供实时预览和一键恢复默认外观。
+- 磁贴设置窗口提供实时预览、一键恢复默认外观，以及“应用”和“保存并关闭”两种提交方式。
 
 ### 备份与恢复
 
@@ -83,13 +87,14 @@ Windows 10 的磁贴开始菜单已经停止维护，Windows 11 又移除了这�
 - 暂停 / 恢复 Shell 接管。
 - 主动打开 Windows 原生开始菜单。
 - 切换登录自启动。
-- 主动检查 GitHub 最新 Release；下载后必须通过随 Release 提供的 SHA-256 校验，安装版启动安装器，便携版打开下载目录供手动覆盖。
+- 设置二级页面支持返回上一级；“关于项目”中可主动检查 GitHub 最新 Release。
+- 更新包下载后必须通过随 Release 提供的 SHA-256 校验，安装版启动安装器，便携版打开下载目录供手动覆盖。
 - 资源管理器右键“添加到 TileStart 应用列表”或“添加到 TileStart 磁贴区”。
 - Host、IPC 或 Hook 不可用时采用 fail-open，放行原生行为。
 
 ## 下载与安装
 
-最新版本：**v0.1.0**
+最新版本：**v0.1.11**
 
 | 文件 | 用途 |
 | --- | --- |
@@ -146,7 +151,7 @@ TileStart.log        本地诊断日志
 
 ## 兼容性
 
-首轮持续实机验证环境：
+Windows 10 基线验证环境：
 
 ```text
 Windows 10 Pro for Workstations
@@ -159,8 +164,9 @@ Windows 10 Pro for Workstations
 
 TileStart 的目标平台是 Windows 10 / 11 x64，但 Shell 接管与 Windows build 强相关：
 
-- Windows 10 build 19045 是当前主要验证环境。
-- Windows 11 将使用独立适配路径，并在设备升级后继续实机验证。
+- Windows 10 build 19045 已完成基线实机验证。
+- 当前 Windows 11 界面与核心功能验证环境为 25H2 build 26200.8875，使用独立的 Win11 适配路径。
+- Windows 11 Shell 接管曾在 build 22631 上完成实机验证，当前 build 26200 仍需重新覆盖完整接管回归。
 - 未验证的系统 build 不应使用未经确认的 Hook 定位。
 - Host 或 Hook 不可用时必须保留原生开始菜单作为回退。
 
@@ -294,6 +300,6 @@ TileStart 不修改或分发微软 `StartUI.dll`。项目使用公开 PDB、二�
 
 <div align="center">
 
-**TileStart v0.1.0 · Built for the tile workspace that Windows left behind.**
+**TileStart v0.1.11 · Built for the tile workspace that Windows left behind.**
 
 </div>
