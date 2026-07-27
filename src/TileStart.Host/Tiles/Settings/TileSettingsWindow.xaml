@@ -620,7 +620,7 @@
                                                 Style="{StaticResource DialogButtonStyle}"
                                                 Content="SVG…"
                                                 Click="ChooseSvgIcon_Click" />
-                                        <Button Width="76"
+                                        <Button Width="88"
                                                 Style="{StaticResource DialogButtonStyle}"
                                                 Content="使用默认"
                                                 Click="ClearIcon_Click" />
@@ -814,10 +814,16 @@
                                 Style="{StaticResource DialogButtonStyle}"
                                 IsCancel="True"
                                 Content="取消" />
-                        <Button Width="76"
+                        <Button x:Name="ApplyButton"
+                                Width="76"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource DialogButtonStyle}"
+                                Content="应用"
+                                Click="Apply_Click" />
+                        <Button Width="100"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 IsDefault="True"
-                                Content="保存"
+                                Content="保存并关闭"
                                 Click="Save_Click" />
                     </StackPanel>
                 </Grid>

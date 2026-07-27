@@ -10,12 +10,19 @@ namespace TileStart.Host.About;
 public partial class AboutWindow : Window
 {
     internal static readonly Uri ProjectUri = new("https://github.com/Narylr350/TileStart");
+    private readonly Func<Task> _checkForUpdates;
 
-    public AboutWindow()
+    public AboutWindow(Func<Task> checkForUpdates)
     {
+        _checkForUpdates = checkForUpdates;
         InitializeComponent();
         VersionText.Text = $"版本 {GitHubUpdateService.CurrentVersion.ToString(3)}";
         EditionText.Text = GitHubUpdateService.IsInstalledCopy(Environment.ProcessPath) ? "安装版" : "便携版";
+    }
+
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        await _checkForUpdates();
     }
 
     private void OpenProject_Click(object sender, RoutedEventArgs e)

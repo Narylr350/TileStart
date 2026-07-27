@@ -355,6 +355,24 @@ internal sealed class TileWorkspaceController : IDisposable
             tile,
             defaultIcon: defaultVisual.Icon,
             defaultUsesFullTileLogo: defaultVisual.UsesFullTileLogo);
+        void CommitSettings()
+        {
+            ApplyTileSettings(tile, dialog);
+            if (folder is null)
+            {
+                Win10GroupLayout.Normalize(group);
+            }
+            else
+            {
+                TileFolderLayout.Normalize(folder);
+                group.RefreshLayout();
+                _window.UpdateLayout();
+            }
+
+            TileLayoutStore.Save(_tileLayout);
+        }
+
+        dialog.ApplyRequested += (_, _) => CommitSettings();
         if (ShowTileSettingsDialog(dialog) != true)
         {
             return;
@@ -367,19 +385,7 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
-        ApplyTileSettings(tile, dialog);
-        if (folder is null)
-        {
-            Win10GroupLayout.Normalize(group);
-        }
-        else
-        {
-            TileFolderLayout.Normalize(folder);
-            group.RefreshLayout();
-            _window.UpdateLayout();
-        }
-
-        TileLayoutStore.Save(_tileLayout);
+        CommitSettings();
     }
 
     public void UnpinTile_Click(object sender, RoutedEventArgs e)

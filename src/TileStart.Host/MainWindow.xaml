@@ -194,7 +194,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource TileBackground}" />
+            <Setter Property="Background" Value="{StaticResource TileStartDefaultTileBackgroundBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">

@@ -13,15 +13,16 @@ public sealed class TrayIcon : IDisposable
     private readonly TileStartTrayPalette _palette;
 
     public TrayIcon(Action showWindow, Action<bool> setPaused, Action openNativeStart, AppThemeStyle themeStyle,
+        bool useDarkMode,
         Action openSettings, Action exit)
     {
-        _palette = TileStartTrayRenderer.GetPalette(themeStyle);
+        _palette = TileStartTrayRenderer.GetPalette(themeStyle, useDarkMode);
         _menuFont = new Drawing.Font(
             themeStyle == AppThemeStyle.Windows11 ? "Segoe UI Variable Text" : "Segoe UI",
             10,
             Drawing.FontStyle.Regular,
             Drawing.GraphicsUnit.Point);
-        var menu = CreateContextMenu(_menuFont, themeStyle);
+        var menu = CreateContextMenu(_menuFont, themeStyle, useDarkMode);
         menu.Items.Add(CreateMenuItem("打开 TileStart", (_, _) => showWindow()));
         menu.Items.Add(CreateMenuItem("打开原生开始菜单", (_, _) => openNativeStart()));
         menu.Items.Add(CreateSeparator());
@@ -58,7 +59,7 @@ public sealed class TrayIcon : IDisposable
         _menuFont.Dispose();
     }
 
-    private Forms.ContextMenuStrip CreateContextMenu(Drawing.Font font, AppThemeStyle themeStyle)
+    private Forms.ContextMenuStrip CreateContextMenu(Drawing.Font font, AppThemeStyle themeStyle, bool useDarkMode)
     {
         var menu = new Forms.ContextMenuStrip
         {
@@ -69,11 +70,11 @@ public sealed class TrayIcon : IDisposable
             ShowCheckMargin = true,
             ShowImageMargin = false,
         };
-        ConfigureDropDown(menu, themeStyle);
+        ConfigureDropDown(menu, themeStyle, useDarkMode);
         return menu;
     }
 
-    private void ConfigureDropDown(Forms.ToolStripDropDown menu, AppThemeStyle themeStyle)
+    private void ConfigureDropDown(Forms.ToolStripDropDown menu, AppThemeStyle themeStyle, bool useDarkMode)
     {
         menu.BackColor = MenuBackgroundColor;
         menu.ForeColor = MenuForegroundColor;
@@ -84,7 +85,7 @@ public sealed class TrayIcon : IDisposable
             return;
         }
 
-        menu.Renderer = new TileStartTrayRenderer(themeStyle);
+        menu.Renderer = new TileStartTrayRenderer(themeStyle, useDarkMode);
         if (themeStyle == AppThemeStyle.Windows11)
         {
             menu.Opened += (_, _) => ApplyRoundedRegion(menu);
@@ -135,9 +136,9 @@ public sealed class TrayIcon : IDisposable
         ? Drawing.SystemColors.Menu
         : _palette.Background;
 
-    private static Drawing.Color MenuForegroundColor => Forms.SystemInformation.HighContrast
+    private Drawing.Color MenuForegroundColor => Forms.SystemInformation.HighContrast
         ? Drawing.SystemColors.MenuText
-        : Drawing.Color.White;
+        : _palette.Text;
 
     private static Drawing.Icon? LoadApplicationIcon()
     {

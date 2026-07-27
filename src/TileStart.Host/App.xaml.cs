@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using Microsoft.Win32;
 using TileStart.Host.About;
 using TileStart.Host.Backup;
 using TileStart.Host.Compatibility;
@@ -23,6 +24,9 @@ public partial class App : System.Windows.Application
     private readonly GitHubUpdateService _updateService = new();
     private bool _isPaused;
     private bool _isCheckingForUpdates;
+    private bool _isSystemThemeSubscribed;
+    private bool _isRestartScheduled;
+    private bool _resolvedDarkMode;
     private AppearancePreferences _appearancePreferences = new();
 
     public App()
@@ -70,11 +74,14 @@ public partial class App : System.Windows.Application
         }
 
         _appearancePreferences = AppearancePreferencesStore.Load();
-        AppThemeManager.Apply(Resources, _appearancePreferences.ThemeStyle);
+        _resolvedDarkMode = AppThemeManager.ResolveDarkMode(_appearancePreferences.ColorMode);
+        AppThemeManager.Apply(Resources, _appearancePreferences.ThemeStyle, _appearancePreferences.ColorMode);
+        SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+        _isSystemThemeSubscribed = true;
 
         DiagnosticLog.Write("Creating main window.");
         MainWindow = new MainWindow(_appearancePreferences.ThemeStyle);
-        PrimeHiddenWindow(MainWindow);
+        PrimeApplicationActivation();
         DiagnosticLog.Write("Main window created.");
         _server = new OpenRequestServer(HandleHostRequest, Dispatcher);
         _server.Start();
@@ -95,6 +102,7 @@ public partial class App : System.Windows.Application
             SetPaused,
             WinKeyHook.OpenNativeStartMenu,
             _appearancePreferences.ThemeStyle,
+            _resolvedDarkMode,
             OpenSettings,
             ExitApplication);
         if (e.Args.Length > 0 && startupRequest.Kind is not HostRequestKind.Exit and not HostRequestKind.Open)
@@ -140,22 +148,23 @@ public partial class App : System.Windows.Application
         }
     }
 
-    private static void PrimeHiddenWindow(Window window)
+    private static void PrimeApplicationActivation()
     {
-        var left = window.Left;
-        var top = window.Top;
-        var opacity = window.Opacity;
-        var showActivated = window.ShowActivated;
-        window.Left = -32000;
-        window.Top = -32000;
-        window.Opacity = 0;
-        window.ShowActivated = false;
-        window.Show();
-        window.Hide();
-        window.Left = left;
-        window.Top = top;
-        window.Opacity = opacity;
-        window.ShowActivated = showActivated;
+        var activationWindow = new Window
+        {
+            Width = 1,
+            Height = 1,
+            Left = -32000,
+            Top = -32000,
+            Opacity = 0,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            WindowStyle = WindowStyle.None,
+        };
+        activationWindow.Show();
+        activationWindow.Hide();
+        activationWindow.Close();
     }
 
     private void SetPaused(bool paused)
@@ -185,18 +194,10 @@ public partial class App : System.Windows.Application
         }
     }
 
-    private void OpenBackupAndRestore()
+    private void OpenBackupAndRestore(Window owner)
     {
-        Dispatcher.BeginInvoke(() =>
-        {
-            var dialog = new BackupRestoreWindow(ScheduleRestore);
-            if (MainWindow?.IsVisible == true)
-            {
-                dialog.Owner = MainWindow;
-            }
-
-            dialog.ShowDialog();
-        });
+        var dialog = new BackupRestoreWindow(ScheduleRestore) { Owner = owner };
+        dialog.ShowDialog();
     }
 
     private void OpenSettings()
@@ -205,8 +206,7 @@ public partial class App : System.Windows.Application
         {
             var dialog = new SettingsWindow(
                 _appearancePreferences.ThemeStyle,
-                ChangeThemeStyle,
-                CheckForUpdatesAsync,
+                _appearancePreferences.ColorMode,
                 OpenBackupAndRestore,
                 OpenAbout);
             if (MainWindow?.IsVisible == true)
@@ -218,26 +218,17 @@ public partial class App : System.Windows.Application
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
-            dialog.ShowDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                ChangeAppearance(dialog.SelectedThemeStyle, dialog.SelectedColorMode);
+            }
         });
     }
 
-    private void OpenAbout()
+    private void OpenAbout(Window owner)
     {
-        Dispatcher.BeginInvoke(() =>
-        {
-            var dialog = new AboutWindow();
-            if (MainWindow?.IsVisible == true)
-            {
-                dialog.Owner = MainWindow;
-            }
-            else
-            {
-                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            }
-
-            dialog.ShowDialog();
-        });
+        var dialog = new AboutWindow(CheckForUpdatesAsync) { Owner = owner };
+        dialog.ShowDialog();
     }
 
     private async Task CheckForUpdatesAsync()
@@ -321,15 +312,57 @@ public partial class App : System.Windows.Application
         Shutdown();
     }
 
-    private void ChangeThemeStyle(AppThemeStyle themeStyle)
+    private void ChangeAppearance(AppThemeStyle themeStyle, AppColorMode colorMode)
     {
-        if (_appearancePreferences.ThemeStyle == themeStyle)
+        if (_appearancePreferences.ThemeStyle == themeStyle && _appearancePreferences.ColorMode == colorMode)
         {
             return;
         }
 
         _appearancePreferences.ThemeStyle = themeStyle;
+        _appearancePreferences.ColorMode = colorMode;
         AppearancePreferencesStore.Save(_appearancePreferences);
+        ScheduleApplicationRestart();
+    }
+
+    private void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (_appearancePreferences.ColorMode != AppColorMode.System)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            var resolvedDarkMode = AppThemeManager.ResolveDarkMode(AppColorMode.System);
+            if (resolvedDarkMode == _resolvedDarkMode)
+            {
+                return;
+            }
+
+            _resolvedDarkMode = resolvedDarkMode;
+            ScheduleApplicationRestart();
+        });
+    }
+
+    private void ScheduleApplicationRestart()
+    {
+        if (_isRestartScheduled)
+        {
+            return;
+        }
+
+        _isRestartScheduled = true;
+        if (MainWindow is MainWindow mainWindow)
+        {
+            mainWindow.PrepareForApplicationRestart();
+        }
+
+        Dispatcher.BeginInvoke(RestartApplication, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    private void RestartApplication()
+    {
         if (Environment.ProcessPath is { } executablePath)
         {
             Process.Start(new ProcessStartInfo(
@@ -384,6 +417,11 @@ public partial class App : System.Windows.Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        if (_isSystemThemeSubscribed)
+        {
+            SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        }
+
         _trayIcon?.Dispose();
         _winKeyHook?.Dispose();
         if (_server is not null)

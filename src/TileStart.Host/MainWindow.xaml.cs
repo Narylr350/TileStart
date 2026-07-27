@@ -164,6 +164,12 @@ public partial class MainWindow : Window
 
     public void AllowClose() => _controller.AllowClose();
 
+    public void PrepareForApplicationRestart()
+    {
+        _tileWorkspaceController.CloseOpenContextMenu();
+        _controller.AllowClose();
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         _controller.OnClosing(e);

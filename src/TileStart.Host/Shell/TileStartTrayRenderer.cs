@@ -9,6 +9,7 @@ internal readonly record struct TileStartTrayPalette(
     Drawing.Color Background,
     Drawing.Color Border,
     Drawing.Color Separator,
+    Drawing.Color Text,
     Drawing.Color DisabledText);
 
 internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRenderer
@@ -19,8 +20,8 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
     private readonly TileStartTrayPalette _palette;
     private readonly bool _rounded;
 
-    public TileStartTrayRenderer(AppThemeStyle themeStyle)
-        : this(themeStyle, GetPalette(themeStyle))
+    public TileStartTrayRenderer(AppThemeStyle themeStyle, bool useDarkMode = true)
+        : this(themeStyle, GetPalette(themeStyle, useDarkMode))
     {
     }
 
@@ -33,19 +34,34 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
         RoundedEdges = false;
     }
 
-    internal static TileStartTrayPalette GetPalette(AppThemeStyle themeStyle) => themeStyle switch
+    internal static TileStartTrayPalette GetPalette(AppThemeStyle themeStyle, bool useDarkMode = true)
     {
-        AppThemeStyle.Windows10 => new TileStartTrayPalette(
+        if (!useDarkMode)
+        {
+            return new TileStartTrayPalette(
+                Drawing.Color.FromArgb(0xFC, 0xF9, 0xF9, 0xF9),
+                Drawing.Color.FromArgb(0xC4, 0xC4, 0xC4),
+                Drawing.Color.FromArgb(0xDD, 0xDD, 0xDD),
+                Drawing.Color.FromArgb(0x21, 0x21, 0x21),
+                Drawing.Color.FromArgb(0x78, 0x00, 0x00, 0x00));
+        }
+
+        return themeStyle switch
+        {
+            AppThemeStyle.Windows10 => new TileStartTrayPalette(
             Drawing.Color.FromArgb(0xFC, 0x23, 0x23, 0x23),
             Drawing.Color.FromArgb(0x45, 0x45, 0x45),
             Drawing.Color.FromArgb(0x58, 0x58, 0x58),
+            Drawing.Color.White,
             Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF)),
-        _ => new TileStartTrayPalette(
-            Drawing.Color.FromArgb(0xFC, 0x2C, 0x2C, 0x2C),
-            Drawing.Color.FromArgb(0x56, 0x56, 0x56),
-            Drawing.Color.FromArgb(0x4A, 0x4A, 0x4A),
-            Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF)),
-    };
+            _ => new TileStartTrayPalette(
+                Drawing.Color.FromArgb(0xFC, 0x2C, 0x2C, 0x2C),
+                Drawing.Color.FromArgb(0x56, 0x56, 0x56),
+                Drawing.Color.FromArgb(0x4A, 0x4A, 0x4A),
+                Drawing.Color.White,
+                Drawing.Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF)),
+        };
+    }
 
     protected override void OnRenderToolStripBackground(Forms.ToolStripRenderEventArgs e)
     {
@@ -98,13 +114,13 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
 
     protected override void OnRenderItemText(Forms.ToolStripItemTextRenderEventArgs e)
     {
-        e.TextColor = e.Item.Enabled ? Drawing.Color.White : _palette.DisabledText;
+        e.TextColor = e.Item.Enabled ? _palette.Text : _palette.DisabledText;
         base.OnRenderItemText(e);
     }
 
     protected override void OnRenderArrow(Forms.ToolStripArrowRenderEventArgs e)
     {
-        e.ArrowColor = e.Item?.Enabled != false ? Drawing.Color.White : _palette.DisabledText;
+        e.ArrowColor = e.Item?.Enabled != false ? _palette.Text : _palette.DisabledText;
         base.OnRenderArrow(e);
     }
 
@@ -117,7 +133,7 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
         }
 
         var centerY = bounds.Top + (bounds.Height / 2f);
-        using var pen = new Drawing.Pen(Drawing.Color.White, 1.8f)
+        using var pen = new Drawing.Pen(_palette.Text, 1.8f)
         {
             StartCap = Drawing2D.LineCap.Round,
             EndCap = Drawing2D.LineCap.Round,

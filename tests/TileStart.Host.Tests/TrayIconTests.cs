@@ -25,6 +25,7 @@ public sealed class TrayIconTests
                     paused => pauseStates.Add(paused),
                     () => nativeCount++,
                     AppThemeStyle.Windows11,
+                    useDarkMode: true,
                     () => settingsCount++,
                     () => exitCount++);
 

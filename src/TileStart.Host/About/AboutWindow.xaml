@@ -141,6 +141,10 @@
                     BorderThickness="0,1,0,0">
                 <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                     <Button Margin="0,0,10,0"
+                            Style="{StaticResource AboutButtonStyle}"
+                            Click="CheckUpdates_Click"
+                            Content="检查更新" />
+                    <Button Margin="0,0,10,0"
                             Style="{StaticResource PrimaryAboutButtonStyle}"
                             Click="OpenProject_Click">
                         <StackPanel Orientation="Horizontal">
@@ -153,7 +157,7 @@
                     </Button>
                     <Button Style="{StaticResource AboutButtonStyle}"
                             IsCancel="True"
-                            Content="关闭" />
+                            Content="返回设置" />
                 </StackPanel>
             </Border>
         </Grid>

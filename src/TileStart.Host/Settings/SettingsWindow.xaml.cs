@@ -7,28 +7,29 @@ namespace TileStart.Host.Settings;
 
 public partial class SettingsWindow : Window
 {
-    private readonly AppThemeStyle _currentThemeStyle;
-    private readonly Action<AppThemeStyle> _changeThemeStyle;
-    private readonly Func<Task> _checkForUpdates;
-    private readonly Action _openBackupAndRestore;
-    private readonly Action _openAbout;
+    private readonly Action<Window> _openBackupAndRestore;
+    private readonly Action<Window> _openAbout;
+
+    public AppThemeStyle SelectedThemeStyle { get; private set; }
+    public AppColorMode SelectedColorMode { get; private set; }
 
     public SettingsWindow(
         AppThemeStyle currentThemeStyle,
-        Action<AppThemeStyle> changeThemeStyle,
-        Func<Task> checkForUpdates,
-        Action openBackupAndRestore,
-        Action openAbout)
+        AppColorMode currentColorMode,
+        Action<Window> openBackupAndRestore,
+        Action<Window> openAbout)
     {
         InitializeComponent();
-        _currentThemeStyle = currentThemeStyle;
-        _changeThemeStyle = changeThemeStyle;
-        _checkForUpdates = checkForUpdates;
+        SelectedThemeStyle = currentThemeStyle;
+        SelectedColorMode = currentColorMode;
         _openBackupAndRestore = openBackupAndRestore;
         _openAbout = openAbout;
         StartupBox.IsChecked = StartupRegistration.IsEnabled();
         Windows10Choice.IsChecked = currentThemeStyle == AppThemeStyle.Windows10;
         Windows11Choice.IsChecked = currentThemeStyle == AppThemeStyle.Windows11;
+        SystemColorChoice.IsChecked = currentColorMode == AppColorMode.System;
+        LightColorChoice.IsChecked = currentColorMode == AppColorMode.Light;
+        DarkColorChoice.IsChecked = currentColorMode == AppColorMode.Dark;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -48,34 +49,24 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        var selectedTheme = Windows10Choice.IsChecked == true
+        SelectedThemeStyle = Windows10Choice.IsChecked == true
             ? AppThemeStyle.Windows10
             : AppThemeStyle.Windows11;
-        if (selectedTheme != _currentThemeStyle)
-        {
-            Close();
-            _changeThemeStyle(selectedTheme);
-            return;
-        }
-
+        SelectedColorMode = LightColorChoice.IsChecked == true
+            ? AppColorMode.Light
+            : DarkColorChoice.IsChecked == true
+                ? AppColorMode.Dark
+                : AppColorMode.System;
         DialogResult = true;
-    }
-
-    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-        await _checkForUpdates();
     }
 
     private void BackupRestore_Click(object sender, RoutedEventArgs e)
     {
-        Close();
-        _openBackupAndRestore();
+        _openBackupAndRestore(this);
     }
 
     private void About_Click(object sender, RoutedEventArgs e)
     {
-        Close();
-        _openAbout();
+        _openAbout(this);
     }
 }

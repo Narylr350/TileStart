@@ -261,7 +261,7 @@
                             Height="32"
                             Style="{StaticResource BaseButtonStyle}"
                             IsCancel="True"
-                            Content="关闭" />
+                            Content="返回设置" />
                 </Grid>
             </Border>
         </Grid>

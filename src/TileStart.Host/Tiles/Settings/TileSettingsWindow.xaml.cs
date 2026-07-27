@@ -26,6 +26,8 @@ public partial class TileSettingsWindow : Window
     private TileSize _previewSize;
     private bool _isReady;
 
+    public event EventHandler? ApplyRequested;
+
     public TileSettingsWindow(
         TileItem tile,
         bool isNew = false,
@@ -94,6 +96,7 @@ public partial class TileSettingsWindow : Window
         BrowseTargetButton.Visibility = canEditTarget ? Visibility.Visible : Visibility.Collapsed;
         TargetHint.Visibility = canEditTarget ? Visibility.Collapsed : Visibility.Visible;
         UnpinButton.Visibility = isNew ? Visibility.Collapsed : Visibility.Visible;
+        ApplyButton.Visibility = isNew ? Visibility.Collapsed : Visibility.Visible;
 
         UpdateColorPreview(BackgroundColorPreview, BackgroundColor);
         UpdateColorPreview(ForegroundColorPreview, ForegroundColor);
@@ -402,44 +405,60 @@ public partial class TileSettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (TryValidateSettings())
+        {
+            DialogResult = true;
+        }
+    }
+
+    private void Apply_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryValidateSettings())
+        {
+            ApplyRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private bool TryValidateSettings()
+    {
         if (string.IsNullOrWhiteSpace(TileName))
         {
             MessageBox.Show(this, "磁贴名称不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         if (LaunchSection.Visibility == Visibility.Visible && string.IsNullOrWhiteSpace(LaunchTarget))
         {
             MessageBox.Show(this, "命令或可执行文件不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         if (!string.IsNullOrWhiteSpace(WorkingDirectory) && !Directory.Exists(WorkingDirectory))
         {
             MessageBox.Show(this, "工作目录不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         if (!string.IsNullOrWhiteSpace(IconPath) && !File.Exists(IconPath))
         {
             MessageBox.Show(this, "图标来源不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         if (!string.IsNullOrWhiteSpace(BackgroundImagePath) && !File.Exists(BackgroundImagePath))
         {
             MessageBox.Show(this, "背景图片不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         if (!IsValidColor(BackgroundColor) || !IsValidColor(ForegroundColor))
         {
             MessageBox.Show(this, "颜色必须是 #RRGGBB、#AARRGGBB 或 WPF 颜色名称。", "TileStart", MessageBoxButton.OK,
                 MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
-        DialogResult = true;
+        return true;
     }
 
     private static bool IsValidColor(string value)

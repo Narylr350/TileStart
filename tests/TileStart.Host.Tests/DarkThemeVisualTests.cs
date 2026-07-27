@@ -76,6 +76,19 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
+    public void LightShellKeepsTheSameDefaultTileFaceAsItsMatchingStyle()
+    {
+        const string key = "TileStartDefaultTileBackgroundBrush";
+
+        Assert.Equal(
+            ReadThemeBrushColor("Win10Theme.xaml", key),
+            ReadThemeBrushColor("Win10LightTheme.xaml", key));
+        Assert.Equal(
+            ReadThemeBrushColor("Win11Theme.xaml", key),
+            ReadThemeBrushColor("Win11LightTheme.xaml", key));
+    }
+
+    [Fact]
     public void TileButtonsUseDedicatedSquareGeometry()
     {
         var document = LoadMainWindow();
@@ -141,12 +154,43 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Name") == "Windows10Choice"));
         Assert.NotNull(document.Descendants(presentation + "RadioButton")
             .Single(element => (string?)element.Attribute(x + "Name") == "Windows11Choice"));
-        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+        Assert.NotNull(document.Descendants(presentation + "RadioButton")
+            .Single(element => (string?)element.Attribute(x + "Name") == "SystemColorChoice"));
+        Assert.NotNull(document.Descendants(presentation + "RadioButton")
+            .Single(element => (string?)element.Attribute(x + "Name") == "LightColorChoice"));
+        Assert.NotNull(document.Descendants(presentation + "RadioButton")
+            .Single(element => (string?)element.Attribute(x + "Name") == "DarkColorChoice"));
+        Assert.DoesNotContain(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "检查更新");
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "备份与恢复");
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "关于 TileStart");
+
+        var about = LoadXaml("AboutWindow.xaml");
+        Assert.Contains(about.Descendants(presentation + "Button"),
+            element => (string?)element.Attribute("Content") == "检查更新");
+        Assert.Contains(about.Descendants(presentation + "Button"),
+            element => (string?)element.Attribute("Content") == "返回设置");
+    }
+
+    [Fact]
+    public void TileSettingsSeparatesApplyFromSaveAndDoesNotClipDefaultButton()
+    {
+        var document = LoadXaml("TileSettingsWindow.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var apply = document.Descendants(presentation + "Button")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ApplyButton");
+        Assert.Equal("应用", (string?)apply.Attribute("Content"));
+        Assert.Equal("Apply_Click", (string?)apply.Attribute("Click"));
+        Assert.Contains(document.Descendants(presentation + "Button"),
+            element => (string?)element.Attribute("Content") == "保存并关闭");
+
+        var useDefault = document.Descendants(presentation + "Button")
+            .Single(element => (string?)element.Attribute("Content") == "使用默认");
+        Assert.Equal("88", (string?)useDefault.Attribute("Width"));
     }
 
     [Fact]
@@ -243,9 +287,12 @@ public sealed class DarkThemeVisualTests
     private static XDocument LoadXaml(string fileName) =>
         XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", fileName));
 
-    private static string? ReadThemeBrushColor(string key)
+    private static string? ReadThemeBrushColor(string key) =>
+        ReadThemeBrushColor("Win11Theme.xaml", key);
+
+    private static string? ReadThemeBrushColor(string fileName, string key)
     {
-        var document = LoadXaml("Win11Theme.xaml");
+        var document = LoadXaml(fileName);
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         return document.Descendants(presentation + "SolidColorBrush")
