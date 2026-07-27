@@ -48,6 +48,8 @@ dotnet publish -c Release -r win-x64 --self-contained true
 - 完整与部分备份恢复、外部图标/背景自包含、恢复前安全快照，以及恶意归档路径拒绝。
 - 无效目标不会破坏已有布局。
 - IPC 超时和 Host 不可用时进入原生放行路径。
+- 未知 Windows build 会选择最接近的 Win10 / Win11 适配器族，而不是被精确 build 白名单拦截。
+- 诊断包包含系统/版本信息、Host 日志和 ShellHook 日志，不包含布局或图标资源，并限制单个日志的导出体积。
 
 ## 已验证实机环境
 
@@ -80,12 +82,16 @@ Win11 开始菜单由 `StartDocked.dll` 实现，不是 Win10 的 `StartUI.dll`�
 
 以下 Shell 接管结论来自升级前的 build 22631，尚未在当前 26200 实机复验：Windows 11 build 22631 上已确认 Win11 Shell Adapter 可由 Release Injector 自动注入：单独 `Win` 键和任务栏开始按钮均可打开 TileStart，`Win+E` 保持系统行为；Explorer 重启后 Watcher 能向新的桌面 Shell 自动重新注入，Host 正常退出后 Injector 随之退出并卸载 ShellHook，Explorer 保持响应。
 
+Windows build 不再作为精确白名单门禁。Injector 根据 build 范围选择 Win10、Win11 legacy 或 Win11 modern 适配器；未知或未来 build 使用最接近的兼容路径并记录选择结果。该策略只取消“未验证即禁用”的限制，不把未知 build 视为已经验证，实机结论仍按具体 build 记录。
+
 ## Shell 集成验证
 
 - 单独按 `Win` 打开 TileStart，再按一次关闭。
 - 点击任务栏开始按钮打开 TileStart，原生开始菜单不闪现。
 - `Win+E/R/D/L/I/数字/方向键/Shift+S` 保持系统原行为。
 - Host 被强制结束、Hook 加载失败或 IPC 超时时，原生开始菜单可用。
+- 在非精确验证 build 上确认 Injector 日志记录了 compatibility fallback、实际 build 和适配器族。
+- 从“设置 → 维护与信息 → 诊断日志”导出诊断包，确认包含 `system-info.txt`、隐私说明及现有日志。
 - Explorer 重启后 Hook 自动恢复。
 - 暂停接管后原生开始菜单可用。
 - 卸载后无残留 Hook、自启动和托盘进程。

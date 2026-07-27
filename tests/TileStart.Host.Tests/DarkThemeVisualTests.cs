@@ -166,6 +166,10 @@ public sealed class DarkThemeVisualTests
             element => (string?)element.Attribute("Text") == "备份与恢复");
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "关于 TileStart");
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "诊断日志");
+        Assert.Contains(document.Descendants(presentation + "Button"),
+            element => (string?)element.Attribute("Click") == "ExportDiagnostics_Click");
 
         var settingsScrollBarStyle = document.Descendants(presentation + "Style")
             .Single(element => (string?)element.Attribute("TargetType") == "ScrollBar"

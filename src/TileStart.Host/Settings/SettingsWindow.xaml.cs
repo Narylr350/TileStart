@@ -1,7 +1,11 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using TileStart.Host.Shell;
 using TileStart.Host.Themes;
+using TileStart.Host.Utilities;
+using MessageBox = System.Windows.MessageBox;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace TileStart.Host.Settings;
 
@@ -68,5 +72,39 @@ public partial class SettingsWindow : Window
     private void About_Click(object sender, RoutedEventArgs e)
     {
         _openAbout(this);
+    }
+
+    private void ExportDiagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "导出 TileStart 诊断包",
+            Filter = "ZIP 压缩包 (*.zip)|*.zip",
+            DefaultExt = ".zip",
+            AddExtension = true,
+            FileName = $"TileStart-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            DiagnosticBundleService.Export(dialog.FileName);
+            MessageBox.Show(this,
+                "诊断包已导出。公开提交前请先检查日志中可能包含的本地路径和应用名称。",
+                "TileStart",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            MessageBox.Show(this,
+                $"无法导出诊断包：{exception.Message}",
+                "TileStart",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 }

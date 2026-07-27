@@ -9,7 +9,7 @@
 [![Release](https://img.shields.io/github/v/release/Narylr350/TileStart?display_name=tag&style=flat-square)](https://github.com/Narylr350/TileStart/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
-![Tests](https://img.shields.io/badge/tests-449%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-451%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -88,6 +88,7 @@ Windows 10 的磁贴开始菜单已经停止维护，Windows 11 又移除了这�
 - 主动打开 Windows 原生开始菜单。
 - 切换登录自启动。
 - 设置二级页面支持返回上一级；“关于项目”中可主动检查 GitHub 最新 Release。
+- 可从设置页导出包含系统、版本和运行日志的诊断包，用于兼容问题反馈。
 - 更新包下载后必须通过随 Release 提供的 SHA-256 校验，安装版启动安装器，便携版打开下载目录供手动覆盖。
 - 资源管理器右键“添加到 TileStart 应用列表”或“添加到 TileStart 磁贴区”。
 - Host、IPC 或 Hook 不可用时采用 fail-open，放行原生行为。
@@ -147,6 +148,7 @@ navigation.json      导航偏好
 icons\               网络、SVG 与恢复后的受管图标
 backups\             恢复前自动创建的安全快照
 TileStart.log        本地诊断日志
+ShellHook.log        Explorer Hook 诊断日志
 ```
 
 ## 兼容性
@@ -167,7 +169,7 @@ TileStart 的目标平台是 Windows 10 / 11 x64，但 Shell 接管与 Windows b
 - Windows 10 build 19045 已完成基线实机验证。
 - 当前 Windows 11 界面与核心功能验证环境为 25H2 build 26200.8875，使用独立的 Win11 适配路径。
 - Windows 11 Shell 接管曾在 build 22631 上完成实机验证，当前 build 26200 仍需重新覆盖完整接管回归。
-- 未验证的系统 build 不应使用未经确认的 Hook 定位。
+- Windows build 用于选择最接近的 Win10 / Win11 适配器族，不再作为精确白名单门禁；未知或未来 build 会先尝试兼容路径，并在日志中记录实际 build 与适配器选择。
 - Host 或 Hook 不可用时必须保留原生开始菜单作为回退。
 
 ## 已知限制
@@ -178,6 +180,19 @@ TileStart 的目标平台是 Windows 10 / 11 x64，但 Shell 接管与 Windows b
 - 高刷新率屏幕上的动画流畅度仍低于 Windows 原生开始菜单。
 - NVIDIA App Overlay 的自动 DRS 配置 helper 尚未集成到安装器。
 - 当前不提供后台自动更新、云同步、插件市场或视频背景；更新检查仅在用户从托盘主动触发时联网。
+
+## 问题反馈与诊断
+
+请通过 [GitHub Issues](https://github.com/Narylr350/TileStart/issues/new/choose) 提交问题。Bug 表单会要求 TileStart 版本、完整 Windows build、其他 Shell 增强软件、复现步骤以及预期/实际结果。
+
+在 **设置 → 维护与信息 → 诊断日志** 中可以导出 `TileStart-diagnostics-*.zip`：
+
+- `system-info.txt`：TileStart 版本、Windows 版本/build 和进程架构。
+- `TileStart.log`：Host 启动、Injector 适配器选择、注入结果和托管异常。
+- `ShellHook.log`：开始按钮、Win 键、IPC 与 fail-open 路径记录。
+- `README.txt`：诊断包内容和隐私提醒。
+
+诊断包不包含磁贴布局、图标或备份，但日志仍可能出现本地文件路径和应用名称；公开上传前请先检查内容。若 `TileStart.Host.exe` 或 `explorer.exe` 崩溃，可额外附上 `%LOCALAPPDATA%\CrashDumps` 中对应的 `.dmp`，或使用 Windows 11 任务管理器的“创建实时内存转储文件”；转储可能包含敏感内存内容，不建议未经检查公开上传。
 
 ## 安全与故障回退
 
@@ -194,7 +209,7 @@ flowchart LR
 - `TileStart.ShellHook.dll` 不加载 WPF、.NET 或业务配置。
 - 应用扫描、窗口、磁贴布局和设置都运行在独立 Host 进程。
 - Injector 负责 Explorer 生命周期与 Hook 挂载 / 卸载。
-- Host 崩溃、IPC 超时或系统版本不受支持时，不应阻断原生行为。
+- Host 崩溃、IPC 超时或 Hook 安装/运行失败时，不应阻断原生行为。
 - 卸载时会停止 Host / Injector，并清理安装器注册的 Shell 项。
 
 ## 从源码构建

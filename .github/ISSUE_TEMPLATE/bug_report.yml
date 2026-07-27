@@ -1,0 +1,119 @@
+name: Bug 反馈
+description: 报告 TileStart 的功能、界面或 Windows Shell 兼容问题
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。TileStart 与 Windows Shell、系统 build 和其他桌面增强软件关系密切，完整环境信息能显著缩短定位时间。
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已在当前最新版本中复现问题
+          required: true
+        - label: 我已搜索现有 Issue，没有找到相同问题
+          required: true
+        - label: 我已说明或临时停用其他会修改任务栏、开始菜单、Explorer 或快捷键的软件
+          required: true
+
+  - type: input
+    id: tilestart-version
+    attributes:
+      label: TileStart 版本
+      description: 可在“设置 → 关于 TileStart”中查看；热更版本请保留完整的 +hotfix 提交信息。
+      placeholder: 例如 0.1.11 或 0.1.11+hotfix.abcdef0
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows 版本与完整 build
+      description: 请填写版本、完整 OS build 和架构，可通过 winver 查看。
+      placeholder: 例如 Windows 11 25H2 build 26200.8875 x64
+    validations:
+      required: true
+
+  - type: textarea
+    id: shell-tools
+    attributes:
+      label: 其他 Shell / 桌面增强软件
+      description: 请列出 Windhawk、ExplorerPatcher、StartAllBack、Open-Shell、TranslucentTB、NVIDIA Overlay 等相关软件；没有请填写“无”。
+      placeholder: 软件名称、版本、启用的相关 Mod 或设置
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 从 TileStart 启动前的状态开始，逐步写出能够稳定触发问题的操作。
+      placeholder: |
+        1. 启动 TileStart
+        2. ...
+        3. 问题出现
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 复现频率
+      options:
+        - 每次必现
+        - 经常出现
+        - 偶尔出现
+        - 只出现过一次
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 诊断包
+      description: 在“设置 → 维护与信息 → 诊断日志”导出 ZIP 后拖到这里。日志可能包含本地路径和应用名称，公开提交前请先检查内容。
+      placeholder: 将 TileStart-diagnostics-*.zip 拖到这里
+    validations:
+      required: false
+
+  - type: textarea
+    id: crash-dumps
+    attributes:
+      label: 崩溃转储（仅崩溃问题）
+      description: 如有 explorer.exe 或 TileStart.Host.exe 崩溃，可附加 %LOCALAPPDATA%\CrashDumps 中对应的 dump；也可在 Windows 11 任务管理器中右键进程创建实时内存转储。转储可能包含敏感内存内容，请谨慎公开上传。
+      placeholder: 将相关 .dmp 压缩后拖到这里，或提供私下传递方式
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: 截图或视频
+      description: UI、动画、闪烁和布局问题请尽量提供截图或视频。
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 其他信息
+      description: DPI、显示器布局、任务栏位置、近期 Windows 更新或其他相关线索。
+    validations:
+      required: false

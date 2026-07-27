@@ -6,10 +6,10 @@ namespace TileStart.Host.Utilities;
 
 public static class DiagnosticLog
 {
-    private static readonly string DirectoryPath =
+    public static string DirectoryPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TileStart");
 
-    private static readonly string LogPath = Path.Combine(DirectoryPath, "TileStart.log");
+    public static string LogPath { get; } = Path.Combine(DirectoryPath, "TileStart.log");
     private static readonly ConcurrentQueue<string> PendingLines = new();
     private static readonly object FileSync = new();
     private static int _writerActive;

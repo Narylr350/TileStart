@@ -264,6 +264,25 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="13" Text="诊断日志" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               FontSize="11"
+                                               Text="收集系统、版本与运行日志，用于问题反馈。" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Width="92"
+                                        Style="{StaticResource TileStartButtonStyle}"
+                                        Content="导出…"
+                                        Click="ExportDiagnostics_Click" />
+                            </Grid>
+                            <Border Height="1" Margin="0,14" Background="{StaticResource TileStartDividerBrush}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
                                     <TextBlock FontSize="13" Text="关于 TileStart" />
                                     <TextBlock Margin="0,4,0,0"
                                                Foreground="{StaticResource TileStartTextSecondaryBrush}"

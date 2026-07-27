@@ -14,39 +14,61 @@ namespace
 
     enum class ShellAdapter : std::uintptr_t
     {
-        Win10_19045 = 1,
-        Win11_22631 = 2,
-        Win11_26200 = 3,
+        Win10 = 1,
+        Win11Legacy = 2,
+        Win11Modern = 3,
     };
 
-    std::optional<ShellAdapter> GetShellAdapter(DWORD build)
+    ShellAdapter GetShellAdapter(DWORD build)
     {
-        switch (build)
+        if (build < 22000)
         {
-        case 19045:
-            return ShellAdapter::Win10_19045;
-        case 22631:
-            return ShellAdapter::Win11_22631;
-        case 26200:
-            return ShellAdapter::Win11_26200;
-        default:
-            return std::nullopt;
+            return ShellAdapter::Win10;
         }
+
+        return build < 26100 ? ShellAdapter::Win11Legacy : ShellAdapter::Win11Modern;
+    }
+
+    bool IsValidatedBuild(DWORD build)
+    {
+        return build == 19045 || build == 22631 || build == 26200;
     }
 
     std::wstring_view AdapterName(ShellAdapter adapter)
     {
         switch (adapter)
         {
-        case ShellAdapter::Win10_19045:
-            return L"Win10-19045";
-        case ShellAdapter::Win11_22631:
-            return L"Win11-22631";
-        case ShellAdapter::Win11_26200:
-            return L"Win11-26200";
+        case ShellAdapter::Win10:
+            return L"Win10";
+        case ShellAdapter::Win11Legacy:
+            return L"Win11-legacy";
+        case ShellAdapter::Win11Modern:
+            return L"Win11-modern";
         }
 
         return L"unknown";
+    }
+
+    ShellAdapter SelectShellAdapter(const std::optional<DWORD> build)
+    {
+        const auto adapter = GetShellAdapter(build.value_or(26100));
+        if (build)
+        {
+            std::wcout << std::format(L"Windows build {} selected the {} adapter ({}).\n",
+                                      *build,
+                                      AdapterName(adapter),
+                                      IsValidatedBuild(*build) ? L"validated build" : L"compatibility fallback")
+                       << std::flush;
+        }
+        else
+        {
+            std::wcout << std::format(
+                L"Windows build detection was unavailable; selected the {} adapter as a compatibility fallback.\n",
+                AdapterName(adapter))
+                       << std::flush;
+        }
+
+        return adapter;
     }
 
     void PrintUsage()
@@ -241,21 +263,15 @@ namespace
         std::wcout << std::format(L"Injected and started '{}' in PID {} using the {} adapter.\n",
                                   absolute_path,
                                   process_id,
-                                  AdapterName(adapter));
+                                  AdapterName(adapter))
+                   << std::flush;
         return 0;
     }
 
     int Inject(const std::filesystem::path& dll_path, DWORD process_id)
     {
         const auto build = GetWindowsBuildNumber();
-        const auto adapter = build ? GetShellAdapter(*build) : std::nullopt;
-        if (!adapter)
-        {
-            std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
-            return 1;
-        }
-
-        return InjectWithAdapter(dll_path, process_id, *adapter);
+        return InjectWithAdapter(dll_path, process_id, SelectShellAdapter(build));
     }
 
     int Stop(const std::filesystem::path& dll_path, DWORD process_id)
@@ -298,12 +314,7 @@ namespace
     int Watch(const std::filesystem::path& dll_path, DWORD host_process_id, const wchar_t* stop_event_name)
     {
         const auto build = GetWindowsBuildNumber();
-        const auto adapter = build ? GetShellAdapter(*build) : std::nullopt;
-        if (!adapter)
-        {
-            std::wcerr << std::format(L"Windows build {} is not supported for Shell injection.\n", build.value_or(0));
-            return 1;
-        }
+        const auto adapter = SelectShellAdapter(build);
 
         const HANDLE host_process = OpenProcess(SYNCHRONIZE, FALSE, host_process_id);
         const HANDLE stop_event = OpenEventW(SYNCHRONIZE, FALSE, stop_event_name);
@@ -332,7 +343,7 @@ namespace
                 injected_process_id = 0;
             }
             else if (*shell_process_id != injected_process_id &&
-                InjectWithAdapter(dll_path, *shell_process_id, *adapter) == 0)
+                InjectWithAdapter(dll_path, *shell_process_id, adapter) == 0)
             {
                 injected_process_id = *shell_process_id;
             }

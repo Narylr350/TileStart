@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using TileStart.Host.Utilities;
 
 namespace TileStart.Host.Shell;
 
@@ -36,6 +37,8 @@ public sealed class ShellIntegrationManager : IDisposable
             WorkingDirectory = Path.GetDirectoryName(injectorPath)!,
             UseShellExecute = false,
             CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
         };
         startInfo.ArgumentList.Add("--watch");
         startInfo.ArgumentList.Add(hookPath);
@@ -43,8 +46,30 @@ public sealed class ShellIntegrationManager : IDisposable
         startInfo.ArgumentList.Add(_stopEventName);
         try
         {
-            _watcher = Process.Start(startInfo);
-            return _watcher is not null;
+            var watcher = Process.Start(startInfo);
+            if (watcher is null)
+            {
+                return false;
+            }
+
+            watcher.OutputDataReceived += (_, args) => WriteInjectorLine("info", args.Data);
+            watcher.ErrorDataReceived += (_, args) => WriteInjectorLine("error", args.Data);
+            watcher.EnableRaisingEvents = true;
+            watcher.Exited += (_, _) =>
+            {
+                try
+                {
+                    DiagnosticLog.Write($"Injector watcher exited: code={watcher.ExitCode}.");
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            };
+            watcher.BeginOutputReadLine();
+            watcher.BeginErrorReadLine();
+            _watcher = watcher;
+            DiagnosticLog.Write($"Injector watcher started: injector='{injectorPath}', hook='{hookPath}'.");
+            return true;
         }
         catch (Win32Exception)
         {
@@ -71,6 +96,14 @@ public sealed class ShellIntegrationManager : IDisposable
 
         _watcher.Dispose();
         _watcher = null;
+    }
+
+    private static void WriteInjectorLine(string level, string? line)
+    {
+        if (!string.IsNullOrWhiteSpace(line))
+        {
+            DiagnosticLog.Write($"Injector {level}: {line}");
+        }
     }
 
     public void Dispose()

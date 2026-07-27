@@ -11,9 +11,9 @@ namespace
     enum class ShellAdapter : std::uintptr_t
     {
         None = 0,
-        Win10_19045 = 1,
-        Win11_22631 = 2,
-        Win11_26200 = 3,
+        Win10 = 1,
+        Win11Legacy = 2,
+        Win11Modern = 3,
     };
 
     constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
@@ -36,6 +36,21 @@ namespace
     LONG g_install_succeeded = 0;
     ShellRegisterHotKeyFunction g_shell_register_hotkey = nullptr;
     void** g_shell_register_hotkey_slot = nullptr;
+
+    const char* AdapterName(ShellAdapter adapter)
+    {
+        switch (adapter)
+        {
+        case ShellAdapter::Win10:
+            return "Win10";
+        case ShellAdapter::Win11Legacy:
+            return "Win11-legacy";
+        case ShellAdapter::Win11Modern:
+            return "Win11-modern";
+        default:
+            return "unknown";
+        }
+    }
 
     void WriteShellLog(const char* message)
     {
@@ -299,11 +314,11 @@ namespace
 
         switch (g_adapter)
         {
-        case ShellAdapter::Win10_19045:
+        case ShellAdapter::Win10:
             g_start_button = FindWin10StartButton(taskbar);
             break;
-        case ShellAdapter::Win11_22631:
-        case ShellAdapter::Win11_26200:
+        case ShellAdapter::Win11Legacy:
+        case ShellAdapter::Win11Modern:
             g_start_button = FindWin11StartButton(taskbar);
             break;
         default:
@@ -376,7 +391,7 @@ namespace
         WriteShellLog(g_progman_hook == nullptr
                           ? "Progman SC_TASKLIST interception installation failed."
                           : "Progman SC_TASKLIST interception installed.");
-        if (g_adapter == ShellAdapter::Win11_26200)
+        if (g_adapter == ShellAdapter::Win11Modern)
         {
             InstallShellWinHotKeyInterception();
         }
@@ -424,10 +439,15 @@ extern "C" __declspec(dllexport) BOOL TileStartTryOpenMenu()
 extern "C" __declspec(dllexport) DWORD WINAPI TileStartInstallHook(LPVOID parameter)
 {
     const auto adapter = static_cast<ShellAdapter>(reinterpret_cast<std::uintptr_t>(parameter));
-    if (adapter != ShellAdapter::Win10_19045 && adapter != ShellAdapter::Win11_22631 && adapter != ShellAdapter::Win11_26200)
+    if (adapter != ShellAdapter::Win10 && adapter != ShellAdapter::Win11Legacy &&
+        adapter != ShellAdapter::Win11Modern)
     {
         return FALSE;
     }
+
+    char adapter_diagnostic[96]{};
+    sprintf_s(adapter_diagnostic, "Installing Shell hooks with adapter=%s.", AdapterName(adapter));
+    WriteShellLog(adapter_diagnostic);
 
     if (InterlockedCompareExchange(&g_started, 1, 0) != 0)
     {
