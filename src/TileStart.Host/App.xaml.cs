@@ -240,6 +240,7 @@ public partial class App : System.Windows.Application
         }
 
         _isCheckingForUpdates = true;
+        UpdateProgressWindow? progressWindow = null;
         try
         {
             using var checkTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -268,15 +269,18 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            TileStartMessageDialog.Show(
-                null,
-                "正在准备更新",
-                "更新包将在后台下载，完成 SHA-256 校验后继续。");
             using var downloadTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-            var update = await _updateService.DownloadAsync(release, installedCopy, downloadTimeout.Token);
+            progressWindow = new UpdateProgressWindow();
+            var update = progressWindow.Run(
+                (progress, cancellationToken) =>
+                    _updateService.DownloadAsync(release, installedCopy, progress, cancellationToken),
+                downloadTimeout.Token);
             if (update.Kind == UpdatePackageKind.Installer)
             {
-                Process.Start(new ProcessStartInfo(update.Path) { UseShellExecute = true });
+                // 助手先等待当前 Host 完全退出，安装器才会覆盖文件；否则 Injector/Hook 清理与安装会发生竞态。
+                UpdateInstallerLauncher.LaunchAfterHostExit(update.Path, Environment.ProcessId);
+                ((MainWindow)MainWindow).AllowClose();
+                Shutdown();
                 return;
             }
 
@@ -288,6 +292,10 @@ public partial class App : System.Windows.Application
                 null,
                 "更新包已就绪",
                 "便携版已下载并通过校验。请退出 TileStart 后解压覆盖旧文件。");
+        }
+        catch (OperationCanceledException) when (progressWindow?.UserCanceled == true)
+        {
+            // 用户主动取消不再弹出“超时”，进度窗口本身已经给出即时反馈。
         }
         catch (OperationCanceledException)
         {

@@ -1,0 +1,48 @@
+using System.Diagnostics;
+using System.IO;
+
+namespace TileStart.Host.Updates;
+
+internal static class UpdateInstallerLauncher
+{
+    private const string InstallerPathVariable = "TILESTART_UPDATE_PATH";
+    private const string HostProcessIdVariable = "TILESTART_UPDATE_PID";
+    private const string LaunchScript =
+        "$hostProcessId = [int]$env:TILESTART_UPDATE_PID; " +
+        "Wait-Process -Id $hostProcessId -ErrorAction SilentlyContinue; " +
+        "Start-Process -FilePath $env:TILESTART_UPDATE_PATH";
+
+    public static void LaunchAfterHostExit(string installerPath, int hostProcessId)
+    {
+        _ = Process.Start(CreateStartInfo(installerPath, hostProcessId))
+            ?? throw new InvalidOperationException("无法启动更新安装助手。");
+    }
+
+    internal static ProcessStartInfo CreateStartInfo(string installerPath, int hostProcessId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(installerPath);
+        if (hostProcessId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hostProcessId));
+        }
+
+        var startInfo = new ProcessStartInfo("powershell.exe")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden,
+            WorkingDirectory = Path.GetDirectoryName(installerPath) ?? Path.GetTempPath(),
+        };
+        startInfo.ArgumentList.Add("-NoLogo");
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-NonInteractive");
+        startInfo.ArgumentList.Add("-WindowStyle");
+        startInfo.ArgumentList.Add("Hidden");
+        startInfo.ArgumentList.Add("-Command");
+        startInfo.ArgumentList.Add(LaunchScript);
+        // 路径不拼进 PowerShell 命令，避免空格和特殊字符改变脚本含义。
+        startInfo.Environment[InstallerPathVariable] = Path.GetFullPath(installerPath);
+        startInfo.Environment[HostProcessIdVariable] = hostProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return startInfo;
+    }
+}

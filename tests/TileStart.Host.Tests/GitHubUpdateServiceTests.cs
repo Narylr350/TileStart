@@ -94,4 +94,33 @@ public sealed class GitHubUpdateServiceTests
             Directory.Delete(directory, true);
         }
     }
+
+    [Fact]
+    public void CreatesUniqueDownloadDirectoryForEveryAttempt()
+    {
+        var first = GitHubUpdateService.CreateDownloadDirectory(new Version(0, 2, 0));
+        var second = GitHubUpdateService.CreateDownloadDirectory(new Version(0, 2, 0));
+
+        Assert.NotEqual(first, second);
+        Assert.Contains(Path.Combine("TileStart", "updates", "v0.2.0"), first, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(0, 100, 0)]
+    [InlineData(50, 100, 50)]
+    [InlineData(150, 100, 100)]
+    public void CalculatesBoundedDownloadPercentage(long received, long total, double expected)
+    {
+        var progress = new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, received, total);
+
+        Assert.Equal(expected, progress.Percentage);
+    }
+
+    [Fact]
+    public void LeavesPercentageUnknownWithoutContentLength()
+    {
+        var progress = new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, 42, null);
+
+        Assert.Null(progress.Percentage);
+    }
 }

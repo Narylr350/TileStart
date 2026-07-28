@@ -13,6 +13,24 @@ public enum UpdatePackageKind
     PortableArchive,
 }
 
+public enum UpdateProgressStage
+{
+    DownloadingChecksums,
+    DownloadingPackage,
+    VerifyingPackage,
+    PreparingInstall,
+}
+
+public sealed record UpdateProgressInfo(
+    UpdateProgressStage Stage,
+    long BytesReceived = 0,
+    long? TotalBytes = null)
+{
+    public double? Percentage => TotalBytes is > 0
+        ? Math.Clamp(BytesReceived * 100d / TotalBytes.Value, 0d, 100d)
+        : null;
+}
+
 public sealed record GitHubReleaseAsset(string Name, Uri DownloadUri);
 
 public sealed record GitHubReleaseInfo(
@@ -53,17 +71,21 @@ public sealed class GitHubUpdateService
     public async Task<DownloadedUpdate> DownloadAsync(
         GitHubReleaseInfo release,
         bool installedCopy,
+        IProgress<UpdateProgressInfo>? progress = null,
         CancellationToken cancellationToken = default)
     {
         var package = SelectPackage(release, installedCopy);
+        progress?.Report(new UpdateProgressInfo(UpdateProgressStage.DownloadingChecksums));
         var checksumText = await DownloadTextAsync(release.Checksums.DownloadUri, MaximumChecksumBytes,
             cancellationToken);
         var expectedHash = ReadExpectedSha256(checksumText, package.Asset.Name);
-        var directory = Path.Combine(Path.GetTempPath(), "TileStart", "updates", $"v{release.Version}");
+        var directory = CreateDownloadDirectory(release.Version);
         Directory.CreateDirectory(directory);
         var destination = Path.Combine(directory, package.Asset.Name);
-        await DownloadFileAsync(package.Asset.DownloadUri, destination, MaximumPackageBytes, cancellationToken);
+        await DownloadFileAsync(package.Asset.DownloadUri, destination, MaximumPackageBytes, progress,
+            cancellationToken);
 
+        progress?.Report(new UpdateProgressInfo(UpdateProgressStage.VerifyingPackage));
         string actualHash;
         await using (var stream = File.OpenRead(destination))
         {
@@ -75,6 +97,7 @@ public sealed class GitHubUpdateService
             throw new InvalidDataException("下载文件的 SHA-256 校验失败，已删除该文件。");
         }
 
+        progress?.Report(new UpdateProgressInfo(UpdateProgressStage.PreparingInstall));
         return new DownloadedUpdate(package.Kind, destination, release.Version);
     }
 
@@ -93,6 +116,14 @@ public sealed class GitHubUpdateService
         installedCopy
             ? (UpdatePackageKind.Installer, release.Installer)
             : (UpdatePackageKind.PortableArchive, release.PortableArchive);
+
+    internal static string CreateDownloadDirectory(Version version) =>
+        Path.Combine(
+            Path.GetTempPath(),
+            "TileStart",
+            "updates",
+            $"v{NormalizeVersion(version).ToString(3)}",
+            Guid.NewGuid().ToString("N"));
 
     internal static GitHubReleaseInfo ParseRelease(string json)
     {
@@ -174,7 +205,11 @@ public sealed class GitHubUpdateService
         return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
-    private static async Task DownloadFileAsync(Uri uri, string destination, long maximumBytes,
+    private static async Task DownloadFileAsync(
+        Uri uri,
+        string destination,
+        long maximumBytes,
+        IProgress<UpdateProgressInfo>? progress,
         CancellationToken cancellationToken)
     {
         var temporaryPath = destination + ".download";
@@ -188,10 +223,18 @@ public sealed class GitHubUpdateService
                 throw new InvalidDataException("更新包超过允许大小。");
             }
 
+            var totalBytes = response.Content.Headers.ContentLength;
+            progress?.Report(new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, 0, totalBytes));
             await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
             await using var output = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None,
                 81920, FileOptions.Asynchronous);
-            await CopyWithLimitAsync(input, output, maximumBytes, cancellationToken);
+            await CopyWithLimitAsync(
+                input,
+                output,
+                maximumBytes,
+                cancellationToken,
+                bytesReceived => progress?.Report(
+                    new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, bytesReceived, totalBytes)));
             File.Move(temporaryPath, destination, true);
         }
         finally
@@ -203,8 +246,12 @@ public sealed class GitHubUpdateService
         }
     }
 
-    private static async Task CopyWithLimitAsync(Stream input, Stream output, long maximumBytes,
-        CancellationToken cancellationToken)
+    private static async Task CopyWithLimitAsync(
+        Stream input,
+        Stream output,
+        long maximumBytes,
+        CancellationToken cancellationToken,
+        Action<long>? progress = null)
     {
         var buffer = new byte[81920];
         long total = 0;
@@ -223,6 +270,7 @@ public sealed class GitHubUpdateService
             }
 
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            progress?.Invoke(total);
         }
     }
 
