@@ -8,6 +8,7 @@ public static class Win10VisualMetrics
     public const double ExpandedNavigationWidth = 256;
     public const double NavigationItemHeight = 48;
     public const double NavigationUserPictureSize = 32;
+    public const double Windows11TaskbarLeftInset = 8;
     public const double AllAppsWidth = 260;
     public const double AllAppsGridItemWidth = 244;
     public const double AllAppsHorizontalInset = (AllAppsWidth - AllAppsGridItemWidth) / 2;
@@ -45,6 +46,18 @@ public static class Win10VisualMetrics
     public const double TileScrollViewerLeftMargin = 28;
 
     public static GridLength CollapsedNavigationGridLength { get; } = new(CollapsedNavigationWidth);
+
+    // Windows 11 的左对齐任务栏在屏幕边缘保留 8 DIP。平移整个导航面板，
+    // 让内容、按钮描边、Reveal 光效和点击区域保持同一坐标系；应用列表仍留在原位。
+    public static double NavigationPaneHorizontalOffset { get; } =
+        NavigationPaneOffsetForWindowsBuild(
+            OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000) ? 22000 : 0);
+
+    public static Thickness NavigationPaneMargin { get; } =
+        new(NavigationPaneHorizontalOffset, 0, 0, 0);
+
+    public static double NavigationPaneOffsetForWindowsBuild(int build) =>
+        build >= 22000 ? Windows11TaskbarLeftInset : 0;
 
     public static GridLength NavigationItemGridLength { get; } = new(NavigationItemHeight);
 

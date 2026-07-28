@@ -143,13 +143,13 @@
                                         Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationGridLength}" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <ContentPresenter Grid.Column="0"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"
-                                                  Content="{TemplateBinding Content}"
-                                                  TextElement.FontFamily="Segoe MDL2 Assets"
-                                                  TextElement.FontSize="16"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}" />
+                                 <ContentPresenter Grid.Column="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Content="{TemplateBinding Content}"
+                                                   TextElement.FontFamily="Segoe MDL2 Assets"
+                                                   TextElement.FontSize="16"
+                                                   TextElement.Foreground="{TemplateBinding Foreground}" />
                                 <TextBlock Grid.Column="1"
                                            Margin="12,0,16,0"
                                            VerticalAlignment="Center"
@@ -597,6 +597,7 @@
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
                   Width="{x:Static local:Win10VisualMetrics.CollapsedNavigationWidth}"
+                  Margin="{x:Static local:Win10VisualMetrics.NavigationPaneMargin}"
                   HorizontalAlignment="Left"
                   Background="Transparent"
                   MouseEnter="NavigationPane_MouseEnter"

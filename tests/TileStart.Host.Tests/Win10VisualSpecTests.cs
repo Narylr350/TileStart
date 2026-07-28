@@ -12,6 +12,16 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.CollapsedNavigationWidth, Win10VisualMetrics.CollapsedNavigationGridLength.Value);
         Assert.Equal(Win10VisualMetrics.NavigationItemHeight, Win10VisualMetrics.NavigationItemGridLength.Value);
         Assert.Equal(Win10VisualMetrics.AllAppsWidth, Win10VisualMetrics.AllAppsGridLength.Value);
+        Assert.Equal(Win10VisualMetrics.NavigationPaneHorizontalOffset, Win10VisualMetrics.NavigationPaneMargin.Left);
+    }
+
+    [Theory]
+    [InlineData(19045, 0)]
+    [InlineData(22000, 8)]
+    [InlineData(26200, 8)]
+    public void NavigationPaneMatchesThePlatformTaskbarInset(int build, double expectedOffset)
+    {
+        Assert.Equal(expectedOffset, Win10VisualMetrics.NavigationPaneOffsetForWindowsBuild(build));
     }
 
     [Fact]
