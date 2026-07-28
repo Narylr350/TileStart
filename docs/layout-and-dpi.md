@@ -1,104 +1,82 @@
-# Layout and DPI rules
+# 布局与 DPI 规则
 
-TileStart uses WPF for content layout and Win32 for screen and HWND placement. Repeated fixes around centering,
-clipping, background bounds, and resolution changes came from mixing those coordinate spaces or copying a native
-metric into a different container hierarchy.
+TileStart 使用 WPF 完成内容布局，使用 Win32 完成屏幕与 HWND 定位。过去围绕居中、截断、背景边界和分辨率变化的反复修复，根因是混用了这些坐标空间，或者把原生界面中的参数复制到了容器层级不同的布局中。
 
-## Why the same class of bug kept returning
+## 为什么同一类问题会反复出现
 
-The Git history shows several local fixes that corrected a visible symptom without first naming the layout
-invariant:
+Git 历史显示，过去有多次局部修复只消除了当前可见症状，但没有先明确对应的布局不变量：
 
-| Commit | Visible symptom | Underlying cause |
+| 提交 | 可见症状 | 根本原因 |
 | --- | --- | --- |
-| `74451a1` | About footer border was clipped | A fixed row was enlarged from 58 to 60 instead of making the middle region yield space. |
-| `7a55d8d` | The all-apps list was clipped at the bottom | A native 54-DIP padding value was copied into a flatter TileStart container hierarchy. |
-| `1da8c58` | Acrylic/background bounds were stale | Composition material was applied before the HWND reached its final rectangle. |
-| `3feaa43` | A resolution change permanently changed the saved size | A temporary work-area clamp was persisted as the user's preference. |
-| `998325b` | Tiles overlapped the scrollbar | Logical workspace width and the scrollbar's visual clearance were treated as one measurement. |
-| `233141f` | Empty/content-filled workspaces used the wrong width | Window width was treated as a fixed value instead of an effective result of preference, content, and work area. |
+| `74451a1` | 关于页底栏边框被截断 | 将固定行高从 58 增加到 60，而不是让中间内容区域主动让出空间。 |
+| `7a55d8d` | 所有应用列表底部被截断 | 将原生界面的 54 DIP 内边距复制到了容器层级更扁平的 TileStart 布局中。 |
+| `1da8c58` | Acrylic 或背景边界仍是旧尺寸 | 在 HWND 到达最终矩形之前就应用了合成材质。 |
+| `3feaa43` | 分辨率变化永久改变了保存的窗口尺寸 | 将工作区产生的临时约束结果保存成了用户首选值。 |
+| `998325b` | 磁贴与滚动条重叠 | 将逻辑工作区宽度和滚动条所需的视觉间隙当成了同一个测量值。 |
+| `233141f` | 空工作区和有内容的工作区使用了错误宽度 | 将窗口宽度视为固定值，而不是用户首选、实际内容和工作区共同决定的有效结果。 |
 
-The common root cause was not “the number was slightly wrong.” It was that ownership was unclear: which container
-owns a spacing metric, which coordinate system owns a rectangle, and whether a value is a user preference or a
-temporary effective result.
+共同根因不是“某个数字差了一点”，而是所有权不明确：哪个容器拥有某个间距参数，哪个坐标空间拥有某个矩形，以及某个值究竟是用户首选还是临时的有效结果。
 
-## Coordinate spaces
+## 坐标空间
 
-- WPF layout, tile metrics, padding, and user-preferred sizes use device-independent pixels (DIP).
-- Monitor rectangles, work areas, taskbars, and `SetWindowPos` use physical pixels.
-- Conversion between DIP and physical pixels belongs at the top-level window boundary. Child controls must not
-  query monitor DPI to position ordinary content.
-- A native StartUI metric is only valid in the container layer where it was observed. For example, the native
-  `AllAppsListPadding.Bottom` belongs to a deeper nested scrolling surface and must not be copied onto TileStart's
-  flat `ListBox` viewport.
+- WPF 布局、磁贴参数、内外边距和用户首选尺寸使用设备无关像素（DIP）。
+- 显示器矩形、工作区、任务栏和 `SetWindowPos` 使用物理像素。
+- DIP 与物理像素之间的转换只能发生在顶层窗口边界。子控件不得通过查询显示器 DPI 来定位普通内容。
+- 原生 StartUI 参数只在观察到它的容器层级中有效。例如，原生 `AllAppsListPadding.Bottom` 属于更深层的嵌套滚动区域，不能直接复制到 TileStart 扁平的 `ListBox` 视口上。
 
-## Fixed and flexible dimensions
+## 固定尺寸与弹性尺寸
 
-Fixed dimensions are appropriate for atomic visual specifications such as tile cells, icons, title bars, control
-heights, separators, and verified design spacing.
+固定尺寸适用于不可再分的视觉规范，例如磁贴单元、图标、标题栏、控件高度、分隔线和经过验证的设计间距。
 
-Top-level windows, main content regions, dynamic forms, lists, and preview panes must remain flexible:
+顶层窗口、主要内容区域、动态表单、列表和预览区域必须保持弹性：
 
-- use `Auto` for content-sized headers and footers;
-- use `*` for the main content row or column;
-- keep important actions outside the scrolling region;
-- use a `ScrollViewer` when the content cannot reflow below its usable minimum;
-- treat a window's declared `Width` and `Height` as desired dimensions, not a guarantee that the monitor can fit them.
+- 内容决定大小的页头和页脚使用 `Auto`；
+- 主要内容行或列使用 `*`；
+- 重要操作按钮放在滚动区域之外；
+- 内容无法在可用最小尺寸内继续重排时使用 `ScrollViewer`；
+- 窗口声明的 `Width` 和 `Height` 只是期望尺寸，不代表当前显示器一定能够容纳。
 
-All windows using `TileStartDialogWindowStyle` are fitted to the owner monitor's work area by
-`DialogWindowManager`. The manager lowers impossible minimums, preserves the desired size for larger monitors,
-centers over the owner, and clamps the final physical rectangle to the work area.
+所有使用 `TileStartDialogWindowStyle` 的窗口都由 `DialogWindowManager` 适配到 Owner 所在显示器的工作区。管理器会降低当前工作区不可能满足的最小尺寸，在较大显示器上保留期望尺寸，相对 Owner 居中，并将最终物理矩形限制在工作区内。
 
-## Main window preferences
+## 主窗口首选值
 
-The persisted start-window size is the user's preferred workspace column count and preferred DIP height. The
-effective window size may be smaller on a low-resolution display or during a temporary game display mode, but that
-temporary clamp must never overwrite the preference. Only an explicit resize gesture updates it.
+开始窗口持久化的是用户首选的工作区列数和 DIP 高度。低分辨率显示器或游戏临时切换显示模式时，有效窗口尺寸可以小于首选尺寸，但这种临时约束绝不能覆盖用户首选值。只有用户明确执行窗口缩放操作时才能更新首选值。
 
-## Display-change ordering
+## 显示变化处理顺序
 
-1. Stop resize animations and coordinate-dependent drag interactions.
-2. On `WM_DPICHANGED`, apply the system-suggested physical rectangle immediately and let WPF process the message.
-3. Re-query the event's target monitor, work area, DPI, and taskbar edge.
-4. Apply the final physical HWND rectangle.
-5. Update WPF layout.
-6. Reapply Acrylic or other size-dependent composition material.
-7. Resume visual animation and interaction.
+1. 停止窗口缩放动画和依赖坐标的拖动交互。
+2. 收到 `WM_DPICHANGED` 时立即应用系统建议的物理矩形，同时继续让 WPF 处理该消息。
+3. 重新查询事件目标显示器、工作区、DPI 和任务栏边缘。
+4. 应用最终的物理 HWND 矩形。
+5. 更新 WPF 布局。
+6. 重新应用 Acrylic 或其他依赖窗口尺寸的合成材质。
+7. 恢复视觉动画和交互。
 
-`WM_DISPLAYCHANGE` and `WM_SETTINGCHANGE / SPI_SETWORKAREA` may be debounced while display topology stabilizes.
-`WM_DPICHANGED` must not be reduced to the same delayed path because its suggested rectangle and target monitor are
-part of the message contract.
+显示拓扑尚未稳定时，可以对 `WM_DISPLAYCHANGE` 和 `WM_SETTINGCHANGE / SPI_SETWORKAREA` 进行防抖处理。`WM_DPICHANGED` 不能简化成同一条延迟路径，因为系统建议矩形和目标显示器属于该消息契约的一部分。
 
-## Review checklist
+## 审查清单
 
-- Does a new dialog use `TileStartDialogWindowStyle`?
-- Can its middle row shrink while the title and primary actions remain visible?
-- Are large columns proportional or scrollable rather than protected by an oversized window `MinWidth`?
-- Is a native metric documented with its owning container hierarchy?
-- Does a display constraint change only the effective size, not the stored preference?
-- Are final visual positions produced by layout, with render transforms returning to zero after animation?
-- Do tests assert the layout invariant rather than only the current magic number?
+- 新对话框是否使用了 `TileStartDialogWindowStyle`？
+- 中间内容行能否收缩，同时保证标题和主要操作始终可见？
+- 大型列是否采用比例尺寸或滚动回退，而不是依靠过大的窗口 `MinWidth` 保护？
+- 原生参数是否记录了它所属的容器层级？
+- 显示约束是否只改变有效尺寸，而不改变持久化的用户首选值？
+- 最终视觉位置是否由布局产生，并且动画结束后渲染变换会回到零？
+- 测试验证的是布局不变量，还是只锁定了当前的魔法数字？
 
-## Regression controls
+## 回归控制
 
-Documentation and comments reduce rework only when each has a specific role:
+文档和注释只有各自承担明确职责时，才能减少返工：
 
-- this document records cross-file invariants and the reason behind them;
-- comments sit at dangerous coordinate-system or ordering boundaries and explain why an apparently simpler change
-  is incorrect;
-- pure layout helpers make fitting and clamping testable without a desktop session;
-- guard tests lock down important ordering and ownership rules, rather than only checking one current pixel value;
-- real desktop checks still cover composition, mixed-DPI movement, taskbar placement, and visual clipping that unit
-  tests cannot observe.
+- 本文档记录跨文件布局不变量及其原因；
+- 注释放在危险的坐标空间或执行顺序边界，解释为什么看似更简单的修改其实不正确；
+- 纯布局辅助函数让尺寸适配和边界约束无需桌面会话也能测试；
+- 防回归测试锁定重要的执行顺序和所有权规则，而不是只检查当前的某个像素值；
+- 真实桌面检查继续覆盖单元测试无法观察的合成效果、混合 DPI 跨屏移动、任务栏位置和视觉截断。
 
-Useful external baselines:
+可参考的外部基线：
 
-- [Microsoft WPF layout documentation](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/layout): WPF content
-  uses device-independent units and dynamic measure/arrange layout.
-- [Microsoft `WM_DPICHANGED` contract](https://learn.microsoft.com/windows/win32/hidpi/wm-dpichanged): the message
-  supplies a suggested physical rectangle for the new DPI.
-- [Microsoft `MONITORINFO` contract](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-monitorinfo):
-  monitor and work-area rectangles use physical virtual-screen coordinates.
-- [Microsoft PowerToys Shortcut Guide](https://github.com/microsoft/PowerToys/blob/main/src/modules/ShortcutGuide/ShortcutGuide.Ui/ShortcutGuideXAML/OverlayWindow.xaml.cs)
-  follows the same boundary in current window code: XAML owns child layout, while top-level monitor placement uses
-  physical rectangles and native move/resize APIs.
+- [Microsoft WPF 布局文档](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/layout)：WPF 内容使用设备无关单位以及动态的测量和排列流程。
+- [Microsoft `WM_DPICHANGED` 消息契约](https://learn.microsoft.com/windows/win32/hidpi/wm-dpichanged)：消息会为新的 DPI 提供建议的物理矩形。
+- [Microsoft `MONITORINFO` 结构文档](https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-monitorinfo)：显示器和工作区矩形使用虚拟屏幕物理坐标。
+- [Microsoft PowerToys Shortcut Guide](https://github.com/microsoft/PowerToys/blob/main/src/modules/ShortcutGuide/ShortcutGuide.Ui/ShortcutGuideXAML/OverlayWindow.xaml.cs) 当前窗口代码也遵循相同边界：XAML 负责子元素布局，顶层显示器定位使用物理矩形和原生移动/缩放 API。
