@@ -225,16 +225,20 @@ public sealed class GitHubUpdateService
 
             var totalBytes = response.Content.Headers.ContentLength;
             progress?.Report(new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, 0, totalBytes));
-            await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var output = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None,
-                81920, FileOptions.Asynchronous);
-            await CopyWithLimitAsync(
-                input,
-                output,
-                maximumBytes,
-                cancellationToken,
-                bytesReceived => progress?.Report(
-                    new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, bytesReceived, totalBytes)));
+            await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var output = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None,
+                81920, FileOptions.Asynchronous))
+            {
+                await CopyWithLimitAsync(
+                    input,
+                    output,
+                    maximumBytes,
+                    cancellationToken,
+                    bytesReceived => progress?.Report(
+                        new UpdateProgressInfo(UpdateProgressStage.DownloadingPackage, bytesReceived, totalBytes)));
+            }
+
+            // File.Move 必须在输出流离开作用域后执行，否则 Windows 会把临时文件视为仍被当前 Host 占用。
             File.Move(temporaryPath, destination, true);
         }
         finally
