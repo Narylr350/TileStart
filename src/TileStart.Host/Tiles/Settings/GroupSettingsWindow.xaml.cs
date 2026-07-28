@@ -92,19 +92,29 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     private string _validationMessage = string.Empty;
     private bool _suspendOptionUpdates;
 
-    public GroupSettingsWindow(TileGroup group, IReadOnlyList<AppEntry> apps)
-        : this(group, apps, isFolderContents: false)
+    public GroupSettingsWindow(
+        TileGroup group,
+        IReadOnlyList<AppEntry> apps,
+        IReadOnlySet<string>? excludedTargets = null)
+        : this(group, apps, isFolderContents: false, excludedTargets)
     {
     }
 
-    public GroupSettingsWindow(TileItem folder, IReadOnlyList<AppEntry> apps)
-        : this(CreateFolderContentsGroup(folder), apps, isFolderContents: true)
+    public GroupSettingsWindow(
+        TileItem folder,
+        IReadOnlyList<AppEntry> apps,
+        IReadOnlySet<string>? excludedTargets = null)
+        : this(CreateFolderContentsGroup(folder), apps, isFolderContents: true, excludedTargets)
     {
     }
 
-    private GroupSettingsWindow(TileGroup group, IReadOnlyList<AppEntry> apps, bool isFolderContents)
+    private GroupSettingsWindow(
+        TileGroup group,
+        IReadOnlyList<AppEntry> apps,
+        bool isFolderContents,
+        IReadOnlySet<string>? excludedTargets)
     {
-        _options = CreateOptions(group, apps);
+        _options = CreateOptions(group, apps, excludedTargets);
         foreach (var option in _options)
         {
             option.PropertyChanged += Option_PropertyChanged;
@@ -177,7 +187,8 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
     internal static ObservableCollection<GroupTileOption> CreateOptions(
         TileGroup group,
-        IReadOnlyList<AppEntry> apps)
+        IReadOnlyList<AppEntry> apps,
+        IReadOnlySet<string>? excludedTargets = null)
     {
         var options = new List<GroupTileOption>();
         var existingTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -204,6 +215,8 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
                      .GroupBy(app => LaunchTargetIdentity.GetKey(app.LaunchTarget), StringComparer.OrdinalIgnoreCase)
                      .Select(grouping => grouping.First())
                      .Where(app => !existingTargets.Contains(LaunchTargetIdentity.GetKey(app.LaunchTarget)))
+                     .Where(app => excludedTargets is null
+                                   || !excludedTargets.Contains(LaunchTargetIdentity.GetKey(app.LaunchTarget)))
                      .OrderBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase))
         {
             options.Add(new GroupTileOption
@@ -311,7 +324,7 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         ValidationMessage = fits
             ? string.Empty
             : $"所选磁贴无法放入 {WidthUnits}×{HeightUnits} 的组，请增大尺寸或减少磁贴。";
-        SaveButton.IsEnabled = fits && !string.IsNullOrWhiteSpace(GroupName);
+        SaveButton.IsEnabled = fits;
         PreviewSizeText.Text = HeightUnits == 0
             ? $"{WidthUnits}×自动 · {preview.PixelWidth:0} DIP 宽"
             : $"{WidthUnits}×{HeightUnits} · {preview.PixelWidth:0} × {preview.PixelHeight:0} DIP";

@@ -74,6 +74,7 @@ public class StartWindowController : IDisposable
     private double _windowWidthSnapFrom;
     private double _windowWidthSnapTo;
     private double _windowWidthSnapRight;
+    private double _requestedMinimumWidth = StartWindowSizing.WidthForColumns(0);
     private IReadOnlyDictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
 
     public event Action? WindowDismissing;
@@ -109,6 +110,21 @@ public class StartWindowController : IDisposable
 
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
         _displayChangeRefreshTimer.Tick += DisplayChangeRefreshTimer_Tick;
+    }
+
+    public void SetMinimumWorkspaceColumns(int columns)
+    {
+        _requestedMinimumWidth = StartWindowSizing.WidthForColumns(columns);
+        _window.MinWidth = Math.Min(_requestedMinimumWidth, _window.MaxWidth);
+        var currentWidth = _window.ActualWidth > 0 ? _window.ActualWidth : _window.Width;
+        if (currentWidth + 0.5 >= _window.MinWidth)
+        {
+            return;
+        }
+
+        _window.Width = _window.MinWidth;
+        PositionOnCurrentMonitor();
+        SaveCurrentSize();
     }
 
     public void SetWindowSource(HwndSource? source)
@@ -379,8 +395,7 @@ public class StartWindowController : IDisposable
         var scale = 96.0 / dpi;
         var logicalWorkWidth = workArea.Width * scale;
         var logicalWorkHeight = workArea.Height * scale;
-        _window.MinWidth = Math.Min(StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns),
-            logicalWorkWidth);
+        _window.MinWidth = Math.Min(_requestedMinimumWidth, logicalWorkWidth);
         _window.MaxWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
         _window.MaxHeight = Math.Max(_window.MinHeight, logicalWorkHeight);
         var requestedWidth = preferredSize?.Width ?? (_window.ActualWidth > 0 ? _window.ActualWidth : _window.Width);

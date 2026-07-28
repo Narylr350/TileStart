@@ -136,7 +136,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
             AlphabetIndex.UpdateAvailability(AlphabetLetters, apps, RecentApps.Count > 0);
             var savedLayout = TileLayoutStore.Load();
-            var layout = savedLayout ?? DefaultTileLayout.Create(launchableApps);
+            var layout = savedLayout ?? new TileLayout();
             RestoreTileIcons(layout, launchableApps);
             foreach (var group in layout.Groups)
             {
@@ -627,6 +627,11 @@ internal sealed class ApplicationPaneController : IDisposable
     public bool AddAppTile(TileGroup target, TileItem tile, System.Windows.Point position,
         System.Windows.Point dragAnchor)
     {
+        if (_tileLayout.ContainsLaunchTarget(tile.LaunchTarget))
+        {
+            return false;
+        }
+
         var (column, row) = TileDropResolver.GetCell(position, dragAnchor, tile, target.ContentColumns);
         if (!Win10GroupLayout.Add(target, tile, column, row))
         {

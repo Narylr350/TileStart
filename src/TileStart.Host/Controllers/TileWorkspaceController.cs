@@ -125,11 +125,12 @@ internal sealed class TileWorkspaceController : IDisposable
         {
             foreach (var item in EnumerateMenuItems(menu))
             {
-                if (item.Tag as string == "UnpinStart")
+                if (item.Tag as string is "PinStart" or "UnpinStart")
                 {
-                    item.Visibility = IsPinnedToStart(app)
-                        ? Visibility.Visible
-                        : Visibility.Collapsed;
+                    var isPinned = IsPinnedToStart(app);
+                    item.Visibility = item.Tag as string == "PinStart"
+                        ? (isPinned ? Visibility.Collapsed : Visibility.Visible)
+                        : (isPinned ? Visibility.Visible : Visibility.Collapsed);
                 }
                 else if (item.Tag as string == "RemoveCustomApp")
                 {
@@ -217,6 +218,11 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
+        if (_tileLayout.ContainsLaunchTarget(app.LaunchTarget))
+        {
+            return;
+        }
+
         var tile = _appController.CreateAppTile(app);
         PinTileToStart(tile);
     }
@@ -281,6 +287,11 @@ internal sealed class TileWorkspaceController : IDisposable
 
     public bool PinTileToStart(TileItem tile)
     {
+        if (_tileLayout.ContainsLaunchTarget(tile.LaunchTarget))
+        {
+            return false;
+        }
+
         var placement = Win10GroupLayout.FindPinPlacement(_tileLayout.Groups, tile)
                         ?? new Win10PinPlacement(
                             TileGroupManager.Add(_tileLayout, _tileDragCoordinator.CurrentGroupColumnCount()),
@@ -355,6 +366,7 @@ internal sealed class TileWorkspaceController : IDisposable
             tile,
             defaultIcon: defaultVisual.Icon,
             defaultUsesFullTileLogo: defaultVisual.UsesFullTileLogo);
+
         void CommitSettings()
         {
             ApplyTileSettings(tile, dialog);
@@ -430,7 +442,12 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
-        var dialog = new GroupSettingsWindow(folder, _appController.LaunchableApps);
+        var excludedTargets = _tileLayout.EnumerateTiles()
+            .Where(tile => !folder.FolderTiles.Contains(tile))
+            .Where(tile => !string.IsNullOrWhiteSpace(tile.LaunchTarget))
+            .Select(tile => LaunchTargetIdentity.GetKey(tile.LaunchTarget))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var dialog = new GroupSettingsWindow(folder, _appController.LaunchableApps, excludedTargets);
         if (ShowGroupSettingsDialog(dialog) != true)
         {
             return;
@@ -439,6 +456,8 @@ internal sealed class TileWorkspaceController : IDisposable
         var selectedTiles = dialog.SelectedOptions
             .Select(option => option.ExistingTile ?? _appController.CreateAppTile(option.App!))
             .Where(tile => !tile.IsTileFolder)
+            .GroupBy(TileLayout.GetIdentityKey, StringComparer.OrdinalIgnoreCase)
+            .Select(grouping => grouping.First())
             .ToArray();
         folder.FolderTiles.Clear();
         foreach (var tile in selectedTiles)
@@ -637,7 +656,11 @@ internal sealed class TileWorkspaceController : IDisposable
         GroupSettingsWindow dialog;
         try
         {
-            dialog = new GroupSettingsWindow(group, _appController.LaunchableApps);
+            var excludedTargets = _tileLayout.EnumerateTiles()
+                .Where(tile => !group.Tiles.Contains(tile))
+                .Select(tile => LaunchTargetIdentity.GetKey(tile.LaunchTarget))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            dialog = new GroupSettingsWindow(group, _appController.LaunchableApps, excludedTargets);
             if (ShowGroupSettingsDialog(dialog) != true)
             {
                 return;
@@ -655,12 +678,19 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
+        ApplyGroupSettings(group, dialog);
+    }
+
+    private void ApplyGroupSettings(TileGroup group, GroupSettingsWindow dialog)
+    {
         var previousName = group.Name;
         var previousWidthUnits = group.WidthUnits;
         var previousHeightUnits = group.HeightUnits;
         var previousTiles = group.Tiles.ToArray();
         var selectedTiles = dialog.SelectedOptions
             .Select(option => option.ExistingTile ?? _appController.CreateAppTile(option.App!))
+            .GroupBy(TileLayout.GetIdentityKey, StringComparer.OrdinalIgnoreCase)
+            .Select(grouping => grouping.First())
             .ToArray();
 
         group.Name = dialog.GroupName;
@@ -1180,7 +1210,8 @@ internal sealed class TileWorkspaceController : IDisposable
     private static T? FindVisualAncestor<T>(DependencyObject child)
         where T : DependencyObject
     {
-        for (var current = VisualTreeHelper.GetParent(child); current is not null;
+        for (var current = VisualTreeHelper.GetParent(child);
+             current is not null;
              current = VisualTreeHelper.GetParent(current))
         {
             if (current is T match)

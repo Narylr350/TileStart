@@ -4,8 +4,12 @@ namespace TileStart.Host.Windowing;
 
 public static class StartWindowSizing
 {
-    public const int MinimumGroupColumns = 1;
+    // Win10 permits the tile pane to be completely collapsed, leaving only
+    // the navigation rail and the all-apps list visible.
+    public const int MinimumGroupColumns = 0;
     public const int MaximumGroupColumns = 3;
+
+    public static int MinimumColumnsForTileCount(int tileCount) => tileCount > 0 ? 1 : 0;
 
     private static double FixedPaneWidth =>
         Win10VisualMetrics.CollapsedNavigationWidth
@@ -15,6 +19,11 @@ public static class StartWindowSizing
     public static double WidthForColumns(int columns)
     {
         columns = Math.Clamp(columns, MinimumGroupColumns, MaximumGroupColumns);
+        if (columns == 0)
+        {
+            return FixedPaneWidth;
+        }
+
         return FixedPaneWidth
                + Win10GroupWrapPanel.RequiredWidth(
                    columns * TileWorkspaceMetrics.LegacyGroupWidthUnits)
@@ -28,7 +37,9 @@ public static class StartWindowSizing
             requestedWidth = WidthForColumns(MinimumGroupColumns);
         }
 
-        var candidates = Enumerable.Range(MinimumGroupColumns, MaximumGroupColumns)
+        var candidates = Enumerable.Range(
+                MinimumGroupColumns,
+                MaximumGroupColumns - MinimumGroupColumns + 1)
             .Select(WidthForColumns)
             .Where(width => !double.IsFinite(availableWidth) || width <= availableWidth + 0.1)
             .ToArray();

@@ -292,6 +292,7 @@
                         <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}"
                                     >
                             <MenuItem Header="固定到“开始”屏幕"
+                                      Tag="PinStart"
                                       Click="PinAppToStart_Click">
                                 <MenuItem.Icon>
                                     <TextBlock Foreground="{DynamicResource TileStartTextPrimaryBrush}"

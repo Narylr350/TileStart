@@ -114,8 +114,18 @@ internal sealed class TileStartTrayRenderer : Forms.ToolStripProfessionalRendere
 
     protected override void OnRenderItemText(Forms.ToolStripItemTextRenderEventArgs e)
     {
-        e.TextColor = e.Item.Enabled ? _palette.Text : _palette.DisabledText;
-        base.OnRenderItemText(e);
+        var color = e.Item.Enabled ? _palette.Text : _palette.DisabledText;
+        var bounds = new Drawing.Rectangle(0, 0, e.Item.Width, e.Item.Height);
+        Forms.TextRenderer.DrawText(
+            e.Graphics,
+            e.Text,
+            e.TextFont,
+            bounds,
+            color,
+            Forms.TextFormatFlags.HorizontalCenter
+            | Forms.TextFormatFlags.VerticalCenter
+            | Forms.TextFormatFlags.SingleLine
+            | Forms.TextFormatFlags.NoPadding);
     }
 
     protected override void OnRenderArrow(Forms.ToolStripArrowRenderEventArgs e)

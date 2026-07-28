@@ -30,6 +30,7 @@ public sealed class GroupSettingsWindowTests
         Assert.Single(options, option => option.Name == "百度网盘");
         Assert.Contains(options, option => option.Name == "其他应用");
     }
+
     [Fact]
     public void FolderModeExcludesNestedFoldersAndReusesApplicationOptions()
     {
@@ -60,4 +61,30 @@ public sealed class GroupSettingsWindowTests
         Assert.Contains(options, option => option.Name == "其他应用" && !option.IsSelected);
     }
 
+
+    [Fact]
+    public void OptionsExcludeTargetsAlreadyUsedOutsideTheEditedGroup()
+    {
+        const string occupiedTarget = @"C:\Apps\Occupied.exe";
+        const string availableTarget = @"C:\Apps\Available.exe";
+        var group = new TileGroup
+        {
+            Tiles = [new TileItem { Name = "已有磁贴", LaunchTarget = @"C:\Apps\Existing.exe" }],
+        };
+        var apps = new[]
+        {
+            AppEntry.Application("已在其他组", occupiedTarget, DateTime.MinValue),
+            AppEntry.Application("可添加", availableTarget, DateTime.MinValue),
+        };
+        var excludedTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            LaunchTargetIdentity.GetKey(occupiedTarget),
+        };
+
+        var options = GroupSettingsWindow.CreateOptions(group, apps, excludedTargets);
+
+        Assert.DoesNotContain(options, option => option.Name == "已在其他组");
+        Assert.Contains(options, option => option.Name == "可添加" && !option.IsSelected);
+        Assert.Contains(options, option => option.Name == "已有磁贴" && option.IsSelected);
+    }
 }

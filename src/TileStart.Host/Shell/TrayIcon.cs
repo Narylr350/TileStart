@@ -6,6 +6,8 @@ namespace TileStart.Host.Shell;
 
 public sealed class TrayIcon : IDisposable
 {
+    private const int MenuItemWidth = 248;
+    private const int MenuItemHeight = 32;
     private readonly Forms.NotifyIcon _notifyIcon;
     private readonly Forms.ToolStripMenuItem _pauseItem;
     private readonly Drawing.Icon? _applicationIcon;
@@ -67,6 +69,7 @@ public sealed class TrayIcon : IDisposable
             ForeColor = MenuForegroundColor,
             Font = font,
             Padding = new Forms.Padding(4),
+            MinimumSize = new Drawing.Size(MenuItemWidth + 8, 0),
             ShowCheckMargin = true,
             ShowImageMargin = false,
         };
@@ -113,7 +116,9 @@ public sealed class TrayIcon : IDisposable
             BackColor = MenuBackgroundColor,
             ForeColor = MenuForegroundColor,
             Padding = new Forms.Padding(8, 0, 14, 0),
-            Size = new Drawing.Size(220, 32),
+            Size = new Drawing.Size(MenuItemWidth, MenuItemHeight),
+            TextAlign = Drawing.ContentAlignment.MiddleCenter,
+            ImageAlign = Drawing.ContentAlignment.MiddleLeft,
         };
         if (click is not null)
         {
@@ -129,7 +134,7 @@ public sealed class TrayIcon : IDisposable
             AutoSize = false,
             BackColor = MenuBackgroundColor,
             Margin = Forms.Padding.Empty,
-            Size = new Drawing.Size(220, 7),
+            Size = new Drawing.Size(MenuItemWidth, 7),
         };
 
     private Drawing.Color MenuBackgroundColor => Forms.SystemInformation.HighContrast

@@ -1785,7 +1785,7 @@ internal sealed class TileDragCoordinator : IDisposable
         foreach (var path in paths)
         {
             var tile = DroppedTileFactory.Create(path);
-            if (tile is null)
+            if (tile is null || _tileLayout.ContainsLaunchTarget(tile.LaunchTarget))
             {
                 continue;
             }

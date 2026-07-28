@@ -8,6 +8,8 @@ namespace TileStart.Host.Shell;
 public static class ExplorerContextMenuRegistration
 {
     internal static readonly string[] RegistrationClasses = ["*", "Directory"];
+    internal const string AddToAppListLabel = "添加到 TileStart 应用列表";
+    internal const string PinToStartLabel = "固定到“开始”屏幕";
     private static readonly string[] LegacyExtensions = [".exe", ".lnk", ".appref-ms"];
 
     public static void EnsureRegistered()
@@ -23,9 +25,9 @@ public static class ExplorerContextMenuRegistration
             RemoveLegacyRegistrations();
             foreach (var registrationClass in RegistrationClasses)
             {
-                RegisterCommand(registrationClass, "TileStart.AddToAppList", "添加到 TileStart 应用列表",
+                RegisterCommand(registrationClass, "TileStart.AddToAppList", AddToAppListLabel,
                     executablePath, "--add-app-list");
-                RegisterCommand(registrationClass, "TileStart.PinTile", "添加到 TileStart 磁贴区", executablePath,
+                RegisterCommand(registrationClass, "TileStart.PinTile", PinToStartLabel, executablePath,
                     "--pin-tile");
             }
 

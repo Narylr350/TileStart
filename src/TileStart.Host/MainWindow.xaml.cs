@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
@@ -19,6 +20,7 @@ public partial class MainWindow : Window
     private readonly Controllers.TileDragCoordinator _tileDragCoordinator;
     private readonly Controllers.NavigationController _navigationController;
     private readonly Controllers.TileWorkspaceController _tileWorkspaceController;
+    private readonly HashSet<TileGroup> _observedTileGroups = [];
     private bool _controllersDisposed;
 
     public MainWindow(AppThemeStyle themeStyle = AppThemeStyle.Windows11)
@@ -125,6 +127,7 @@ public partial class MainWindow : Window
         _controller.WindowDismissing += _tileWorkspaceController.CloseOpenContextMenu;
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;
+        TileLayout.Groups.CollectionChanged += TileGroups_CollectionChanged;
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
         MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
         var savedSize = WindowSizeStore.Load();
@@ -191,11 +194,52 @@ public partial class MainWindow : Window
         }
 
         _controllersDisposed = true;
+        TileLayout.Groups.CollectionChanged -= TileGroups_CollectionChanged;
+        foreach (var group in _observedTileGroups)
+        {
+            group.Tiles.CollectionChanged -= GroupTiles_CollectionChanged;
+        }
+
+        _observedTileGroups.Clear();
         _controller.Dispose();
         _tileWorkspaceController.Dispose();
         _tileDragCoordinator.Dispose();
         _navigationController.Dispose();
         _appController.Dispose();
+    }
+
+    private void TileGroups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (var group in e.OldItems.OfType<TileGroup>())
+            {
+                group.Tiles.CollectionChanged -= GroupTiles_CollectionChanged;
+                _observedTileGroups.Remove(group);
+            }
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (var group in e.NewItems.OfType<TileGroup>())
+            {
+                if (_observedTileGroups.Add(group))
+                {
+                    group.Tiles.CollectionChanged += GroupTiles_CollectionChanged;
+                }
+            }
+        }
+
+        UpdateMinimumWidthForTileLayout();
+    }
+
+    private void GroupTiles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        UpdateMinimumWidthForTileLayout();
+
+    private void UpdateMinimumWidthForTileLayout()
+    {
+        var tileCount = TileLayout.Groups.Sum(group => group.Tiles.Count);
+        _controller.SetMinimumWorkspaceColumns(StartWindowSizing.MinimumColumnsForTileCount(tileCount));
     }
 
     private void Window_Deactivated(object? sender, EventArgs e) =>
