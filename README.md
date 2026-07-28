@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
 ![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-451%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-475%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -50,6 +50,23 @@ Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁
 - 把磁贴组成文件夹，管理文件夹内容，或从现有组拆分为新组。文件夹预览随实际内容更新；展开时只推动发生重叠的后续分组列。
 - 支持固定 `.exe`、`.lnk`、普通文件、文件夹、批处理、PowerShell、URL、UWP/MSIX 与自定义命令，可设置启动参数、工作目录和管理员运行。
 
+### AI 辅助布局管理
+
+仓库内置 [`scripts\Manage-Layout.ps1`](scripts/Manage-Layout.ps1)，供 AI 或本地自动化安全读取和调整开始菜单布局：
+
+- `Paths` 输出权威布局文件与本机偏好文件路径。
+- `Summary` 生成精简但保留完整磁贴 ID、目标和坐标的 AI 可读摘要。
+- `Validate` 在写入前检查版本、重复 ID、越界、磁贴重叠、组重叠和非法嵌套文件夹。
+- `Apply` 先校验候选布局，再备份当前布局、正常停止 Host、原子替换文件并恢复同一个 Host。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Summary -OutputPath "$env:TEMP\TileStart-layout-summary.json"
+powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Validate -InputPath "$env:TEMP\layout-candidate.json"
+powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply -InputPath "$env:TEMP\layout-candidate.json"
+```
+
+详细说明和可选的本机 AI 整理偏好见 [AI 辅助布局管理](docs/ai-layout-management.md)。TileStart 不会把个人分类、排序或收纳规则当成产品默认值。
+
 ### 图标与外观
 
 - 使用应用默认图标、程序资源或本地图片，支持 PNG、JPEG、BMP、ICO、GIF、SVG，也可主动下载网络图标。
@@ -79,7 +96,7 @@ Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁
 
 ## 下载与安装
 
-最新版本：**v0.1.12**
+最新版本：**v0.1.13**
 
 | 文件 | 用途 |
 | --- | --- |
@@ -125,6 +142,7 @@ TileStart 的用户数据保存在：
 
 ```text
 layout.json          磁贴与分组布局
+ai-layout-preferences.json  可选的本机 AI 布局整理偏好
 custom-apps.json     手动添加的应用
 hidden-apps.json     应用隐藏状态
 window.json          窗口尺寸
@@ -246,16 +264,16 @@ artifacts\installer\TileStart-Setup-win-x64.exe
 推送符合 `v主版本.次版本.修订号` 格式的标签后，GitHub Actions 会自动运行测试、构建完整 x64 解决方案、生成便携包与安装器、计算 SHA-256，并创建 GitHub Release：
 
 ```powershell
-git tag v0.1.12
-git push origin v0.1.12
+git tag v0.1.13
+git push origin v0.1.13
 ```
 
-也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.12`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
+也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.13`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
 
 本地为指定版本生成相同产物：
 
 ```powershell
-.\scripts\Build-Package.ps1 -Version 0.1.12
+.\scripts\Build-Package.ps1 -Version 0.1.13
 ```
 
 ## 项目结构
@@ -267,7 +285,7 @@ src/TileStart.Injector/      Hook 挂载、兼容适配与 Explorer 生命周期
 src/TileStart.ShellProbe/    Shell / IPC 验证工具
 tests/TileStart.Host.Tests/  托管单元、行为与 XAML 回归测试
 installer/                   Inno Setup 安装配置
-scripts/                     构建和打包脚本
+scripts/                     构建、打包与 AI 辅助布局管理脚本
 docs/                        设计、验证和用户反馈资料
 ```
 
