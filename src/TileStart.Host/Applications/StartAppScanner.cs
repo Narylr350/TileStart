@@ -37,6 +37,12 @@ public static class StartAppScanner
             Environment.GetFolderPath(Environment.SpecialFolder.Programs),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs"),
         };
+        var excludedDirectories = new[]
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.Startup),
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup),
+            TaskbarPinner.ShortcutRoot,
+        }.Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
         var shortcuts = new List<StartMenuShortcut>();
         foreach (var directory in directories.Where(Directory.Exists))
         {
@@ -44,8 +50,7 @@ public static class StartAppScanner
             {
                 foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
                 {
-                    if (path.StartsWith(TaskbarPinner.ShortcutRoot + Path.DirectorySeparatorChar,
-                            StringComparison.OrdinalIgnoreCase))
+                    if (IsExcludedStartMenuShortcut(path, excludedDirectories))
                     {
                         continue;
                     }
@@ -156,6 +161,25 @@ public static class StartAppScanner
 
     internal static bool IsPackagedAppsFolderItem(string? packageFamilyName) =>
         !string.IsNullOrWhiteSpace(packageFamilyName);
+
+    internal static bool IsExcludedStartMenuShortcut(
+        string path,
+        IEnumerable<string> excludedDirectories) =>
+        excludedDirectories.Any(directory => IsPathWithinDirectory(path, directory));
+
+    internal static bool IsPathWithinDirectory(string path, string directory)
+    {
+        if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(directory))
+        {
+            return false;
+        }
+
+        var candidate = Path.GetFullPath(path);
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+        return candidate.Equals(root, StringComparison.OrdinalIgnoreCase)
+               || candidate.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+               || candidate.StartsWith(root + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static void ReleaseComObject(object? value)
     {

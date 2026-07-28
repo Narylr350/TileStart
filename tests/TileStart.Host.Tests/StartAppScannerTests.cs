@@ -20,4 +20,34 @@ public sealed class StartAppScannerTests
     {
         Assert.False(StartAppScanner.IsPackagedAppsFolderItem(packageFamilyName));
     }
+
+    [Theory]
+    [InlineData(@"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\Tool.lnk", true)]
+    [InlineData(@"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\Nested\Tool.lnk", true)]
+    [InlineData(@"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup Tools\Tool.lnk", false)]
+    [InlineData(@"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Tool.lnk", false)]
+    public void StartupDirectoryIsExcludedWithoutMatchingSimilarFolderNames(string path, bool expected)
+    {
+        const string startup =
+            @"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup";
+
+        Assert.Equal(expected, StartAppScanner.IsExcludedStartMenuShortcut(path, [startup]));
+    }
+
+    [Fact]
+    public void UserAndCommonStartupDirectoriesAreBothExcluded()
+    {
+        var excludedDirectories = new[]
+        {
+            @"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup",
+            @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup",
+        };
+
+        Assert.True(StartAppScanner.IsExcludedStartMenuShortcut(
+            @"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\UserTool.lnk",
+            excludedDirectories));
+        Assert.True(StartAppScanner.IsExcludedStartMenuShortcut(
+            @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\MachineTool.lnk",
+            excludedDirectories));
+    }
 }
