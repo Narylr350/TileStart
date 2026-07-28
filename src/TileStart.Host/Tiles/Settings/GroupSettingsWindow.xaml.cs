@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -77,20 +78,15 @@ public sealed class GroupTileOption : INotifyPropertyChanged
     }
 }
 
-public sealed class GroupTileOptionRow
-{
-    public required GroupTileOption First { get; init; }
-    public GroupTileOption? Second { get; init; }
-}
-
 public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 {
     private readonly ObservableCollection<GroupTileOption> _options;
-    private readonly RangeObservableCollection<GroupTileOptionRow> _optionRows = [];
+    private readonly RangeObservableCollection<GroupTileOption> _availableOptions = [];
+    private readonly ObservableCollection<GroupTileOption> _includedOptions = [];
+    private readonly bool _isFolderContents;
     private bool _isReady;
     private TileGroup _previewGroup = new();
     private string _validationMessage = string.Empty;
-    private bool _suspendOptionUpdates;
 
     public GroupSettingsWindow(
         TileGroup group,
@@ -115,9 +111,10 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         IReadOnlySet<string>? excludedTargets)
     {
         _options = CreateOptions(group, apps, excludedTargets);
-        foreach (var option in _options)
+        _isFolderContents = isFolderContents;
+        foreach (var option in _options.Where(option => option.IsSelected))
         {
-            option.PropertyChanged += Option_PropertyChanged;
+            _includedOptions.Add(option);
         }
 
         InitializeComponent();
@@ -129,18 +126,22 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         {
             Title = "文件夹内容";
             DialogTitleText.Text = "文件夹内容";
-            DialogDescriptionText.Text = "选择要放入当前文件夹的应用和已有项目";
-            GroupPropertiesPanel.Visibility = Visibility.Collapsed;
+            DialogDescriptionText.Text = "管理当前文件夹内的项目";
+            ContentEditorTitleText.Text = "管理文件夹内容";
+            ContentEditorDescriptionText.Text = "先从可添加列表选择项目，再点击添加；保存前不会修改文件夹。";
+            GroupPropertiesPane.Visibility = Visibility.Collapsed;
             GroupPropertiesColumn.Width = new GridLength(0);
             PropertiesGapColumn.Width = new GridLength(0);
         }
 
         _isReady = true;
-        RefreshOptionRows();
+        RefreshAvailableOptions();
         RefreshPreview();
+        UpdateSelectionButtons();
     }
 
-    public IReadOnlyList<GroupTileOptionRow> TileOptionRows => _optionRows;
+    public IReadOnlyList<GroupTileOption> AvailableOptions => _availableOptions;
+    public ObservableCollection<GroupTileOption> IncludedOptions => _includedOptions;
 
     public TileGroup PreviewGroup
     {
@@ -172,8 +173,9 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     public string GroupName => NameBox.Text.Trim();
     public int WidthUnits => ParseSelectedUnits(WidthBox, TileWorkspaceMetrics.LegacyGroupWidthUnits);
     public int HeightUnits => ParseSelectedUnits(HeightBox, 0);
-    public IReadOnlyList<GroupTileOption> SelectedOptions => [.. _options.Where(option => option.IsSelected)];
-    public string SelectedCountText => $"已选择 {SelectedOptions.Count} 项";
+    public IReadOnlyList<GroupTileOption> SelectedOptions => [.. _includedOptions];
+    public string SelectedCountText => $"当前 {_includedOptions.Count} 项";
+    public string AvailableCountText => $"{_availableOptions.Count} 项";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -244,55 +246,134 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     private static string TileKey(string launchTarget, string fallback) =>
         string.IsNullOrWhiteSpace(launchTarget) ? fallback : launchTarget;
 
-    private void Option_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(GroupTileOption.IsSelected) && !_suspendOptionUpdates)
-        {
-            OnPropertyChanged(nameof(SelectedCountText));
-            RefreshOptionRows();
-            RefreshPreview();
-        }
-    }
-
-    private void RefreshOptionRows()
+    private void RefreshAvailableOptions()
     {
         var query = SearchBox?.Text.Trim();
         var filtered = _options
+            .Where(option => !option.IsSelected)
             .Where(option => string.IsNullOrWhiteSpace(query)
                              || option.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase))
-            .OrderByDescending(option => option.IsSelected)
+            .OrderBy(option => option.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
-        var rows = new List<GroupTileOptionRow>((filtered.Length + 1) / 2);
-        for (var index = 0; index < filtered.Length; index += 2)
-        {
-            rows.Add(new GroupTileOptionRow
-            {
-                First = filtered[index],
-                Second = index + 1 < filtered.Length ? filtered[index + 1] : null,
-            });
-        }
 
-        _optionRows.Clear();
-        _optionRows.AddRange(rows);
+        _availableOptions.Clear();
+        _availableOptions.AddRange(filtered);
+        OnPropertyChanged(nameof(AvailableCountText));
     }
 
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        RefreshOptionRows();
+        RefreshAvailableOptions();
+        UpdateSelectionButtons();
+    }
+
+    private void AddSelection_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = AvailableList.SelectedItems.OfType<GroupTileOption>().ToArray();
+        foreach (var option in selected)
+        {
+            option.IsSelected = true;
+            _includedOptions.Add(option);
+        }
+
+        AvailableList.SelectedItems.Clear();
+        CompleteContentChange();
+    }
+
+    private void RemoveSelection_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = IncludedList.SelectedItems.OfType<GroupTileOption>().ToArray();
+        foreach (var option in selected)
+        {
+            option.IsSelected = false;
+            _includedOptions.Remove(option);
+        }
+
+        IncludedList.SelectedItems.Clear();
+        CompleteContentChange();
     }
 
     private void ClearSelection_Click(object sender, RoutedEventArgs e)
     {
-        _suspendOptionUpdates = true;
-        foreach (var option in _options.Where(option => option.IsSelected))
+        foreach (var option in _includedOptions)
         {
             option.IsSelected = false;
         }
 
-        _suspendOptionUpdates = false;
+        _includedOptions.Clear();
+        CompleteContentChange();
+    }
+
+    private void MoveUp_Click(object sender, RoutedEventArgs e)
+    {
+        if (IncludedList.SelectedItems.Count != 1 || IncludedList.SelectedItem is not GroupTileOption option)
+        {
+            return;
+        }
+
+        var index = _includedOptions.IndexOf(option);
+        if (index <= 0)
+        {
+            return;
+        }
+
+        _includedOptions.Move(index, index - 1);
+        IncludedList.SelectedItem = option;
+        IncludedList.ScrollIntoView(option);
+        CompleteContentChange(refreshAvailable: false);
+    }
+
+    private void MoveDown_Click(object sender, RoutedEventArgs e)
+    {
+        if (IncludedList.SelectedItems.Count != 1 || IncludedList.SelectedItem is not GroupTileOption option)
+        {
+            return;
+        }
+
+        var index = _includedOptions.IndexOf(option);
+        if (index < 0 || index >= _includedOptions.Count - 1)
+        {
+            return;
+        }
+
+        _includedOptions.Move(index, index + 1);
+        IncludedList.SelectedItem = option;
+        IncludedList.ScrollIntoView(option);
+        CompleteContentChange(refreshAvailable: false);
+    }
+
+    private void ContentSelection_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateSelectionButtons();
+    }
+
+    private void CompleteContentChange(bool refreshAvailable = true)
+    {
+        if (refreshAvailable)
+        {
+            RefreshAvailableOptions();
+        }
+
         OnPropertyChanged(nameof(SelectedCountText));
-        RefreshOptionRows();
         RefreshPreview();
+        UpdateSelectionButtons();
+    }
+
+    private void UpdateSelectionButtons()
+    {
+        if (!_isReady)
+        {
+            return;
+        }
+
+        AddButton.IsEnabled = AvailableList.SelectedItems.Count > 0;
+        RemoveButton.IsEnabled = IncludedList.SelectedItems.Count > 0;
+        var selected = IncludedList.SelectedItems.Count == 1
+            ? IncludedList.SelectedItem as GroupTileOption
+            : null;
+        var selectedIndex = selected is null ? -1 : _includedOptions.IndexOf(selected);
+        MoveUpButton.IsEnabled = selectedIndex > 0;
+        MoveDownButton.IsEnabled = selectedIndex >= 0 && selectedIndex < _includedOptions.Count - 1;
     }
 
     private void Settings_Changed(object sender, RoutedEventArgs e)
@@ -325,9 +406,12 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
             ? string.Empty
             : $"所选磁贴无法放入 {WidthUnits}×{HeightUnits} 的组，请增大尺寸或减少磁贴。";
         SaveButton.IsEnabled = fits;
-        PreviewSizeText.Text = HeightUnits == 0
-            ? $"{WidthUnits}×自动 · {preview.PixelWidth:0} DIP 宽"
-            : $"{WidthUnits}×{HeightUnits} · {preview.PixelWidth:0} × {preview.PixelHeight:0} DIP";
+        if (!_isFolderContents)
+        {
+            PreviewSizeText.Text = HeightUnits == 0
+                ? $"{WidthUnits}×自动 · {preview.PixelWidth:0} DIP 宽"
+                : $"{WidthUnits}×{HeightUnits} · {preview.PixelWidth:0} × {preview.PixelHeight:0} DIP";
+        }
     }
 
     private static TileItem CloneForPreview(GroupTileOption option)
