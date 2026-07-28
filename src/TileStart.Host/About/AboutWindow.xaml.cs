@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using TileStart.Host.Updates;
-using MessageBox = System.Windows.MessageBox;
+using TileStart.Host.Windowing;
 
 namespace TileStart.Host.About;
 
@@ -33,8 +33,11 @@ public partial class AboutWindow : Window
         }
         catch (Exception exception) when (exception is Win32Exception or InvalidOperationException)
         {
-            MessageBox.Show(this, $"无法打开项目页面：{exception.Message}", "TileStart",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            TileStartMessageDialog.Show(
+                this,
+                "无法打开项目页面",
+                exception.Message,
+                TileStartMessageKind.Error);
         }
     }
 

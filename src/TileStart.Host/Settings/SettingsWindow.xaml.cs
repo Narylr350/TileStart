@@ -4,7 +4,7 @@ using System.Windows.Input;
 using TileStart.Host.Shell;
 using TileStart.Host.Themes;
 using TileStart.Host.Utilities;
-using MessageBox = System.Windows.MessageBox;
+using TileStart.Host.Windowing;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace TileStart.Host.Settings;
@@ -92,19 +92,19 @@ public partial class SettingsWindow : Window
         try
         {
             DiagnosticBundleService.Export(dialog.FileName);
-            MessageBox.Show(this,
+            TileStartMessageDialog.Show(
+                this,
+                "诊断包已导出",
                 "诊断包已导出。公开提交前请先检查日志中可能包含的本地路径和应用名称。",
-                "TileStart",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                TileStartMessageKind.Information);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            MessageBox.Show(this,
-                $"无法导出诊断包：{exception.Message}",
-                "TileStart",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            TileStartMessageDialog.Show(
+                this,
+                "无法导出诊断包",
+                exception.Message,
+                TileStartMessageKind.Error);
         }
     }
 }

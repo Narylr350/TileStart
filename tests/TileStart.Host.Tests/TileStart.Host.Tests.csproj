@@ -82,6 +82,13 @@
     <Content Include="..\..\src\TileStart.Host\Tiles\Settings\SvgIconWindow.xaml"
              Link="TestData\Xaml\SvgIconWindow.xaml"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\Windowing\TileStartMessageDialog.xaml"
+             Link="TestData\Xaml\TileStartMessageDialog.xaml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\TileStart.Host\**\*.cs"
+             Exclude="..\..\src\TileStart.Host\bin\**;..\..\src\TileStart.Host\obj\**"
+             Link="TestData\HostSource\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\Windowing\StartMotion.cs"
              Link="TestData\Performance\StartMotion.cs"
              CopyToOutputDirectory="PreserveNewest" />

@@ -283,11 +283,22 @@
         </Style>
         <DataTemplate x:Key="AppEntryTemplate">
             <StackPanel>
-                <Button Style="{StaticResource AppRowStyle}"
-                        Tag="{Binding}"
+                <Button Tag="{Binding}"
                         Click="AppButton_Click"
                         PreviewMouseLeftButtonDown="AppButton_PreviewMouseLeftButtonDown"
                         PreviewMouseMove="AppButton_PreviewMouseMove">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource AppRowStyle}">
+                            <Setter Property="ContextMenuService.IsEnabled" Value="True" />
+                            <Style.Triggers>
+                                <!-- Application-list folders are navigation containers, not launch targets.
+                                     Do not expose the regular app actions as a non-functional empty promise. -->
+                                <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                                    <Setter Property="ContextMenuService.IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
                     <Button.ContextMenu>
                         <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}"
                                     >

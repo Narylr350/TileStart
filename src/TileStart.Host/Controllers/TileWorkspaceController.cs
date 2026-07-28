@@ -18,6 +18,7 @@ using TileStart.Host.Tiles.Settings;
 using TileStart.Host.Persistence;
 using TileStart.Host.Utilities;
 using TileStart.Host.Tiles.Folders;
+using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Controllers;
 
@@ -127,6 +128,12 @@ internal sealed class TileWorkspaceController : IDisposable
             {
                 if (item.Tag as string is "PinStart" or "UnpinStart")
                 {
+                    if (app.IsFolder)
+                    {
+                        item.Visibility = Visibility.Collapsed;
+                        continue;
+                    }
+
                     var isPinned = IsPinnedToStart(app);
                     item.Visibility = item.Tag as string == "PinStart"
                         ? (isPinned ? Visibility.Collapsed : Visibility.Visible)
@@ -552,11 +559,11 @@ internal sealed class TileWorkspaceController : IDisposable
         ShowTaskbarPinFailed();
     }
 
-    private void ShowTaskbarPinFailed() => System.Windows.MessageBox.Show(_window,
+    private void ShowTaskbarPinFailed() => TileStartMessageDialog.Show(
+        _window,
+        "无法固定到任务栏",
         "Windows 没有允许固定该应用，或该应用已经固定到任务栏。",
-        "固定到任务栏",
-        MessageBoxButton.OK,
-        MessageBoxImage.Information);
+        TileStartMessageKind.Information);
 
     private AppEntry? FindApp(TileItem tile) => _appController.LaunchableApps.FirstOrDefault(candidate =>
         candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
@@ -630,11 +637,13 @@ internal sealed class TileWorkspaceController : IDisposable
         }
 
         if (group.Tiles.Count > 0
-            && System.Windows.MessageBox.Show(_window,
-                "删除该组会同时取消固定其中的全部磁贴。是否继续？",
+            && !TileStartMessageDialog.Confirm(
+                _window,
                 "删除组",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                "删除该组会同时取消固定其中的全部磁贴。是否继续？",
+                TileStartMessageKind.Warning,
+                primaryText: "删除组",
+                secondaryText: "取消"))
         {
             return;
         }
@@ -669,12 +678,11 @@ internal sealed class TileWorkspaceController : IDisposable
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Unable to open group settings: {exception}");
-            System.Windows.MessageBox.Show(
+            TileStartMessageDialog.Show(
                 _window,
-                "无法打开组设置，错误已写入 TileStart 日志。",
-                "TileStart",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                "无法打开组设置",
+                "错误已写入 TileStart 日志。",
+                TileStartMessageKind.Error);
             return;
         }
 
@@ -723,12 +731,11 @@ internal sealed class TileWorkspaceController : IDisposable
             }
 
             Win10GroupLayout.Normalize(group);
-            System.Windows.MessageBox.Show(
+            TileStartMessageDialog.Show(
                 _window,
-                "组内容无法应用到所选尺寸，原布局已恢复。",
-                "TileStart",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                "无法应用组布局",
+                "组内容无法放入所选尺寸，原布局已恢复。",
+                TileStartMessageKind.Warning);
             return;
         }
 

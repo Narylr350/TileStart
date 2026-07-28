@@ -6,12 +6,12 @@ using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushConverter = System.Windows.Media.BrushConverter;
 using MediaBrushes = System.Windows.Media.Brushes;
 using MediaColorConverter = System.Windows.Media.ColorConverter;
-using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using OpenFolderDialog = Microsoft.Win32.OpenFolderDialog;
 using TileStart.Host.Applications;
 using TileStart.Host.Icons;
 using TileStart.Host.Tiles.Models;
+using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Tiles.Settings;
 
@@ -227,7 +227,7 @@ public partial class TileSettingsWindow : Window
     {
         if (string.IsNullOrWhiteSpace(LaunchTarget))
         {
-            MessageBox.Show(this, "请先填写启动目标。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Information);
+            TileStartMessageDialog.Show(this, "无法测试启动", "请先填写启动目标。");
             return;
         }
 
@@ -242,8 +242,11 @@ public partial class TileSettingsWindow : Window
         };
         if (!AppLauncher.Launch(testTile))
         {
-            MessageBox.Show(this, "启动失败，请检查目标、参数和工作目录。", "TileStart", MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            TileStartMessageDialog.Show(
+                this,
+                "启动失败",
+                "请检查目标、参数和工作目录。",
+                TileStartMessageKind.Warning);
         }
     }
 
@@ -423,43 +426,45 @@ public partial class TileSettingsWindow : Window
     {
         if (string.IsNullOrWhiteSpace(TileName))
         {
-            MessageBox.Show(this, "磁贴名称不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowValidationWarning("磁贴名称不能为空。");
             return false;
         }
 
         if (LaunchSection.Visibility == Visibility.Visible && string.IsNullOrWhiteSpace(LaunchTarget))
         {
-            MessageBox.Show(this, "命令或可执行文件不能为空。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowValidationWarning("命令或可执行文件不能为空。");
             return false;
         }
 
         if (!string.IsNullOrWhiteSpace(WorkingDirectory) && !Directory.Exists(WorkingDirectory))
         {
-            MessageBox.Show(this, "工作目录不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowValidationWarning("工作目录不存在。");
             return false;
         }
 
         if (!string.IsNullOrWhiteSpace(IconPath) && !File.Exists(IconPath))
         {
-            MessageBox.Show(this, "图标来源不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowValidationWarning("图标来源不存在。");
             return false;
         }
 
         if (!string.IsNullOrWhiteSpace(BackgroundImagePath) && !File.Exists(BackgroundImagePath))
         {
-            MessageBox.Show(this, "背景图片不存在。", "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowValidationWarning("背景图片不存在。");
             return false;
         }
 
         if (!IsValidColor(BackgroundColor) || !IsValidColor(ForegroundColor))
         {
-            MessageBox.Show(this, "颜色必须是 #RRGGBB、#AARRGGBB 或 WPF 颜色名称。", "TileStart", MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            ShowValidationWarning("颜色必须是 #RRGGBB、#AARRGGBB 或 WPF 颜色名称。");
             return false;
         }
 
         return true;
     }
+
+    private void ShowValidationWarning(string message) =>
+        TileStartMessageDialog.Show(this, "无法保存磁贴", message, TileStartMessageKind.Warning);
 
     private static bool IsValidColor(string value)
     {

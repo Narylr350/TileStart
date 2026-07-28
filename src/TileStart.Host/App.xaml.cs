@@ -9,7 +9,7 @@ using TileStart.Host.Shell;
 using TileStart.Host.Themes;
 using TileStart.Host.Updates;
 using TileStart.Host.Utilities;
-using MessageBox = System.Windows.MessageBox;
+using TileStart.Host.Windowing;
 
 namespace TileStart.Host;
 
@@ -235,8 +235,7 @@ public partial class App : System.Windows.Application
     {
         if (_isCheckingForUpdates)
         {
-            MessageBox.Show("正在检查更新，请稍候。", "TileStart", MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            TileStartMessageDialog.Show(null, "检查更新", "正在检查更新，请稍候。");
             return;
         }
 
@@ -248,25 +247,31 @@ public partial class App : System.Windows.Application
             var currentVersion = GitHubUpdateService.CurrentVersion;
             if (!GitHubUpdateService.IsNewer(currentVersion, release.Version))
             {
-                MessageBox.Show($"当前版本 {currentVersion.ToString(3)} 已是最新版本。", "TileStart",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                TileStartMessageDialog.Show(
+                    null,
+                    "检查更新",
+                    $"当前版本 {currentVersion.ToString(3)} 已是最新版本。");
                 return;
             }
 
             var installedCopy = GitHubUpdateService.IsInstalledCopy(Environment.ProcessPath);
             var packageDescription = installedCopy ? "安装器" : "便携版压缩包";
-            var answer = MessageBox.Show(
+            var shouldDownload = TileStartMessageDialog.Confirm(
+                null,
+                "发现新版本",
                 $"发现新版本 {release.Version.ToString(3)}（当前 {currentVersion.ToString(3)}）。\n\n是否从 GitHub 下载并校验{packageDescription}？",
-                "TileStart 更新",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Information);
-            if (answer != MessageBoxResult.Yes)
+                TileStartMessageKind.Question,
+                primaryText: "下载并校验",
+                secondaryText: "暂不更新");
+            if (!shouldDownload)
             {
                 return;
             }
 
-            MessageBox.Show("更新包将在后台下载，完成 SHA-256 校验后继续。", "TileStart 更新",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            TileStartMessageDialog.Show(
+                null,
+                "正在准备更新",
+                "更新包将在后台下载，完成 SHA-256 校验后继续。");
             using var downloadTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
             var update = await _updateService.DownloadAsync(release, installedCopy, downloadTimeout.Token);
             if (update.Kind == UpdatePackageKind.Installer)
@@ -279,19 +284,27 @@ public partial class App : System.Windows.Application
             {
                 UseShellExecute = true,
             });
-            MessageBox.Show("便携版已下载并通过校验。请退出 TileStart 后解压覆盖旧文件。", "TileStart 更新",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            TileStartMessageDialog.Show(
+                null,
+                "更新包已就绪",
+                "便携版已下载并通过校验。请退出 TileStart 后解压覆盖旧文件。");
         }
         catch (OperationCanceledException)
         {
-            MessageBox.Show("检查或下载更新超时，请稍后重试。", "TileStart 更新", MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            TileStartMessageDialog.Show(
+                null,
+                "更新超时",
+                "检查或下载更新超时，请稍后重试。",
+                TileStartMessageKind.Warning);
         }
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Update check failed: {exception}");
-            MessageBox.Show($"无法完成更新：{exception.Message}", "TileStart 更新", MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            TileStartMessageDialog.Show(
+                null,
+                "无法完成更新",
+                exception.Message,
+                TileStartMessageKind.Error);
         }
         finally
         {
@@ -447,17 +460,20 @@ public partial class App : System.Windows.Application
             }
         }
 
+        if (_pendingRestore is not null && restoreError is not null)
+        {
+            TileStartMessageDialog.Show(
+                null,
+                "恢复失败",
+                restoreError.Message,
+                TileStartMessageKind.Error);
+        }
+
         DiagnosticLog.Flush();
         base.OnExit(e);
 
         if (_pendingRestore is not null && Environment.ProcessPath is { } executablePath)
         {
-            if (_pendingRestore is not null && restoreError is not null)
-            {
-                MessageBox.Show($"恢复失败：{restoreError.Message}", "TileStart", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-
             Process.Start(new ProcessStartInfo(executablePath) { UseShellExecute = true });
         }
     }

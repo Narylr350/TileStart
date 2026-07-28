@@ -1,8 +1,8 @@
 using System.IO;
 using System.Windows;
-using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+using TileStart.Host.Windowing;
 
 namespace TileStart.Host.Backup;
 
@@ -58,14 +58,17 @@ public partial class BackupRestoreWindow : Window
             await Task.Run(() => _service.Create(dialog.FileName, components));
             var size = new FileInfo(dialog.FileName).Length;
             StatusText.Text = $"备份完成 · {FormatSize(size)}";
-            MessageBox.Show(this, $"备份已保存到：\n{dialog.FileName}", "TileStart",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            TileStartMessageDialog.Show(this, "备份完成", $"备份已保存到：\n{dialog.FileName}");
         }
         catch (Exception exception) when (exception is IOException or InvalidDataException
                                               or UnauthorizedAccessException or InvalidOperationException)
         {
             StatusText.Text = "备份失败";
-            MessageBox.Show(this, exception.Message, "无法创建备份", MessageBoxButton.OK, MessageBoxImage.Error);
+            TileStartMessageDialog.Show(
+                this,
+                "无法创建备份",
+                exception.Message,
+                TileStartMessageKind.Error);
         }
         finally
         {
@@ -98,12 +101,16 @@ public partial class BackupRestoreWindow : Window
                 return;
             }
 
-            var answer = MessageBox.Show(this,
+            var shouldRestore = TileStartMessageDialog.Confirm(
+                this,
+                "确认恢复",
                 $"备份时间：{inspection.CreatedAt:yyyy-MM-dd HH:mm}\n" +
                 $"将恢复：{DescribeComponents(components)}\n\n" +
                 "TileStart 将关闭、创建当前状态的安全备份，然后恢复并自动重启。是否继续？",
-                "确认恢复", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (answer != MessageBoxResult.Yes)
+                TileStartMessageKind.Warning,
+                primaryText: "恢复并重启",
+                secondaryText: "取消");
+            if (!shouldRestore)
             {
                 return;
             }
@@ -115,7 +122,11 @@ public partial class BackupRestoreWindow : Window
         catch (Exception exception) when (exception is IOException or InvalidDataException
                                               or UnauthorizedAccessException or InvalidOperationException)
         {
-            MessageBox.Show(this, exception.Message, "无法读取备份", MessageBoxButton.OK, MessageBoxImage.Error);
+            TileStartMessageDialog.Show(
+                this,
+                "无法读取备份",
+                exception.Message,
+                TileStartMessageKind.Error);
         }
     }
 
@@ -150,7 +161,7 @@ public partial class BackupRestoreWindow : Window
     }
 
     private void ShowWarning(string message) =>
-        MessageBox.Show(this, message, "TileStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+        TileStartMessageDialog.Show(this, "需要检查", message, TileStartMessageKind.Warning);
 
     private static string DescribeComponents(BackupComponents components)
     {

@@ -1,0 +1,126 @@
+<Window x:Class="TileStart.Host.Windowing.TileStartMessageDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="TileStart"
+        Width="520"
+        Height="278"
+        MinWidth="420"
+        MinHeight="240"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ShowInTaskbar="False"
+        Style="{StaticResource TileStartDialogWindowStyle}">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="44"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Border Style="{StaticResource TileStartDialogSurfaceStyle}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="68" />
+            </Grid.RowDefinitions>
+
+            <Grid Background="{DynamicResource TileStartLayerBackgroundBrush}"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="TitleLayout" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               LineHeight="20"
+                               LineStackingStrategy="BlockLineHeight"
+                               TextAlignment="Center"
+                               Text="&#xE946;" />
+                    <TextBlock x:Name="TitleText"
+                               Grid.Column="2"
+                               VerticalAlignment="Center"
+                               LineHeight="20"
+                               LineStackingStrategy="BlockLineHeight"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <Button Grid.Column="1"
+                        Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        IsCancel="True"
+                        Content="&#xE8BB;" />
+            </Grid>
+
+            <Grid x:Name="ContentLayout"
+                  Grid.Row="1"
+                  Margin="28,18,28,18"
+                  VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="54"
+                        Height="54"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource TileStartCardBackgroundBrush}"
+                        BorderBrush="{DynamicResource TileStartControlStrokeBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource TileStartOverlayCornerRadius}">
+                    <TextBlock x:Name="KindIcon"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="25" />
+                </Border>
+                <ScrollViewer Grid.Column="2"
+                              MaxHeight="118"
+                              VerticalAlignment="Center"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <TextBlock x:Name="MessageText"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               LineHeight="21"
+                               TextWrapping="Wrap" />
+                </ScrollViewer>
+            </Grid>
+
+            <Border Grid.Row="2"
+                    Padding="20,0"
+                    Background="{DynamicResource TileStartLayerBackgroundBrush}"
+                    BorderBrush="{DynamicResource TileStartDividerBrush}"
+                    BorderThickness="0,1,0,0">
+                <StackPanel HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <Button x:Name="SecondaryButton"
+                            Margin="0,0,10,0"
+                            MinWidth="90"
+                            Height="36"
+                            Style="{StaticResource TileStartButtonStyle}"
+                            IsCancel="True"
+                            Click="SecondaryButton_Click" />
+                    <Button x:Name="PrimaryButton"
+                            MinWidth="96"
+                            Height="36"
+                            Style="{StaticResource TileStartPrimaryButtonStyle}"
+                            IsDefault="True"
+                            Click="PrimaryButton_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
