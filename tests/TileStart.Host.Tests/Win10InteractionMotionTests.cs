@@ -50,4 +50,21 @@ public sealed class Win10InteractionMotionTests
 
         Assert.Equal(expected, actual);
     }
+
+    [Theory]
+    [InlineData(8, 72, 48, 8)]
+    [InlineData(80, 40, 20, 10)]
+    [InlineData(0, 40, 40, 0)]
+    public void RevealCornerRadiusFollowsThemeWithoutExceedingHalfTheControl(
+        double requested,
+        double width,
+        double height,
+        double expected)
+    {
+        var actual = Win10InteractionMotion.ConstrainCornerRadius(
+            new System.Windows.CornerRadius(requested),
+            new System.Windows.Size(width, height));
+
+        Assert.Equal(expected, actual);
+    }
 }

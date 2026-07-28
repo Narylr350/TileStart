@@ -44,6 +44,7 @@ internal sealed class NavigationController : IDisposable
     private readonly Button _networkNavigationButton;
     private readonly Button _settingsNavigationButton;
     private readonly Button _powerNavigationButton;
+    private readonly Button[] _navigationButtons;
     private readonly FrameworkElement _powerUpdateBadge;
     private readonly MenuItem _updateAndShutDownMenuItem;
     private readonly MenuItem _updateAndRestartMenuItem;
@@ -114,6 +115,20 @@ internal sealed class NavigationController : IDisposable
         _networkNavigationButton = networkNavigationButton;
         _settingsNavigationButton = settingsNavigationButton;
         _powerNavigationButton = powerNavigationButton;
+        _navigationButtons =
+        [
+            navigationToggleButton,
+            userNavigationButton,
+            documentsNavigationButton,
+            downloadsNavigationButton,
+            picturesNavigationButton,
+            musicNavigationButton,
+            videosNavigationButton,
+            fileExplorerNavigationButton,
+            networkNavigationButton,
+            settingsNavigationButton,
+            powerNavigationButton,
+        ];
         _powerUpdateBadge = powerUpdateBadge;
         _updateAndShutDownMenuItem = updateAndShutDownMenuItem;
         _updateAndRestartMenuItem = updateAndRestartMenuItem;
@@ -187,6 +202,7 @@ internal sealed class NavigationController : IDisposable
         }
 
         _navigationExpanded = expanded;
+        SetNavigationToolTipsEnabled(!expanded);
         var targetWidth = expanded
             ? Win10VisualMetrics.ExpandedNavigationWidth
             : Win10VisualMetrics.CollapsedNavigationWidth;
@@ -233,6 +249,14 @@ internal sealed class NavigationController : IDisposable
             }
         };
         _navigationPane.BeginAnimation(FrameworkElement.WidthProperty, animation);
+    }
+
+    private void SetNavigationToolTipsEnabled(bool enabled)
+    {
+        foreach (var button in _navigationButtons)
+        {
+            ToolTipService.SetIsEnabled(button, enabled);
+        }
     }
 
     public void NavigationPreferencesMenuOpened(object sender, RoutedEventArgs e)

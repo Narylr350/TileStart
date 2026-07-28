@@ -45,6 +45,15 @@ public static class Win10InteractionMotion
         var constrainedRadius = Math.Max(1, radius);
         return (deltaX * deltaX) + (deltaY * deltaY) <= constrainedRadius * constrainedRadius;
     }
+
+    public static double ConstrainCornerRadius(CornerRadius cornerRadius, Size bounds)
+    {
+        var requested = Math.Max(
+            Math.Max(cornerRadius.TopLeft, cornerRadius.TopRight),
+            Math.Max(cornerRadius.BottomRight, cornerRadius.BottomLeft));
+        var maximum = Math.Max(0, Math.Min(bounds.Width, bounds.Height) / 2);
+        return Math.Clamp(requested, 0, maximum);
+    }
 }
 
 public sealed class Win10InteractionBorder : Border
@@ -213,11 +222,14 @@ public sealed class Win10InteractionBorder : Border
             ? _pointerPosition
             : new Point(ActualWidth / 2, ActualHeight / 2);
         var bounds = new Rect(0, 0, ActualWidth, ActualHeight);
+        var cornerRadius = Win10InteractionMotion.ConstrainCornerRadius(
+            CornerRadius,
+            new Size(ActualWidth, ActualHeight));
         var fillOpacity = IsPressedState ? PressedFillOpacity : HoverFillOpacity;
         if (fillOpacity > 0)
         {
             var fill = CreateRevealBrush(pointer, fillOpacity);
-            drawingContext.DrawRectangle(fill, null, bounds);
+            drawingContext.DrawRoundedRectangle(fill, null, bounds, cornerRadius, cornerRadius);
         }
 
         if (RevealBorderOpacity <= 0 || ActualWidth <= 1 || ActualHeight <= 1)
@@ -227,10 +239,13 @@ public sealed class Win10InteractionBorder : Border
 
         var border = CreateRevealBrush(pointer, RevealBorderOpacity);
         var pen = new Pen(border, 1);
-        drawingContext.DrawRectangle(
+        var borderCornerRadius = Math.Max(0, cornerRadius - 0.5);
+        drawingContext.DrawRoundedRectangle(
             null,
             pen,
-            new Rect(0.5, 0.5, ActualWidth - 1, ActualHeight - 1));
+            new Rect(0.5, 0.5, ActualWidth - 1, ActualHeight - 1),
+            borderCornerRadius,
+            borderCornerRadius);
     }
 
     private static void OnIsPressedStateChanged(DependencyObject dependencyObject,

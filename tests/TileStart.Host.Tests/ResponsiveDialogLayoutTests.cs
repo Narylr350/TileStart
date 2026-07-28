@@ -22,6 +22,35 @@ public sealed class ResponsiveDialogLayoutTests
             && (string?)setter.Attribute("Handler") == "DialogWindow_Loaded");
     }
 
+    [Fact]
+    public void SharedToolTipsUseThemeAwareSurfaceAndCornerRadius()
+    {
+        var document = LoadXaml("SharedStyles.xaml");
+        var style = document.Descendants(Presentation + "Style")
+            .Single(element => (string?)element.Attribute("TargetType") == "ToolTip"
+                               && element.Attribute(X + "Key") is null);
+        var border = style.Descendants(Presentation + "ControlTemplate")
+            .Single()
+            .Element(Presentation + "Border");
+
+        Assert.Equal("{TemplateBinding Background}", (string?)border?.Attribute("Background"));
+        Assert.Equal("{DynamicResource TileStartOverlayCornerRadius}",
+            (string?)border?.Attribute("CornerRadius"));
+    }
+
+    [Fact]
+    public void NavigationRevealBackgroundUsesThemeAwareOverlayRadius()
+    {
+        var document = LoadXaml("MainWindow.xaml");
+        var railStyle = document.Descendants(Presentation + "Style")
+            .Single(element => (string?)element.Attribute(X + "Key") == "RailButtonStyle");
+        var interactionBorder = railStyle.Descendants()
+            .Single(element => element.Name.LocalName == "Win10InteractionBorder");
+
+        Assert.Equal("{DynamicResource TileStartOverlayCornerRadius}",
+            (string?)interactionBorder.Attribute("CornerRadius"));
+    }
+
     [Theory]
     [InlineData("SettingsWindow.xaml")]
     [InlineData("AboutWindow.xaml")]
@@ -83,6 +112,18 @@ public sealed class ResponsiveDialogLayoutTests
         Assert.Contains("AddButton", buttonNames);
         Assert.Contains("RemoveButton", buttonNames);
         Assert.Empty(document.Descendants(Presentation + "ToggleButton"));
+    }
+
+    [Fact]
+    public void TilePaneBlankAreaExposesFolderCreation()
+    {
+        var document = LoadXaml("MainWindow.xaml");
+        var createFolderItems = document.Descendants(Presentation + "MenuItem")
+            .Where(item => (string?)item.Attribute("Click") == "AddFolder_Click")
+            .ToArray();
+
+        var createFolderItem = Assert.Single(createFolderItems);
+        Assert.Equal("新建文件夹…", (string?)createFolderItem.Attribute("Header"));
     }
 
     [Fact]
@@ -150,6 +191,12 @@ public sealed class ResponsiveDialogLayoutTests
         Assert.Equal("40", transferSetters["Height"]);
         Assert.Equal("Center", transferSetters["HorizontalContentAlignment"]);
         Assert.Equal("Center", transferSetters["VerticalContentAlignment"]);
+        var transferTemplateBorder = transferStyle
+            .Descendants(Presentation + "ControlTemplate")
+            .Single()
+            .Element(Presentation + "Border");
+        Assert.Equal("{DynamicResource TileStartOverlayCornerRadius}",
+            (string?)transferTemplateBorder?.Attribute("CornerRadius"));
     }
 
     private static XDocument LoadXaml(string fileName)

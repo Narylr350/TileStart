@@ -134,7 +134,7 @@
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
-                                                      CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                                      CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       RevealRadius="88">
                             <Grid>
@@ -972,6 +972,8 @@
                     <ContextMenu>
                         <MenuItem Header="新建自定义磁贴…"
                                   Click="AddCommandTile_Click" />
+                        <MenuItem Header="新建文件夹…"
+                                  Click="AddFolder_Click" />
                     </ContextMenu>
                 </Border.ContextMenu>
                 <ScrollViewer x:Name="TileScrollViewer"

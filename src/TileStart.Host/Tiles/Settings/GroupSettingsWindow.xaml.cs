@@ -30,6 +30,7 @@ public sealed class GroupTileOption : INotifyPropertyChanged
     }
 
     public TileItem? ExistingTile { get; init; }
+    public bool CanRemove => ExistingTile?.IsTileFolder != true;
 
     public AppEntry? App
     {
@@ -279,7 +280,9 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
     private void RemoveSelection_Click(object sender, RoutedEventArgs e)
     {
-        var selected = IncludedList.SelectedItems.OfType<GroupTileOption>().ToArray();
+        var selected = IncludedList.SelectedItems.OfType<GroupTileOption>()
+            .Where(option => option.CanRemove)
+            .ToArray();
         foreach (var option in selected)
         {
             option.IsSelected = false;
@@ -292,12 +295,13 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
 
     private void ClearSelection_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var option in _includedOptions)
+        var removable = _includedOptions.Where(option => option.CanRemove).ToArray();
+        foreach (var option in removable)
         {
             option.IsSelected = false;
+            _includedOptions.Remove(option);
         }
 
-        _includedOptions.Clear();
         CompleteContentChange();
     }
 
@@ -364,7 +368,11 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         }
 
         AddButton.IsEnabled = AvailableList.SelectedItems.Count > 0;
-        RemoveButton.IsEnabled = IncludedList.SelectedItems.Count > 0;
+        var selectedOptions = IncludedList.SelectedItems.OfType<GroupTileOption>().ToArray();
+        RemoveButton.IsEnabled = selectedOptions.Any(option => option.CanRemove);
+        RemoveButton.ToolTip = selectedOptions.Length > 0 && selectedOptions.All(option => !option.CanRemove)
+            ? "文件夹请通过磁贴右键菜单取消固定或解散"
+            : "从当前内容移除";
         var selected = IncludedList.SelectedItems.Count == 1
             ? IncludedList.SelectedItem as GroupTileOption
             : null;

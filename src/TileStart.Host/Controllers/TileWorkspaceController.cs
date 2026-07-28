@@ -631,6 +631,36 @@ internal sealed class TileWorkspaceController : IDisposable
 
     // ── Group actions ─────────────────────────────────────────────
 
+    public void AddFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var folder = CreateEmptyFolder();
+        var placement = Win10GroupLayout.FindPinPlacement(_tileLayout.Groups, folder)
+                        ?? new Win10PinPlacement(
+                            TileGroupManager.Add(_tileLayout, _tileDragCoordinator.CurrentGroupColumnCount()),
+                            0,
+                            0);
+        if (!Win10GroupLayout.AddToFreeCell(placement.Group, folder, placement.Column, placement.Row))
+        {
+            TileStartMessageDialog.Show(
+                _window,
+                "无法新建文件夹",
+                "当前布局没有可容纳新文件夹的空间。",
+                TileStartMessageKind.Warning);
+            return;
+        }
+
+        _tileDragCoordinator.EnsureGroupGridCoordinates();
+        _tileDragCoordinator.RefreshGroupPanelLayout();
+        TileLayoutStore.Save(_tileLayout);
+    }
+
+    internal static TileItem CreateEmptyFolder() => new()
+    {
+        Name = "文件夹",
+        IsTileFolder = true,
+        Size = TileSize.Medium,
+    };
+
     public void GroupHeader_NameCommitted(object sender, EventArgs e)
     {
         TileLayoutStore.Save(_tileLayout);
@@ -707,7 +737,8 @@ internal sealed class TileWorkspaceController : IDisposable
             .Select(option => option.ExistingTile ?? _appController.CreateAppTile(option.App!))
             .GroupBy(TileLayout.GetIdentityKey, StringComparer.OrdinalIgnoreCase)
             .Select(grouping => grouping.First())
-            .ToArray();
+            .ToList();
+        PreserveStructuralFolders(previousTiles, selectedTiles);
         var requiresReflow = previousWidthUnits != dialog.WidthUnits
                              || previousHeightUnits != dialog.HeightUnits
                              || !previousTiles.SequenceEqual(selectedTiles);
@@ -750,6 +781,22 @@ internal sealed class TileWorkspaceController : IDisposable
         _tileDragCoordinator.EnsureGroupGridCoordinates();
         _tileDragCoordinator.RefreshGroupPanelLayout();
         TileLayoutStore.Save(_tileLayout);
+    }
+
+    internal static void PreserveStructuralFolders(
+        IReadOnlyList<TileItem> previousTiles,
+        IList<TileItem> selectedTiles)
+    {
+        for (var index = 0; index < previousTiles.Count; index++)
+        {
+            var folder = previousTiles[index];
+            if (!folder.IsTileFolder || selectedTiles.Contains(folder))
+            {
+                continue;
+            }
+
+            selectedTiles.Insert(Math.Min(index, selectedTiles.Count), folder);
+        }
     }
 
     public static TileGroup? GetContextGroup(object sender)

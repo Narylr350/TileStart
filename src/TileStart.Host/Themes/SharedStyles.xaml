@@ -30,6 +30,32 @@
         <Setter Property="CornerRadius" Value="{DynamicResource TileStartOverlayCornerRadius}" />
     </Style>
 
+    <Style TargetType="ToolTip">
+        <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TileStartCardBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TileStartControlStrokeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Placement" Value="Right" />
+        <Setter Property="HorizontalOffset" Value="8" />
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource TileStartOverlayCornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="TileStartButtonStyle" TargetType="Button">
         <Setter Property="Height" Value="32" />
         <Setter Property="MinWidth" Value="76" />

@@ -58,6 +58,9 @@ public partial class MainWindow
     private void AddCommandTile_Click(object sender, RoutedEventArgs e) =>
         _tileWorkspaceController.AddCommandTile_Click(sender, e);
 
+    private void AddFolder_Click(object sender, RoutedEventArgs e) =>
+        _tileWorkspaceController.AddFolder_Click(sender, e);
+
     private void GroupHeader_NameCommitted(object sender, EventArgs e) =>
         _tileWorkspaceController.GroupHeader_NameCommitted(sender, e);
 
