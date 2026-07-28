@@ -55,4 +55,29 @@ public sealed class InstallerSafetyTests
         Assert.DoesNotContain("Tasks:", startupRegistration, StringComparison.Ordinal);
         Assert.DoesNotContain("Name: \"autostart\"", source, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void InstallerRejectsRootAndForeignNonEmptyDirectories()
+    {
+        var source = File.ReadAllText(InstallerSource);
+
+        Assert.Contains("AppendDefaultDirName=yes", source, StringComparison.Ordinal);
+        Assert.Contains("function ValidateInstallDirectory", source, StringComparison.Ordinal);
+        Assert.Contains("IsRootDirectory(InstallDirectory)", source, StringComparison.Ordinal);
+        Assert.Contains("not DirectoryIsEmpty(InstallDirectory)", source, StringComparison.Ordinal);
+        Assert.Contains("not IsExistingTileStartDirectory(InstallDirectory)", source, StringComparison.Ordinal);
+        Assert.Contains("if not ValidateInstallDirectory(Result) then", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UninstallerNeverRecursivelyDeletesTheInstallDirectory()
+    {
+        var source = File.ReadAllText(InstallerSource);
+
+        Assert.Contains("Type: files; Name: \"{app}\\.tilestart-installation\"", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Type: filesandordirs", source, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Type: dirifempty", source, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Name: \"{app}\\*\"", source, StringComparison.OrdinalIgnoreCase);
+    }
 }
