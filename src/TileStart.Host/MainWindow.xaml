@@ -969,6 +969,7 @@
                               Style="{StaticResource TileScrollViewerStyle}">
                     <ItemsControl x:Name="TileGroupsControl"
                                   Margin="0,0,0,20"
+                                  HorizontalAlignment="Center"
                                   ItemsSource="{Binding TileLayout.Groups}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

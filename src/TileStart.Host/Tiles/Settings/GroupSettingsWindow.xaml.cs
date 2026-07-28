@@ -400,7 +400,10 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
             HeightUnits = HeightUnits,
             Tiles = [.. SelectedOptions.Select(option => CloneForPreview(option))],
         };
-        var fits = Win10GroupLayout.Normalize(preview);
+        // A size change is a layout migration, not merely a new clipping boundary.
+        // Reflow the preview from its visual item order so it shows the exact placement
+        // that will be applied to the real group when the user saves.
+        var fits = Win10GroupLayout.Reflow(preview);
         PreviewGroup = preview;
         ValidationMessage = fits
             ? string.Empty

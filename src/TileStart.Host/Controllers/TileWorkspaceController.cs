@@ -692,6 +692,9 @@ internal sealed class TileWorkspaceController : IDisposable
             .GroupBy(TileLayout.GetIdentityKey, StringComparer.OrdinalIgnoreCase)
             .Select(grouping => grouping.First())
             .ToArray();
+        var requiresReflow = previousWidthUnits != dialog.WidthUnits
+                             || previousHeightUnits != dialog.HeightUnits
+                             || !previousTiles.SequenceEqual(selectedTiles);
 
         group.Name = dialog.GroupName;
         group.WidthUnits = dialog.WidthUnits;
@@ -702,7 +705,13 @@ internal sealed class TileWorkspaceController : IDisposable
             group.Tiles.Add(tile);
         }
 
-        if (!Win10GroupLayout.Normalize(group))
+        // Existing tile coordinates remain valid when a group becomes wider, so Normalize
+        // alone preserves the old narrow arrangement. Reflow whenever the grid definition
+        // or visual item order changes, making the saved layout match the live preview.
+        var applied = requiresReflow
+            ? Win10GroupLayout.Reflow(group)
+            : Win10GroupLayout.Normalize(group);
+        if (!applied)
         {
             group.Name = previousName;
             group.WidthUnits = previousWidthUnits;

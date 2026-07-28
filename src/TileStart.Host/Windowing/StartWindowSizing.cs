@@ -11,6 +11,19 @@ public static class StartWindowSizing
 
     public static int MinimumColumnsForTileCount(int tileCount) => tileCount > 0 ? 1 : 0;
 
+    public static int MinimumColumnsForTileLayout(int tileCount, int widestGroupWidthUnits)
+    {
+        if (tileCount <= 0)
+        {
+            return MinimumGroupColumns;
+        }
+
+        var workspaceColumns = (Math.Max(1, widestGroupWidthUnits)
+                                + TileWorkspaceMetrics.LegacyGroupWidthUnits - 1)
+                               / TileWorkspaceMetrics.LegacyGroupWidthUnits;
+        return Math.Clamp(workspaceColumns, 1, MaximumGroupColumns);
+    }
+
     private static double FixedPaneWidth =>
         Win10VisualMetrics.CollapsedNavigationWidth
         + Win10VisualMetrics.AllAppsWidth

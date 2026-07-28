@@ -6,6 +6,28 @@ public readonly record struct Win10PinPlacement(TileGroup Group, int Column, int
 
 public static class Win10GroupLayout
 {
+    public static bool Reflow(TileGroup group)
+    {
+        var snapshots = group.Tiles.ToDictionary(tile => tile, tile => (tile.Column, tile.Row));
+        var occupied = new HashSet<(int Column, int Row)>();
+        foreach (var tile in group.Tiles)
+        {
+            if (!TryFindFirstAvailable(group, tile, occupied, out var location))
+            {
+                RestorePositions(snapshots);
+                group.RefreshLayout();
+                return false;
+            }
+
+            tile.Column = location.Column;
+            tile.Row = location.Row;
+            Occupy(tile, location.Column, location.Row, occupied);
+        }
+
+        group.RefreshLayout();
+        return true;
+    }
+
     public static bool Normalize(TileGroup group)
     {
         var snapshots = group.Tiles.ToDictionary(tile => tile, tile => (tile.Column, tile.Row));
@@ -218,6 +240,13 @@ public static class Win10GroupLayout
         HashSet<(int Column, int Row)> occupied,
         out (int Column, int Row) location)
     {
+        if (tile.Size.ColumnSpan() > group.ContentColumns
+            || group.ContentRowLimit is { } availableRows && tile.Size.RowSpan() > availableRows)
+        {
+            location = default;
+            return false;
+        }
+
         var lastStartRow = group.ContentRowLimit is { } rowLimit
             ? rowLimit - tile.Size.RowSpan()
             : int.MaxValue;

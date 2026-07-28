@@ -90,6 +90,52 @@ public sealed class Win10GroupLayoutTests
     }
 
     [Fact]
+    public void ReflowUsesTheExpandedWidthInsteadOfPreservingTheOldRows()
+    {
+        var tiles = Enumerable.Range(0, 8)
+            .Select(index => Tile(TileSize.Medium, index % 4 * 2, index / 4 * 2))
+            .ToArray();
+        var group = new TileGroup { WidthUnits = 8, Tiles = [.. tiles] };
+
+        Assert.True(Win10GroupLayout.Reflow(group));
+
+        Assert.All(tiles, tile => Assert.Equal(0, tile.Row));
+        Assert.Equal(
+            Enumerable.Range(0, 8).Select(index => index * 2),
+            tiles.Select(tile => tile.Column));
+        AssertNoOverlap(group);
+    }
+
+    [Fact]
+    public void ReflowRollsBackWhenFixedHeightCannotContainTheTiles()
+    {
+        var first = Tile(TileSize.Large, 0, 0);
+        var second = Tile(TileSize.Large, 4, 0);
+        var group = new TileGroup
+        {
+            WidthUnits = 3,
+            HeightUnits = 1,
+            Tiles = [first, second],
+        };
+
+        Assert.False(Win10GroupLayout.Reflow(group));
+
+        Assert.Equal((0, 0), (first.Column, first.Row));
+        Assert.Equal((4, 0), (second.Column, second.Row));
+    }
+
+    [Fact]
+    public void ReflowRejectsATileWiderThanTheGroupWithoutSearchingUnboundedRows()
+    {
+        var wide = Tile(TileSize.Wide, 2, 3);
+        var group = new TileGroup { WidthUnits = 1, Tiles = [wide] };
+
+        Assert.False(Win10GroupLayout.Reflow(group));
+
+        Assert.Equal((2, 3), (wide.Column, wide.Row));
+    }
+
+    [Fact]
     public void TryMoveRejectsOverlapAndGroupOverflow()
     {
         var stationary = Tile(TileSize.Medium, 0, 0);

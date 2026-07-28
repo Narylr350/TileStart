@@ -198,6 +198,7 @@ public partial class MainWindow : Window
         foreach (var group in _observedTileGroups)
         {
             group.Tiles.CollectionChanged -= GroupTiles_CollectionChanged;
+            group.PropertyChanged -= TileGroup_PropertyChanged;
         }
 
         _observedTileGroups.Clear();
@@ -215,6 +216,7 @@ public partial class MainWindow : Window
             foreach (var group in e.OldItems.OfType<TileGroup>())
             {
                 group.Tiles.CollectionChanged -= GroupTiles_CollectionChanged;
+                group.PropertyChanged -= TileGroup_PropertyChanged;
                 _observedTileGroups.Remove(group);
             }
         }
@@ -226,6 +228,7 @@ public partial class MainWindow : Window
                 if (_observedTileGroups.Add(group))
                 {
                     group.Tiles.CollectionChanged += GroupTiles_CollectionChanged;
+                    group.PropertyChanged += TileGroup_PropertyChanged;
                 }
             }
         }
@@ -236,10 +239,24 @@ public partial class MainWindow : Window
     private void GroupTiles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
         UpdateMinimumWidthForTileLayout();
 
+    private void TileGroup_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TileGroup.WidthUnits))
+        {
+            UpdateMinimumWidthForTileLayout();
+        }
+    }
+
     private void UpdateMinimumWidthForTileLayout()
     {
         var tileCount = TileLayout.Groups.Sum(group => group.Tiles.Count);
-        _controller.SetMinimumWorkspaceColumns(StartWindowSizing.MinimumColumnsForTileCount(tileCount));
+        var widestGroup = TileLayout.Groups
+            .Where(group => group.Tiles.Count > 0)
+            .Select(group => group.WidthUnits)
+            .DefaultIfEmpty(0)
+            .Max();
+        _controller.SetMinimumWorkspaceColumns(
+            StartWindowSizing.MinimumColumnsForTileLayout(tileCount, widestGroup));
     }
 
     private void Window_Deactivated(object? sender, EventArgs e) =>

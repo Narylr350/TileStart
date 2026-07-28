@@ -104,6 +104,22 @@ public sealed class StartWindowSizingTests
         Assert.Equal(expectedColumns, StartWindowSizing.MinimumColumnsForTileCount(tileCount));
     }
 
+    [Theory]
+    [InlineData(0, 8, 0)]
+    [InlineData(1, 1, 1)]
+    [InlineData(1, 4, 1)]
+    [InlineData(1, 5, 2)]
+    [InlineData(8, 8, 2)]
+    public void MinimumWidthIncludesTheWidestVisibleGroup(
+        int tileCount,
+        int widestGroupWidthUnits,
+        int expectedWorkspaceColumns)
+    {
+        Assert.Equal(
+            expectedWorkspaceColumns,
+            StartWindowSizing.MinimumColumnsForTileLayout(tileCount, widestGroupWidthUnits));
+    }
+
     [Fact]
     public void InvalidWidthFallsBackToTheMinimumWorkspace()
     {
