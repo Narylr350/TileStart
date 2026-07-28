@@ -59,14 +59,14 @@ public sealed class PerformanceGuardTests
     }
 
     [Fact]
-    public void StartWindowAppliesAcrylicBeforePositioningTheNativeWindow()
+    public void StartWindowPositionsBeforeApplyingAcrylicMaterial()
     {
         var showMethod = ReadShowFromShellMethod();
         var materialIndex = showMethod.IndexOf("ApplyWindowMaterial();", StringComparison.Ordinal);
         var positionIndex = showMethod.IndexOf("PositionOnCurrentMonitor();", StringComparison.Ordinal);
 
-        Assert.True(materialIndex >= 0);
-        Assert.True(positionIndex > materialIndex);
+        Assert.True(positionIndex >= 0);
+        Assert.True(materialIndex > positionIndex);
     }
 
     [Fact]
@@ -76,6 +76,31 @@ public sealed class PerformanceGuardTests
         var source = File.ReadAllText(path);
 
         Assert.Contains("SwpNoActivate | SwpFrameChanged", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DisplayChangesUseDedicatedDpiAndWorkAreaPaths()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+
+        Assert.Contains("HandleDpiChanged(window, lParam);", source, StringComparison.Ordinal);
+        Assert.Contains("message == WmSettingChange && wParam.ToInt64() == SpiSetWorkArea", source,
+            StringComparison.Ordinal);
+        Assert.Contains("MonitorFromRect(ref suggested, MonitorDefaultToNearest)", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("PositionOnCurrentMonitor(WindowSizeStore.Load())", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AutomaticWorkspaceMinimumDoesNotOverwriteTheUserPreference()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+        var method = source[source.IndexOf("public void SetMinimumWorkspaceColumns", StringComparison.Ordinal)..];
+        method = method[..method.IndexOf("public void SetWindowSource", StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("_preferredWorkspaceColumns =", method, StringComparison.Ordinal);
+        Assert.DoesNotContain("PersistPreferredSize", method, StringComparison.Ordinal);
     }
 
     private static string ReadShowFromShellMethod()

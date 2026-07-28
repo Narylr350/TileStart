@@ -16,7 +16,9 @@ namespace TileStart.Host.Shell;
 public class StartWindowController : IDisposable
 {
     private const int WmDisplayChange = 0x007E;
+    private const int WmSettingChange = 0x001A;
     private const int WmDpiChanged = 0x02E0;
+    private const int SpiSetWorkArea = 0x002F;
     private const uint MonitorDefaultToNearest = 2;
     private const int MdtEffectiveDpi = 0;
     private const uint SwpNoActivate = 0x0010;
@@ -48,6 +50,7 @@ public class StartWindowController : IDisposable
     private readonly Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> _animateGroupReorderFrom;
     private readonly Func<bool> _isAnyDragActive;
     private readonly Func<bool> _hasOpenContextMenu;
+    private readonly Action _cancelActiveDrag;
     private readonly AppThemeStyle _themeStyle;
 
     private readonly System.Windows.Threading.DispatcherTimer _foregroundWatchdogTimer = new()
@@ -70,11 +73,15 @@ public class StartWindowController : IDisposable
 
     private bool _isWindowWidthSnapAnimating;
     private bool _isDisplayChangePending;
+    private nint _pendingDisplayMonitor;
     private long _windowWidthSnapStartedAt;
     private double _windowWidthSnapFrom;
     private double _windowWidthSnapTo;
     private double _windowWidthSnapRight;
     private double _requestedMinimumWidth = StartWindowSizing.WidthForColumns(0);
+    private readonly double _requestedMinimumHeight;
+    private int _preferredWorkspaceColumns;
+    private double _preferredHeight;
     private IReadOnlyDictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
 
     public event Action? WindowDismissing;
@@ -94,6 +101,9 @@ public class StartWindowController : IDisposable
         Action<IReadOnlyDictionary<TileGroup, System.Windows.Point>> animateGroupReorderFrom,
         Func<bool> isAnyDragActive,
         Func<bool> hasOpenContextMenu,
+        Action cancelActiveDrag,
+        int preferredWorkspaceColumns,
+        double preferredHeight,
         AppThemeStyle themeStyle = AppThemeStyle.Windows11)
     {
         _window = window;
@@ -106,6 +116,15 @@ public class StartWindowController : IDisposable
         _animateGroupReorderFrom = animateGroupReorderFrom;
         _isAnyDragActive = isAnyDragActive;
         _hasOpenContextMenu = hasOpenContextMenu;
+        _cancelActiveDrag = cancelActiveDrag;
+        _requestedMinimumHeight = window.MinHeight;
+        _preferredWorkspaceColumns = Math.Clamp(
+            preferredWorkspaceColumns,
+            StartWindowSizing.MinimumGroupColumns,
+            StartWindowSizing.MaximumGroupColumns);
+        _preferredHeight = double.IsFinite(preferredHeight) && preferredHeight > 0
+            ? preferredHeight
+            : window.Height;
         _themeStyle = themeStyle;
 
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
@@ -124,7 +143,6 @@ public class StartWindowController : IDisposable
 
         _window.Width = _window.MinWidth;
         PositionOnCurrentMonitor();
-        SaveCurrentSize();
     }
 
     public void SetWindowSource(HwndSource? source)
@@ -151,9 +169,9 @@ public class StartWindowController : IDisposable
         _beforeShow();
 
         StopEntranceCache();
-        ApplyWindowMaterial();
         _foregroundLifecycle.Reset();
         PositionOnCurrentMonitor();
+        ApplyWindowMaterial();
         PrepareMotionElements();
         var animationsEnabled = SystemParameters.ClientAreaAnimation;
         _ = RenderFrameProbe.Start(
@@ -200,7 +218,7 @@ public class StartWindowController : IDisposable
 
     public void OnClosing(CancelEventArgs e)
     {
-        SaveCurrentSize();
+        PersistPreferredSize();
         if (!_allowClose)
         {
             e.Cancel = true;
@@ -292,7 +310,7 @@ public class StartWindowController : IDisposable
         }
         else
         {
-            SaveCurrentSize();
+            CapturePreferredSize();
         }
     }
 
@@ -372,14 +390,20 @@ public class StartWindowController : IDisposable
         _mainSurface.CacheMode = null;
     }
 
-    private void PositionOnCurrentMonitor((double Width, double Height)? preferredSize = null)
+    private void PositionOnCurrentMonitor() => PositionOnMonitor(GetCursorMonitor());
+
+    private nint GetCursorMonitor()
     {
         if (!GetCursorPos(out var cursor))
         {
-            return;
+            return 0;
         }
 
-        var monitor = MonitorFromPoint(cursor, MonitorDefaultToNearest);
+        return MonitorFromPoint(cursor, MonitorDefaultToNearest);
+    }
+
+    private void PositionOnMonitor(nint monitor)
+    {
         var monitorInfo = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         if (monitor == 0 || !GetMonitorInfoW(monitor, ref monitorInfo))
         {
@@ -396,14 +420,15 @@ public class StartWindowController : IDisposable
         var logicalWorkWidth = workArea.Width * scale;
         var logicalWorkHeight = workArea.Height * scale;
         _window.MinWidth = Math.Min(_requestedMinimumWidth, logicalWorkWidth);
+        _window.MinHeight = Math.Min(_requestedMinimumHeight, logicalWorkHeight);
         _window.MaxWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
-        _window.MaxHeight = Math.Max(_window.MinHeight, logicalWorkHeight);
-        var requestedWidth = preferredSize?.Width ?? (_window.ActualWidth > 0 ? _window.ActualWidth : _window.Width);
-        var requestedHeight =
-            preferredSize?.Height ?? (_window.ActualHeight > 0 ? _window.ActualHeight : _window.Height);
-        var logicalWidth = StartWindowSizing.SnapWidth(requestedWidth, logicalWorkWidth);
+        _window.MaxHeight = Math.Max(1, logicalWorkHeight);
+        var requestedWidth = StartWindowSizing.WidthForColumns(_preferredWorkspaceColumns);
+        var logicalWidth = Math.Max(
+            _window.MinWidth,
+            StartWindowSizing.SnapWidth(requestedWidth, logicalWorkWidth));
         var logicalHeight = StartWindowSizing.ClampHeight(
-            requestedHeight,
+            _preferredHeight,
             _window.MinHeight,
             logicalWorkHeight);
         var placement = StartWindowPlacement.Calculate(
@@ -411,6 +436,8 @@ public class StartWindowController : IDisposable
             edge,
             (int)Math.Round(logicalWidth * dpi / 96.0),
             (int)Math.Round(logicalHeight * dpi / 96.0));
+        // WPF needs the logical values before the first Show; SetWindowPos below remains
+        // the physical-pixel authority after the HWND exists.
         _window.Left = placement.Left * scale;
         _window.Top = placement.Top * scale;
         _window.Width = placement.Width * scale;
@@ -481,7 +508,7 @@ public class StartWindowController : IDisposable
         }
     }
 
-    private void SaveCurrentSize()
+    private void CapturePreferredSize()
     {
         if (_isDisplayChangePending)
         {
@@ -490,9 +517,14 @@ public class StartWindowController : IDisposable
 
         if (_window.ActualWidth > 0 && _window.ActualHeight > 0)
         {
-            WindowSizeStore.Save(_window.ActualWidth, _window.ActualHeight);
+            _preferredWorkspaceColumns = StartWindowSizing.ColumnsForWidth(_window.ActualWidth, _window.MaxWidth);
+            _preferredHeight = _window.ActualHeight;
+            PersistPreferredSize();
         }
     }
+
+    private void PersistPreferredSize() =>
+        WindowSizeStore.Save(_preferredWorkspaceColumns, _preferredHeight);
 
     public void DismissWindow(bool yieldTopmost = false)
     {
@@ -515,10 +547,7 @@ public class StartWindowController : IDisposable
         WindowDismissing?.Invoke();
         _foregroundWatchdogTimer.Stop();
         StopEntranceCache();
-        if (!_isDisplayChangePending)
-        {
-            SaveCurrentSize();
-        }
+        PersistPreferredSize();
 
         _clearSearch();
         var wasTopmost = _window.Topmost;
@@ -556,9 +585,16 @@ public class StartWindowController : IDisposable
             return 0;
         }
 
-        if (message is WmDisplayChange or WmDpiChanged)
+        if (message == WmDpiChanged)
         {
-            RequestDisplayChangeRefresh();
+            HandleDpiChanged(window, lParam);
+            return 0;
+        }
+
+        if (message == WmDisplayChange
+            || message == WmSettingChange && wParam.ToInt64() == SpiSetWorkArea)
+        {
+            RequestDisplayChangeRefresh(0);
             return 0;
         }
 
@@ -668,7 +704,7 @@ public class StartWindowController : IDisposable
         {
             _window.Width = targetWidth;
             PositionOnCurrentMonitor();
-            SaveCurrentSize();
+            CapturePreferredSize();
             return;
         }
 
@@ -714,10 +750,32 @@ public class StartWindowController : IDisposable
             _animateGroupReorderFrom(previousGroupPositions);
         }
 
-        SaveCurrentSize();
+        CapturePreferredSize();
     }
 
-    private void RequestDisplayChangeRefresh()
+    private void HandleDpiChanged(nint window, nint suggestedRectPointer)
+    {
+        StopWindowWidthSnapAnimation();
+        _cancelActiveDrag();
+        if (suggestedRectPointer == 0)
+        {
+            RequestDisplayChangeRefresh(0);
+            return;
+        }
+
+        var suggested = Marshal.PtrToStructure<Rect>(suggestedRectPointer);
+        SetWindowPos(
+            window,
+            HwndTopmost,
+            suggested.Left,
+            suggested.Top,
+            Math.Max(1, suggested.Right - suggested.Left),
+            Math.Max(1, suggested.Bottom - suggested.Top),
+            SwpNoActivate | SwpFrameChanged);
+        RequestDisplayChangeRefresh(MonitorFromRect(ref suggested, MonitorDefaultToNearest));
+    }
+
+    private void RequestDisplayChangeRefresh(nint monitor)
     {
         if (_isDisposed)
         {
@@ -725,6 +783,10 @@ public class StartWindowController : IDisposable
         }
 
         _isDisplayChangePending = true;
+        StopWindowWidthSnapAnimation();
+        _cancelActiveDrag();
+        _pendingDisplayMonitor = monitor;
+
         _displayChangeRefreshTimer.Stop();
         _displayChangeRefreshTimer.Start();
     }
@@ -740,10 +802,13 @@ public class StartWindowController : IDisposable
 
         if (_window.IsVisible)
         {
-            PositionOnCurrentMonitor(WindowSizeStore.Load());
+            var monitor = _pendingDisplayMonitor != 0 ? _pendingDisplayMonitor : GetCursorMonitor();
+            PositionOnMonitor(monitor);
             _window.UpdateLayout();
+            ApplyWindowMaterial();
         }
 
+        _pendingDisplayMonitor = 0;
         _isDisplayChangePending = false;
     }
 
@@ -840,6 +905,9 @@ public class StartWindowController : IDisposable
 
     [DllImport("user32.dll")]
     private static extern nint MonitorFromPoint(Point point, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromRect(ref Rect rect, uint flags);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern bool GetMonitorInfoW(nint monitor, ref MonitorInfo monitorInfo);

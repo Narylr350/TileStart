@@ -6,7 +6,9 @@
         Title="TileStart 设置"
         Width="640"
         Height="560"
-        ResizeMode="NoResize"
+        MinWidth="420"
+        MinHeight="320"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         Style="{StaticResource TileStartDialogWindowStyle}">

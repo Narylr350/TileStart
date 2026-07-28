@@ -8,8 +8,8 @@
         Title="磁贴设置"
         Width="920"
         Height="740"
-        MinWidth="840"
-        MinHeight="620"
+        MinWidth="560"
+        MinHeight="420"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
@@ -176,10 +176,14 @@
                         Content="&#xE8BB;" />
             </Grid>
 
-            <Grid Grid.Row="1">
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalContentAlignment="Stretch"
+                          VerticalScrollBarVisibility="Disabled">
+            <Grid MinWidth="540">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" MinWidth="220" MaxWidth="300" />
+                    <ColumnDefinition Width="4*" MinWidth="320" />
                 </Grid.ColumnDefinitions>
 
                 <Border Padding="22"
@@ -791,6 +795,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
+            </ScrollViewer>
 
             <Border Grid.Row="2"
                     Padding="20,12"

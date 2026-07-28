@@ -4,6 +4,7 @@
                     xmlns:local="clr-namespace:TileStart.Host"
                     xmlns:utilities="clr-namespace:TileStart.Host.Utilities">
     <Style x:Key="TileStartDialogWindowStyle" TargetType="Window">
+        <EventSetter Event="Loaded" Handler="DialogWindow_Loaded" />
         <Setter Property="Background" Value="{DynamicResource TileStartWindowBackgroundBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />
         <Setter Property="FontFamily" Value="{DynamicResource TileStartContentFont}" />

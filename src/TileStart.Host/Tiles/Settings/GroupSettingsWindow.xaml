@@ -9,8 +9,8 @@
         Title="组设置"
         Width="1100"
         Height="700"
-        MinWidth="980"
-        MinHeight="620"
+        MinWidth="620"
+        MinHeight="460"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         ResizeMode="CanResize"
@@ -237,16 +237,24 @@
                         IsCancel="True" Content="&#xE8BB;" Click="Close_Click" />
             </Grid>
 
-            <Grid Grid.Row="1" Margin="24,22">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="GroupPropertiesColumn" Width="220" />
-                    <ColumnDefinition x:Name="PropertiesGapColumn" Width="24" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="24" />
-                    <ColumnDefinition Width="350" />
-                </Grid.ColumnDefinitions>
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalContentAlignment="Stretch"
+                          VerticalScrollBarVisibility="Disabled">
+                <Grid MinWidth="720" Margin="24,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="GroupPropertiesColumn" Width="2*" MinWidth="180" MaxWidth="220" />
+                        <ColumnDefinition x:Name="PropertiesGapColumn" Width="16" />
+                        <ColumnDefinition Width="3*" MinWidth="260" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="3*" MinWidth="240" MaxWidth="350" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel x:Name="GroupPropertiesPanel" Grid.Column="0">
+                <ScrollViewer x:Name="GroupPropertiesScrollViewer"
+                              Grid.Column="0"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="GroupPropertiesPanel">
                     <TextBlock FontSize="14" FontWeight="SemiBold" Text="组属性" />
                     <TextBlock Margin="0,18,0,6" Foreground="{StaticResource TileStartTextPrimaryBrush}" Text="名称" />
                     <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged" />
@@ -283,6 +291,7 @@
                                    Text="每个单位对应一个中磁贴。小、宽和大磁贴会按实际占格自动排布。" />
                     </StackPanel>
                 </StackPanel>
+                </ScrollViewer>
 
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
@@ -396,7 +405,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Column="4">
+                    <Grid Grid.Column="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -460,8 +469,9 @@
                     <TextBlock Grid.Row="3" Margin="0,12,0,0" MinHeight="18"
                                Foreground="{StaticResource TileStartErrorBrush}"
                                Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+                    </Grid>
                 </Grid>
-            </Grid>
+            </ScrollViewer>
 
             <Border Grid.Row="2"
                     Padding="20,12"

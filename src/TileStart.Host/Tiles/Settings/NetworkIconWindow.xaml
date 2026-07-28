@@ -6,6 +6,8 @@
         Title="网络图标"
         Width="500"
         Height="330"
+        MinWidth="360"
+        MinHeight="260"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"

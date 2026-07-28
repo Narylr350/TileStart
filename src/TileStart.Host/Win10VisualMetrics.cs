@@ -60,8 +60,11 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
+    // Native StartUI applies this padding inside a deeper nested scrolling surface.
+    // It is reference evidence, not a margin that can be copied onto TileStart's flat ListBox viewport.
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
 
+    // TileStart's current ListBox is the viewport itself, so only the verified top inset belongs here.
     public static Thickness AllAppsViewportMargin { get; } = new(0, 7, 0, 0);
 
     public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);

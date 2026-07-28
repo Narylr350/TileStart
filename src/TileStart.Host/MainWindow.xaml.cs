@@ -26,6 +26,13 @@ public partial class MainWindow : Window
     public MainWindow(AppThemeStyle themeStyle = AppThemeStyle.Windows11)
     {
         InitializeComponent();
+        MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
+        MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
+        var savedSize = WindowSizeStore.Load();
+        var preferredWorkspaceColumns = savedSize?.WorkspaceColumns ?? 2;
+        var preferredHeight = savedSize?.Height ?? Height;
+        Width = StartWindowSizing.WidthForColumns(preferredWorkspaceColumns);
+        Height = Math.Max(MinHeight, preferredHeight);
         _appController = new Controllers.ApplicationPaneController(
             TileLayout,
             Dispatcher,
@@ -123,24 +130,17 @@ public partial class MainWindow : Window
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
             hasOpenContextMenu: () => _hasOpenContextMenu,
+            cancelActiveDrag: () =>
+            {
+                _tileDragCoordinator.CancelCurrentDrag();
+            },
+            preferredWorkspaceColumns,
+            preferredHeight,
             themeStyle);
         _controller.WindowDismissing += _tileWorkspaceController.CloseOpenContextMenu;
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;
         TileLayout.Groups.CollectionChanged += TileGroups_CollectionChanged;
-        MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
-        MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
-        var savedSize = WindowSizeStore.Load();
-        if (savedSize is not null)
-        {
-            Width = StartWindowSizing.SnapWidth(savedSize.Value.Width, MaxWidth);
-            Height = Math.Max(MinHeight, savedSize.Value.Height);
-        }
-        else
-        {
-            Width = StartWindowSizing.WidthForColumns(2);
-        }
-
         _ = _appController.LoadAppsAsync();
     }
 

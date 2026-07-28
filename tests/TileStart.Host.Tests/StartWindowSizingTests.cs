@@ -55,13 +55,26 @@ public sealed class StartWindowSizingTests
         Assert.Equal(twoColumns, StartWindowSizing.MaximumWidth(availableWidth));
     }
 
-    [Theory]
-    [InlineData(300, 480)]
-    [InlineData(700, 700)]
-    [InlineData(1200, 900)]
-    public void HeightRemainsContinuousWithinTheWorkArea(double requestedHeight, double expectedHeight)
+    [Fact]
+    public void WorkAreaNarrowerThanTheFixedPaneUsesTheActualAvailableWidth()
     {
-        Assert.Equal(expectedHeight, StartWindowSizing.ClampHeight(requestedHeight, 480, 900));
+        var availableWidth = StartWindowSizing.WidthForColumns(0) - 40;
+
+        Assert.Equal(availableWidth, StartWindowSizing.SnapWidth(10_000, availableWidth));
+        Assert.Equal(availableWidth, StartWindowSizing.MaximumWidth(availableWidth));
+    }
+
+    [Theory]
+    [InlineData(300, 480, 900)]
+    [InlineData(700, 700, 900)]
+    [InlineData(1200, 900, 900)]
+    [InlineData(700, 400, 400)]
+    public void HeightRemainsContinuousWithinTheWorkArea(
+        double requestedHeight,
+        double expectedHeight,
+        double availableHeight)
+    {
+        Assert.Equal(expectedHeight, StartWindowSizing.ClampHeight(requestedHeight, 480, availableHeight));
     }
 
     [Theory]
@@ -71,5 +84,14 @@ public sealed class StartWindowSizingTests
     public void MinimumWidthDependsOnWhetherTilesExist(int tileCount, int expectedColumns)
     {
         Assert.Equal(expectedColumns, StartWindowSizing.MinimumColumnsForTileCount(tileCount));
+    }
+
+    [Fact]
+    public void InvalidWidthFallsBackToTheMinimumWorkspace()
+    {
+        Assert.Equal(StartWindowSizing.MinimumGroupColumns, StartWindowSizing.ColumnsForWidth(double.NaN));
+        Assert.Equal(
+            StartWindowSizing.MinimumGroupColumns,
+            StartWindowSizing.ColumnsForWidth(double.PositiveInfinity));
     }
 }

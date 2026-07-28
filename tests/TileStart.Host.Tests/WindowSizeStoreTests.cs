@@ -28,5 +28,6 @@ public sealed class WindowSizeStoreTests
         Assert.Equal(
             migratedWidth,
             WindowSizeStore.MigrateWidth(migratedWidth, WindowSizeStore.CurrentFormatVersion));
+        Assert.Equal(migratedWidth, WindowSizeStore.MigrateWidth(migratedWidth, version: 1));
     }
 }

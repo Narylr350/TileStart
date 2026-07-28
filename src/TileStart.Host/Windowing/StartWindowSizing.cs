@@ -37,22 +37,43 @@ public static class StartWindowSizing
             requestedWidth = WidthForColumns(MinimumGroupColumns);
         }
 
-        var candidates = Enumerable.Range(
-                MinimumGroupColumns,
-                MaximumGroupColumns - MinimumGroupColumns + 1)
-            .Select(WidthForColumns)
-            .Where(width => !double.IsFinite(availableWidth) || width <= availableWidth + 0.1)
-            .ToArray();
+        var candidates = AvailableColumns(availableWidth);
         if (candidates.Length == 0)
         {
             return Math.Max(1, availableWidth);
         }
 
-        return candidates
-            .OrderBy(width => Math.Abs(width - requestedWidth))
-            .ThenBy(width => width)
-            .First();
+        return WidthForColumns(NearestColumns(requestedWidth, candidates));
     }
+
+    public static int ColumnsForWidth(double requestedWidth, double availableWidth = double.PositiveInfinity)
+    {
+        if (!double.IsFinite(requestedWidth))
+        {
+            return MinimumGroupColumns;
+        }
+
+        var candidates = AvailableColumns(availableWidth);
+        if (candidates.Length == 0)
+        {
+            return MinimumGroupColumns;
+        }
+
+        return NearestColumns(requestedWidth, candidates);
+    }
+
+    private static int[] AvailableColumns(double availableWidth) =>
+        Enumerable.Range(
+                MinimumGroupColumns,
+                MaximumGroupColumns - MinimumGroupColumns + 1)
+            .Where(columns => !double.IsFinite(availableWidth) || WidthForColumns(columns) <= availableWidth + 0.1)
+            .ToArray();
+
+    private static int NearestColumns(double requestedWidth, IEnumerable<int> candidates) =>
+        candidates
+            .OrderBy(columns => Math.Abs(WidthForColumns(columns) - requestedWidth))
+            .ThenBy(columns => columns)
+            .First();
 
     public static double MaximumWidth(double availableWidth)
     {

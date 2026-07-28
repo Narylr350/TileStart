@@ -4,11 +4,12 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="备份与恢复"
         Width="660"
-        MaxHeight="760"
-        SizeToContent="Height"
+        Height="620"
+        MinWidth="480"
+        MinHeight="360"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Style="{StaticResource TileStartDialogWindowStyle}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="42"
@@ -57,7 +58,7 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="42" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="54" />
             </Grid.RowDefinitions>
 
@@ -83,7 +84,10 @@
                         Content="&#xE8BB;" />
             </Grid>
 
-            <StackPanel Grid.Row="1" Margin="26,22,26,20">
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="26,22,26,20">
                 <TextBlock FontSize="20" FontWeight="SemiBold" Text="保护你的 TileStart" />
                 <TextBlock Margin="0,5,0,0"
                            Foreground="{StaticResource TileStartTextSecondaryBrush}"
@@ -237,6 +241,7 @@
                     </StackPanel>
                 </Expander>
             </StackPanel>
+            </ScrollViewer>
 
             <Border Grid.Row="2"
                     Padding="20,9"

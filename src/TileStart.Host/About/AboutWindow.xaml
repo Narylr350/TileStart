@@ -5,6 +5,8 @@
         Title="关于 TileStart"
         Width="560"
         Height="390"
+        MinWidth="420"
+        MinHeight="300"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
@@ -65,7 +67,10 @@
                         Content="&#xE8BB;" />
             </Grid>
 
-            <Grid Grid.Row="1" Margin="30,26,30,22">
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+            <Grid Margin="30,26,30,22">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -133,6 +138,7 @@
                     </Grid>
                 </Border>
             </Grid>
+            </ScrollViewer>
 
             <Border Grid.Row="2"
                     Padding="18,11"

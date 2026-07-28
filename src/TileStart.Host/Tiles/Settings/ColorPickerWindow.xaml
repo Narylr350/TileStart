@@ -5,6 +5,8 @@
         Title="选择颜色"
         Width="506"
         Height="508"
+        MinWidth="420"
+        MinHeight="320"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
