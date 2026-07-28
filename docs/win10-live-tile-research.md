@@ -12,6 +12,17 @@ Win10 动态磁贴不是单纯在静态磁贴上播放动画，而是一套由�
 
 TileStart 应优先实现**独立的 Win10 风格动态磁贴引擎**，不读取 Windows 原生 Live Tile 数据。这样可以复刻视觉和交互，同时保持当前项目“不读取 Windows 原生 Live Tile 数据”的 Non-goal，不引入 UWP 应用身份、系统通知权限和原生磁贴存储兼容问题。
 
+## 证据边界
+
+本文件第一版主要来自 Microsoft Learn 官方契约、现有 Win10 StartUI 逆向导出和 TileStart 当前代码对照，**不等于已经在 Windows 10 19045 实机上观察并还原了动态磁贴行为**。
+
+当前 Windows 11 环境不能作为原生动态磁贴研究环境：Windows 11 开始菜单使用 Pinned、Recommended 和 All 等新的区域结构，原生系统开始菜单不再提供 Win10 Live Tiles。Win11 仍可能保留部分 UWP/通知 API 或文档契约，但不能据此推断 `StartDocked` 仍保留 Win10 `StartUI` 的动态磁贴渲染、队列和缓存链路。
+
+后续研究必须分开记录：
+
+- **Win10 19045 实机**：观察原生动态磁贴的真实视觉、时序、轮播、暂停、更新和失效行为；
+- **TileStart 独立复刻**：在 Win10 与 Win11 上验证自己的 WPF 渲染和性能，不把 Win11 行为当作原生 Win10 证据。
+
 ## 官方机制事实
 
 ### 自适应内容模型
