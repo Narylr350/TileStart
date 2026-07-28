@@ -36,6 +36,23 @@ public sealed class ContextMenuDismissalTests
         });
     }
 
+    [Fact]
+    public void ClosingTheTopLevelMenuAlsoClearsNestedSubmenuState()
+    {
+        RunOnSta(() =>
+        {
+            var nested = new MenuItem { Header = "二级" };
+            nested.Items.Add(new MenuItem { Header = "操作" });
+            nested.IsSubmenuOpen = true;
+            var menu = new ContextMenu();
+            menu.Items.Add(nested);
+
+            TileWorkspaceController.CloseSubmenus(menu);
+
+            Assert.False(nested.IsSubmenuOpen);
+        });
+    }
+
     private static void RunOnSta(Action action)
     {
         Exception? error = null;

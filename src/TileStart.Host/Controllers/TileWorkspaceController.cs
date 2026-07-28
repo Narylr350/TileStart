@@ -169,6 +169,10 @@ internal sealed class TileWorkspaceController : IDisposable
 
         if (sender is ContextMenu menu)
         {
+            // A submenu is a separate Popup HWND. When WPF closes the top-level menu
+            // because focus moved elsewhere, it does not reliably reset the nested
+            // MenuItem state used by our custom template, so close the whole popup tree.
+            CloseSubmenus(menu);
             MenuPopupAnimator.CloseTopLevel(menu);
         }
 
@@ -203,12 +207,16 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
-        foreach (var item in EnumerateMenuItems(menu))
+        CloseSubmenus(menu);
+        menu.IsOpen = false;
+    }
+
+    internal static void CloseSubmenus(ItemsControl owner)
+    {
+        foreach (var item in EnumerateMenuItems(owner))
         {
             item.IsSubmenuOpen = false;
         }
-
-        menu.IsOpen = false;
     }
 
     // ── Pin / unpin ───────────────────────────────────────────────
