@@ -46,10 +46,14 @@
         <Style x:Key="TransferButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource TileStartButtonStyle}">
-            <Setter Property="Width" Value="88" />
-            <Setter Property="Height" Value="38" />
+            <Setter Property="Width" Value="40" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Height" Value="40" />
             <Setter Property="Margin" Value="0,5" />
-            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style x:Key="PaneStyle" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource TileStartCardBackgroundBrush}" />
@@ -148,18 +152,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="44" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="DialogTitleText"
-                               Foreground="{StaticResource TileStartTextPrimaryBrush}"
-                               FontSize="15"
-                               FontWeight="SemiBold"
-                               Text="自定义组" />
-                    <TextBlock x:Name="DialogDescriptionText"
-                               Margin="0,2,0,0"
-                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
-                               FontSize="10"
-                               Text="设置组属性并管理当前内容" />
-                </StackPanel>
+                <TextBlock x:Name="DialogTitleText"
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource TileStartTextPrimaryBrush}"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Text="自定义组" />
                 <Button Grid.Column="1"
                         Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
@@ -174,7 +173,7 @@
                           VerticalScrollBarVisibility="Disabled">
                 <Grid MinWidth="720" Margin="20,18">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition x:Name="GroupPropertiesColumn" Width="230" />
+                        <ColumnDefinition x:Name="GroupPropertiesColumn" Width="250" />
                         <ColumnDefinition x:Name="PropertiesGapColumn" Width="18" />
                         <ColumnDefinition Width="*" MinWidth="470" />
                     </Grid.ColumnDefinitions>
@@ -303,190 +302,168 @@
                     </Border>
 
                     <Grid Grid.Column="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock x:Name="ContentEditorTitleText"
-                                           Foreground="{StaticResource TileStartTextPrimaryBrush}"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Text="管理组内容" />
-                                <TextBlock x:Name="ContentEditorDescriptionText"
-                                           Margin="0,4,0,0"
-                                           Foreground="{StaticResource TileStartTextSecondaryBrush}"
-                                           Text="先选择项目，再使用中间按钮添加或移除；保存前不会修改实际布局。"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                            <TextBlock Grid.Column="1"
-                                       Margin="16,0,0,0"
-                                       VerticalAlignment="Top"
-                                       Foreground="{StaticResource TileStartTextSecondaryBrush}"
-                                       Text="{Binding SelectedCountText}" />
-                        </Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="190" />
+                            <ColumnDefinition Width="56" />
+                            <ColumnDefinition Width="*" MinWidth="190" />
+                        </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Row="2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="190" />
-                                <ColumnDefinition Width="104" />
-                                <ColumnDefinition Width="*" MinWidth="190" />
-                            </Grid.ColumnDefinitions>
-
-                            <Border Padding="14" Style="{StaticResource PaneStyle}">
+                        <Border Padding="14" Style="{StaticResource PaneStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
                                 <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="10" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   Text="可添加" />
-                                        <TextBlock Grid.Column="1"
-                                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
-                                                   Text="{Binding AvailableCountText}" />
-                                    </Grid>
-                                    <Grid Grid.Row="2">
-                                        <TextBox x:Name="SearchBox"
-                                                 Padding="34,0,10,0"
-                                                 TextChanged="SearchBox_TextChanged" />
-                                        <TextBlock Margin="11,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="{StaticResource TileStartTextSecondaryBrush}"
-                                                   FontSize="14"
-                                                   Text="&#xE721;"
-                                                   IsHitTestVisible="False" />
-                                        <TextBlock Margin="34,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{StaticResource TileStartTextTertiaryBrush}"
-                                                   Text="搜索应用和磁贴"
-                                                   IsHitTestVisible="False">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Grid>
-                                    <ListBox x:Name="AvailableList"
-                                             Grid.Row="4"
-                                             ItemsSource="{Binding AvailableOptions}"
-                                             ItemTemplate="{StaticResource ContentItemTemplate}"
-                                             ItemContainerStyle="{StaticResource ContentListItemStyle}"
-                                             SelectionMode="Extended"
-                                              SelectionChanged="ContentSelection_Changed"
-                                              HorizontalContentAlignment="Stretch"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             ScrollViewer.CanContentScroll="True"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             VirtualizingPanel.IsVirtualizing="True"
-                                             VirtualizingPanel.ScrollUnit="Pixel"
-                                             VirtualizingPanel.VirtualizationMode="Recycling"
-                                             utilities:SmoothScroll.IsEnabled="True" />
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Text="可添加" />
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               Text="{Binding AvailableCountText}" />
                                 </Grid>
-                            </Border>
+                                <Grid Grid.Row="2">
+                                    <TextBox x:Name="SearchBox"
+                                             Padding="34,0,10,0"
+                                             TextChanged="SearchBox_TextChanged" />
+                                    <TextBlock Margin="11,0,0,0"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               FontSize="14"
+                                               Text="&#xE721;"
+                                               IsHitTestVisible="False" />
+                                    <TextBlock Margin="34,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{StaticResource TileStartTextTertiaryBrush}"
+                                               Text="搜索应用和磁贴"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}"
+                                                                 Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                                <ListBox x:Name="AvailableList"
+                                         Grid.Row="4"
+                                         ItemsSource="{Binding AvailableOptions}"
+                                         ItemTemplate="{StaticResource ContentItemTemplate}"
+                                         ItemContainerStyle="{StaticResource ContentListItemStyle}"
+                                         SelectionMode="Extended"
+                                         SelectionChanged="ContentSelection_Changed"
+                                         HorizontalContentAlignment="Stretch"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.CanContentScroll="True"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.ScrollUnit="Pixel"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         utilities:SmoothScroll.IsEnabled="True" />
+                            </Grid>
+                        </Border>
 
-                            <StackPanel Grid.Column="1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
-                                <Button x:Name="AddButton"
-                                        Style="{StaticResource TransferButtonStyle}"
-                                        Content="添加 →"
-                                        IsEnabled="False"
-                                        Click="AddSelection_Click" />
-                                <Button x:Name="RemoveButton"
-                                        Style="{StaticResource TransferButtonStyle}"
-                                        Content="← 移除"
-                                        IsEnabled="False"
-                                        Click="RemoveSelection_Click" />
-                            </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="AddButton"
+                                    Style="{StaticResource TransferButtonStyle}"
+                                    Content="→"
+                                    ToolTip="添加到当前内容"
+                                    IsEnabled="False"
+                                    Click="AddSelection_Click" />
+                            <Button x:Name="RemoveButton"
+                                    Style="{StaticResource TransferButtonStyle}"
+                                    Content="←"
+                                    ToolTip="从当前内容移除"
+                                    IsEnabled="False"
+                                    Click="RemoveSelection_Click" />
+                        </StackPanel>
 
-                            <Border Grid.Column="2" Padding="14" Style="{StaticResource PaneStyle}">
+                        <Border Grid.Column="2" Padding="14" Style="{StaticResource PaneStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
                                 <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   Text="当前内容" />
-                                        <Button Grid.Column="1"
-                                                Height="28"
-                                                MinWidth="54"
-                                                Padding="9,0"
-                                                Style="{StaticResource DialogButtonStyle}"
-                                                Content="清空"
-                                                Click="ClearSelection_Click" />
-                                    </Grid>
-                                    <ListBox x:Name="IncludedList"
-                                             Grid.Row="2"
-                                             ItemsSource="{Binding IncludedOptions}"
-                                             ItemTemplate="{StaticResource ContentItemTemplate}"
-                                             ItemContainerStyle="{StaticResource ContentListItemStyle}"
-                                             SelectionMode="Extended"
-                                              SelectionChanged="ContentSelection_Changed"
-                                              HorizontalContentAlignment="Stretch"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             ScrollViewer.CanContentScroll="True"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             VirtualizingPanel.IsVirtualizing="True"
-                                             VirtualizingPanel.ScrollUnit="Pixel"
-                                             VirtualizingPanel.VirtualizationMode="Recycling"
-                                             utilities:SmoothScroll.IsEnabled="True" />
-                                    <StackPanel Grid.Row="4"
-                                                HorizontalAlignment="Right"
-                                                Orientation="Horizontal">
-                                        <Button x:Name="MoveUpButton"
-                                                Width="68"
-                                                Margin="0,0,8,0"
-                                                Style="{StaticResource DialogButtonStyle}"
-                                                Content="上移"
-                                                IsEnabled="False"
-                                                Click="MoveUp_Click" />
-                                        <Button x:Name="MoveDownButton"
-                                                Width="68"
-                                                Style="{StaticResource DialogButtonStyle}"
-                                                Content="下移"
-                                                IsEnabled="False"
-                                                Click="MoveDown_Click" />
-                                    </StackPanel>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Foreground="{StaticResource TileStartTextPrimaryBrush}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Text="当前内容" />
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="{StaticResource TileStartTextSecondaryBrush}"
+                                               Text="{Binding SelectedCountText}" />
                                 </Grid>
-                            </Border>
-                        </Grid>
+                                <StackPanel Grid.Row="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Button x:Name="MoveUpButton"
+                                            Width="60"
+                                            Height="34"
+                                            Margin="0,0,8,0"
+                                            Style="{StaticResource DialogButtonStyle}"
+                                            Content="上移"
+                                            IsEnabled="False"
+                                            Click="MoveUp_Click" />
+                                    <Button x:Name="MoveDownButton"
+                                            Width="60"
+                                            Height="34"
+                                            Margin="0,0,8,0"
+                                            Style="{StaticResource DialogButtonStyle}"
+                                            Content="下移"
+                                            IsEnabled="False"
+                                            Click="MoveDown_Click" />
+                                    <Button Height="34"
+                                            MinWidth="54"
+                                            Padding="9,0"
+                                            Style="{StaticResource DialogButtonStyle}"
+                                            Content="清空"
+                                            Click="ClearSelection_Click" />
+                                </StackPanel>
+                                <ListBox x:Name="IncludedList"
+                                         Grid.Row="4"
+                                         ItemsSource="{Binding IncludedOptions}"
+                                         ItemTemplate="{StaticResource ContentItemTemplate}"
+                                         ItemContainerStyle="{StaticResource ContentListItemStyle}"
+                                         SelectionMode="Extended"
+                                         SelectionChanged="ContentSelection_Changed"
+                                         HorizontalContentAlignment="Stretch"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.CanContentScroll="True"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.ScrollUnit="Pixel"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         utilities:SmoothScroll.IsEnabled="True" />
+                            </Grid>
+                        </Border>
                     </Grid>
                 </Grid>
             </ScrollViewer>

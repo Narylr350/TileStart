@@ -7,6 +7,7 @@ public sealed class ResponsiveDialogLayoutTests
 {
     private static readonly XNamespace Presentation =
         "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
     private static readonly XNamespace X = "http://schemas.microsoft.com/winfx/2006/xaml";
 
     [Fact]
@@ -61,9 +62,9 @@ public sealed class ResponsiveDialogLayoutTests
             .SelectMany(definitions => definitions.Elements(Presentation + "ColumnDefinition"))
             .ToArray();
         Assert.Contains(tileColumns, column => (string?)column.Attribute("Width") == "2*"
-            && (string?)column.Attribute("MaxWidth") == "300");
+                                               && (string?)column.Attribute("MaxWidth") == "300");
         Assert.Contains(tileColumns, column => (string?)column.Attribute("Width") == "4*"
-            && (string?)column.Attribute("MinWidth") == "320");
+                                               && (string?)column.Attribute("MinWidth") == "320");
     }
 
     [Fact]
@@ -104,7 +105,18 @@ public sealed class ResponsiveDialogLayoutTests
             .ToArray();
         Assert.Equal(2, contentLists.Length);
         Assert.All(contentLists, list =>
-            Assert.Equal("Stretch", (string?)list.Attribute("HorizontalContentAlignment")));
+        {
+            Assert.Equal("Stretch", (string?)list.Attribute("HorizontalContentAlignment"));
+            Assert.Equal("4", (string?)list.Attribute("Grid.Row"));
+        });
+
+        var namedElements = document.Descendants()
+            .Select(element => (string?)element.Attribute(X + "Name"))
+            .Where(name => name != null)
+            .ToArray();
+        Assert.DoesNotContain("DialogDescriptionText", namedElements);
+        Assert.DoesNotContain("ContentEditorTitleText", namedElements);
+        Assert.DoesNotContain("ContentEditorDescriptionText", namedElements);
 
         Assert.Contains(document.Descendants(Presentation + "ControlTemplate").Descendants(), element =>
             element.Name.LocalName == "Win10InteractionBorder"
@@ -119,9 +131,25 @@ public sealed class ResponsiveDialogLayoutTests
 
         var editorColumns = document.Descendants(Presentation + "Grid.ColumnDefinitions")
             .Select(definitions => definitions.Elements(Presentation + "ColumnDefinition").ToArray())
-            .Single(columns => columns.Length == 3 && (string?)columns[1].Attribute("Width") == "104");
+            .Single(columns => columns.Length == 3 && (string?)columns[1].Attribute("Width") == "56");
         Assert.Equal("*", (string?)editorColumns[0].Attribute("Width"));
         Assert.Equal("*", (string?)editorColumns[2].Attribute("Width"));
+
+        var propertiesColumn = document.Descendants(Presentation + "ColumnDefinition")
+            .Single(column => (string?)column.Attribute(X + "Name") == "GroupPropertiesColumn");
+        Assert.Equal("250", (string?)propertiesColumn.Attribute("Width"));
+
+        var transferStyle = document.Descendants(Presentation + "Style")
+            .Single(element => (string?)element.Attribute(X + "Key") == "TransferButtonStyle");
+        var transferSetters = transferStyle.Elements(Presentation + "Setter")
+            .ToDictionary(
+                setter => (string)setter.Attribute("Property")!,
+                setter => (string?)setter.Attribute("Value"));
+        Assert.Equal("40", transferSetters["Width"]);
+        Assert.Equal("0", transferSetters["MinWidth"]);
+        Assert.Equal("40", transferSetters["Height"]);
+        Assert.Equal("Center", transferSetters["HorizontalContentAlignment"]);
+        Assert.Equal("Center", transferSetters["VerticalContentAlignment"]);
     }
 
     private static XDocument LoadXaml(string fileName)

@@ -126,9 +126,6 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
         {
             Title = "文件夹内容";
             DialogTitleText.Text = "文件夹内容";
-            DialogDescriptionText.Text = "管理当前文件夹内的项目";
-            ContentEditorTitleText.Text = "管理文件夹内容";
-            ContentEditorDescriptionText.Text = "先从可添加列表选择项目，再点击添加；保存前不会修改文件夹。";
             GroupPropertiesPane.Visibility = Visibility.Collapsed;
             GroupPropertiesColumn.Width = new GridLength(0);
             PropertiesGapColumn.Width = new GridLength(0);
@@ -174,7 +171,7 @@ public partial class GroupSettingsWindow : Window, INotifyPropertyChanged
     public int WidthUnits => ParseSelectedUnits(WidthBox, TileWorkspaceMetrics.LegacyGroupWidthUnits);
     public int HeightUnits => ParseSelectedUnits(HeightBox, 0);
     public IReadOnlyList<GroupTileOption> SelectedOptions => [.. _includedOptions];
-    public string SelectedCountText => $"当前 {_includedOptions.Count} 项";
+    public string SelectedCountText => $"{_includedOptions.Count} 项";
     public string AvailableCountText => $"{_availableOptions.Count} 项";
 
     public event PropertyChangedEventHandler? PropertyChanged;
