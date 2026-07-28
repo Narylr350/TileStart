@@ -11,7 +11,16 @@ internal static partial class PackagedTileAssetLoader
 {
     public static ImageSource? Load(string packageInstallPath, string appUserModelId, TileSize size)
     {
-        var path = ResolveAssetPath(packageInstallPath, appUserModelId, size);
+        return LoadAsset(ResolveAssetPath(packageInstallPath, appUserModelId, size));
+    }
+
+    public static ImageSource? LoadApplicationIcon(string packageInstallPath, string appUserModelId)
+    {
+        return LoadAsset(ResolveApplicationIconAssetPath(packageInstallPath, appUserModelId));
+    }
+
+    private static ImageSource? LoadAsset(string? path)
+    {
         if (path is null)
         {
             return null;
@@ -48,15 +57,7 @@ internal static partial class PackagedTileAssetLoader
 
         try
         {
-            var applicationId = appUserModelId[(appUserModelId.LastIndexOf('!') + 1)..];
-            var document = XDocument.Load(manifestPath);
-            var application = document.Descendants()
-                .FirstOrDefault(element => element.Name.LocalName == "Application"
-                                           && element.Attributes().Any(attribute => attribute.Name.LocalName == "Id"
-                                               && attribute.Value.Equals(applicationId,
-                                                   StringComparison.OrdinalIgnoreCase)));
-            var visualElements = application?.Elements()
-                .FirstOrDefault(element => element.Name.LocalName == "VisualElements");
+            var visualElements = FindVisualElements(manifestPath, appUserModelId);
             var defaultTile = visualElements?.Elements()
                 .FirstOrDefault(element => element.Name.LocalName == "DefaultTile");
             var asset = size switch
@@ -76,16 +77,52 @@ internal static partial class PackagedTileAssetLoader
         }
     }
 
+    internal static string? ResolveApplicationIconAssetPath(string packageInstallPath, string appUserModelId)
+    {
+        if (string.IsNullOrWhiteSpace(packageInstallPath) || string.IsNullOrWhiteSpace(appUserModelId))
+        {
+            return null;
+        }
+
+        var manifestPath = Path.Combine(packageInstallPath, "AppxManifest.xml");
+        if (!File.Exists(manifestPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var visualElements = FindVisualElements(manifestPath, appUserModelId);
+            var asset = Attribute(visualElements, "Square44x44Logo");
+            return asset is null ? null : ResolveQualifiedApplicationIcon(packageInstallPath, asset);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                               or System.Xml.XmlException)
+        {
+            return null;
+        }
+    }
+
+    private static XElement? FindVisualElements(string manifestPath, string appUserModelId)
+    {
+        var applicationId = appUserModelId[(appUserModelId.LastIndexOf('!') + 1)..];
+        var document = XDocument.Load(manifestPath);
+        var application = document.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "Application"
+                                       && element.Attributes().Any(attribute => attribute.Name.LocalName == "Id"
+                                           && attribute.Value.Equals(applicationId,
+                                               StringComparison.OrdinalIgnoreCase)));
+        return application?.Elements()
+            .FirstOrDefault(element => element.Name.LocalName == "VisualElements");
+    }
+
     private static string? Attribute(XElement? element, string name) =>
         element?.Attributes().FirstOrDefault(attribute => attribute.Name.LocalName == name)?.Value;
 
     private static string? ResolveQualifiedAsset(string packageInstallPath, string relativePath)
     {
-        var root = Path.GetFullPath(packageInstallPath).TrimEnd(Path.DirectorySeparatorChar) +
-                   Path.DirectorySeparatorChar;
-        var unqualifiedPath =
-            Path.GetFullPath(Path.Combine(packageInstallPath, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
-        if (!unqualifiedPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        var unqualifiedPath = ResolveSafePackagePath(packageInstallPath, relativePath);
+        if (unqualifiedPath is null)
         {
             return null;
         }
@@ -111,6 +148,57 @@ internal static partial class PackagedTileAssetLoader
             .FirstOrDefault();
     }
 
+    private static string? ResolveQualifiedApplicationIcon(string packageInstallPath, string relativePath)
+    {
+        var unqualifiedPath = ResolveSafePackagePath(packageInstallPath, relativePath);
+        if (unqualifiedPath is null)
+        {
+            return null;
+        }
+
+        var directory = Path.GetDirectoryName(unqualifiedPath);
+        if (directory is null || !Directory.Exists(directory))
+        {
+            return null;
+        }
+
+        var stem = Path.GetFileNameWithoutExtension(unqualifiedPath);
+        var qualified = Directory.EnumerateFiles(directory, $"{stem}*.png")
+            .Where(path => !Path.GetFileName(path).Contains("_contrast-", StringComparison.OrdinalIgnoreCase))
+            .Where(path => !Path.GetFileName(path).Contains("_theme-", StringComparison.OrdinalIgnoreCase))
+            .Select(path => new { Path = path, Rank = ApplicationIconRank(path) })
+            .OrderBy(candidate => candidate.Rank.Kind)
+            .ThenBy(candidate => candidate.Rank.Distance)
+            .ThenBy(candidate => candidate.Path, StringComparer.OrdinalIgnoreCase)
+            .Select(candidate => candidate.Path)
+            .FirstOrDefault();
+
+        return qualified ?? (File.Exists(unqualifiedPath) ? unqualifiedPath : null);
+    }
+
+    private static (int Kind, int Distance) ApplicationIconRank(string path)
+    {
+        var fileName = Path.GetFileName(path);
+        var targetSizeMatch = TargetSizePattern().Match(fileName);
+        if (targetSizeMatch.Success && int.TryParse(targetSizeMatch.Groups[1].Value, out var targetSize))
+        {
+            var isUnplated = fileName.Contains("_altform-unplated", StringComparison.OrdinalIgnoreCase);
+            var exactKind = targetSize == 24 ? (isUnplated ? 0 : 1) : (isUnplated ? 2 : 3);
+            return (exactKind, Math.Abs(targetSize - 24));
+        }
+
+        return (4, Math.Abs(Scale(path) - 100));
+    }
+
+    private static string? ResolveSafePackagePath(string packageInstallPath, string relativePath)
+    {
+        var root = Path.GetFullPath(packageInstallPath).TrimEnd(Path.DirectorySeparatorChar) +
+                   Path.DirectorySeparatorChar;
+        var path =
+            Path.GetFullPath(Path.Combine(packageInstallPath, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+        return path.StartsWith(root, StringComparison.OrdinalIgnoreCase) ? path : null;
+    }
+
     private static int Scale(string path)
     {
         var match = ScalePattern().Match(Path.GetFileName(path));
@@ -119,4 +207,7 @@ internal static partial class PackagedTileAssetLoader
 
     [GeneratedRegex(@"\.scale-(\d+)", RegexOptions.IgnoreCase)]
     private static partial Regex ScalePattern();
+
+    [GeneratedRegex(@"\.targetsize-(\d+)", RegexOptions.IgnoreCase)]
+    private static partial Regex TargetSizePattern();
 }

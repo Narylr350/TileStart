@@ -103,6 +103,40 @@ public sealed class PerformanceGuardTests
         Assert.DoesNotContain("PersistPreferredSize", method, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void WindowWidthSnapDoesNotRelayoutTheWorkspaceEveryRenderFrame()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+        var method = source[source.IndexOf("private void SnapWindowWidthAfterResize()", StringComparison.Ordinal)..];
+        method = method[..method.IndexOf("private void BeginLiveResize()", StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("CompositionTarget.Rendering += WindowWidthSnap_Rendering", source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("private void WindowWidthSnap_Rendering", source, StringComparison.Ordinal);
+        Assert.Contains("_window.Width = targetWidth;", method, StringComparison.Ordinal);
+        Assert.Contains("_animateGroupReorderFrom(previousGroupPositions);", method, StringComparison.Ordinal);
+        Assert.True(
+            method.IndexOf("_preferredWorkspaceColumns = calculatedColumns;", StringComparison.Ordinal)
+            < method.IndexOf("PositionOnCurrentMonitor();", StringComparison.Ordinal),
+            "The snapped column preference must be published before placement reads it.");
+    }
+
+    [Fact]
+    public void LiveResizeTemporarilyDisablesAcrylicComposition()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");
+        var source = File.ReadAllText(path);
+
+        Assert.Contains("message == WmEnterSizeMove", source, StringComparison.Ordinal);
+        Assert.Contains("message == WmExitSizeMove", source, StringComparison.Ordinal);
+        Assert.Contains("SetAccentPolicy(0, 0, 0);", source, StringComparison.Ordinal);
+        Assert.Contains("new SolidColorBrush(Win10Theme.StartSurfaceColor)", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Win10Theme.ReadStartMaterial(_themeStyle).FallbackColor", source,
+            StringComparison.Ordinal);
+        Assert.Contains("ApplyWindowMaterial();", source, StringComparison.Ordinal);
+    }
+
     private static string ReadShowFromShellMethod()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");

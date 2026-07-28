@@ -34,6 +34,8 @@ public class StartWindowController : IDisposable
     private const int WmActivate = 0x0006;
     private const int WaInactive = 0;
     private const int WmNcLButtonDown = 0x00A1;
+    private const int WmEnterSizeMove = 0x0231;
+    private const int WmExitSizeMove = 0x0232;
     private const int HtRight = 11;
     private const int HtTop = 12;
     private const int HtTopRight = 14;
@@ -71,18 +73,14 @@ public class StartWindowController : IDisposable
     private HwndSource? _windowSource;
     private bool _isDisposed;
 
-    private bool _isWindowWidthSnapAnimating;
     private bool _isDisplayChangePending;
+    private bool _isLiveResizeActive;
+    private bool _restoreMaterialAfterLiveResize;
     private nint _pendingDisplayMonitor;
-    private long _windowWidthSnapStartedAt;
-    private double _windowWidthSnapFrom;
-    private double _windowWidthSnapTo;
-    private double _windowWidthSnapRight;
     private double _requestedMinimumWidth = StartWindowSizing.WidthForColumns(0);
     private readonly double _requestedMinimumHeight;
     private int _preferredWorkspaceColumns;
     private double _preferredHeight;
-    private IReadOnlyDictionary<TileGroup, System.Windows.Point>? _windowWidthSnapGroupPositions;
 
     public event Action? WindowDismissing;
     public event Action? WindowShown;
@@ -236,7 +234,6 @@ public class StartWindowController : IDisposable
 
         _isDisposed = true;
         _foregroundActivationGeneration++;
-        StopWindowWidthSnapAnimation();
         StopEntranceCache();
         _foregroundWatchdogTimer.Stop();
         _foregroundWatchdogTimer.Tick -= ForegroundWatchdogTimer_Tick;
@@ -264,6 +261,7 @@ public class StartWindowController : IDisposable
         _mainSurface.Background = material.UseAcrylic && acrylicApplied
             ? System.Windows.Media.Brushes.Transparent
             : new SolidColorBrush(material.FallbackColor);
+        _restoreMaterialAfterLiveResize = false;
     }
 
     private void ApplyWindowCornerPreference()
@@ -452,7 +450,11 @@ public class StartWindowController : IDisposable
         var positioned = SetWindowPos(handle, HwndTopmost, placement.Left, placement.Top, placement.Width,
             placement.Height, SwpNoActivate | SwpFrameChanged);
         DiagnosticLog.Write(
-            $"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, taskbar={taskbarRect}, edge={edge}, target={placement}, positioned={positioned}, error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
+            $"Window placement: monitor={monitorRect}, work={ToPixelRect(monitorInfo.WorkArea)}, dpi={dpi}, " +
+            $"logicalWork={logicalWorkWidth:F1}x{logicalWorkHeight:F1}, min={_window.MinWidth:F1}, " +
+            $"max={_window.MaxWidth:F1}, preferredColumns={_preferredWorkspaceColumns}, taskbar={taskbarRect}, " +
+            $"edge={edge}, target={placement}, positioned={positioned}, " +
+            $"error={(positioned ? 0 : Marshal.GetLastWin32Error())}.");
     }
 
     private static PixelRect? FindTaskbarRect(nint monitor)
@@ -585,6 +587,18 @@ public class StartWindowController : IDisposable
             return 0;
         }
 
+        if (message == WmEnterSizeMove)
+        {
+            BeginLiveResize();
+            return 0;
+        }
+
+        if (message == WmExitSizeMove)
+        {
+            EndLiveResize();
+            return 0;
+        }
+
         if (message == WmDpiChanged)
         {
             HandleDpiChanged(window, lParam);
@@ -700,62 +714,70 @@ public class StartWindowController : IDisposable
     {
         var currentWidth = _window.ActualWidth > 0 ? _window.ActualWidth : _window.Width;
         var targetWidth = StartWindowSizing.SnapWidth(currentWidth, _window.MaxWidth);
-        if (Math.Abs(currentWidth - targetWidth) < 0.5 || !SystemParameters.ClientAreaAnimation)
-        {
-            _window.Width = targetWidth;
-            PositionOnCurrentMonitor();
-            CapturePreferredSize();
-            return;
-        }
-
-        StopWindowWidthSnapAnimation();
-        _isWindowWidthSnapAnimating = true;
-        _windowWidthSnapStartedAt = Environment.TickCount64;
-        _windowWidthSnapFrom = currentWidth;
-        _windowWidthSnapTo = targetWidth;
-        _windowWidthSnapRight = _window.Left + currentWidth;
-        _windowWidthSnapGroupPositions = _captureGroupReorderPositions();
-        CompositionTarget.Rendering += WindowWidthSnap_Rendering;
-    }
-
-    private void WindowWidthSnap_Rendering(object? sender, EventArgs e)
-    {
-        if (_isDisposed || !_isWindowWidthSnapAnimating)
-        {
-            StopWindowWidthSnapAnimation();
-            return;
-        }
-
-        var elapsed = Environment.TickCount64 - _windowWidthSnapStartedAt;
-        var progress = elapsed / (double)StartWindowResizeMotion.DurationMilliseconds;
-        var width = StartWindowResizeMotion.Interpolate(_windowWidthSnapFrom, _windowWidthSnapTo, progress);
-        _window.Width = width;
-        if (_taskbarEdge == TaskbarEdge.Right)
-        {
-            _window.Left = _windowWidthSnapRight - width;
-        }
-
-        if (progress < 1)
-        {
-            return;
-        }
-
-        var previousGroupPositions = _windowWidthSnapGroupPositions;
-        StopWindowWidthSnapAnimation();
-        _window.Width = _windowWidthSnapTo;
+        var calculatedColumns = StartWindowSizing.ColumnsForWidth(targetWidth, _window.MaxWidth);
+        var previousGroupPositions = _captureGroupReorderPositions();
+        // Changing Width on every render frame forces the complete tile workspace through
+        // repeated WPF measure/arrange passes. That looks acceptable on a fast GPU but
+        // becomes delayed under software rendering, remote sessions, and slower machines.
+        // Snap the native window once; only the lightweight group transforms animate.
+        // PositionOnCurrentMonitor treats the preferred column count as the source of truth,
+        // so publish the newly selected count before it recalculates the window placement.
+        // Reversing this order immediately restores the old width and makes expansion appear
+        // impossible even though the pointer reached the wider column boundary.
+        _preferredWorkspaceColumns = calculatedColumns;
+        _window.Width = targetWidth;
         PositionOnCurrentMonitor();
         _window.UpdateLayout();
-        if (previousGroupPositions is not null)
+        _animateGroupReorderFrom(previousGroupPositions);
+        DiagnosticLog.Write(
+            $"Window resize snap: current={currentWidth:F1}, target={targetWidth:F1}, max={_window.MaxWidth:F1}, " +
+            $"calculatedColumns={calculatedColumns}, preferredColumns={_preferredWorkspaceColumns}.");
+        CapturePreferredSize();
+    }
+
+    private void BeginLiveResize()
+    {
+        if (_isLiveResizeActive)
         {
-            _animateGroupReorderFrom(previousGroupPositions);
+            return;
         }
 
-        CapturePreferredSize();
+        _isLiveResizeActive = true;
+        _restoreMaterialAfterLiveResize = true;
+        // Acrylic composition is substantially more expensive during native live resize,
+        // especially on integrated GPUs and software-rendered sessions. Disable only the
+        // blur effect while the pointer is moving, but retain the wallpaper-derived Start
+        // surface color so the menu does not visibly lose the user's theme. Restore the full
+        // material once the final snapped layout has settled.
+        SetAccentPolicy(0, 0, 0);
+        _mainSurface.Background = new SolidColorBrush(Win10Theme.StartSurfaceColor);
+        DiagnosticLog.Write(
+            $"Window live resize begin: width={_window.ActualWidth:F1}, min={_window.MinWidth:F1}, " +
+            $"max={_window.MaxWidth:F1}, renderTier={RenderCapability.Tier >> 16}.");
+    }
+
+    private void EndLiveResize()
+    {
+        if (!_isLiveResizeActive)
+        {
+            return;
+        }
+
+        _isLiveResizeActive = false;
+        DiagnosticLog.Write($"Window live resize end: width={_window.ActualWidth:F1}.");
+        _ = _window.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Render,
+            () =>
+            {
+                if (!_isDisposed && !_isLiveResizeActive && _restoreMaterialAfterLiveResize)
+                {
+                    ApplyWindowMaterial();
+                }
+            });
     }
 
     private void HandleDpiChanged(nint window, nint suggestedRectPointer)
     {
-        StopWindowWidthSnapAnimation();
         _cancelActiveDrag();
         if (suggestedRectPointer == 0)
         {
@@ -783,7 +805,6 @@ public class StartWindowController : IDisposable
         }
 
         _isDisplayChangePending = true;
-        StopWindowWidthSnapAnimation();
         _cancelActiveDrag();
         _pendingDisplayMonitor = monitor;
 
@@ -810,17 +831,6 @@ public class StartWindowController : IDisposable
 
         _pendingDisplayMonitor = 0;
         _isDisplayChangePending = false;
-    }
-
-    private void StopWindowWidthSnapAnimation()
-    {
-        if (_isWindowWidthSnapAnimating)
-        {
-            CompositionTarget.Rendering -= WindowWidthSnap_Rendering;
-        }
-
-        _isWindowWidthSnapAnimating = false;
-        _windowWidthSnapGroupPositions = null;
     }
 
     [StructLayout(LayoutKind.Sequential)]

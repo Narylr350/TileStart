@@ -509,7 +509,12 @@ internal sealed class ApplicationPaneController : IDisposable
         {
             try
             {
-                var icon = ShellIconLoader.Load(app.LaunchTarget) ?? GenericAppIcon.Image;
+                // Packaged apps declare a Square44x44Logo specifically for shell app lists.
+                // Prefer that deterministic asset over the Shell thumbnail API, which can
+                // return a large bitmap containing only a tiny glyph on some Windows builds.
+                var icon = PackagedTileAssetLoader.LoadApplicationIcon(app.PackageInstallPath, app.AppUserModelId)
+                           ?? ShellIconLoader.Load(app.LaunchTarget)
+                           ?? GenericAppIcon.Image;
                 loadedIcons.Add(new LoadedApplicationIcon(app, icon));
             }
             catch (Exception exception)

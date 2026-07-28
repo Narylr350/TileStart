@@ -64,6 +64,24 @@ public sealed class StartWindowSizingTests
         Assert.Equal(availableWidth, StartWindowSizing.MaximumWidth(availableWidth));
     }
 
+    [Fact]
+    public void FullHdAt150PercentCanExposeTwoWorkspaceColumns()
+    {
+        var logicalWorkWidth = 1920 / 1.5;
+        var maximumWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
+
+        Assert.Equal(2, StartWindowSizing.ColumnsForWidth(maximumWidth, logicalWorkWidth));
+    }
+
+    [Fact]
+    public void FullHdAt175PercentCanOnlyExposeOneWorkspaceColumn()
+    {
+        var logicalWorkWidth = 1920 / 1.75;
+        var maximumWidth = StartWindowSizing.MaximumWidth(logicalWorkWidth);
+
+        Assert.Equal(1, StartWindowSizing.ColumnsForWidth(maximumWidth, logicalWorkWidth));
+    }
+
     [Theory]
     [InlineData(300, 480, 900)]
     [InlineData(700, 700, 900)]

@@ -44,6 +44,49 @@ public sealed class PackagedTileAssetLoaderTests
         }
     }
 
+    [Fact]
+    public void ResolveApplicationIconPrefersExactUnplatedTargetSize()
+    {
+        var package = CreatePackage();
+        try
+        {
+            var assets = Path.Combine(package, "Assets");
+            File.WriteAllText(Path.Combine(assets, "AppList.targetsize-24.png"), string.Empty);
+            File.WriteAllText(Path.Combine(assets, "AppList.targetsize-24_altform-unplated.png"), string.Empty);
+            File.WriteAllText(Path.Combine(assets, "AppList.targetsize-32_altform-unplated.png"), string.Empty);
+            File.WriteAllText(Path.Combine(assets, "AppList.targetsize-24_altform-unplated_contrast-white.png"),
+                string.Empty);
+
+            var path = PackagedTileAssetLoader.ResolveApplicationIconAssetPath(
+                package,
+                "Example.Package_abc!App");
+
+            Assert.Equal("AppList.targetsize-24_altform-unplated.png", Path.GetFileName(path));
+        }
+        finally
+        {
+            Directory.Delete(package, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ResolveApplicationIconFallsBackToStandardScaleAsset()
+    {
+        var package = CreatePackage();
+        try
+        {
+            var path = PackagedTileAssetLoader.ResolveApplicationIconAssetPath(
+                package,
+                "Example.Package_abc!App");
+
+            Assert.Equal("AppList.scale-100.png", Path.GetFileName(path));
+        }
+        finally
+        {
+            Directory.Delete(package, recursive: true);
+        }
+    }
+
     private static string CreatePackage()
     {
         var package = Path.Combine(Path.GetTempPath(), "TileStart.Tests", Guid.NewGuid().ToString("N"));
@@ -53,7 +96,8 @@ public sealed class PackagedTileAssetLoaderTests
                      xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10">
               <Applications>
                 <Application Id="App">
-                  <uap:VisualElements Square150x150Logo="Assets\Medium.png">
+                  <uap:VisualElements Square150x150Logo="Assets\Medium.png"
+                                      Square44x44Logo="Assets\AppList.png">
                     <uap:DefaultTile Square71x71Logo="Assets\Small.png"
                                      Wide310x150Logo="Assets\Wide.png"
                                      Square310x310Logo="Assets\Large.png" />
@@ -66,6 +110,8 @@ public sealed class PackagedTileAssetLoaderTests
         {
             File.WriteAllText(Path.Combine(assets, $"{name}.scale-200.png"), string.Empty);
         }
+
+        File.WriteAllText(Path.Combine(assets, "AppList.scale-100.png"), string.Empty);
 
         return package;
     }
