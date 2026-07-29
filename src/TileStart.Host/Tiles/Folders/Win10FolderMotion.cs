@@ -15,7 +15,7 @@ public static class Win10FolderMotion
     public const int TileCollapseRowBudgetMilliseconds = 150;
     public const int TileCollapseColumnBudgetMilliseconds = 150;
 
-    public const int TilePreviewExitDurationMilliseconds = 100;
+    public const int TilePreviewExitDurationMilliseconds = 180;
     public const int TilePreviewEnterDurationMilliseconds = 240;
     public const int TileChildDurationMilliseconds = 300;
     public const int TileChildWaveDelayMilliseconds = 30;

@@ -23,7 +23,7 @@ public sealed class Win10FolderMotionTests
     [Fact]
     public void TileFolderTimingsMatchDenseRuntimeFrameEvidence()
     {
-        Assert.Equal(100, Win10FolderMotion.TilePreviewExitDurationMilliseconds);
+        Assert.Equal(180, Win10FolderMotion.TilePreviewExitDurationMilliseconds);
         Assert.Equal(240, Win10FolderMotion.TilePreviewEnterDurationMilliseconds);
         Assert.Equal(300, Win10FolderMotion.TileChildDurationMilliseconds);
         Assert.Equal(30, Win10FolderMotion.TileChildWaveDelayMilliseconds);

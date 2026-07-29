@@ -1239,6 +1239,7 @@ internal sealed class TileWorkspaceController : IDisposable
                 element.Name == "FolderCollapseGlyph" && ReferenceEquals(element.DataContext, folder));
         preview.BeginAnimation(UIElement.OpacityProperty, null);
         preview.Visibility = Visibility.Visible;
+        preview.Opacity = 1;
         var transform = new TranslateTransform();
         preview.RenderTransform = transform;
         var travel = folder.PixelHeight - Win10VisualMetrics.TileReservedBrandingSpace;
@@ -1250,6 +1251,16 @@ internal sealed class TileWorkspaceController : IDisposable
             Win10FolderMotion.CreateSplineAnimation(
                 expanding ? 0 : travel,
                 expanding ? travel : 0,
+                0,
+                duration,
+                Win10FolderMotion.StandardSpline,
+                FillBehavior.HoldEnd),
+            HandoffBehavior.SnapshotAndReplace);
+        preview.BeginAnimation(
+            UIElement.OpacityProperty,
+            Win10FolderMotion.CreateSplineAnimation(
+                expanding ? 1 : 0,
+                expanding ? 0 : 1,
                 0,
                 duration,
                 Win10FolderMotion.StandardSpline,
@@ -1383,6 +1394,8 @@ internal sealed class TileWorkspaceController : IDisposable
                 transform.BeginAnimation(TranslateTransform.YProperty, null);
             }
 
+            preview.BeginAnimation(UIElement.OpacityProperty, null);
+            preview.ClearValue(UIElement.OpacityProperty);
             preview.RenderTransform = null;
             preview.ClearValue(UIElement.VisibilityProperty);
             if (glyph is not null)
