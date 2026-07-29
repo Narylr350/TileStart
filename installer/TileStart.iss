@@ -54,6 +54,8 @@ Root: HKCU; Subkey: "Software\Classes\*\shell\TileStart.AddToAppList"; Flags: un
 Root: HKCU; Subkey: "Software\Classes\*\shell\TileStart.PinTile"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\Directory\shell\TileStart.AddToAppList"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\Directory\shell\TileStart.PinTile"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Drive\shell\TileStart.AddToAppList"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Drive\shell\TileStart.PinTile"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.exe\shell\TileStart.AddToAppList"; Flags: deletekey
 Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.exe\shell\TileStart.PinTile"; Flags: deletekey
 Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.lnk\shell\TileStart.AddToAppList"; Flags: deletekey

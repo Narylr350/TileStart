@@ -46,6 +46,20 @@ public sealed class DroppedTileFactoryTests : IDisposable
     }
 
     [Fact]
+    public void CreateUsesDriveIdentityForAFileSystemRoot()
+    {
+        var root = Path.GetPathRoot(_directory)!;
+
+        var tile = DroppedTileFactory.Create(root, _ => null);
+
+        Assert.NotNull(tile);
+        Assert.Equal(TileTargetType.Folder, tile.TargetType);
+        Assert.False(string.IsNullOrWhiteSpace(tile.Name));
+        Assert.Contains(root.TrimEnd(Path.DirectorySeparatorChar), tile.Name, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(root, tile.LaunchTarget);
+    }
+
+    [Fact]
     public void CreateRejectsMissingTarget()
     {
         Assert.Null(DroppedTileFactory.Create(Path.Combine(_directory, "missing.txt"), _ => null));

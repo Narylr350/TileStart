@@ -7,7 +7,7 @@ namespace TileStart.Host.Shell;
 
 public static class ExplorerContextMenuRegistration
 {
-    internal static readonly string[] RegistrationClasses = ["*", "Directory"];
+    internal static readonly string[] RegistrationClasses = ["*", "Directory", "Drive"];
     internal const string AddToAppListLabel = "添加到 TileStart 应用列表";
     internal const string PinToStartLabel = "固定到“开始”屏幕";
     private static readonly string[] LegacyExtensions = [".exe", ".lnk", ".appref-ms"];
@@ -52,8 +52,15 @@ public static class ExplorerContextMenuRegistration
         menuKey.SetValue(null, label);
         menuKey.SetValue("Icon", executablePath);
         using var command = menuKey.CreateSubKey("command");
-        command.SetValue(null, $"\"{executablePath}\" {argument} \"%1\"");
+        command.SetValue(null, BuildCommand(executablePath, argument, registrationClass));
     }
+
+    internal static string BuildCommand(string executablePath, string argument, string registrationClass) =>
+        registrationClass.Equals("Drive", StringComparison.OrdinalIgnoreCase)
+            // Quoting a root such as C:\ produces "C:\", whose trailing slash
+            // escapes the closing quote in Windows command-line parsing.
+            ? $"\"{executablePath}\" {argument} %V"
+            : $"\"{executablePath}\" {argument} \"%1\"";
 
     private static void RemoveLegacyRegistrations()
     {

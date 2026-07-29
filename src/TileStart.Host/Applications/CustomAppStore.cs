@@ -155,7 +155,7 @@ public static class CustomAppStore
     {
         if (Directory.Exists(path))
         {
-            return new DirectoryInfo(path).Name;
+            return DirectoryDisplayName.Get(path);
         }
 
         var extension = Path.GetExtension(path);

@@ -30,7 +30,7 @@ public static class DroppedTileFactory
 
             var type = Classify(fullPath, isDirectory);
             var name = isDirectory
-                ? new DirectoryInfo(fullPath).Name
+                ? DirectoryDisplayName.Get(fullPath)
                 : type == TileTargetType.File
                     ? Path.GetFileName(fullPath)
                     : Path.GetFileNameWithoutExtension(fullPath);
