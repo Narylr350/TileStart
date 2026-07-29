@@ -9,7 +9,7 @@ public static class ExplorerContextMenuRegistration
 {
     internal static readonly string[] RegistrationClasses = ["*", "Directory", "Drive"];
     internal const string AddToAppListLabel = "添加到 TileStart 应用列表";
-    internal const string PinToStartLabel = "固定到“开始”屏幕";
+    internal const string PinToStartLabel = "固定到 TileStart 磁贴区";
     private static readonly string[] LegacyExtensions = [".exe", ".lnk", ".appref-ms"];
 
     public static void EnsureRegistered()
