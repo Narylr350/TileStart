@@ -63,7 +63,7 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
-    public void ShowingTheStartWindowQueuesAnApplicationRescan()
+    public void ShowingTheStartWindowDoesNotTriggerAnApplicationRescan()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -71,7 +71,35 @@ public sealed class ApplicationPaneRefreshTests
             "HostSource",
             "MainWindow.xaml.cs"));
 
-        Assert.Contains("_appController.RefreshAppsAsync()", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("_appController.RefreshAppsAsync()", source, StringComparison.Ordinal);
         Assert.DoesNotContain("CheckAndRemoveMissingApps", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ApplicationChangesAreMonitoredOutsideTheMenuShowPath()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Controllers",
+            "ApplicationPaneController.cs"));
+
+        Assert.Contains("new FileSystemWatcher(directory)", source, StringComparison.Ordinal);
+        Assert.Contains("PeriodicTimer(PackagedAppRefreshInterval)", source, StringComparison.Ordinal);
+        Assert.Contains("DispatcherPriority.ApplicationIdle", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ApplicationEnumerationUsesLowPriorityWorkerThreads()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Applications",
+            "StartAppScanner.cs"));
+
+        Assert.Equal(2, source.Split("Priority = ThreadPriority.BelowNormal", StringSplitOptions.None).Length - 1);
     }
 }

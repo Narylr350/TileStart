@@ -11,7 +11,10 @@ public static class StartAppScanner
 
     public static async Task<IReadOnlyList<AppEntry>> ScanAsync()
     {
-        var shortcutTask = Task.Run(ScanShortcuts);
+        var shortcutTask = RunOnBackgroundThread(
+            ScanShortcuts,
+            "TileStart Shortcut Scanner",
+            ApartmentState.MTA);
         var packagedTask = ScanPackagedAppsAsync();
         await Task.WhenAll(shortcutTask, packagedTask);
 
@@ -153,8 +156,37 @@ public static class StartAppScanner
         {
             IsBackground = true,
             Name = "TileStart AppsFolder Scanner",
+            Priority = ThreadPriority.BelowNormal,
         };
         thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
+    }
+
+    private static Task<T> RunOnBackgroundThread<T>(
+        Func<T> action,
+        string name,
+        ApartmentState apartmentState)
+    {
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                completion.SetResult(action());
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = name,
+            // 应用枚举属于维护工作，不能与开始菜单动画争抢普通优先级 CPU 时间。
+            Priority = ThreadPriority.BelowNormal,
+        };
+        thread.SetApartmentState(apartmentState);
         thread.Start();
         return completion.Task;
     }

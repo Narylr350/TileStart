@@ -116,12 +116,6 @@ public partial class MainWindow : Window
             {
                 _hasOpenContextMenu = false;
                 _ = _navigationController.RefreshWindowsUpdateStateAsync();
-                // 安装程序和 shell:AppsFolder 不会主动通知这个长期驻留的窗口。
-                // 每次显示后在后台重扫，才能在不重启 TileStart 的情况下发现新安装应用；
-                // 无变化时控制器不会重建集合，因此不会干扰正常的入场动画。
-                Dispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Background,
-                    () => _ = _appController.RefreshAppsAsync());
             },
             clearSearch: _navigationController.ClearSearch,
             ensureTileScrollBarClearance: () => _tileDragCoordinator.EnsureTileScrollBarClearance(),

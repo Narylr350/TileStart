@@ -21,6 +21,8 @@ internal sealed class ApplicationPaneController : IDisposable
 {
     private const int CollapsedRecentAppCount = 3;
     private const int ExpandedRecentAppCount = 10;
+    private static readonly TimeSpan ApplicationRefreshDebounce = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan PackagedAppRefreshInterval = TimeSpan.FromMinutes(5);
 
     private readonly RangeObservableCollection<AppEntry> _apps = [];
     private readonly RangeObservableCollection<IApplicationListItem> _applicationListItems = [];
@@ -28,11 +30,16 @@ internal sealed class ApplicationPaneController : IDisposable
     private readonly Queue<HostRequest> _pendingHostRequests = [];
     private readonly CancellationTokenSource _lifetimeCancellation = new();
     private readonly CancellationToken _lifetimeToken;
+    private readonly object _applicationRefreshScheduleLock = new();
+    private readonly List<FileSystemWatcher> _startMenuWatchers = [];
     private System.Windows.Threading.DispatcherOperation? _contextMenuPrewarmOperation;
+    private CancellationTokenSource? _applicationRefreshDebounceCancellation;
+    private Task? _packagedAppRefreshTask;
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _applicationContentReady;
     private bool _applicationRefreshInProgress;
+    private bool _applicationRefreshPending;
     private bool _recentAppsExpanded;
     private bool _isDisposed;
 
@@ -145,6 +152,7 @@ internal sealed class ApplicationPaneController : IDisposable
             QueueContextMenuPrewarm();
             _ = LoadApplicationIconsAsync(launchableApps);
             _applicationContentReady = true;
+            StartApplicationChangeMonitoring();
             while (_pendingHostRequests.Count > 0)
             {
                 HandleHostRequest(_pendingHostRequests.Dequeue());
@@ -161,12 +169,19 @@ internal sealed class ApplicationPaneController : IDisposable
 
     public async Task RefreshAppsAsync()
     {
-        if (_isDisposed || !_applicationContentReady || _applicationRefreshInProgress)
+        if (_isDisposed || !_applicationContentReady)
         {
             return;
         }
 
+        if (_applicationRefreshInProgress)
+        {
+            _applicationRefreshPending = true;
+            return;
+        }
+
         _applicationRefreshInProgress = true;
+        _applicationRefreshPending = false;
         try
         {
             var apps = await ScanApplicationsAsync();
@@ -195,6 +210,117 @@ internal sealed class ApplicationPaneController : IDisposable
         finally
         {
             _applicationRefreshInProgress = false;
+            if (_applicationRefreshPending)
+            {
+                QueueApplicationRefresh();
+            }
+        }
+    }
+
+    private void StartApplicationChangeMonitoring()
+    {
+        foreach (var directory in new[]
+                 {
+                     Environment.GetFolderPath(Environment.SpecialFolder.Programs),
+                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs"),
+                 }.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var watcher = new FileSystemWatcher(directory)
+                {
+                    IncludeSubdirectories = true,
+                    NotifyFilter = NotifyFilters.FileName
+                                   | NotifyFilters.DirectoryName
+                                   | NotifyFilters.CreationTime
+                                   | NotifyFilters.LastWrite,
+                };
+                watcher.Changed += StartMenuWatcher_Changed;
+                watcher.Created += StartMenuWatcher_Changed;
+                watcher.Deleted += StartMenuWatcher_Changed;
+                watcher.Renamed += StartMenuWatcher_Changed;
+                watcher.Error += StartMenuWatcher_Error;
+                watcher.EnableRaisingEvents = true;
+                _startMenuWatchers.Add(watcher);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                DiagnosticLog.Write($"Start menu watcher unavailable for '{directory}': {exception.Message}");
+            }
+        }
+
+        // shell:AppsFolder 没有与传统开始菜单目录等价的文件事件。低频后台兜底
+        // 用于发现纯 MSIX/UWP 安装变化，但绝不再由菜单显示路径触发。
+        _packagedAppRefreshTask = MonitorPackagedAppsAsync();
+    }
+
+    private void StartMenuWatcher_Changed(object sender, FileSystemEventArgs e) => QueueApplicationRefresh();
+
+    private void StartMenuWatcher_Error(object sender, ErrorEventArgs e)
+    {
+        DiagnosticLog.Write($"Start menu watcher error: {e.GetException()?.Message}");
+        QueueApplicationRefresh();
+    }
+
+    private void QueueApplicationRefresh()
+    {
+        CancellationTokenSource request;
+        lock (_applicationRefreshScheduleLock)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _applicationRefreshDebounceCancellation?.Cancel();
+            _applicationRefreshDebounceCancellation?.Dispose();
+            request = CancellationTokenSource.CreateLinkedTokenSource(_lifetimeToken);
+            _applicationRefreshDebounceCancellation = request;
+        }
+
+        _ = RefreshApplicationsAfterDebounceAsync(request);
+    }
+
+    private async Task RefreshApplicationsAfterDebounceAsync(CancellationTokenSource request)
+    {
+        try
+        {
+            await Task.Delay(ApplicationRefreshDebounce, request.Token);
+            var operation = _dispatcher.InvokeAsync(
+                RefreshAppsAsync,
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                request.Token);
+            await operation.Task.Unwrap();
+        }
+        catch (OperationCanceledException) when (request.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            lock (_applicationRefreshScheduleLock)
+            {
+                if (ReferenceEquals(_applicationRefreshDebounceCancellation, request))
+                {
+                    _applicationRefreshDebounceCancellation = null;
+                }
+            }
+
+            request.Dispose();
+        }
+    }
+
+    private async Task MonitorPackagedAppsAsync()
+    {
+        using var timer = new PeriodicTimer(PackagedAppRefreshInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_lifetimeToken))
+            {
+                QueueApplicationRefresh();
+            }
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
         }
     }
 
@@ -845,6 +971,20 @@ internal sealed class ApplicationPaneController : IDisposable
 
         _isDisposed = true;
         _lifetimeCancellation.Cancel();
+        lock (_applicationRefreshScheduleLock)
+        {
+            _applicationRefreshDebounceCancellation?.Cancel();
+            _applicationRefreshDebounceCancellation?.Dispose();
+            _applicationRefreshDebounceCancellation = null;
+        }
+
+        foreach (var watcher in _startMenuWatchers)
+        {
+            watcher.Dispose();
+        }
+
+        _startMenuWatchers.Clear();
+        _packagedAppRefreshTask = null;
         _contextMenuPrewarmOperation?.Abort();
         _contextMenuPrewarmOperation = null;
         _pendingHostRequests.Clear();
