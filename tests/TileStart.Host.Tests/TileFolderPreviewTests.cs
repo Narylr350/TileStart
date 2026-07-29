@@ -6,20 +6,19 @@ namespace TileStart.Host.Tests;
 public sealed class TileFolderPreviewTests
 {
     [Fact]
-    public void PreviewUsesFirstFourTilesInVisualOrder()
+    public void PreviewUsesFirstNineTilesInVisualOrder()
     {
-        var fifth = Tile("fifth", 4, 2);
-        var third = Tile("third", 0, 1);
-        var first = Tile("first", 0, 0);
-        var fourth = Tile("fourth", 2, 1);
-        var second = Tile("second", 2, 0);
+        var tiles = Enumerable.Range(0, 10)
+            .Select(index => Tile($"tile-{index}", index % 4, index / 4))
+            .ToArray();
         var folder = new TileItem
         {
             IsTileFolder = true,
-            FolderTiles = [fifth, third, first, fourth, second],
+            FolderTiles =
+                [tiles[9], tiles[5], tiles[1], tiles[7], tiles[3], tiles[8], tiles[0], tiles[6], tiles[2], tiles[4]],
         };
 
-        Assert.Equal([first, second, third, fourth], folder.FolderPreviewTiles);
+        Assert.Equal(tiles.Take(9), folder.FolderPreviewTiles);
     }
 
     [Fact]

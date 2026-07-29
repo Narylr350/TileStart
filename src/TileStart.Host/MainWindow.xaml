@@ -1150,76 +1150,57 @@
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                                 </Image.RenderTransform>
                                                             </Image>
-                                                            <ItemsControl x:Name="FolderPreview"
-                                                                          Grid.Row="0"
-                                                                          Grid.RowSpan="2"
-                                                                          HorizontalAlignment="Center"
-                                                                          VerticalAlignment="Center"
-                                                                          ClipToBounds="True"
-                                                                          ItemsSource="{Binding FolderPreviewTiles}"
-                                                                          Visibility="Collapsed">
-                                                                <ItemsControl.Style>
-                                                                    <Style TargetType="ItemsControl">
-                                                                        <Setter Property="Width" Value="52" />
-                                                                        <Setter Property="Height" Value="52" />
-                                                                        <Setter Property="ItemsPanel">
-                                                                            <Setter.Value>
-                                                                                <ItemsPanelTemplate>
-                                                                                    <UniformGrid Rows="2" Columns="2" />
-                                                                                </ItemsPanelTemplate>
-                                                                            </Setter.Value>
-                                                                        </Setter>
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding FolderPreviewTiles.Count}" Value="1">
-                                                                                <Setter Property="Width" Value="32" />
-                                                                                <Setter Property="Height" Value="32" />
-                                                                                <Setter Property="ItemsPanel">
-                                                                                    <Setter.Value>
-                                                                                        <ItemsPanelTemplate>
-                                                                                            <UniformGrid Rows="1" Columns="1" />
-                                                                                        </ItemsPanelTemplate>
-                                                                                    </Setter.Value>
-                                                                                </Setter>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding FolderPreviewTiles.Count}" Value="2">
-                                                                                <Setter Property="Height" Value="26" />
-                                                                                <Setter Property="ItemsPanel">
-                                                                                    <Setter.Value>
-                                                                                        <ItemsPanelTemplate>
-                                                                                            <UniformGrid Rows="1" Columns="2" />
-                                                                                        </ItemsPanelTemplate>
-                                                                                    </Setter.Value>
-                                                                                </Setter>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </ItemsControl.Style>
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <Border Margin="1"
-                                                                                Background="{Binding BackgroundBrush}">
-                                                                            <Grid Margin="3">
-                                                                                <Image
-                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                    Stretch="Uniform">
-                                                                                    <Image.Source>
-                                                                                        <MultiBinding
-                                                                                            Converter="{StaticResource NonGifImageSourceConverter}">
-                                                                                            <Binding Path="Icon" />
-                                                                                            <Binding Path="IconPath" />
-                                                                                        </MultiBinding>
-                                                                                    </Image.Source>
-                                                                                </Image>
-                                                                                <Image
-                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                    gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                                    gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                                    Stretch="Uniform" />
-                                                                            </Grid>
-                                                                        </Border>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
+                                                             <Grid x:Name="FolderVisual"
+                                                                   Grid.Row="0"
+                                                                   Grid.RowSpan="2"
+                                                                   Visibility="Collapsed">
+                                                                 <!-- Win10 实机录屏确认：折叠态只显示从左上角填充的 3×3 图标槽位，
+                                                                      文件夹名称仅在展开区域出现，预览项也没有统一的小磁贴背景。 -->
+                                                                 <ItemsControl x:Name="FolderPreview"
+                                                                               Width="84"
+                                                                               Height="84"
+                                                                               HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center"
+                                                                               ClipToBounds="True"
+                                                                               ItemsSource="{Binding FolderPreviewTiles}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <UniformGrid Rows="3" Columns="3" />
+                                                                        </ItemsPanelTemplate>
+                                                                     </ItemsControl.ItemsPanel>
+                                                                     <ItemsControl.ItemTemplate>
+                                                                         <DataTemplate>
+                                                                             <Grid Margin="2">
+                                                                                     <Image
+                                                                                         RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                         Stretch="Uniform">
+                                                                                        <Image.Source>
+                                                                                            <MultiBinding
+                                                                                                Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                                <Binding Path="Icon" />
+                                                                                                <Binding Path="IconPath" />
+                                                                                            </MultiBinding>
+                                                                                        </Image.Source>
+                                                                                    </Image>
+                                                                                    <Image
+                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                        gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                         gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                         Stretch="Uniform" />
+                                                                             </Grid>
+                                                                         </DataTemplate>
+                                                                     </ItemsControl.ItemTemplate>
+                                                                 </ItemsControl>
+                                                                 <Grid x:Name="FolderCollapseGlyph"
+                                                                       Visibility="Collapsed">
+                                                                     <TextBlock HorizontalAlignment="Center"
+                                                                                VerticalAlignment="Center"
+                                                                               FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="18"
+                                                                               Foreground="{DynamicResource TileStartTextSecondaryBrush}"
+                                                                               Text="&#xE70E;" />
+                                                                </Grid>
+                                                            </Grid>
                                                             <Grid x:Name="TileBranding"
                                                                   Grid.Row="1"
                                                                   Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
@@ -1254,16 +1235,24 @@
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Visible" />
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                         <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Collapsed" />
                                                             <Setter TargetName="TileIcon" Property="Visibility"
                                                                     Value="Collapsed" />
                                                             <Setter TargetName="TileAnimatedIcon" Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Setter TargetName="FolderPreview" Property="Visibility"
-                                                                    Value="Visible" />
-                                                        </DataTrigger>
+                                                             <Setter TargetName="FolderVisual" Property="Visibility"
+                                                                     Value="Visible" />
+                                                             <Setter TargetName="TileBranding" Property="Visibility"
+                                                                     Value="Collapsed" />
+                                                         </DataTrigger>
+                                                         <DataTrigger Binding="{Binding IsFolderExpanded}" Value="True">
+                                                             <Setter TargetName="FolderPreview" Property="Visibility"
+                                                                     Value="Collapsed" />
+                                                             <Setter TargetName="FolderCollapseGlyph" Property="Visibility"
+                                                                     Value="Visible" />
+                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsDragging}" Value="True">
                                                             <Setter TargetName="TileButton" Property="Opacity"
                                                                     Value="0.24" />
@@ -1361,32 +1350,33 @@
                                             </ItemsControl.ItemContainerStyle>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="{x:Type models:TileItem}">
-                                                    <Border x:Name="FolderRegion"
-                                                            Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                            Height="{Binding FolderRegionHeight}"
-                                                            Background="#16000000"
-                                                            ClipToBounds="True">
-                                                        <Grid>
-                                                            <Grid.RowDefinitions>
-                                                                <RowDefinition Height="1" />
-                                                                <RowDefinition Height="32" />
-                                                                <RowDefinition Height="*" />
-                                                                <RowDefinition Height="1" />
-                                                                <RowDefinition Height="4" />
-                                                            </Grid.RowDefinitions>
-                                                            <Border Grid.Row="0" Background="#55FFFFFF" />
-                                                            <TextBox Grid.Row="1"
-                                                                     MaxLength="500"
-                                                                     Padding="0,7,6,0"
-                                                                     Foreground="{DynamicResource TileStartTextPrimaryBrush}"
-                                                                     Background="Transparent"
+                                                      <Border x:Name="FolderRegion"
+                                                              Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                              Height="{Binding FolderRegionHeight}"
+                                                              Background="Transparent"
+                                                              ClipToBounds="True">
+                                                          <Grid>
+                                                              <Grid.RowDefinitions>
+                                                                  <RowDefinition Height="32" />
+                                                                  <RowDefinition Height="*" />
+                                                                  <RowDefinition Height="4" />
+                                                              </Grid.RowDefinitions>
+                                                              <!-- 展开内容是原组中的内联区域，不是嵌套组或独立卡片；
+                                                                   透明区域只负责名称、子磁贴布局和推动后续磁贴。 -->
+                                                              <TextBox x:Name="FolderNameTextBox"
+                                                                       Grid.Row="0"
+                                                                       MaxLength="500"
+                                                                       Padding="0,0,6,0"
+                                                                       VerticalContentAlignment="Center"
+                                                                       Foreground="{DynamicResource TileStartTextPrimaryBrush}"
+                                                                       Background="Transparent"
                                                                      BorderThickness="0"
                                                                      FontFamily="{StaticResource TileStartContentFont}"
-                                                                     FontSize="12"
-                                                                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                                            <ItemsControl Grid.Row="2"
-                                                                          Width="{x:Static local:Win10TileMetrics.GroupWidth}"
-                                                                          Height="{Binding FolderContentHeight}"
+                                                                       FontSize="12"
+                                                                       Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                                             <ItemsControl Grid.Row="1"
+                                                                           Width="{x:Static local:Win10TileMetrics.GroupWidth}"
+                                                                           Height="{Binding FolderContentHeight}"
                                                                           HorizontalAlignment="Left"
                                                                           VerticalAlignment="Top"
                                                                           AllowDrop="True"
@@ -1407,41 +1397,167 @@
                                                                                 Value="{Binding Top}" />
                                                                     </Style>
                                                                 </ItemsControl.ItemContainerStyle>
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate DataType="{x:Type models:TileItem}">
-                                                                        <Button Width="{Binding PixelWidth}"
+                                                                 <ItemsControl.ItemTemplate>
+                                                                     <DataTemplate DataType="{x:Type models:TileItem}">
+                                                                         <Button Width="{Binding PixelWidth}"
                                                                                 Height="{Binding PixelHeight}"
                                                                                 Background="{Binding BackgroundBrush}"
                                                                                 Foreground="{Binding ForegroundBrush}"
                                                                                 Style="{StaticResource TileStyle}"
                                                                                 Tag="{Binding}"
-                                                                                ContextMenu="{StaticResource TileContextMenu}"
-                                                                                Click="TileButton_Click"
-                                                                                PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
-                                                                            <Grid ClipToBounds="True">
-                                                                                <Image Width="{Binding IconSize}"
-                                                                                    Height="{Binding IconSize}"
-                                                                                    HorizontalAlignment="Center"
-                                                                                    VerticalAlignment="Center"
-                                                                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                    Source="{Binding Icon}"
-                                                                                    Stretch="Uniform" />
-                                                                                <TextBlock Margin="8,0,8,5"
-                                                                                    HorizontalAlignment="Left"
-                                                                                    VerticalAlignment="Bottom"
-                                                                                    FontFamily="{StaticResource TileStartContentFont}"
-                                                                                    FontSize="12"
-                                                                                    FontWeight="SemiBold"
-                                                                                    Text="{Binding Name}"
-                                                                                    TextTrimming="CharacterEllipsis" />
-                                                                            </Grid>
-                                                                        </Button>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
-                                                            <Border Grid.Row="3" Background="#55FFFFFF" />
-                                                        </Grid>
-                                                    </Border>
+                                                                                 ContextMenu="{StaticResource TileContextMenu}"
+                                                                                 Click="TileButton_Click"
+                                                                                 PreviewMouseLeftButtonDown="TileButton_PreviewMouseLeftButtonDown">
+                                                                             <Grid ClipToBounds="True">
+                                                                                 <Grid.RowDefinitions>
+                                                                                     <RowDefinition />
+                                                                                     <RowDefinition
+                                                                                         Height="{x:Static local:Win10VisualMetrics.TileReservedBrandingGridLength}" />
+                                                                                 </Grid.RowDefinitions>
+                                                                                 <Image Grid.RowSpan="2"
+                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                        RenderTransformOrigin="0.5,0.5"
+                                                                                        Stretch="UniformToFill">
+                                                                                     <Image.RenderTransform>
+                                                                                         <ScaleTransform
+                                                                                             ScaleX="{Binding BackgroundImageScale}"
+                                                                                             ScaleY="{Binding BackgroundImageScale}" />
+                                                                                     </Image.RenderTransform>
+                                                                                     <Image.Source>
+                                                                                         <MultiBinding
+                                                                                             Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                             <Binding Path="BackgroundImage" />
+                                                                                             <Binding Path="BackgroundImagePath" />
+                                                                                         </MultiBinding>
+                                                                                     </Image.Source>
+                                                                                 </Image>
+                                                                                 <Image Grid.RowSpan="2"
+                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                        gif:ImageBehavior.AnimatedSource="{Binding BackgroundImagePath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                        gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                        RenderTransformOrigin="0.5,0.5"
+                                                                                        Stretch="UniformToFill">
+                                                                                     <Image.RenderTransform>
+                                                                                         <ScaleTransform
+                                                                                             ScaleX="{Binding BackgroundImageScale}"
+                                                                                             ScaleY="{Binding BackgroundImageScale}" />
+                                                                                     </Image.RenderTransform>
+                                                                                 </Image>
+                                                                                 <TextBlock x:Name="FolderChildInitial"
+                                                                                            Grid.RowSpan="2"
+                                                                                            HorizontalAlignment="Center"
+                                                                                            VerticalAlignment="Center"
+                                                                                            FontSize="24"
+                                                                                            FontWeight="SemiBold"
+                                                                                            Text="{Binding Initial}"
+                                                                                            Visibility="Collapsed" />
+                                                                                 <Image x:Name="FolderChildIcon"
+                                                                                        Grid.RowSpan="2"
+                                                                                        Width="{Binding IconSize}"
+                                                                                        Height="{Binding IconSize}"
+                                                                                        HorizontalAlignment="Center"
+                                                                                        VerticalAlignment="Center"
+                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                        Stretch="Uniform">
+                                                                                     <Image.Source>
+                                                                                         <MultiBinding
+                                                                                             Converter="{StaticResource NonGifImageSourceConverter}">
+                                                                                             <Binding Path="Icon" />
+                                                                                             <Binding Path="IconPath" />
+                                                                                         </MultiBinding>
+                                                                                     </Image.Source>
+                                                                                     <Image.RenderTransform>
+                                                                                         <TranslateTransform
+                                                                                             Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
+                                                                                     </Image.RenderTransform>
+                                                                                 </Image>
+                                                                                 <Image x:Name="FolderChildAnimatedIcon"
+                                                                                        Grid.RowSpan="2"
+                                                                                        Width="{Binding IconSize}"
+                                                                                        Height="{Binding IconSize}"
+                                                                                        HorizontalAlignment="Center"
+                                                                                        VerticalAlignment="Center"
+                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                        gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                        gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                        Stretch="Uniform">
+                                                                                     <Image.RenderTransform>
+                                                                                         <TranslateTransform
+                                                                                             Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
+                                                                                     </Image.RenderTransform>
+                                                                                 </Image>
+                                                                                 <Grid x:Name="FolderChildBranding"
+                                                                                       Grid.Row="1"
+                                                                                       Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
+                                                                                     <TextBlock x:Name="FolderChildTitle"
+                                                                                                HorizontalAlignment="Left"
+                                                                                                VerticalAlignment="Bottom"
+                                                                                                FontFamily="{StaticResource TileStartContentFont}"
+                                                                                                FontSize="12"
+                                                                                                FontWeight="SemiBold"
+                                                                                                Text="{Binding Name}"
+                                                                                                TextTrimming="CharacterEllipsis"
+                                                                                                TextWrapping="NoWrap" />
+                                                                                 </Grid>
+                                                                             </Grid>
+                                                                         </Button>
+                                                                         <DataTemplate.Triggers>
+                                                                             <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                                                 <Setter TargetName="FolderChildInitial"
+                                                                                         Property="Visibility"
+                                                                                         Value="Visible" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding Size}" Value="Small">
+                                                                                 <Setter TargetName="FolderChildBranding"
+                                                                                         Property="Visibility"
+                                                                                         Value="Collapsed" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding ShowTitle}" Value="False">
+                                                                                 <Setter TargetName="FolderChildTitle"
+                                                                                         Property="Visibility"
+                                                                                         Value="Collapsed" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding UsesFullTileLogo}" Value="True">
+                                                                                 <Setter TargetName="FolderChildIcon" Property="Width" Value="Auto" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="Height" Value="Auto" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="Margin" Value="0" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="Stretch" Value="Fill" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="RenderTransform">
+                                                                                     <Setter.Value>
+                                                                                         <TranslateTransform Y="0" />
+                                                                                     </Setter.Value>
+                                                                                 </Setter>
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding IconPosition}" Value="TopLeft">
+                                                                                 <Setter TargetName="FolderChildIcon" Property="HorizontalAlignment" Value="Left" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="VerticalAlignment" Value="Top" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="HorizontalAlignment" Value="Left" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="VerticalAlignment" Value="Top" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding IconPosition}" Value="TopRight">
+                                                                                 <Setter TargetName="FolderChildIcon" Property="HorizontalAlignment" Value="Right" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="VerticalAlignment" Value="Top" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="HorizontalAlignment" Value="Right" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="VerticalAlignment" Value="Top" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding IconPosition}" Value="BottomLeft">
+                                                                                 <Setter TargetName="FolderChildIcon" Property="HorizontalAlignment" Value="Left" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="VerticalAlignment" Value="Bottom" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="HorizontalAlignment" Value="Left" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="VerticalAlignment" Value="Bottom" />
+                                                                             </DataTrigger>
+                                                                             <DataTrigger Binding="{Binding IconPosition}" Value="BottomRight">
+                                                                                 <Setter TargetName="FolderChildIcon" Property="HorizontalAlignment" Value="Right" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="VerticalAlignment" Value="Bottom" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="HorizontalAlignment" Value="Right" />
+                                                                                 <Setter TargetName="FolderChildAnimatedIcon" Property="VerticalAlignment" Value="Bottom" />
+                                                                             </DataTrigger>
+                                                                         </DataTemplate.Triggers>
+                                                                     </DataTemplate>
+                                                                 </ItemsControl.ItemTemplate>
+                                                             </ItemsControl>
+                                                         </Grid>
+                                                     </Border>
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding IsFolderExpanded}" Value="False">
                                                             <Setter TargetName="FolderRegion" Property="Visibility"

@@ -526,7 +526,7 @@ public sealed class TileItem : INotifyPropertyChanged
         var preview = _folderTiles
             .OrderBy(tile => tile.Row)
             .ThenBy(tile => tile.Column)
-            .Take(4)
+            .Take(9)
             .ToArray();
         if (_folderPreviewTiles.SequenceEqual(preview))
         {

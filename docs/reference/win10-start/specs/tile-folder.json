@@ -50,13 +50,37 @@
     },
     {
       "status": "xbf-verified",
-      "fact": "The expanded folder is an inline folder region with its own nested tile panel, separators, and editable folder name.",
+      "fact": "展开后的文件夹是带有嵌套磁贴面板、结构性分隔元素和可编辑名称的内联区域。运行时录屏中没有可辨认的独立卡片背景或高对比分隔线，因此不能仅根据 XBF 元素名称给 TileStart 添加突出的装饰。",
       "evidence": [
         "TileGrid_FolderRegionTemplate",
         "TileGridNestedPanel",
         "TileFolderNameTextBox",
         "TopSeparator",
         "BottomSeparator"
+      ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "在 2560×1600、120 FPS 的 Win10 录屏中，折叠的中型文件夹不显示名称，并按固定三列、行优先顺序填充最多九个纯图标预览槽位。六个子项占据前两行，九个子项占满三行。所有预览项共享父磁贴的一整块连续背景，而不是统一绘制小磁贴背景。",
+      "evidence": [
+        "C:/Users/Narylr/Videos/2026-07-29 18-54-10.mp4",
+        "C:/Users/Narylr/Videos/2026-07-29 18-53-39.mp4"
+      ]
+    },
+    {
+      "status": "runtime-verified",
+      "fact": "展开时，原文件夹磁贴保持普通中型磁贴的尺寸和位置，切换为带居中轻量上箭头的收起目标。可编辑名称和标准尺寸子磁贴网格以内联方式出现在下方，继续露出原组背景并将后续内容向下推，不产生另一套组标题或带边框的内容卡片。",
+      "evidence": [
+        "C:/Users/Narylr/Videos/2026-07-29 18-54-10.mp4",
+        "C:/Users/Narylr/Videos/2026-07-29 18-53-39.mp4"
+      ]
+    },
+    {
+      "status": "runtime-estimated",
+      "fact": "多次展开和收起大约在 400～550 ms 内完成。子项预览会通过位移和缩放进入标准磁贴位置，并存在可见的错峰，而不是统一淡入切换。精确缓动曲线和单项延迟仍未测量。",
+      "evidence": [
+        "C:/Users/Narylr/Videos/2026-07-29 18-54-10.mp4",
+        "C:/Users/Narylr/Videos/2026-07-29 18-53-39.mp4"
       ]
     },
     {
@@ -103,6 +127,11 @@
     "tileStartManualDissolveFromContextMenu": true,
     "tileStartManualDissolvePlacement": "Restore children to the containing group using folder origin plus folder-local child coordinates, then normalize collisions without discarding children.",
     "activationTogglesInlineExpansion": true,
+    "collapsedPreviewColumns": 3,
+    "collapsedPreviewMaximumObservedItems": 9,
+    "collapsedFolderNameVisible": false,
+    "expandedAnchorRemainsNormalTileSize": true,
+    "expandedRegionHasDistinctCardBackground": false,
     "regionStartsAfterFolderCellBottom": true,
     "regionSpansGroupWidth": true,
     "expansionDoesNotRewriteTopLevelCellRows": true,
@@ -111,6 +140,7 @@
   "unresolved": [
     "The exact native center-target tolerance beyond the verified bounds hit test.",
     "The maximum folder child count, if any.",
+    "一至五个子项及超过九个子项时的折叠预览规则；当前运行时录屏只覆盖六个和九个子项。",
     "The exact duration and easing curve of the platform RepositionThemeTransition/ContentThemeTransition used during folder expansion and collapse; TileStart currently uses a separately testable WPF approximation while preserving the verified geometry and state transitions.",
     "Whether the stock menu permits more than one expanded folder in every presentation mode; the inspected group model stores a vector of active folder regions and does not collapse another folder inside UpdateFolderExpanded."
   ]

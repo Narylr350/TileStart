@@ -173,7 +173,7 @@ public sealed class DarkThemeVisualTests
 
         var settingsScrollBarStyle = document.Descendants(presentation + "Style")
             .Single(element => (string?)element.Attribute("TargetType") == "ScrollBar"
-                && element.Attribute(x + "Key") is null);
+                               && element.Attribute(x + "Key") is null);
         Assert.Equal("{StaticResource TileStartDialogScrollBarStyle}",
             (string?)settingsScrollBarStyle.Attribute("BasedOn"));
 
@@ -261,7 +261,7 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void FolderTilesUseAStableLimitedPreviewAndSpecificSettingsLabel()
+    public void FolderTilesUseAStableThreeByThreePreviewAndSpecificSettingsLabel()
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -270,12 +270,9 @@ public sealed class DarkThemeVisualTests
         var preview = document.Descendants(presentation + "ItemsControl")
             .Single(element => (string?)element.Attribute(x + "Name") == "FolderPreview");
         Assert.Equal("{Binding FolderPreviewTiles}", (string?)preview.Attribute("ItemsSource"));
-        var counts = preview.Descendants(presentation + "DataTrigger")
-            .Where(trigger => (string?)trigger.Attribute("Binding") == "{Binding FolderPreviewTiles.Count}")
-            .Select(trigger => (string?)trigger.Attribute("Value"))
-            .ToArray();
-        Assert.Contains("1", counts);
-        Assert.Contains("2", counts);
+        var previewPanel = preview.Descendants(presentation + "UniformGrid").Single();
+        Assert.Equal("3", (string?)previewPanel.Attribute("Rows"));
+        Assert.Equal("3", (string?)previewPanel.Attribute("Columns"));
 
         var settingsItem = document.Descendants(presentation + "MenuItem")
             .Single(item => (string?)item.Attribute("Click") == "TileSettings_Click");
