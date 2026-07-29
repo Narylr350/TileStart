@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
 ![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-475%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-539%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -38,6 +38,7 @@ Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁
 - 单独按 `Win` 或点击任务栏开始按钮打开 / 关闭 TileStart。
 - 保留 `Win+E/R/D/L/I/数字/方向键/Shift+S` 等系统组合键。
 - 扫描用户与公共开始菜单，显示 Win32、UWP/MSIX 应用。
+- TileStart 长期驻留时会在菜单显示后后台重扫，新安装的软件无需重启即可出现在应用列表中。
 - 最近添加、应用文件夹、字母索引和 Windows Search 转交。
 - 便携应用可加入应用列表，并提供单独的取消固定操作。
 - Explorer 重启后自动恢复接管。
@@ -47,8 +48,9 @@ Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁
 - Win10 风格磁贴组、组命名和二维组布局。
 - 小 `1×1`、中 `2×2`、宽 `4×2`、大 `4×4` 四种磁贴尺寸。
 - 组内重排、跨组移动、自动让位、边缘滚动和整组拖动。
-- 把磁贴组成文件夹，管理文件夹内容，或从现有组拆分为新组。文件夹预览随实际内容更新；展开时只推动发生重叠的后续分组列。
+- 把磁贴组成文件夹，管理文件夹内容，或从现有组拆分为新组。折叠预览、展开过渡和内容布局按 Win10 实机行为重建，预览磁贴会连续移动到展开后的对应位置。
 - 支持固定 `.exe`、`.lnk`、普通文件、文件夹、批处理、PowerShell、URL、UWP/MSIX 与自定义命令，可设置启动参数、工作目录和管理员运行。
+- 可从资源管理器直接拖入内容，也可通过盘符右键菜单将本地磁盘或可移动磁盘固定到 TileStart。
 
 ### AI 辅助布局管理
 
@@ -72,8 +74,9 @@ powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply
 - 使用应用默认图标、程序资源或本地图片，支持 PNG、JPEG、BMP、ICO、GIF、SVG，也可主动下载网络图标。
 - 静态图片与 GIF 可作为磁贴背景。
 - 界面风格和颜色模式分别设置：Windows 10 / 11 风格，随系统 / 浅色 / 深色模式。
-- 自定义背景色、文字色、图标大小与位置、标题显示和背景缩放。
+- 自定义背景色、文字色、图标大小与位置、标题显示、六种标题位置和背景缩放；旧布局默认保持 Win10 风格的左下标题。
 - 磁贴设置窗口有实时预览，支持一键恢复默认外观，以及"应用"和"保存并关闭"两种提交方式。
+- 文件夹设置只显示实际生效的名称、标题、颜色、背景和内容管理能力，不再暴露无效的父磁贴图标或启动选项。
 
 ### 备份与恢复
 
@@ -264,16 +267,16 @@ artifacts\installer\TileStart-Setup-win-x64.exe
 推送符合 `v主版本.次版本.修订号` 格式的标签后，GitHub Actions 会自动运行测试、构建完整 x64 解决方案、生成便携包与安装器、计算 SHA-256，并创建 GitHub Release：
 
 ```powershell
-git tag v0.1.13
-git push origin v0.1.13
+git tag v0.1.19
+git push origin v0.1.19
 ```
 
-也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.13`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
+也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.19`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
 
 本地为指定版本生成相同产物：
 
 ```powershell
-.\scripts\Build-Package.ps1 -Version 0.1.13
+.\scripts\Build-Package.ps1 -Version 0.1.19
 ```
 
 ## 项目结构
