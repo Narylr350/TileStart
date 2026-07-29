@@ -78,7 +78,11 @@ public static class TileContextActions
 
     public static bool Resize(TileLayout layout, TileItem tile, TileSize size)
     {
-        if (!TryFindLocation(layout, tile, out var group, out var folder) || tile.Size == size)
+        // 文件夹正面的内容预览按 Win10 中磁贴槽位重建，其他尺寸没有对应的
+        // 预览布局。入口和领域操作都拒绝调整，避免绕过 UI 写入半支持状态。
+        if (tile.IsTileFolder
+            || !TryFindLocation(layout, tile, out var group, out var folder)
+            || tile.Size == size)
         {
             return false;
         }

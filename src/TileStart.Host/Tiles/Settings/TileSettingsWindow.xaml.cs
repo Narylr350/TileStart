@@ -19,6 +19,7 @@ public partial class TileSettingsWindow : Window
 {
     private readonly ImageSource? _defaultIcon;
     private readonly bool _defaultUsesFullTileLogo;
+    private readonly bool _isTileFolder;
     private readonly string _subtitle;
     private readonly TileTargetType _targetType;
     private CustomIconSourceKind _iconSourceKind;
@@ -36,6 +37,7 @@ public partial class TileSettingsWindow : Window
     {
         _subtitle = tile.Subtitle;
         _targetType = tile.TargetType;
+        _isTileFolder = tile.IsTileFolder;
         _previewSize = tile.Size;
         _iconSourceKind = tile.IconSourceKind == CustomIconSourceKind.Default &&
                           !string.IsNullOrWhiteSpace(tile.IconPath)
@@ -89,7 +91,7 @@ public partial class TileSettingsWindow : Window
         SizeBox.SelectedValue = tile.Size.ToString();
         RunAsAdministratorBox.IsChecked = tile.RunAsAdministrator;
 
-        var hasLaunchTarget = !tile.IsTileFolder;
+        var hasLaunchTarget = !_isTileFolder;
         var canEditTarget = hasLaunchTarget && (isNew || tile.TargetType == TileTargetType.Command);
         LaunchSection.Visibility = hasLaunchTarget ? Visibility.Visible : Visibility.Collapsed;
         TargetBox.IsReadOnly = !canEditTarget;
@@ -97,6 +99,19 @@ public partial class TileSettingsWindow : Window
         TargetHint.Visibility = canEditTarget ? Visibility.Collapsed : Visibility.Visible;
         UnpinButton.Visibility = isNew ? Visibility.Collapsed : Visibility.Visible;
         ApplyButton.Visibility = isNew ? Visibility.Collapsed : Visibility.Visible;
+
+        if (_isTileFolder)
+        {
+            // 文件夹正面由内容预览生成，父磁贴图标及其尺寸/位置不会参与渲染。
+            // 隐藏这些无效入口，避免用户保存一个永远看不到结果的设置。
+            Title = "文件夹设置";
+            HeaderTitleText.Text = "文件夹设置";
+            InformationSectionTitle.Text = "文件夹信息";
+            LayoutSectionTitle.Text = "标题";
+            IconSection.Visibility = Visibility.Collapsed;
+            TileLayoutFields.Visibility = Visibility.Collapsed;
+            Height = 620;
+        }
 
         UpdateColorPreview(BackgroundColorPreview, BackgroundColor);
         UpdateColorPreview(ForegroundColorPreview, ForegroundColor);
@@ -442,7 +457,7 @@ public partial class TileSettingsWindow : Window
             return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(IconPath) && !File.Exists(IconPath))
+        if (!_isTileFolder && !string.IsNullOrWhiteSpace(IconPath) && !File.Exists(IconPath))
         {
             ShowValidationWarning("图标来源不存在。");
             return false;

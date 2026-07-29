@@ -477,8 +477,16 @@
                       Tag="DissolveFolder"
                       Visibility="Collapsed"
                       Click="DissolveFolder_Click" />
-            <MenuItem Header="调整大小"
-                     >
+            <MenuItem Header="调整大小">
+                <MenuItem.Style>
+                    <Style TargetType="MenuItem" BasedOn="{StaticResource TileStartMenuItemStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.Style>
                 <MenuItem Header="小"
                           Tag="Small"
                           IsCheckable="True"
@@ -519,8 +527,16 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="更多"
-                     >
+            <MenuItem Header="更多">
+                <MenuItem.Style>
+                    <Style TargetType="MenuItem" BasedOn="{StaticResource TileStartMenuItemStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.Style>
                 <MenuItem Header="打开文件所在的位置"
                           Tag="OpenFileLocation"
                           Click="OpenTileFileLocation_Click">

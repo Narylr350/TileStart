@@ -167,7 +167,11 @@
                                FontFamily="Segoe MDL2 Assets"
                                FontSize="14"
                                Text="&#xE713;" />
-                    <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="磁贴设置" />
+                    <TextBlock x:Name="HeaderTitleText"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Text="磁贴设置" />
                 </StackPanel>
                 <Button Grid.Column="1"
                         Style="{StaticResource TileStartTitleBarCloseButtonStyle}"
@@ -482,7 +486,9 @@
                     <StackPanel Margin="0,0,10,0">
                         <Border Style="{StaticResource SettingsCardStyle}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="磁贴信息" />
+                                <TextBlock x:Name="InformationSectionTitle"
+                                           Style="{StaticResource SectionTitleStyle}"
+                                           Text="磁贴信息" />
                                 <TextBlock Style="{StaticResource FieldLabelStyle}" Text="名称" />
                                 <TextBox x:Name="NameBox" TextChanged="PreviewTextBox_TextChanged" />
                             </StackPanel>
@@ -552,7 +558,7 @@
                             </StackPanel>
                         </Expander>
 
-                        <Border Style="{StaticResource SettingsCardStyle}">
+                        <Border x:Name="IconSection" Style="{StaticResource SettingsCardStyle}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}" Text="图标" />
                                 <Border Margin="0,0,0,10"
@@ -734,7 +740,9 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="布局" />
+                                    <TextBlock x:Name="LayoutSectionTitle"
+                                               Style="{StaticResource SectionTitleStyle}"
+                                               Text="布局" />
                                     <CheckBox x:Name="ShowTitleBox"
                                               Grid.Column="1"
                                               VerticalAlignment="Top"
@@ -743,6 +751,7 @@
                                               Unchecked="PreviewOption_Changed" />
                                 </Grid>
 
+                                <StackPanel x:Name="TileLayoutFields">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -790,6 +799,7 @@
                                         TickFrequency="1"
                                         IsSnapToTickEnabled="True"
                                         ValueChanged="PreviewSlider_ValueChanged" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

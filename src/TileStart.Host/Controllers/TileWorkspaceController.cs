@@ -814,12 +814,6 @@ internal sealed class TileWorkspaceController : IDisposable
     {
         tile.Name = dialog.TileName;
         tile.Subtitle = dialog.Subtitle;
-        tile.LaunchTarget = dialog.LaunchTarget;
-        tile.Arguments = dialog.Arguments;
-        tile.WorkingDirectory = dialog.WorkingDirectory;
-        tile.IconPath = dialog.IconPath;
-        tile.IconSourceKind = dialog.IconSourceKind;
-        tile.IconSourceValue = dialog.IconSourceValue;
         tile.BackgroundImagePath = dialog.BackgroundImagePath;
         tile.BackgroundImageScale = dialog.BackgroundImageScale;
         // Saving the theme's own colour means "no custom colour", so the tile keeps following
@@ -836,12 +830,24 @@ internal sealed class TileWorkspaceController : IDisposable
 
         tile.ForegroundColor = dialog.ForegroundColor;
         tile.ShowTitle = dialog.ShowTitle;
+        tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
+
+        if (tile.IsTileFolder)
+        {
+            return;
+        }
+
+        tile.LaunchTarget = dialog.LaunchTarget;
+        tile.Arguments = dialog.Arguments;
+        tile.WorkingDirectory = dialog.WorkingDirectory;
+        tile.IconPath = dialog.IconPath;
+        tile.IconSourceKind = dialog.IconSourceKind;
+        tile.IconSourceValue = dialog.IconSourceValue;
         tile.IconSize = dialog.IconSize;
         tile.IconPosition = dialog.IconPosition;
         tile.RunAsAdministrator = dialog.RunAsAdministrator;
         tile.Size = dialog.TileSize;
         ApplicationPaneController.RestoreTileIcon(tile, _appController.LaunchableApps);
-        tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
     }
 
     private bool? ShowTileSettingsDialog(TileSettingsWindow dialog)
