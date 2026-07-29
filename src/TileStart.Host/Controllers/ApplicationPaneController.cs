@@ -32,6 +32,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _applicationContentReady;
+    private bool _applicationRefreshInProgress;
     private bool _recentAppsExpanded;
     private bool _isDisposed;
 
@@ -109,19 +110,8 @@ internal sealed class ApplicationPaneController : IDisposable
 
         try
         {
-            var scannedApps = FilterHiddenApplications(
-                await StartAppScanner.ScanAsync(),
-                AppVisibilityStore.Load());
+            var apps = await ScanApplicationsAsync();
             _lifetimeToken.ThrowIfCancellationRequested();
-            var customApps = CustomAppStore.Load();
-            var scannedLaunchableApps = AppEntry.FlattenApplications(scannedApps).ToArray();
-            var apps = customApps.Count == 0
-                ? scannedApps.ToArray()
-                : scannedApps
-                    .Concat(customApps.Where(custom => !scannedLaunchableApps.Any(existing =>
-                        LaunchTargetIdentity.GetKey(existing.LaunchTarget)
-                        == LaunchTargetIdentity.GetKey(custom.LaunchTarget))))
-                    .ToArray();
             _apps.AddRange(apps);
             _applicationListItems.AddRange(apps);
 
@@ -166,6 +156,117 @@ internal sealed class ApplicationPaneController : IDisposable
         catch (Exception exception)
         {
             DiagnosticLog.Write($"Application list load failed: {exception}");
+        }
+    }
+
+    public async Task RefreshAppsAsync()
+    {
+        if (_isDisposed || !_applicationContentReady || _applicationRefreshInProgress)
+        {
+            return;
+        }
+
+        _applicationRefreshInProgress = true;
+        try
+        {
+            var apps = await ScanApplicationsAsync();
+            _lifetimeToken.ThrowIfCancellationRequested();
+            if (ApplicationTreesMatch(_apps, apps))
+            {
+                return;
+            }
+
+            // 扫描会生成新的 AppEntry。复用旧图标可避免应用列表在后台刷新完成时
+            // 先退回占位图，再等待相同应用重新解码图标而产生闪烁。
+            ReuseLoadedIcons(_launchableApps, apps);
+            _apps.Clear();
+            _apps.AddRange(apps);
+            RefreshApplicationCollection();
+            DiagnosticLog.Write($"Application list refreshed: {_launchableApps.Length} launchable apps.");
+            _ = LoadApplicationIconsAsync(_launchableApps);
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Application list refresh failed: {exception}");
+        }
+        finally
+        {
+            _applicationRefreshInProgress = false;
+        }
+    }
+
+    private static async Task<List<AppEntry>> ScanApplicationsAsync()
+    {
+        var scannedApps = FilterHiddenApplications(
+            await StartAppScanner.ScanAsync(),
+            AppVisibilityStore.Load());
+        var customApps = CustomAppStore.Load();
+        var scannedLaunchableApps = AppEntry.FlattenApplications(scannedApps).ToArray();
+        var apps = customApps.Count == 0
+            ? scannedApps.ToList()
+            : scannedApps
+                .Concat(customApps.Where(custom => !scannedLaunchableApps.Any(existing =>
+                    LaunchTargetIdentity.GetKey(existing.LaunchTarget)
+                    == LaunchTargetIdentity.GetKey(custom.LaunchTarget))))
+                .ToList();
+        RemoveMissingApplications(apps);
+        return apps;
+    }
+
+    internal static bool ApplicationTreesMatch(
+        IReadOnlyList<AppEntry> current,
+        IReadOnlyList<AppEntry> scanned)
+    {
+        if (current.Count != scanned.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < current.Count; index++)
+        {
+            var left = current[index];
+            var right = scanned[index];
+            if (left.IsFolder != right.IsFolder
+                || !left.Name.Equals(right.Name, StringComparison.CurrentCulture)
+                || left.AddedAt != right.AddedAt
+                || !left.PackageInstallPath.Equals(right.PackageInstallPath, StringComparison.OrdinalIgnoreCase)
+                || !left.AppUserModelId.Equals(right.AppUserModelId, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (left.IsFolder)
+            {
+                if (!ApplicationTreesMatch(left.Children, right.Children))
+                {
+                    return false;
+                }
+            }
+            else if (LaunchTargetIdentity.GetKey(left.LaunchTarget)
+                     != LaunchTargetIdentity.GetKey(right.LaunchTarget))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static void ReuseLoadedIcons(IEnumerable<AppEntry> current, IEnumerable<AppEntry> scanned)
+    {
+        var icons = AppEntry.FlattenApplications(current)
+            .Where(app => app.Icon is not null)
+            .GroupBy(app => LaunchTargetIdentity.GetKey(app.LaunchTarget), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Icon!, StringComparer.OrdinalIgnoreCase);
+        foreach (var app in AppEntry.FlattenApplications(scanned))
+        {
+            if (icons.TryGetValue(LaunchTargetIdentity.GetKey(app.LaunchTarget), out var icon))
+            {
+                app.Icon = icon;
+            }
         }
     }
 
@@ -247,11 +348,6 @@ internal sealed class ApplicationPaneController : IDisposable
     public void ShowIfHidden()
     {
         _showFromShell();
-    }
-
-    public bool CheckAndRemoveMissingApps()
-    {
-        return _applicationContentReady && RemoveMissingApplications(_apps);
     }
 
     private static IReadOnlyList<AppEntry> FilterHiddenApplications(
