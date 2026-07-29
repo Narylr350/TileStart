@@ -49,24 +49,20 @@ public sealed class SemanticZoomMotionTests
     }
 
     [Fact]
-    public void PresenterFadeUsesRecoveredWin10ThemeDuration()
+    public void SemanticZoomUsesVideoMeasuredDurationAndFastCrossFade()
     {
-        Assert.Equal(167, SemanticZoomMotion.PresenterFadeDurationMilliseconds);
-        Assert.Equal(17, SemanticZoomMotion.ZoomOutGeometryDelayMilliseconds);
-        Assert.Equal(217, SemanticZoomMotion.ZoomOutGeometryDurationMilliseconds);
-        Assert.Equal(250, SemanticZoomMotion.ZoomOutVisualDurationMilliseconds);
-        Assert.Equal(183, SemanticZoomMotion.ZoomInGeometryDurationMilliseconds);
-        Assert.Equal(200, SemanticZoomMotion.ZoomInVisualDurationMilliseconds);
-        Assert.Equal(5, SemanticZoomMotion.MotionBlurRadius);
+        Assert.Equal(240, SemanticZoomMotion.PresenterFadeDurationMilliseconds);
+        Assert.Equal(500, SemanticZoomMotion.ZoomOutGeometryDurationMilliseconds);
+        Assert.Equal(500, SemanticZoomMotion.ZoomInGeometryDurationMilliseconds);
     }
 
     [Theory]
-    [InlineData(false, 0.15, 0.10)]
-    [InlineData(false, 0.46, 0.54)]
-    [InlineData(false, 0.77, 0.92)]
-    [InlineData(true, 0.20, 0.18)]
-    [InlineData(true, 0.50, 0.62)]
-    [InlineData(true, 0.80, 0.94)]
+    [InlineData(false, 0.15, 0.39)]
+    [InlineData(false, 0.35, 0.73)]
+    [InlineData(false, 0.60, 0.94)]
+    [InlineData(true, 0.15, 0.39)]
+    [InlineData(true, 0.35, 0.73)]
+    [InlineData(true, 0.60, 0.94)]
     public void GeometryProgressUsesFrameMeasuredPiecewiseCurve(
         bool zoomedInViewActive,
         double normalizedTime,

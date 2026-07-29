@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Effects;
 using Size = System.Windows.Size;
 
 namespace TileStart.Host.Navigation;
@@ -18,31 +17,27 @@ public readonly record struct SemanticZoomTransform(double Scale, double Transla
 public static class SemanticZoomMotion
 {
     public const double ZoomedInPresenterScale = 0.5;
-    public const int PresenterFadeDurationMilliseconds = 167;
-    public const int ZoomOutGeometryDelayMilliseconds = 17;
-    public const int ZoomOutGeometryDurationMilliseconds = 217;
-    public const int ZoomOutVisualDurationMilliseconds = 250;
-    public const int ZoomInGeometryDurationMilliseconds = 183;
-    public const int ZoomInVisualDurationMilliseconds = 200;
-    public const double MotionBlurRadius = 5;
-
-    private const double OutgoingBlurScale = 0.35;
+    public const int PresenterFadeDurationMilliseconds = 240;
+    public const int ZoomOutGeometryDurationMilliseconds = 500;
+    public const int ZoomInGeometryDurationMilliseconds = 500;
 
     private static readonly SemanticZoomProgressPoint[] ZoomOutGeometryProgress =
     [
         new(0, 0),
-        new(0.15, 0.10),
-        new(0.46, 0.54),
-        new(0.77, 0.92),
+        new(0.15, 0.39),
+        new(0.35, 0.73),
+        new(0.60, 0.94),
+        new(0.82, 0.99),
         new(1, 1),
     ];
 
     private static readonly SemanticZoomProgressPoint[] ZoomInGeometryProgress =
     [
         new(0, 0),
-        new(0.20, 0.18),
-        new(0.50, 0.62),
-        new(0.80, 0.94),
+        new(0.15, 0.39),
+        new(0.35, 0.73),
+        new(0.60, 0.94),
+        new(0.82, 0.99),
         new(1, 1),
     ];
 
@@ -143,19 +138,24 @@ public static class SemanticZoomMotion
 
         ClearAnimations(sharedScale, sharedTranslate, zoomedInPresenter, zoomedOutPresenter);
         EnableAnimationCache(zoomedInPresenter, zoomedOutPresenter);
-        var zoomedInBlur = EnableMotionBlur(zoomedInPresenter);
-        var zoomedOutBlur = EnableMotionBlur(zoomedOutPresenter);
         ApplySurfaceState(target, sharedScale, sharedTranslate);
         zoomedInPresenter.Opacity = targetZoomedInOpacity;
         zoomedOutPresenter.Opacity = targetZoomedOutOpacity;
 
+        var scaleXAnimation = CreateViewChangeAnimation(fromScaleX, target.Scale, timing);
+        var scaleYAnimation = CreateViewChangeAnimation(fromScaleY, target.Scale, timing);
+        scaleYAnimation.Completed += (_, _) =>
+        {
+            ClearTransientEffects(zoomedInPresenter, zoomedOutPresenter);
+            completed();
+        };
         sharedScale.BeginAnimation(
             ScaleTransform.ScaleXProperty,
-            CreateViewChangeAnimation(fromScaleX, target.Scale, timing),
+            scaleXAnimation,
             HandoffBehavior.SnapshotAndReplace);
         sharedScale.BeginAnimation(
             ScaleTransform.ScaleYProperty,
-            CreateViewChangeAnimation(fromScaleY, target.Scale, timing),
+            scaleYAnimation,
             HandoffBehavior.SnapshotAndReplace);
         sharedTranslate.BeginAnimation(
             TranslateTransform.XProperty,
@@ -169,42 +169,13 @@ public static class SemanticZoomMotion
             UIElement.OpacityProperty,
             CreatePresenterOpacityAnimation(
                 fromZoomedInOpacity,
-                targetZoomedInOpacity,
-                zoomedInViewActive,
-                isZoomedInPresenter: true,
-                timing),
+                targetZoomedInOpacity),
             HandoffBehavior.SnapshotAndReplace);
         zoomedOutPresenter.BeginAnimation(
             UIElement.OpacityProperty,
             CreatePresenterOpacityAnimation(
                 fromZoomedOutOpacity,
-                targetZoomedOutOpacity,
-                zoomedInViewActive,
-                isZoomedInPresenter: false,
-                timing),
-            HandoffBehavior.SnapshotAndReplace);
-
-        var zoomedInBlurAnimation = CreateMotionBlurAnimation(
-            timing,
-            zoomedInViewActive ? 1 : OutgoingBlurScale,
-            zoomedInViewActive ? 0.95 : 0.90);
-        var zoomedOutBlurAnimation = CreateMotionBlurAnimation(
-            timing,
-            zoomedInViewActive ? OutgoingBlurScale : 1,
-            zoomedInViewActive ? 0.95 : 0.90);
-        var completionAnimation = zoomedInViewActive ? zoomedInBlurAnimation : zoomedOutBlurAnimation;
-        completionAnimation.Completed += (_, _) =>
-        {
-            ClearTransientEffects(zoomedInPresenter, zoomedOutPresenter);
-            completed();
-        };
-        zoomedInBlur.BeginAnimation(
-            BlurEffect.RadiusProperty,
-            zoomedInBlurAnimation,
-            HandoffBehavior.SnapshotAndReplace);
-        zoomedOutBlur.BeginAnimation(
-            BlurEffect.RadiusProperty,
-            zoomedOutBlurAnimation,
+                targetZoomedOutOpacity),
             HandoffBehavior.SnapshotAndReplace);
     }
 
@@ -251,18 +222,6 @@ public static class SemanticZoomMotion
         zoomedOutPresenter.CacheMode = new BitmapCache { RenderAtScale = 1 };
     }
 
-    private static BlurEffect EnableMotionBlur(UIElement presenter)
-    {
-        var blur = new BlurEffect
-        {
-            KernelType = KernelType.Gaussian,
-            Radius = 0,
-            RenderingBias = RenderingBias.Performance,
-        };
-        presenter.Effect = blur;
-        return blur;
-    }
-
     private static void ClearTransientEffects(UIElement zoomedInPresenter, UIElement zoomedOutPresenter)
     {
         zoomedInPresenter.CacheMode = null;
@@ -275,12 +234,10 @@ public static class SemanticZoomMotion
         ? new SemanticZoomTiming(
             0,
             ZoomInGeometryDurationMilliseconds,
-            ZoomInVisualDurationMilliseconds,
             ZoomInGeometryProgress)
         : new SemanticZoomTiming(
-            ZoomOutGeometryDelayMilliseconds,
+            0,
             ZoomOutGeometryDurationMilliseconds,
-            ZoomOutVisualDurationMilliseconds,
             ZoomOutGeometryProgress);
 
     private static DoubleAnimationUsingKeyFrames CreateViewChangeAnimation(
@@ -314,92 +271,22 @@ public static class SemanticZoomMotion
 
     private static AnimationTimeline CreatePresenterOpacityAnimation(
         double from,
-        double to,
-        bool zoomedInViewActive,
-        bool isZoomedInPresenter,
-        SemanticZoomTiming timing)
+        double to)
     {
-        if (zoomedInViewActive && isZoomedInPresenter && to > from)
-        {
-            return CreateZoomedInPresenterFadeIn(from, to, timing.VisualDurationMilliseconds);
-        }
-
         var animation = new DoubleAnimation
         {
             From = from,
             To = to,
             Duration = TimeSpan.FromMilliseconds(PresenterFadeDurationMilliseconds),
             FillBehavior = FillBehavior.Stop,
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
         };
-        return animation;
-    }
-
-    private static DoubleAnimationUsingKeyFrames CreateZoomedInPresenterFadeIn(
-        double from,
-        double to,
-        int visualDurationMilliseconds)
-    {
-        var duration = TimeSpan.FromMilliseconds(visualDurationMilliseconds);
-        var animation = new DoubleAnimationUsingKeyFrames
-        {
-            Duration = duration,
-            FillBehavior = FillBehavior.Stop,
-        };
-        var points = new SemanticZoomProgressPoint[]
-        {
-            new(0, 0),
-            new(0.15, 0.04),
-            new(0.35, 0.15),
-            new(0.50, 0.35),
-            new(0.75, 0.75),
-            new(0.92, 1),
-            new(1, 1),
-        };
-        foreach (var point in points)
-        {
-            var value = from + ((to - from) * point.Progress);
-            var keyTime = TimeSpan.FromMilliseconds(visualDurationMilliseconds * point.Time);
-            animation.KeyFrames.Add(new LinearDoubleKeyFrame(value, KeyTime.FromTimeSpan(keyTime)));
-        }
-
-        return animation;
-    }
-
-    private static DoubleAnimationUsingKeyFrames CreateMotionBlurAnimation(
-        SemanticZoomTiming timing,
-        double radiusScale,
-        double clearTime)
-    {
-        var visualEnd = TimeSpan.FromMilliseconds(timing.VisualDurationMilliseconds);
-        var animation = new DoubleAnimationUsingKeyFrames
-        {
-            Duration = visualEnd,
-            FillBehavior = FillBehavior.Stop,
-        };
-        var points = new SemanticZoomProgressPoint[]
-        {
-            new(0, 0),
-            new(0.15, 0.30),
-            new(0.40, 0.90),
-            new(0.55, 1),
-            new(0.80, 0.50),
-            new(clearTime, 0),
-            new(1, 0),
-        };
-        foreach (var point in points)
-        {
-            var radius = MotionBlurRadius * radiusScale * point.Progress;
-            var keyTime = TimeSpan.FromMilliseconds(timing.VisualDurationMilliseconds * point.Time);
-            animation.KeyFrames.Add(new LinearDoubleKeyFrame(radius, KeyTime.FromTimeSpan(keyTime)));
-        }
-
         return animation;
     }
 
     private readonly record struct SemanticZoomTiming(
         int GeometryDelayMilliseconds,
         int GeometryDurationMilliseconds,
-        int VisualDurationMilliseconds,
         IReadOnlyList<SemanticZoomProgressPoint> GeometryProgress);
 
     private readonly record struct SemanticZoomProgressPoint(double Time, double Progress);
