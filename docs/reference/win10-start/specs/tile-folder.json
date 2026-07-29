@@ -77,7 +77,7 @@
     },
     {
       "status": "runtime-estimated",
-      "fact": "多次展开和收起大约在 400～550 ms 内完成。子项预览会通过位移和缩放进入标准磁贴位置，并存在可见的错峰，而不是统一淡入切换。精确缓动曲线和单项延迟仍未测量。",
+      "fact": "多次展开和收起大约在 400～550 ms 内完成。折叠预览作为紧凑层整体向下退出并被文件夹磁贴裁切；完整尺寸子磁贴从展开区域顶部、在最终列内向下进入，按右下到左上的反对角波浪错峰启动。中间帧没有证据支持预览图标缩放或横向飞到目标磁贴。精确缓动曲线仍未测量。",
       "evidence": [
         "C:/Users/Narylr/Videos/2026-07-29 18-54-10.mp4",
         "C:/Users/Narylr/Videos/2026-07-29 18-53-39.mp4"
@@ -130,6 +130,11 @@
     "collapsedPreviewColumns": 3,
     "collapsedPreviewMaximumObservedItems": 9,
     "collapsedFolderNameVisible": false,
+    "tileStartCollapsedFolderNameVisible": true,
+    "tileStartFolderNamePlacement": "普通磁贴底部品牌区；这是用户确认的产品差异，不复刻原版仅在展开区域显示名称的规则。",
+    "tileStartUsesInlineEditableFolderName": false,
+    "tileStartChildAnimationStagger": "右下到左上的反对角波浪，相邻波次约 30 ms。",
+    "tileStartChildAnimationMapping": "折叠预览层整体纵向退出；完整尺寸磁贴保持目标列，只做纵向进入，不使用截图共享元素缩放或交叉淡入。",
     "expandedAnchorRemainsNormalTileSize": true,
     "expandedRegionHasDistinctCardBackground": false,
     "regionStartsAfterFolderCellBottom": true,

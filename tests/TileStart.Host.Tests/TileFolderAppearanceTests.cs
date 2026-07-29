@@ -14,22 +14,20 @@ public sealed class TileFolderAppearanceTests
     private static readonly XNamespace Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 
     [Fact]
-    public void CollapsedFolderUsesNativeThreeByThreeIconSlotsWithoutAName()
+    public void CollapsedFolderUsesThreeByThreeIconSlotsAndRegularTileBranding()
     {
         var visual = NamedElement("FolderVisual");
         var preview = NamedElement("FolderPreview");
         var previewPanel = Assert.Single(preview.Descendants(), element => element.Name.LocalName == "UniformGrid");
 
         Assert.Equal("0", visual.Attribute("Grid.Row")?.Value);
-        Assert.Equal("2", visual.Attribute("Grid.RowSpan")?.Value);
+        Assert.Null(visual.Attribute("Grid.RowSpan"));
         Assert.Null(preview.Attribute("Grid.Row"));
-        Assert.Equal("84", preview.Attribute("Width")?.Value);
-        Assert.Equal("84", preview.Attribute("Height")?.Value);
+        Assert.Equal("66", preview.Attribute("Width")?.Value);
+        Assert.Equal("66", preview.Attribute("Height")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Rows")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Columns")?.Value);
-        Assert.DoesNotContain(visual.Descendants(), element =>
-            element.Name.LocalName == "TextBlock"
-            && element.Attribute("Text")?.Value == "{Binding Name}");
+        Assert.Equal("{Binding Name}", NamedElement("TileTitle").Attribute("Text")?.Value);
         Assert.DoesNotContain(preview.Descendants(), element =>
             element.Name.LocalName == "Border"
             && element.Attribute("Background")?.Value == "{Binding BackgroundBrush}");
@@ -47,7 +45,11 @@ public sealed class TileFolderAppearanceTests
         Assert.Null(collapseGlyph.Attribute("Grid.Row"));
         Assert.Null(collapseGlyph.Attribute("Background"));
         Assert.Contains(template.Descendants(), element => IsSetter(element, "FolderVisual", "Visibility", "Visible"));
-        Assert.Contains(template.Descendants(),
+        var folderTrigger = Assert.Single(template.Descendants(), element =>
+            element.Name.LocalName == "DataTrigger"
+            && element.Attribute("Binding")?.Value == "{Binding IsTileFolder}"
+            && element.Attribute("Value")?.Value == "True");
+        Assert.DoesNotContain(folderTrigger.Descendants(),
             element => IsSetter(element, "TileBranding", "Visibility", "Collapsed"));
         Assert.Contains(template.Descendants(),
             element => IsSetter(element, "FolderPreview", "Visibility", "Collapsed"));
@@ -68,9 +70,10 @@ public sealed class TileFolderAppearanceTests
             .ToArray();
 
         Assert.Equal("Transparent", region.Attribute("Background")?.Value);
-        Assert.Equal(["32", "*", "4"], rowHeights);
+        Assert.Equal(["*", "4"], rowHeights);
         Assert.DoesNotContain(layoutGrid.Elements(), element => element.Name.LocalName == "Border");
-        Assert.Equal("0", NamedElement("FolderNameTextBox").Attribute("Grid.Row")?.Value);
+        Assert.DoesNotContain(XDocument.Load(MainWindowXaml).Descendants(), element =>
+            element.Attribute(Xaml + "Name")?.Value == "FolderNameTextBox");
     }
 
     [Fact]

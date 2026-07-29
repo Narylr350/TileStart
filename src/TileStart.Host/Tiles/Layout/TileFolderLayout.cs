@@ -16,8 +16,7 @@ public static class TileFolderLayout
     }
 
     public static double RegionHeight(TileItem folder) =>
-        Win10VisualMetrics.TileFolderHeaderHeight
-        + ContentHeight(folder)
+        ContentHeight(folder)
         + Win10VisualMetrics.TileFolderBottomMargin;
 
     public static double ToLogicalY(TileGroup group, double displayY)

@@ -1058,10 +1058,12 @@ internal sealed class TileWorkspaceController : IDisposable
 
         _isTileFolderAnimating = true;
         var generation = ++_tileFolderAnimationGeneration;
+        TileFolderPreviewTransition? previewTransition = null;
         try
         {
             if (!folder.IsFolderExpanded)
             {
+                previewTransition = PrepareTileFolderPreviewTransition(folder, expanding: true);
                 var expandPreviousTops = group.Tiles.ToDictionary(item => item, item => item.DisplayTop);
                 var expandPreviousGroupPositions = _tileDragCoordinator.CaptureGroupReorderPositions();
                 folder.IsFolderExpanded = true;
@@ -1069,71 +1071,45 @@ internal sealed class TileWorkspaceController : IDisposable
                 _window.UpdateLayout();
                 var shiftDuration = AnimateTileFolderShift(group, expandPreviousTops, expanding: true);
                 var expandMovedGroups = _tileDragCoordinator.AnimateGroupReorderFrom(expandPreviousGroupPositions);
-                AnimateTileFolderRegion(folder, expanding: true);
-                if (!await WaitForAnimationAsync(Math.Max(
-                        Math.Max(shiftDuration, Win10FolderMotion.TileRegionExpandDurationMilliseconds),
-                        expandMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds)))
+                var childDuration = AnimateTileFolderChildren(folder);
+                var totalDuration = Math.Max(
+                    Math.Max(
+                        Math.Max(shiftDuration, childDuration),
+                        Win10FolderMotion.TileDecorationDelayMilliseconds
+                        + Win10FolderMotion.TileDecorationDurationMilliseconds),
+                    expandMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds);
+                if (!await WaitForAnimationAsync(totalDuration))
                 {
                     return;
                 }
 
+                previewTransition?.Complete();
+                previewTransition = null;
                 return;
             }
 
+            previewTransition = PrepareTileFolderPreviewTransition(folder, expanding: false);
             var collapsePreviousTops = group.Tiles.ToDictionary(item => item, item => item.DisplayTop);
             var collapsePreviousGroupPositions = _tileDragCoordinator.CaptureGroupReorderPositions();
-            var collapseRegion = FindTileFolderRegion(folder);
-            var collapseRegionContainer = collapseRegion is null
-                ? null
-                : FindTileFolderRegionContainer(collapseRegion);
-            if (collapseRegion is not null)
-            {
-                var currentRegionTop = collapseRegionContainer is null
-                    ? folder.FolderRegionTop
-                    : Canvas.GetTop(collapseRegionContainer);
-                if (!double.IsFinite(currentRegionTop))
-                {
-                    currentRegionTop = folder.FolderRegionTop;
-                }
-
-                HoldTileFolderCollapseVisual(collapseRegion, collapseRegionContainer, currentRegionTop);
-            }
-
             folder.IsFolderExpanded = false;
             group.RefreshLayout();
             _window.UpdateLayout();
             var collapseDuration = AnimateTileFolderShift(group, collapsePreviousTops, expanding: false);
             var collapseMovedGroups = _tileDragCoordinator.AnimateGroupReorderFrom(collapsePreviousGroupPositions);
-            AnimateTileFolderRegion(folder, expanding: false);
             var totalCollapseDuration = Math.Max(
-                collapseDuration,
-                Math.Max(
-                    Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
-                    collapseMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds));
-            if (!await WaitForAnimationAsync(Win10FolderMotion.TileRegionCollapseDurationMilliseconds))
+                Math.Max(collapseDuration, Win10FolderMotion.TilePreviewEnterDurationMilliseconds),
+                collapseMovedGroups.Count == 0 ? 0 : Win10ReorderMotion.DurationMilliseconds);
+            if (!await WaitForAnimationAsync(totalCollapseDuration))
             {
                 return;
             }
 
-            if (generation != _tileFolderAnimationGeneration)
-            {
-                return;
-            }
-
-            if (collapseRegion is not null)
-            {
-                CompleteTileFolderCollapse(collapseRegion, collapseRegionContainer);
-            }
-
-            if (!await WaitForAnimationAsync(Math.Max(
-                    0,
-                    totalCollapseDuration - Win10FolderMotion.TileRegionCollapseDurationMilliseconds)))
-            {
-                return;
-            }
+            previewTransition?.Complete();
+            previewTransition = null;
         }
         finally
         {
+            previewTransition?.Complete();
             if (generation == _tileFolderAnimationGeneration)
             {
                 _isTileFolderAnimating = false;
@@ -1189,109 +1165,122 @@ internal sealed class TileWorkspaceController : IDisposable
         return maximumDuration;
     }
 
-    private void AnimateTileFolderRegion(TileItem folder, bool expanding)
+    private int AnimateTileFolderChildren(TileItem folder)
     {
         var region = FindTileFolderRegion(folder);
-        if (region is null)
+        var control = region is null
+            ? null
+            : FindVisualDescendants<ItemsControl>(region)
+                .FirstOrDefault(candidate => ReferenceEquals(candidate.Tag, folder));
+        if (control is null)
         {
-            return;
+            return 0;
         }
 
-        if (expanding)
+        control.UpdateLayout();
+        var children = folder.FolderTiles
+            .OrderBy(tile => tile.Row)
+            .ThenBy(tile => tile.Column)
+            .ToArray();
+        var rows = children.Select(tile => tile.Row).Distinct().Order().ToArray();
+        var columns = children.Select(tile => tile.Column).Distinct().Order().ToArray();
+        var maximumDuration = 0;
+        foreach (var tile in children)
         {
-            PrepareTileFolderExpansion(region);
-        }
-
-        var scale = new ScaleTransform(1, 1);
-        region.RenderTransformOrigin = new System.Windows.Point(0.5, 0);
-        region.RenderTransform = scale;
-        region.Opacity = 1;
-        var duration = expanding
-            ? Win10FolderMotion.TileRegionExpandDurationMilliseconds
-            : Win10FolderMotion.TileRegionCollapseDurationMilliseconds;
-        var fillBehavior = expanding ? FillBehavior.Stop : FillBehavior.HoldEnd;
-        scale.BeginAnimation(
-            ScaleTransform.ScaleYProperty,
-            Win10FolderMotion.CreateSplineAnimation(
-                expanding ? 0 : 1,
-                expanding ? 1 : 0,
-                Win10FolderMotion.TileRegionExpandDelayMilliseconds,
-                duration,
-                Win10FolderMotion.StandardSpline,
-                fillBehavior),
-            HandoffBehavior.SnapshotAndReplace);
-        region.BeginAnimation(
-            UIElement.OpacityProperty,
-            Win10FolderMotion.CreateSplineAnimation(
-                expanding ? 0 : 1,
-                expanding ? 1 : 0,
-                Win10FolderMotion.TileRegionExpandDelayMilliseconds,
-                duration,
-                Win10FolderMotion.StandardSpline,
-                fillBehavior),
-            HandoffBehavior.SnapshotAndReplace);
-    }
-
-    internal static System.Windows.Controls.ContentPresenter? FindTileFolderRegionContainer(
-        System.Windows.Controls.Border region) =>
-        FindVisualAncestor<System.Windows.Controls.ContentPresenter>(region);
-
-    internal static void HoldTileFolderCollapseVisual(
-        System.Windows.Controls.Border region,
-        FrameworkElement? regionContainer,
-        double regionTop)
-    {
-        region.Visibility = Visibility.Visible;
-        region.BeginAnimation(
-            FrameworkElement.HeightProperty,
-            Win10FolderMotion.CreateSplineAnimation(
-                region.ActualHeight,
-                region.ActualHeight,
-                0,
-                Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
-                Win10FolderMotion.StandardSpline,
-                FillBehavior.HoldEnd),
-            HandoffBehavior.SnapshotAndReplace);
-        regionContainer?.BeginAnimation(
-            Canvas.TopProperty,
-            Win10FolderMotion.CreateSplineAnimation(
-                regionTop,
-                regionTop,
-                0,
-                Win10FolderMotion.TileRegionCollapseDurationMilliseconds,
-                Win10FolderMotion.StandardSpline,
-                FillBehavior.HoldEnd),
-            HandoffBehavior.SnapshotAndReplace);
-    }
-
-    internal static void CompleteTileFolderCollapse(
-        System.Windows.Controls.Border region,
-        FrameworkElement? regionContainer)
-    {
-        region.Visibility = Visibility.Collapsed;
-        region.BeginAnimation(FrameworkElement.HeightProperty, null);
-        regionContainer?.BeginAnimation(Canvas.TopProperty, null);
-    }
-
-    internal static void PrepareTileFolderExpansion(System.Windows.Controls.Border region)
-    {
-        region.ClearValue(UIElement.VisibilityProperty);
-    }
-
-    private static T? FindVisualAncestor<T>(DependencyObject child)
-        where T : DependencyObject
-    {
-        for (var current = VisualTreeHelper.GetParent(child);
-             current is not null;
-             current = VisualTreeHelper.GetParent(current))
-        {
-            if (current is T match)
+            if (control.ItemContainerGenerator.ContainerFromItem(tile) is not FrameworkElement child)
             {
-                return match;
+                continue;
+            }
+
+            var rowIndex = Array.IndexOf(rows, tile.Row);
+            var columnIndex = Array.IndexOf(columns, tile.Column);
+            var delay = Win10FolderMotion.TileChildWaveDelay(
+                rowIndex,
+                columnIndex,
+                rows.Length,
+                columns.Length);
+            var transform = new TranslateTransform();
+            child.RenderTransform = transform;
+            child.Opacity = 1;
+
+            // 原版从第一次露出起就是完整尺寸磁贴，并已位于最终列；
+            // 这里只把它放到展开区顶部之外，再靠父区域裁切向下进入。
+            transform.BeginAnimation(
+                TranslateTransform.YProperty,
+                Win10FolderMotion.CreateSplineAnimation(
+                    -(tile.Top + tile.PixelHeight),
+                    0,
+                    delay,
+                    Win10FolderMotion.TileChildDurationMilliseconds,
+                    Win10FolderMotion.StandardSpline),
+                HandoffBehavior.SnapshotAndReplace);
+            maximumDuration = Math.Max(
+                maximumDuration,
+                delay + Win10FolderMotion.TileChildDurationMilliseconds);
+        }
+
+        return maximumDuration;
+    }
+
+    private TileFolderPreviewTransition? PrepareTileFolderPreviewTransition(
+        TileItem folder,
+        bool expanding)
+    {
+        var preview = FindVisualDescendants<ItemsControl>(_tileGroupsControl)
+            .FirstOrDefault(control =>
+                control.Name == "FolderPreview" && ReferenceEquals(control.DataContext, folder));
+        if (preview is null)
+        {
+            return null;
+        }
+
+        var glyph = FindVisualDescendants<FrameworkElement>(_tileGroupsControl)
+            .FirstOrDefault(element =>
+                element.Name == "FolderCollapseGlyph" && ReferenceEquals(element.DataContext, folder));
+        preview.BeginAnimation(UIElement.OpacityProperty, null);
+        preview.Visibility = Visibility.Visible;
+        var transform = new TranslateTransform();
+        preview.RenderTransform = transform;
+        var travel = folder.PixelHeight - Win10VisualMetrics.TileReservedBrandingSpace;
+        var duration = expanding
+            ? Win10FolderMotion.TilePreviewExitDurationMilliseconds
+            : Win10FolderMotion.TilePreviewEnterDurationMilliseconds;
+        transform.BeginAnimation(
+            TranslateTransform.YProperty,
+            Win10FolderMotion.CreateSplineAnimation(
+                expanding ? 0 : travel,
+                expanding ? travel : 0,
+                0,
+                duration,
+                Win10FolderMotion.StandardSpline,
+                FillBehavior.HoldEnd),
+            HandoffBehavior.SnapshotAndReplace);
+
+        if (glyph is not null)
+        {
+            glyph.BeginAnimation(UIElement.OpacityProperty, null);
+            if (expanding)
+            {
+                glyph.Visibility = Visibility.Visible;
+                glyph.Opacity = 1;
+                glyph.BeginAnimation(
+                    UIElement.OpacityProperty,
+                    Win10FolderMotion.CreateSplineAnimation(
+                        0,
+                        1,
+                        Win10FolderMotion.TileDecorationDelayMilliseconds,
+                        Win10FolderMotion.TileDecorationDurationMilliseconds,
+                        Win10FolderMotion.StandardSpline,
+                        FillBehavior.HoldEnd),
+                    HandoffBehavior.SnapshotAndReplace);
+            }
+            else
+            {
+                glyph.Visibility = Visibility.Collapsed;
             }
         }
 
-        return null;
+        return new TileFolderPreviewTransition(preview, glyph);
     }
 
     private System.Windows.Controls.Border? FindTileFolderRegion(TileItem folder) =>
@@ -1372,6 +1361,36 @@ internal sealed class TileWorkspaceController : IDisposable
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
         {
             return false;
+        }
+    }
+
+    private sealed class TileFolderPreviewTransition(
+        ItemsControl preview,
+        FrameworkElement? glyph)
+    {
+        private bool _completed;
+
+        public void Complete()
+        {
+            if (_completed)
+            {
+                return;
+            }
+
+            _completed = true;
+            if (preview.RenderTransform is TranslateTransform transform)
+            {
+                transform.BeginAnimation(TranslateTransform.YProperty, null);
+            }
+
+            preview.RenderTransform = null;
+            preview.ClearValue(UIElement.VisibilityProperty);
+            if (glyph is not null)
+            {
+                glyph.BeginAnimation(UIElement.OpacityProperty, null);
+                glyph.ClearValue(UIElement.OpacityProperty);
+                glyph.ClearValue(UIElement.VisibilityProperty);
+            }
         }
     }
 

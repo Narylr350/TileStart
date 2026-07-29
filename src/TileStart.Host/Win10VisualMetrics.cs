@@ -37,7 +37,6 @@ public static class Win10VisualMetrics
     public const double TileGroupVisualGap = Win10TileMetrics.GroupPitch - TileGroupVisualWidth;
     public const double TileReservedBrandingSpace = 28;
     public const double TileLogoVerticalOffset = -2;
-    public const double TileFolderHeaderHeight = 32;
     public const double TileFolderBottomMargin = 4;
     public const double TileScrollBarWidth = 6;
     public const double TileScrollBarRightMargin = 2;

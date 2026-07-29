@@ -1152,13 +1152,12 @@
                                                             </Image>
                                                              <Grid x:Name="FolderVisual"
                                                                    Grid.Row="0"
-                                                                   Grid.RowSpan="2"
                                                                    Visibility="Collapsed">
-                                                                 <!-- Win10 实机录屏确认：折叠态只显示从左上角填充的 3×3 图标槽位，
-                                                                      文件夹名称仅在展开区域出现，预览项也没有统一的小磁贴背景。 -->
+                                                                 <!-- 预览仍遵循 Win10 的三列图标槽位；TileStart 按产品选择保留普通磁贴品牌区，
+                                                                      让文件夹名称与其他磁贴一致显示，而不是复制原版的展开名称行。 -->
                                                                  <ItemsControl x:Name="FolderPreview"
-                                                                               Width="84"
-                                                                               Height="84"
+                                                                               Width="66"
+                                                                               Height="66"
                                                                                HorizontalAlignment="Center"
                                                                                VerticalAlignment="Center"
                                                                                ClipToBounds="True"
@@ -1201,7 +1200,7 @@
                                                                                Text="&#xE70E;" />
                                                                 </Grid>
                                                             </Grid>
-                                                            <Grid x:Name="TileBranding"
+                                                             <Grid x:Name="TileBranding"
                                                                   Grid.Row="1"
                                                                   Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
                                                                 <TextBlock x:Name="TileTitle"
@@ -1235,18 +1234,16 @@
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Visible" />
                                                         </DataTrigger>
-                                                         <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                                                              <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Collapsed" />
                                                             <Setter TargetName="TileIcon" Property="Visibility"
                                                                     Value="Collapsed" />
                                                             <Setter TargetName="TileAnimatedIcon" Property="Visibility"
                                                                     Value="Collapsed" />
-                                                             <Setter TargetName="FolderVisual" Property="Visibility"
-                                                                     Value="Visible" />
-                                                             <Setter TargetName="TileBranding" Property="Visibility"
-                                                                     Value="Collapsed" />
-                                                         </DataTrigger>
+                                                                  <Setter TargetName="FolderVisual" Property="Visibility"
+                                                                          Value="Visible" />
+                                                              </DataTrigger>
                                                          <DataTrigger Binding="{Binding IsFolderExpanded}" Value="True">
                                                              <Setter TargetName="FolderPreview" Property="Visibility"
                                                                      Value="Collapsed" />
@@ -1357,24 +1354,12 @@
                                                               ClipToBounds="True">
                                                           <Grid>
                                                               <Grid.RowDefinitions>
-                                                                  <RowDefinition Height="32" />
                                                                   <RowDefinition Height="*" />
                                                                   <RowDefinition Height="4" />
                                                               </Grid.RowDefinitions>
-                                                              <!-- 展开内容是原组中的内联区域，不是嵌套组或独立卡片；
-                                                                   透明区域只负责名称、子磁贴布局和推动后续磁贴。 -->
-                                                              <TextBox x:Name="FolderNameTextBox"
-                                                                       Grid.Row="0"
-                                                                       MaxLength="500"
-                                                                       Padding="0,0,6,0"
-                                                                       VerticalContentAlignment="Center"
-                                                                       Foreground="{DynamicResource TileStartTextPrimaryBrush}"
-                                                                       Background="Transparent"
-                                                                     BorderThickness="0"
-                                                                     FontFamily="{StaticResource TileStartContentFont}"
-                                                                       FontSize="12"
-                                                                       Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                                             <ItemsControl Grid.Row="1"
+                                                              <!-- 名称由上方文件夹磁贴的普通品牌区显示；透明内联区域只承载子磁贴，
+                                                                   因此既不会出现重复标题，也不会被误解成嵌套组。 -->
+                                                             <ItemsControl Grid.Row="0"
                                                                            Width="{x:Static local:Win10TileMetrics.GroupWidth}"
                                                                            Height="{Binding FolderContentHeight}"
                                                                           HorizontalAlignment="Left"

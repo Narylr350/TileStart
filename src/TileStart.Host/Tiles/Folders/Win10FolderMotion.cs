@@ -15,9 +15,12 @@ public static class Win10FolderMotion
     public const int TileCollapseRowBudgetMilliseconds = 150;
     public const int TileCollapseColumnBudgetMilliseconds = 150;
 
-    public const int TileRegionExpandDelayMilliseconds = 0;
-    public const int TileRegionExpandDurationMilliseconds = 250;
-    public const int TileRegionCollapseDurationMilliseconds = 200;
+    public const int TilePreviewExitDurationMilliseconds = 100;
+    public const int TilePreviewEnterDurationMilliseconds = 240;
+    public const int TileChildDurationMilliseconds = 300;
+    public const int TileChildWaveDelayMilliseconds = 30;
+    public const int TileDecorationDelayMilliseconds = 280;
+    public const int TileDecorationDurationMilliseconds = 100;
 
     public static KeySpline StandardSpline { get; } = CreateFrozenSpline(0.1, 0.9, 0.2, 1);
     public static KeySpline TileExpandShiftSpline { get; } = CreateFrozenSpline(0.9, 0.1, 1, 0.2);
@@ -31,6 +34,25 @@ public static class Win10FolderMotion
 
     public static int AppChildrenDuration(int childCount) =>
         AppChildDurationMilliseconds + AppChildDelay(Math.Max(0, childCount - 1));
+
+    public static int TileChildWaveDelay(
+        int rowIndex,
+        int columnIndex,
+        int rowCount,
+        int columnCount)
+    {
+        var lastRow = Math.Max(0, rowCount - 1);
+        var lastColumn = Math.Max(0, columnCount - 1);
+        return ((lastRow - Math.Clamp(rowIndex, 0, lastRow))
+                + (lastColumn - Math.Clamp(columnIndex, 0, lastColumn)))
+               * TileChildWaveDelayMilliseconds;
+    }
+
+    public static int TileChildrenDuration(int rowCount, int columnCount) =>
+        rowCount <= 0 || columnCount <= 0
+            ? 0
+            : TileChildDurationMilliseconds
+              + TileChildWaveDelay(0, 0, rowCount, columnCount);
 
     private static KeySpline CreateFrozenSpline(double x1, double y1, double x2, double y2)
     {

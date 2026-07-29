@@ -21,17 +21,32 @@ public sealed class Win10FolderMotionTests
     }
 
     [Fact]
-    public void TileRegionTimingsMatchRecoveredStoryboards()
+    public void TileFolderTimingsMatchDenseRuntimeFrameEvidence()
     {
-        Assert.Equal(0, Win10FolderMotion.TileRegionExpandDelayMilliseconds);
-        Assert.Equal(250, Win10FolderMotion.TileRegionExpandDurationMilliseconds);
-        Assert.Equal(200, Win10FolderMotion.TileRegionCollapseDurationMilliseconds);
+        Assert.Equal(100, Win10FolderMotion.TilePreviewExitDurationMilliseconds);
+        Assert.Equal(240, Win10FolderMotion.TilePreviewEnterDurationMilliseconds);
+        Assert.Equal(300, Win10FolderMotion.TileChildDurationMilliseconds);
+        Assert.Equal(30, Win10FolderMotion.TileChildWaveDelayMilliseconds);
+        Assert.Equal(280, Win10FolderMotion.TileDecorationDelayMilliseconds);
         Assert.True(Win10FolderMotion.StandardSpline.IsFrozen);
         Assert.True(Win10FolderMotion.TileExpandShiftSpline.IsFrozen);
         Assert.Equal(0.1, Win10FolderMotion.StandardSpline.ControlPoint1.X, 3);
         Assert.Equal(0.9, Win10FolderMotion.StandardSpline.ControlPoint1.Y, 3);
         Assert.Equal(0.9, Win10FolderMotion.TileExpandShiftSpline.ControlPoint1.X, 3);
         Assert.Equal(0.1, Win10FolderMotion.TileExpandShiftSpline.ControlPoint1.Y, 3);
+    }
+
+    [Fact]
+    public void TileFolderChildrenEnterInBottomRightToTopLeftDiagonalWaves()
+    {
+        Assert.Equal(0, Win10FolderMotion.TileChildWaveDelay(2, 2, 3, 3));
+        Assert.Equal(30, Win10FolderMotion.TileChildWaveDelay(1, 2, 3, 3));
+        Assert.Equal(30, Win10FolderMotion.TileChildWaveDelay(2, 1, 3, 3));
+        Assert.Equal(60, Win10FolderMotion.TileChildWaveDelay(0, 2, 3, 3));
+        Assert.Equal(60, Win10FolderMotion.TileChildWaveDelay(1, 1, 3, 3));
+        Assert.Equal(120, Win10FolderMotion.TileChildWaveDelay(0, 0, 3, 3));
+        Assert.Equal(420, Win10FolderMotion.TileChildrenDuration(3, 3));
+        Assert.Equal(0, Win10FolderMotion.TileChildrenDuration(0, 0));
     }
 
     [Fact]
