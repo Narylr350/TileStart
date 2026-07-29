@@ -44,6 +44,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private bool _isDisposed;
 
     private readonly TileLayout _tileLayout;
+    private readonly TileLayout? _savedLayout;
     private readonly System.Windows.Threading.Dispatcher _dispatcher;
     private readonly Button _navigationToggleButton;
     private readonly Grid _windowRoot;
@@ -57,6 +58,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
     public ApplicationPaneController(
         TileLayout tileLayout,
+        TileLayout? savedLayout,
         System.Windows.Threading.Dispatcher dispatcher,
         Button navigationToggleButton,
         Grid windowRoot,
@@ -70,6 +72,7 @@ internal sealed class ApplicationPaneController : IDisposable
     {
         _lifetimeToken = _lifetimeCancellation.Token;
         _tileLayout = tileLayout;
+        _savedLayout = savedLayout;
         _dispatcher = dispatcher;
         _navigationToggleButton = navigationToggleButton;
         _windowRoot = windowRoot;
@@ -132,8 +135,7 @@ internal sealed class ApplicationPaneController : IDisposable
             RefreshRecentApps();
 
             AlphabetIndex.UpdateAvailability(AlphabetLetters, apps, RecentApps.Count > 0);
-            var savedLayout = TileLayoutStore.Load();
-            var layout = savedLayout ?? new TileLayout();
+            var layout = _savedLayout ?? new TileLayout();
             RestoreTileIcons(layout, launchableApps);
             foreach (var group in layout.Groups)
             {
@@ -142,7 +144,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
             _updateLayout();
             var migratedGroupCoordinates = _ensureGroupGridCoordinates();
-            if (savedLayout is null || migratedGroupCoordinates)
+            if (_savedLayout is null || migratedGroupCoordinates)
             {
                 TileLayoutStore.Save(_tileLayout);
             }

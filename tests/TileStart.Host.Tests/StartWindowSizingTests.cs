@@ -12,14 +12,34 @@ public sealed class StartWindowSizingTests
     }
 
     [Fact]
+    public void EmptyLayoutIgnoresAPreviouslySavedExpandedWorkspace()
+    {
+        Assert.Equal(0, StartWindowSizing.InitialWorkspaceColumns(3, 0, 0));
+    }
+
+    [Fact]
+    public void ExistingTilesRestoreTheSavedWorkspaceWithoutViolatingTheirMinimumWidth()
+    {
+        Assert.Equal(3, StartWindowSizing.InitialWorkspaceColumns(3, 1, 4));
+        Assert.Equal(2, StartWindowSizing.InitialWorkspaceColumns(1, 1, 5));
+    }
+
+    [Fact]
+    public void AllAppsOnlyWidthDoesNotReserveTheTilePaneInset()
+    {
+        Assert.Equal(
+            Win10VisualMetrics.CollapsedNavigationWidth + Win10VisualMetrics.AllAppsWidth,
+            StartWindowSizing.WidthForColumns(0));
+    }
+
+    [Fact]
     public void WidthTargetsExposeTheRequestedWorkspaceWidth()
     {
         for (var columns = 0; columns <= 3; columns++)
         {
             var viewportWidth = StartWindowSizing.WidthForColumns(columns)
                                 - Win10VisualMetrics.CollapsedNavigationWidth
-                                - Win10VisualMetrics.AllAppsWidth
-                                - Win10VisualMetrics.TileScrollViewerLeftMargin;
+                                - Win10VisualMetrics.AllAppsWidth;
 
             var workspaceColumns = columns * TileWorkspaceMetrics.LegacyGroupWidthUnits;
             if (workspaceColumns == 0)
@@ -27,6 +47,8 @@ public sealed class StartWindowSizingTests
                 Assert.Equal(0, viewportWidth);
                 continue;
             }
+
+            viewportWidth -= Win10VisualMetrics.TileScrollViewerLeftMargin;
 
             Assert.Equal(workspaceColumns, Win10GroupWrapPanel.ColumnsForWidth(viewportWidth));
             Assert.True(viewportWidth >= Win10GroupWrapPanel.RequiredWidth(workspaceColumns));

@@ -12,6 +12,25 @@ public static class StartWindowSizing
 
     public static int MinimumColumnsForTileCount(int tileCount) => tileCount > 0 ? 1 : 0;
 
+    public static int InitialWorkspaceColumns(
+        int? savedWorkspaceColumns,
+        int tileCount,
+        int widestGroupWidthUnits)
+    {
+        var minimumColumns = MinimumColumnsForTileLayout(tileCount, widestGroupWidthUnits);
+        if (minimumColumns == 0)
+        {
+            // window.json can survive an uninstall or an earlier build while layout.json is
+            // empty. Restoring that stale width would reopen a blank tile workspace.
+            return MinimumGroupColumns;
+        }
+
+        return Math.Clamp(
+            Math.Max(savedWorkspaceColumns ?? DefaultWorkspaceColumns, minimumColumns),
+            minimumColumns,
+            MaximumGroupColumns);
+    }
+
     public static int MinimumColumnsForTileLayout(int tileCount, int widestGroupWidthUnits)
     {
         if (tileCount <= 0)
@@ -20,25 +39,27 @@ public static class StartWindowSizing
         }
 
         var workspaceColumns = (Math.Max(1, widestGroupWidthUnits)
-                                + TileWorkspaceMetrics.LegacyGroupWidthUnits - 1)
+                                   + TileWorkspaceMetrics.LegacyGroupWidthUnits - 1)
                                / TileWorkspaceMetrics.LegacyGroupWidthUnits;
         return Math.Clamp(workspaceColumns, 1, MaximumGroupColumns);
     }
 
-    private static double FixedPaneWidth =>
+    private static double AllAppsOnlyWidth =>
         Win10VisualMetrics.CollapsedNavigationWidth
-        + Win10VisualMetrics.AllAppsWidth
-        + Win10VisualMetrics.TileScrollViewerLeftMargin;
+        + Win10VisualMetrics.AllAppsWidth;
 
     public static double WidthForColumns(int columns)
     {
         columns = Math.Clamp(columns, MinimumGroupColumns, MaximumGroupColumns);
         if (columns == 0)
         {
-            return FixedPaneWidth;
+            // The tile viewer's left inset belongs to the tile pane. Keeping it in the
+            // all-apps-only width leaves a visible empty strip after the list scrollbar.
+            return AllAppsOnlyWidth;
         }
 
-        return FixedPaneWidth
+        return AllAppsOnlyWidth
+               + Win10VisualMetrics.TileScrollViewerLeftMargin
                + Win10GroupWrapPanel.RequiredWidth(
                    columns * TileWorkspaceMetrics.LegacyGroupWidthUnits)
                + Win10VisualMetrics.TileScrollBarLayoutWidth;

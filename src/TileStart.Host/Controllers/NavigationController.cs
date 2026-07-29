@@ -207,20 +207,11 @@ internal sealed class NavigationController : IDisposable
             ? Win10VisualMetrics.ExpandedNavigationWidth
             : Win10VisualMetrics.CollapsedNavigationWidth;
         _navigationToggleButton.ToolTip = expanded ? "收起" : "展开";
-        if (expanded)
-        {
-            _navigationPane.Background =
-                (System.Windows.Media.Brush)_navigationPane.FindResource("TileStartNavigationOverlayBrush");
-        }
+        ApplyNavigationAppearance(expanded);
 
         if (!SystemParameters.ClientAreaAnimation)
         {
             _navigationPane.Width = targetWidth;
-            if (!expanded)
-            {
-                _navigationPane.Background = System.Windows.Media.Brushes.Transparent;
-            }
-
             return;
         }
 
@@ -243,12 +234,38 @@ internal sealed class NavigationController : IDisposable
 
             _navigationPane.BeginAnimation(FrameworkElement.WidthProperty, null);
             _navigationPane.Width = targetWidth;
-            if (!expanded && !_navigationExpanded)
-            {
-                _navigationPane.Background = System.Windows.Media.Brushes.Transparent;
-            }
         };
         _navigationPane.BeginAnimation(FrameworkElement.WidthProperty, animation);
+    }
+
+    private void ApplyNavigationAppearance(bool expanded)
+    {
+        if (!expanded)
+        {
+            _navigationPane.Background = System.Windows.Media.Brushes.Transparent;
+            var themeForeground =
+                (System.Windows.Media.Brush)_navigationPane.FindResource("TileStartTextPrimaryBrush");
+            foreach (var button in _navigationButtons)
+            {
+                button.Foreground = themeForeground;
+            }
+
+            return;
+        }
+
+        // The main window keeps the original Acrylic/material behavior. The expanded rail
+        // must sample that actual surface instead of blindly using the light-theme overlay;
+        // otherwise a light resource dictionary can paint a white veil over a dark Start pane.
+        var surface = Win10Theme.StartSurfaceColor;
+        _navigationPane.Background = new SolidColorBrush(
+            System.Windows.Media.Color.FromArgb(0xEE, surface.R, surface.G, surface.B));
+        var foreground = new SolidColorBrush(
+            Win10Theme.UseDarkForeground(surface) ? Colors.Black : Colors.White);
+        foreground.Freeze();
+        foreach (var button in _navigationButtons)
+        {
+            button.Foreground = foreground;
+        }
     }
 
     private void SetNavigationToolTipsEnabled(bool enabled)

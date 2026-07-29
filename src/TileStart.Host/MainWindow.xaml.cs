@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Input;
 using System.Windows.Interop;
 using TileStart.Host.Applications;
+using TileStart.Host.Persistence;
 using TileStart.Host.Shell;
 using TileStart.Host.Themes;
 using TileStart.Host.Windowing;
@@ -29,14 +30,23 @@ public partial class MainWindow : Window
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
         MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
         var savedSize = WindowSizeStore.Load();
-        // A clean install has no tiles, so opening a blank workspace only wastes
-        // horizontal space. A saved user width still takes precedence after resize.
-        var preferredWorkspaceColumns = savedSize?.WorkspaceColumns ?? StartWindowSizing.DefaultWorkspaceColumns;
+        var savedLayout = TileLayoutStore.Load();
+        var savedTileCount = savedLayout?.Groups.Sum(group => group.Tiles.Count) ?? 0;
+        var widestSavedGroup = savedLayout?.Groups
+            .Where(group => group.Tiles.Count > 0)
+            .Select(group => group.WidthUnits)
+            .DefaultIfEmpty(0)
+            .Max() ?? 0;
+        var preferredWorkspaceColumns = StartWindowSizing.InitialWorkspaceColumns(
+            savedSize?.WorkspaceColumns,
+            savedTileCount,
+            widestSavedGroup);
         var preferredHeight = savedSize?.Height ?? Height;
         Width = StartWindowSizing.WidthForColumns(preferredWorkspaceColumns);
         Height = Math.Max(MinHeight, preferredHeight);
         _appController = new Controllers.ApplicationPaneController(
             TileLayout,
+            savedLayout,
             Dispatcher,
             NavigationToggleButton,
             WindowRoot,
