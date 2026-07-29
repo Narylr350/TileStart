@@ -92,6 +92,9 @@
              Exclude="..\..\src\TileStart.Host\bin\**;..\..\src\TileStart.Host\obj\**"
              Link="TestData\HostSource\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\*.Injector\*.vcxproj;..\..\src\*.ShellHook\*.vcxproj;..\..\src\*.ShellProbe\*.vcxproj"
+             Link="TestData\NativeProjects\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\Windowing\StartMotion.cs"
              Link="TestData\Performance\StartMotion.cs"
              CopyToOutputDirectory="PreserveNewest" />

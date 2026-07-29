@@ -48,6 +48,9 @@
             <WarningLevel>Level4</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <ConformanceMode>true</ConformanceMode>
+            <!-- Explorer 内加载的 Hook 不能依赖目标系统预装 VC++ Redistributable。 -->
+            <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+            <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>

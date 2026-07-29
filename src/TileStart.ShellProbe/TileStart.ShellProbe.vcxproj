@@ -51,6 +51,8 @@
             <WarningLevel>Level4</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <ConformanceMode>true</ConformanceMode>
+            <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+            <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>

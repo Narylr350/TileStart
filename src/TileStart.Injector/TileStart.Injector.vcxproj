@@ -48,6 +48,9 @@
             <WarningLevel>Level4</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <ConformanceMode>true</ConformanceMode>
+            <!-- 发布产物必须能在未安装 VC++ Redistributable 的干净系统启动。 -->
+            <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+            <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>
