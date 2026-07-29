@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
 ![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-539%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-541%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -99,7 +99,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply
 
 ## 下载与安装
 
-最新版本：**v0.1.13**
+最新版本请以 [Releases 页面标记的 Latest](https://github.com/Narylr350/TileStart/releases/latest) 为准，避免 README 中的固定版本号在新版本发布后过期。
 
 | 文件 | 用途 |
 | --- | --- |
@@ -158,7 +158,19 @@ ShellHook.log        Explorer Hook 诊断日志
 
 ## 兼容性
 
-Windows 10 基线验证环境：
+TileStart 面向 Windows 10 / 11 x64。当前主动开发和日常回归在 Windows 11 上进行；Windows 10 记录来自升级前保存的实机基线，不表示每次提交仍在 Win10 实机同步验证。
+
+### 当前 Windows 11 验证环境
+
+```text
+Windows 11 25H2 build 26200.8875 x64
+2560 × 1600 / 150% DPI / 240 Hz
+任务栏位于底部、左对齐
+```
+
+该环境已验证 Win11-modern 适配器选择、ShellHook 注入、单独 `Win` 键、磁贴拖动、文件夹展开动画和不同磁贴区列数。应用扫描已与菜单显示路径完全解耦，不再在按 Win 时执行目录或 `AppsFolder` 全量枚举。
+
+### Windows 10 历史基线
 
 ```text
 Windows 10 Pro for Workstations
@@ -167,20 +179,18 @@ Windows 10 Pro for Workstations
 任务栏位于底部
 ```
 
-目标平台是 Windows 10 / 11 x64，但 Shell 接管与 Windows build 强相关：
+Windows 10 build 19045 曾完成开始按钮、单独 `Win` 键、磁贴布局、150% DPI 和底部任务栏的基线实机验证。Win10 与 Win11 使用独立适配路径，不能用当前 Win11 结果替代 Win10 回归结论。
 
-- Windows 10 build 19045 已完成基线实机验证。
-- Windows 11 当前以 25H2 build 26200.8875 为验证基准，使用独立的 Win11 适配路径。build 26200 已验证 Injector 能选择 Win11-modern 适配器并完成 ShellHook 注入。
-- 不同 Windows build、任务栏布局和全屏场景仍需持续实机回归。build 号用于选择最接近的适配器族，不作为精确白名单门禁；未知或未来 build 会先尝试兼容路径，并在日志中记录实际 build 与适配器选择。
-- Host 或 Hook 不可用时必须保留原生开始菜单作为回退。
+Shell 接管与 Windows build 强相关。build 号只用于选择最接近的适配器族，不是精确白名单；未知或未来 build 会先尝试兼容路径，并在日志中记录实际 build 与适配器选择。Host、Injector、Hook 或 IPC 不可用时必须放行原生开始菜单。
 
-## 已知限制
+## 已知问题与限制
 
 - 安装器和可执行文件尚未进行 Authenticode 代码签名。
-- 不同 Windows build、任务栏布局、DPI 和全屏场景的 Shell 接管覆盖仍在持续扩大。
-- 全屏游戏中单独 `Win` 键接管的行为仍需继续验证。
-- 高刷新率屏幕上的动画流畅度仍低于 Windows 原生开始菜单。
-- NVIDIA App Overlay 的自动 DRS 配置 helper 尚未集成到安装器。
+- 未记录或未来的 Windows build 会尝试兼容路径，但在对应实机验证前不能视为已确认兼容。
+- 任务栏开始按钮接管和 Explorer 重启后自动恢复曾在 Windows 11 build 22631 验证，当前 build 26200 尚未完成同等范围的正式回归。
+- 非底部任务栏、任务栏自动隐藏、多显示器混合 DPI 和全屏游戏中的单独 `Win` 键仍需要扩大实机覆盖。
+- 传统 Win32 安装程序创建开始菜单快捷方式后可由目录监听及时刷新；纯 UWP/MSIX 安装、更新或卸载依赖独立的低频后台兜底扫描，应用列表最多可能延迟约 5 分钟更新。
+- 当前主动开发环境已经升级到 Windows 11；涉及 Win10 Shell、布局或动画的改动仍需在 Win10 实机重新验证后，才能更新 Windows 10 基线结论。
 - 当前不提供后台自动更新、云同步、插件市场或视频背景；更新检查仅在用户从托盘主动触发时联网。
 
 ## 问题反馈与诊断
