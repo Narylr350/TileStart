@@ -113,6 +113,8 @@ public static class Win10VisualMetrics
 
     public static Thickness TileBrandingMargin { get; } = new(8, 0, 8, 5);
 
+    public static Thickness TileTopBrandingMargin { get; } = new(8, 5, 8, 0);
+
     public static Thickness TileScrollBarMargin { get; } = new(0, 2, TileScrollBarRightMargin, 2);
 
     public static Thickness TileScrollViewerMargin { get; } = new(TileScrollViewerLeftMargin, 28, 0, 0);

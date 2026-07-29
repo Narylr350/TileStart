@@ -16,6 +16,57 @@
         <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale" />
     </Style>
 
+    <!-- 标题容器和文字样式同时用于主磁贴、文件夹内容与设置预览。
+         BottomLeft 是默认值，保证旧布局仍保持原来的 Win10 品牌区位置。 -->
+    <Style x:Key="TileStartTileTitleContainerStyle" TargetType="Grid">
+        <Setter Property="Grid.Row" Value="1" />
+        <!-- 实际磁贴靠 Grid.Row=1 落在品牌区；设置预览没有两行网格，
+             还必须保留显式的底部锚点，二者才能使用同一套位置样式。 -->
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileBrandingMargin}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopLeft">
+                <Setter Property="Grid.Row" Value="0" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileTopBrandingMargin}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopCenter">
+                <Setter Property="Grid.Row" Value="0" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileTopBrandingMargin}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopRight">
+                <Setter Property="Grid.Row" Value="0" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileTopBrandingMargin}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="TileStartTileTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="BottomCenter">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="BottomRight">
+                <Setter Property="HorizontalAlignment" Value="Right" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopLeft">
+                <Setter Property="VerticalAlignment" Value="Top" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopCenter">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding TitlePosition}" Value="TopRight">
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="TileStartDialogSurfaceStyle" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource TileStartWindowBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TileStartWindowStrokeBrush}" />

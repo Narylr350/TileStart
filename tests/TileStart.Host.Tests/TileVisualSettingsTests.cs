@@ -112,6 +112,7 @@ public sealed class TileVisualSettingsTests
                             BackgroundColor = "#123456",
                             ForegroundColor = "#ABCDEF",
                             ShowTitle = false,
+                            TitlePosition = TileTitlePosition.TopCenter,
                             IconSize = 72,
                             IconPosition = TileIconPosition.TopRight,
                         },
@@ -132,8 +133,17 @@ public sealed class TileVisualSettingsTests
         Assert.Equal("#123456", tile.BackgroundColor);
         Assert.Equal("#ABCDEF", tile.ForegroundColor);
         Assert.False(tile.ShowTitle);
+        Assert.Equal(TileTitlePosition.TopCenter, tile.TitlePosition);
         Assert.Equal(72, tile.IconSize);
         Assert.Equal(TileIconPosition.TopRight, tile.IconPosition);
+    }
+
+    [Fact]
+    public void LegacyTilesDefaultToTheExistingBottomLeftTitlePosition()
+    {
+        var tile = new TileItem();
+
+        Assert.Equal(TileTitlePosition.BottomLeft, tile.TitlePosition);
     }
 
 }

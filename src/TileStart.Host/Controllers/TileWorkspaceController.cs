@@ -830,6 +830,7 @@ internal sealed class TileWorkspaceController : IDisposable
 
         tile.ForegroundColor = dialog.ForegroundColor;
         tile.ShowTitle = dialog.ShowTitle;
+        tile.TitlePosition = dialog.TitlePosition;
         tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
 
         if (tile.IsTileFolder)

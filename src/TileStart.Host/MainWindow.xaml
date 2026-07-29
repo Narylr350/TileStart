@@ -1216,16 +1216,14 @@
                                                                                Text="&#xE70E;" />
                                                                 </Grid>
                                                             </Grid>
-                                                             <Grid x:Name="TileBranding"
-                                                                  Grid.Row="1"
-                                                                  Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
-                                                                <TextBlock x:Name="TileTitle"
-                                                                           HorizontalAlignment="Left"
-                                                                           VerticalAlignment="Bottom"
-                                                                           FontFamily="{StaticResource TileStartContentFont}"
-                                                                           FontSize="12"
-                                                                           FontWeight="SemiBold"
-                                                                           Text="{Binding Name}"
+                                                              <Grid x:Name="TileBranding"
+                                                                    Style="{StaticResource TileStartTileTitleContainerStyle}">
+                                                                 <TextBlock x:Name="TileTitle"
+                                                                            FontFamily="{StaticResource TileStartContentFont}"
+                                                                            FontSize="12"
+                                                                            FontWeight="SemiBold"
+                                                                            Style="{StaticResource TileStartTileTitleTextStyle}"
+                                                                            Text="{Binding Name}"
                                                                            TextAlignment="Left"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            TextWrapping="NoWrap" />
@@ -1487,16 +1485,14 @@
                                                                                              Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                                                      </Image.RenderTransform>
                                                                                  </Image>
-                                                                                 <Grid x:Name="FolderChildBranding"
-                                                                                       Grid.Row="1"
-                                                                                       Margin="{x:Static local:Win10VisualMetrics.TileBrandingMargin}">
-                                                                                     <TextBlock x:Name="FolderChildTitle"
-                                                                                                HorizontalAlignment="Left"
-                                                                                                VerticalAlignment="Bottom"
-                                                                                                FontFamily="{StaticResource TileStartContentFont}"
-                                                                                                FontSize="12"
-                                                                                                FontWeight="SemiBold"
-                                                                                                Text="{Binding Name}"
+                                                                                  <Grid x:Name="FolderChildBranding"
+                                                                                        Style="{StaticResource TileStartTileTitleContainerStyle}">
+                                                                                      <TextBlock x:Name="FolderChildTitle"
+                                                                                                 FontFamily="{StaticResource TileStartContentFont}"
+                                                                                                 FontSize="12"
+                                                                                                 FontWeight="SemiBold"
+                                                                                                 Style="{StaticResource TileStartTileTitleTextStyle}"
+                                                                                                 Text="{Binding Name}"
                                                                                                 TextTrimming="CharacterEllipsis"
                                                                                                 TextWrapping="NoWrap" />
                                                                                  </Grid>

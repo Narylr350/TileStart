@@ -66,6 +66,7 @@ public partial class TileSettingsWindow : Window
             BackgroundImageScale = tile.BackgroundImageScale,
             BackgroundImage = tile.BackgroundImage,
             ShowTitle = tile.ShowTitle,
+            TitlePosition = tile.TitlePosition,
             IconSize = tile.IconSize,
             IconPosition = tile.IconPosition,
             Icon = tile.Icon,
@@ -85,6 +86,7 @@ public partial class TileSettingsWindow : Window
         BackgroundColorBox.Text = tile.BackgroundColor;
         ForegroundColorBox.Text = tile.ForegroundColor;
         ShowTitleBox.IsChecked = tile.ShowTitle;
+        TitlePositionBox.SelectedValue = tile.TitlePosition.ToString();
         IconSizeBox.Maximum = Win10TileMetrics.MaxIconSize(tile.Size);
         IconSizeBox.Value = tile.IconSize;
         IconPositionBox.SelectedValue = tile.IconPosition.ToString();
@@ -134,6 +136,8 @@ public partial class TileSettingsWindow : Window
     public string BackgroundColor => BackgroundColorBox.Text.Trim();
     public string ForegroundColor => ForegroundColorBox.Text.Trim();
     public bool ShowTitle => ShowTitleBox.IsChecked == true;
+    public TileTitlePosition TitlePosition =>
+        Enum.Parse<TileTitlePosition>((string)TitlePositionBox.SelectedValue);
     public double IconSize => IconSizeBox.Value;
     public TileIconPosition IconPosition => Enum.Parse<TileIconPosition>((string)IconPositionBox.SelectedValue);
     public TileSize TileSize => Enum.Parse<TileSize>((string)SizeBox.SelectedValue);
@@ -231,6 +235,7 @@ public partial class TileSettingsWindow : Window
         BackgroundColorBox.Text = TileItem.ThemeDefaultBackgroundColor;
         ForegroundColorBox.Text = "#FFFFFF";
         ShowTitleBox.IsChecked = true;
+        TitlePositionBox.SelectedValue = TileTitlePosition.BottomLeft.ToString();
         IconSizeBox.Value = 32;
         IconPositionBox.SelectedValue = TileIconPosition.Center.ToString();
         _iconSourceKind = CustomIconSourceKind.Default;
@@ -363,6 +368,11 @@ public partial class TileSettingsWindow : Window
         PreviewTile.BackgroundImageScale = BackgroundImageScale;
         PreviewTile.BackgroundImage = ShellIconLoader.LoadImage(BackgroundImagePath);
         PreviewTile.ShowTitle = ShowTitle;
+        PreviewTile.TitlePosition = Enum.TryParse<TileTitlePosition>(
+            TitlePositionBox.SelectedValue as string,
+            out var titlePosition)
+            ? titlePosition
+            : TileTitlePosition.BottomLeft;
         PreviewTile.IconSize = IconSize;
         PreviewTile.IconPosition =
             Enum.TryParse<TileIconPosition>(IconPositionBox.SelectedValue as string, out var iconPosition)

@@ -49,6 +49,7 @@ public sealed class TileItem : INotifyPropertyChanged
     private string _backgroundImagePath = string.Empty;
     private double _backgroundImageScale = 1;
     private bool _showTitle = true;
+    private TileTitlePosition _titlePosition;
     private double _iconSize = 32;
     private TileIconPosition _iconPosition;
     private ImageSource? _icon;
@@ -322,6 +323,25 @@ public sealed class TileItem : INotifyPropertyChanged
             }
 
             _showTitle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Defaults to <see cref="TileTitlePosition.BottomLeft"/> so layouts written before this
+    /// setting existed keep the original Win10-style branding position without migration.
+    /// </summary>
+    public TileTitlePosition TitlePosition
+    {
+        get => _titlePosition;
+        set
+        {
+            if (_titlePosition == value)
+            {
+                return;
+            }
+
+            _titlePosition = value;
             OnPropertyChanged();
         }
     }

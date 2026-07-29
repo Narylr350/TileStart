@@ -429,16 +429,15 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
                                                 <Grid Height="28"
-                                                      Margin="10,0,10,4"
-                                                      VerticalAlignment="Bottom">
-                                                    <TextBlock VerticalAlignment="Bottom"
-                                                               Foreground="{Binding ForegroundBrush}"
+                                                      Style="{StaticResource TileStartTileTitleContainerStyle}">
+                                                    <TextBlock Foreground="{Binding ForegroundBrush}"
                                                                FontSize="12"
                                                                FontWeight="SemiBold"
                                                                Text="{Binding Name}"
                                                                TextTrimming="CharacterEllipsis">
                                                         <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
+                                                            <Style TargetType="TextBlock"
+                                                                   BasedOn="{StaticResource TileStartTileTitleTextStyle}">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding ShowTitle}"
@@ -750,6 +749,20 @@
                                               Checked="PreviewOption_Changed"
                                               Unchecked="PreviewOption_Changed" />
                                 </Grid>
+
+                                <StackPanel Margin="0,0,0,16">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="标题位置" />
+                                    <ComboBox x:Name="TitlePositionBox"
+                                              SelectedValuePath="Tag"
+                                              SelectionChanged="PreviewSelection_Changed">
+                                        <ComboBoxItem Content="左下（默认）" Tag="BottomLeft" />
+                                        <ComboBoxItem Content="居下" Tag="BottomCenter" />
+                                        <ComboBoxItem Content="右下" Tag="BottomRight" />
+                                        <ComboBoxItem Content="左上" Tag="TopLeft" />
+                                        <ComboBoxItem Content="居上" Tag="TopCenter" />
+                                        <ComboBoxItem Content="右上" Tag="TopRight" />
+                                    </ComboBox>
+                                </StackPanel>
 
                                 <StackPanel x:Name="TileLayoutFields">
                                 <Grid>

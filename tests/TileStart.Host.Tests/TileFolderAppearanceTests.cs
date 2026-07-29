@@ -11,6 +11,12 @@ public sealed class TileFolderAppearanceTests
         "Xaml",
         "MainWindow.xaml");
 
+    private static readonly string SharedStylesXaml = Path.Combine(
+        AppContext.BaseDirectory,
+        "TestData",
+        "Xaml",
+        "SharedStyles.xaml");
+
     private static readonly XNamespace Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 
     [Fact]
@@ -83,8 +89,23 @@ public sealed class TileFolderAppearanceTests
         var icon = NamedElement("FolderChildIcon");
         var animatedIcon = NamedElement("FolderChildAnimatedIcon");
 
-        Assert.Equal("1", branding.Attribute("Grid.Row")?.Value);
-        Assert.Contains("TileBrandingMargin", branding.Attribute("Margin")?.Value, StringComparison.Ordinal);
+        Assert.Equal("{StaticResource TileStartTileTitleContainerStyle}", branding.Attribute("Style")?.Value);
+        var titleContainerStyle = Assert.Single(
+            XDocument.Load(SharedStylesXaml).Descendants(),
+            element => element.Name.LocalName == "Style"
+                       && element.Attribute(Xaml + "Key")?.Value == "TileStartTileTitleContainerStyle");
+        Assert.Contains(titleContainerStyle.Elements(), element =>
+            element.Name.LocalName == "Setter"
+            && element.Attribute("Property")?.Value == "Grid.Row"
+            && element.Attribute("Value")?.Value == "1");
+        Assert.Contains(titleContainerStyle.Elements(), element =>
+            element.Name.LocalName == "Setter"
+            && element.Attribute("Property")?.Value == "VerticalAlignment"
+            && element.Attribute("Value")?.Value == "Bottom");
+        Assert.Contains(titleContainerStyle.Elements(), element =>
+            element.Name.LocalName == "Setter"
+            && element.Attribute("Property")?.Value == "Margin"
+            && element.Attribute("Value")?.Value.Contains("TileBrandingMargin", StringComparison.Ordinal) == true);
         Assert.NotNull(icon.Descendants().SingleOrDefault(element => element.Name.LocalName == "MultiBinding"));
         Assert.Contains("IconPath", animatedIcon.ToString(), StringComparison.Ordinal);
     }
