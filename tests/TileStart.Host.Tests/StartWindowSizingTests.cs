@@ -5,6 +5,13 @@ namespace TileStart.Host.Tests;
 public sealed class StartWindowSizingTests
 {
     [Fact]
+    public void CleanInstallStartsWithTheTileWorkspaceCollapsed()
+    {
+        Assert.Equal(0, StartWindowSizing.DefaultWorkspaceColumns);
+        Assert.Equal(StartWindowSizing.MinimumGroupColumns, StartWindowSizing.DefaultWorkspaceColumns);
+    }
+
+    [Fact]
     public void WidthTargetsExposeTheRequestedWorkspaceWidth()
     {
         for (var columns = 0; columns <= 3; columns++)

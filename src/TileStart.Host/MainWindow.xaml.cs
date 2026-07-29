@@ -29,7 +29,9 @@ public partial class MainWindow : Window
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
         MaxWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MaximumGroupColumns);
         var savedSize = WindowSizeStore.Load();
-        var preferredWorkspaceColumns = savedSize?.WorkspaceColumns ?? 2;
+        // A clean install has no tiles, so opening a blank workspace only wastes
+        // horizontal space. A saved user width still takes precedence after resize.
+        var preferredWorkspaceColumns = savedSize?.WorkspaceColumns ?? StartWindowSizing.DefaultWorkspaceColumns;
         var preferredHeight = savedSize?.Height ?? Height;
         Width = StartWindowSizing.WidthForColumns(preferredWorkspaceColumns);
         Height = Math.Max(MinHeight, preferredHeight);

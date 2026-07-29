@@ -8,6 +8,7 @@ public static class StartWindowSizing
     // the navigation rail and the all-apps list visible.
     public const int MinimumGroupColumns = 0;
     public const int MaximumGroupColumns = 3;
+    public const int DefaultWorkspaceColumns = MinimumGroupColumns;
 
     public static int MinimumColumnsForTileCount(int tileCount) => tileCount > 0 ? 1 : 0;
 
