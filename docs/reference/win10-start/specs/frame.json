@@ -98,12 +98,12 @@
       }
     },
     "tileStartWcaMapping": {
-      "gradientColor": "0xCC101010",
+      "gradientColor": "0xBF101010",
       "fallbackColor": "#FF1F1F1F",
       "evidence": "independent-wca-mapping + manual-win10-validation",
-      "validatedAt": "2026-07-30",
-      "result": "pending Win10 VM revalidation",
-      "notes": "The original UWP AcrylicBrush values are verified. Mapping TintOpacity to the undocumented WCA GradientColor alpha is an independent approximation, not an exact API-equivalent reconstruction. The alpha was raised after screenshot comparison showed TileStart's surface brighter than native Start."
+      "validatedAt": "2026-07-21",
+      "result": "acceptable approximate match",
+      "notes": "The original UWP AcrylicBrush values are verified. Mapping TintOpacity directly to the undocumented WCA GradientColor alpha is an independent approximation, not an exact API-equivalent reconstruction."
     }
   }
 }

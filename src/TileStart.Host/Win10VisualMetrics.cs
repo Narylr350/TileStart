@@ -41,8 +41,7 @@ public static class Win10VisualMetrics
     public const double TileScrollBarWidth = 6;
     public const double TileScrollBarRightMargin = 2;
     public const double TileScrollBarLayoutWidth = TileScrollBarWidth + TileScrollBarRightMargin;
-    public const double TileScrollViewerLeftMargin = 12;
-    public const double TileScrollViewerTopMargin = 14;
+    public const double TileScrollViewerLeftMargin = 28;
 
     public static GridLength CollapsedNavigationGridLength { get; } = new(CollapsedNavigationWidth);
 
@@ -90,10 +89,6 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsGroupHeaderPadding { get; } = new(4, 0, 0, 10);
 
-    // StartUI's verified 4 DIP padding sits inside additional native containers. TileStart's
-    // flatter WPF presenter needs this visual inset or group letters render about 10 DIP too far left.
-    public static Thickness AllAppsGroupHeaderPresenterPadding { get; } = new(14, 0, 0, 10);
-
     public static Thickness TileGroupHeaderBorderThickness { get; } = new(TileGroupHeaderStrokeThickness);
 
     public static Thickness TileGroupPrimaryFocusBorderThickness { get; } = new(TileGroupPrimaryFocusThickness);
@@ -122,6 +117,5 @@ public static class Win10VisualMetrics
 
     public static Thickness TileScrollBarMargin { get; } = new(0, 2, TileScrollBarRightMargin, 2);
 
-    public static Thickness TileScrollViewerMargin { get; } =
-        new(TileScrollViewerLeftMargin, TileScrollViewerTopMargin, 0, 0);
+    public static Thickness TileScrollViewerMargin { get; } = new(TileScrollViewerLeftMargin, 28, 0, 0);
 }
