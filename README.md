@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
 ![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-541%20passed-2EA44F?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-553%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -39,7 +39,7 @@ Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁
 - 保留 `Win+E/R/D/L/I/数字/方向键/Shift+S` 等系统组合键。
 - 扫描用户与公共开始菜单，显示 Win32、UWP/MSIX 应用。
 - TileStart 长期驻留时会在菜单显示后后台重扫，新安装的软件无需重启即可出现在应用列表中。
-- 最近添加、应用文件夹、字母索引和 Windows Search 转交。
+- 最近添加、应用文件夹、字母索引和应用列表内搜索。
 - 便携应用可加入应用列表，并提供单独的取消固定操作。
 - Explorer 重启后自动恢复接管。
 
@@ -73,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply
 
 - 使用应用默认图标、程序资源或本地图片，支持 PNG、JPEG、BMP、ICO、GIF、SVG，也可主动下载网络图标。
 - 静态图片与 GIF 可作为磁贴背景。
-- 界面风格和颜色模式分别设置：Windows 10 / 11 风格，随系统 / 浅色 / 深色模式。
+- 界面风格和颜色模式分别设置：Windows 10 / 11 风格，随系统 / 浅色 / 深色模式；两种风格共享 Win10 主布局，Win11 主题只更换字体、材质、颜色、描边和圆角。
 - 自定义背景色、文字色、图标大小与位置、标题显示、六种标题位置和背景缩放；旧布局默认保持 Win10 风格的左下标题。
 - 磁贴设置窗口有实时预览，支持一键恢复默认外观，以及"应用"和"保存并关闭"两种提交方式。
 - 文件夹设置只显示实际生效的名称、标题、颜色、背景和内容管理能力，不再暴露无效的父磁贴图标或启动选项。
@@ -191,6 +191,7 @@ Shell 接管与 Windows build 强相关。build 号只用于选择最接近的�
 - 非底部任务栏、任务栏自动隐藏、多显示器混合 DPI 和全屏游戏中的单独 `Win` 键仍需要扩大实机覆盖。
 - 传统 Win32 安装程序创建开始菜单快捷方式后可由目录监听及时刷新；纯 UWP/MSIX 安装、更新或卸载依赖独立的低频后台兜底扫描，应用列表最多可能延迟约 5 分钟更新。
 - 当前主动开发环境已经升级到 Windows 11；涉及 Win10 Shell、布局或动画的改动仍需在 Win10 实机重新验证后，才能更新 Windows 10 基线结论。
+- 当前直接输入会打开 TileStart 自己的应用列表搜索框并原地过滤应用，尚未按目标行为转交 Windows Search；All Apps 的字母 type-to-jump 也尚未补齐。
 - 当前不提供后台自动更新、云同步、插件市场或视频背景；更新检查仅在用户从托盘主动触发时联网。
 
 ## 问题反馈与诊断

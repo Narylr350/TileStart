@@ -3,6 +3,8 @@
 > 分析目标：Windows 10 22H2 build 19045 当前机器上的 `StartUI.dll`。
 >
 > 本文只保存可复核的符号、地址、控制流和参数结论。原始 DLL、PDB、Ghidra 工程、反编译文本、录像和第三方工具均位于 Windows 临时目录，不进入仓库。
+>
+> **文档边界：** 本文描述 Win10 StartUI 的原版 Motion 证据，不要求 TileStart 逐帧或逐 API 复制。TileStart 当前动画实现状态见 `ui-implementation-status.md`；带日期的实现差距仅代表研究当时的代码。
 
 ## 1. 分析对象与工具
 
@@ -67,7 +69,7 @@ Java：OpenJDK 21.0.9
 
 ## 2. 结论摘要
 
-当前 TileStart 不能再被描述为已完成 Win10 Motion 还原。原版 StartUI 的核心行为是：
+原版 StartUI 的核心 Motion 行为如下；这些证据用于理解状态、时序和手感，不作为 TileStart 必须采用相同 Storyboard 技术的要求：
 
 1. Shell 发送全局动画请求。
 2. `SplitViewFrame` 把请求切回 UI 线程并按动画类型分派。
@@ -79,7 +81,7 @@ Java：OpenJDK 21.0.9
 8. StartUI 的 40 个编译 XAML 已完整提取；导航轨、文件夹 chevron、SemanticZoom 和上下文菜单状态不再依赖外观猜测。
 9. 系统关闭动画时仍执行状态更新，但 `StoryboardWrapper` 会把允许跳转的动画立即推进到 fill/end state。
 
-这不是整窗统一 `TranslateY + Opacity` 能等价替代的结构。本轮针对 MVP Motion 的已知研究开放项已经闭环，但这只表示实现参数有证据来源，不表示 TileStart 当前 UI 已经高度还原。
+整窗统一 `TranslateY + Opacity` 不等价于原版逐元素 Motion。TileStart 当前选择保留独立、直觉化的动画体系：开关、字母索引、文件夹、拖动、让位、菜单和按压动画已实现；菜单关闭和应用启动仍只有基础退出行为。是否满足产品目标按视觉体验和状态完整性验收，而不是按私有 API 一致性验收。
 
 ## 3. 全局动画调用链
 
@@ -432,7 +434,7 @@ D = 1931.8199462890625
 1. `ReorderThemeTransition`
 2. `AddDeleteThemeTransition`
 
-随后设置为磁贴列表的 `ItemContainerTransitions`。因此 TileStart 后续应优先复现这两种系统转场的行为，而不是只对布局坐标做瞬时更新。
+随后设置为磁贴列表的 `ItemContainerTransitions`。TileStart 不直接复制 UWP 系统转场，但生产实现必须保留等价的可见状态：拖动预览期间目标稳定、其他磁贴连续让位、Drop 提交、Cancel 回滚，不能只在落下后瞬时改坐标。
 
 ### 11.2 Reflow Timer
 
@@ -453,7 +455,7 @@ DispatcherTimer interval = 1,200,000 × 100 ns = 120 ms
 
 超过阈值时，原版会停止并重新启动 timer；tick 时只有当前位置相对上次已提交位置发生变化，或占位磁贴要求重新渲染，才触发 reflow 事件。
 
-当前 TileStart 的拖动事务虽然会实时更新目标位置，但缺少该 120 ms 稳定窗口、3 DIP 抖动过滤和系统重排转场，因此手感与原版不同。
+TileStart 后续已接入 120 ms reflow 等待、系统拖动阈值、事务式预览和 400 ms 重排位移动画。当前实现不复制 StartUI 的 `ReorderThemeTransition` / `AddDeleteThemeTransition` 编排，但已覆盖连续让位、跨组移动、Drop 提交和 Cancel 回滚；剩余工作是实机手感与边界校准。
 
 ## 12. LauncherFrame 退出包装器
 

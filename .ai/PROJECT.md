@@ -2,9 +2,9 @@
 
 ## Goal
 
-开发一个兼容 Windows 10 和 Windows 11 的系统级磁贴开始菜单替代程序。界面、布局、动画和主要行为复刻用户当前的 Win10 扩展开始菜单，同时加入 Dawn Launcher 风格的任意项目固定与高度自定义图标能力。
+开发一个兼容 Windows 10 和 Windows 11 的系统级磁贴开始菜单替代程序。主界面布局、信息架构和交互习惯以用户当前的 Win10 扩展开始菜单为准，外观按 Win10 原版进行精确校准，同时加入 Dawn Launcher 风格的任意项目固定与高度自定义图标能力。
 
-安装后通过系统开始按钮和单独的 `Win` 键打开 TileStart，先在 Win10 上对照原生开始菜单验证，升级 Win11 后继续使用相同的磁贴体验。
+安装后通过系统开始按钮和单独的 `Win` 键打开 TileStart，先在 Win10 上对照原生开始菜单验证，升级 Win11 后继续使用相同的磁贴体验。Windows 11 主题只把 Win11 的字体、材质、颜色、描边、圆角和控件状态带到这套 Win10 UI/UX 上，不改成 Win11 原生的 Pinned、Recommended 或分类布局。
 
 ## Users and Scenarios
 
@@ -17,7 +17,7 @@
 
 ## MVP
 
-- 底部锚定、不覆盖任务栏、尺寸可调且可记忆的 Win10 风格窗口，支持多显示器和 Per-Monitor DPI。
+- 底部锚定、不覆盖任务栏、尺寸可调且可记忆的 Win10 风格窗口，支持多显示器和 Per-Monitor DPI；Win10/Win11 主题共享同一套 Win10 主布局，仅视觉 token 和窗口材质随主题变化。
 - 左侧扫描开始菜单与 UWP/MSIX 应用，提供最近添加和字母索引；用户直接输入搜索时转交 Windows Search，TileStart 不实现独立搜索结果页。
 - 右侧磁贴区域按窗口可用 DIP 形成固定列数的桌面式工作区；组支持可配置的宽×高跨度、磁贴选择和实时预览，超出可见高度时继续纵向滚动；组内保留 `1×1`、`2×2`、`4×2`、`4×4` 四种磁贴尺寸，并支持拖动、跨组移动和自动避让。
 - 支持固定 `.exe`、`.lnk`、普通文件、文件夹、`.bat`、`.cmd`、`.ps1`、URL、UWP/MSIX 和自定义命令。
@@ -50,6 +50,7 @@
 - 不复刻 ExplorerPatcher 或 Dawn Launcher 的全部功能。
 - 不读取 Windows 原生 Live Tile 数据，不做天气和新闻等在线磁贴。
 - 不实现独立搜索结果页；开始菜单中的搜索输入转交 Windows Search。
+- 不复刻或引入 Win11 原生开始菜单的 Pinned、Recommended、分类或分页布局；Win11 只作为现有 Win10 UI/UX 的视觉主题。
 - 不做云同步、账号、插件市场、后台自动更新和非 Windows 平台版本。
 
 ## Seed Tasks

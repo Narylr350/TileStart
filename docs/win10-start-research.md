@@ -3,6 +3,8 @@
 > 目标环境：Windows 10 Pro for Workstations 22H2，build 19045，2560×1600，150% DPI，底部任务栏。
 >
 > 本文是 TileStart 后续 UI 和交互实现的参考基线。实现时优先相信实机截图、导出的原生布局和重复实测，不凭印象调整。
+>
+> **文档边界：** 本文按研究发生时间保存原版证据和历史差距，带日期的“当前 TileStart”描述可能已经被后续实现取代。当前生产实现状态统一见 `ui-implementation-status.md`；判断是否已实现时以源码、测试和该状态文档为准。
 
 ## 1. 产品目标
 
@@ -83,7 +85,7 @@ TileStart 的目标不是通用启动器，而是：
 - 多个分组不是无限水平单行，而是在可用磁贴区域内横向排列并自动换到下一行。
 - 分组高度由其内部最高占用行决定。
 - 空名称分组仍保持组级间距和布局边界。
-- 当前 TileStart 使用横向 `StackPanel`，不具备原版分组换行行为，是必须重做的结构问题。
+- TileStart 已用 `Win10GroupWrapPanel` 替换早期横向 `StackPanel`，支持按可用宽度排列和换行；后续只需继续做同尺度视觉与边界校准。
 
 ## 6. 主界面结构
 
@@ -193,23 +195,23 @@ Microsoft Learn 对 Windows 10 Start layout 的说明确认：
 
 ## 9. TileStart 当前主要偏差
 
-### P0：结构性偏差
+当前生产状态统一维护在 `ui-implementation-status.md`。截至 2026-07-30，早期列出的分组换行、实时让位、组名编辑、创建组、跨组移动、字母索引、应用文件夹和 Win10 风格上下文菜单均已接入生产实现，不再属于结构性缺失。
 
-1. 磁贴分组使用水平 `StackPanel`，原版是可换行的分组布局。
-2. 当前窗口初始宽度和内容密度没有以实机截图为基准。
-3. 左侧导航轨、应用列表和磁贴区的比例、留白、滚动模型不够接近原版。
-4. 原版没有“现代卡片式”主按钮；“添加磁贴”不应长期占据主界面顶部。
-5. 设置窗口是普通 WPF 表单，和 Win10 上下文菜单/设置体验不一致。
-6. 原版材质、阴影、边界、字体层级、悬停和按压反馈尚未还原。
+仍需继续解决的主要差距是：
 
-### P1：交互偏差
+### P0：Win10 UI / UX 边界
 
-1. 搜索目前依赖显式搜索面板和 `Ctrl+F`，应改为原版直接输入行为。
-2. 拖动目前只在落下后规范化，没有原版实时让位动画和插入预览。
-3. 缺少组名编辑、创建组、跨组视觉反馈和分组换行。
-4. 缺少字母索引面板和应用文件夹展开行为。
-5. 缺少完整键盘焦点和可访问性导航。
-6. 上下文菜单不是 Win10 风格，也没有分层的“调整大小”和“更多”。
+1. 尚未完成原版与 TileStart 的同物理尺度整窗截图验收，不能仅凭常量和局部结构宣称外观已经精确复原。
+2. 当前直接输入仍显示 TileStart 自己的搜索框并原地过滤应用，没有按产品目标转交 Windows Search。
+3. All Apps 的字母 type-to-jump、完整方向键导航、Tab 顺序和跨区域焦点尚未补齐。
+4. 主窗口、导航轨、应用列表、磁贴内容、组间距和滚动条仍需逐项做像素级校准。
+
+### P1：主题、输入与系统设置
+
+1. Win11 主题已提供字体、材质、颜色、描边和圆角，但主窗口中的本地模板仍需逐项确认 Fluent token 覆盖。
+2. Accent、高对比度和壁纸派生颜色的运行时刷新不完整。
+3. 鼠标拖动已实现；触摸、笔、长按、Narrator、文本缩放和完整高对比度主题尚未实现。
+4. 菜单关闭和应用启动只有基础退出行为，没有与当前开启动画配套的内容级过渡。
 
 ### P2：自定义磁贴内容
 
@@ -560,7 +562,7 @@ PDB 不提交仓库。下一步使用 Ghidra/PDBHeaderGenerator 检查其中是�
 
 已确认原版不是整窗统一上滑：应用项和磁贴会分别执行 `CompositeTransform3D.TranslateZ + Opacity` 错峰动画，视图切换使用 `TranslateY`；拖动让位还包含 120 ms reflow timer、3 DIP 抖动阈值和系统 `ReorderThemeTransition`/`AddDeleteThemeTransition`。
 
-因此当前 TileStart 的准确状态应为：
+该阶段当时的准确状态如下，现仅作为历史记录：
 
 ```text
 Win10 布局几何：部分证据化还原
@@ -570,6 +572,8 @@ Win10 全局动画：未实现
 Win10 拖动转场：未实现
 高度还原：不成立
 ```
+
+截至 2026-07-30，布局换行、开启动画、字母索引、应用/磁贴文件夹、拖动、120 ms reflow、让位重排、右键菜单和 Press / Reveal 均已实现。仍不能宣称整体外观精确完成，原因是缺少同尺度整窗视觉验收、完整键盘/搜索边界以及部分主题和系统设置响应。当前矩阵见 `ui-implementation-status.md`。
 
 此前保存的 TileStart 截图不能作为视觉一致或 Motion 完成的验收结论。2026-07-16 核验发现该文件实际为 1707×1067，而原版总览为 2560×1600，文件名中的分辨率声明不成立。后续必须重新采集同物理尺度证据；在视觉细节和剩余 Motion 通过原版对照前，不再把构建称为 Win10 高度还原版本。
 
@@ -585,24 +589,19 @@ Win10 拖动转场：未实现
 - Classic 模式 `AllAppsPanel` 宽度为 260 DIP。
 - 磁贴内容 pane 相对 All Apps 使用 `12,0,0,0` margin，而不是把整个左区简化为固定的 `48 + 204` 两列。
 - All Apps 列表菜单模式行高为 36 DIP；普通分组标题高度同为 36 DIP。
-- All Apps 列表 padding 为 `0,7,0,54`，菜单模式不是当前 TileStart 的 `8,20,8,16`。
+- All Apps 列表编译 padding 为 `0,7,0,54`；TileStart 当前平坦 WPF viewport 只直接应用已验证的 7 DIP 顶部 inset，不能把原版更深层容器的 54 DIP 底部 padding 机械复制到当前 ListBox。
 - 磁贴列表菜单模式底部 padding 为 50 DIP。
-- 原版窗口背景通过 Acrylic VisualState 和主题资源切换；当前 TileStart 的固定纯色背景不等价。
+- 原版窗口背景通过 Acrylic VisualState 和主题资源切换；TileStart 现已接入 Win32 AccentPolicy Acrylic，并在透明关闭或高对比度时回退不透明背景。该映射已实机验证为可接受近似，但不声明与 UWP AcrylicBrush 完全等价。
 
-当前 TileStart 虽然左侧总宽约为 252 DIP，与截图初测接近，但内部使用 `48 + 204` 的简化列、额外 StackPanel margin 和独立 ScrollViewer，因此文字、图标、分组标题与磁贴 pane 的实际锚点仍会错位。后续应按原版容器关系重建，不再只调总宽度。
+TileStart 现已接入 48 DIP 导航轨、260 DIP All Apps、12 DIP pane margin 和独立磁贴工作区等已验证几何。WPF 容器层级仍与 StartUI 不同，因此最终正确性必须由同尺度渲染对照验证，不能机械复制原版深层容器的 margin/padding。
 
 ### 18.2 应用列表与图标
 
 原版 All Apps 项目由独立的 logo plate、logo image、名称和文件夹 glyph 组成；名称使用单行省略，正常文本 margin 为 `8,0,0,0`。菜单模式行高固定为 36 DIP，hover/pressed 使用系统 ListViewItem Reveal 状态。
 
-当前 TileStart 的差异：
+TileStart 后续已把应用列表图标调整为 16 DIP 图像、24 DIP 布局框，删除所有应用统一使用的固定灰色底板，并优先通过 `IShellItemImageFactory` 获取高分辨率 Shell 图标，失败时才回退 legacy 路径。交互边框也已提供 Hover、Pressed 和 Reveal 反馈。
 
-- 将所有应用统一放入手写 Button 模板，缺少原版 ListViewItem 的 Reveal border/state。
-- 每个图标后固定绘制 `#343434` 底板，原版并非所有图标都有统一灰色方块。
-- `SHGetFileInfo` 只取 32×32 legacy icon，再缩放进应用列表和磁贴，无法匹配 UWP/MSIX 包资源及高清 Win32 图标。
-- 图标失败时显示首字母方块，属于占位实现，不是原版视觉。
-
-静态视觉阶段必须分离应用列表图标与磁贴图标资源链路，并分别处理 Win32 Shell image、快捷方式图标和 UWP/MSIX manifest 资产。
+仍未闭环的是 StartUI 内部 Logo 类型 raw value 5 的正式语义、资产来源优先级和全部状态尺寸；当前 Shell 图标链路是独立实现，不声明等同于内部 UnifiedTile 缓存。
 
 ### 18.3 字母索引不是弹出卡片
 
@@ -619,7 +618,7 @@ ItemsWrapGrid：4 列，按列形成最多 8 行
 
 进入索引时，zoomed-in 应用列表与 zoomed-out 索引共享同一数据分组；点击字母后把目标 group 传入 view change，返回列表后执行 `ScrollIntoView` 和 `FocusItem`。`Escape` 返回 zoomed-in view，普通列表和索引视图中的字母键分别执行 app 和 group 的 type-to-jump。
 
-当前 TileStart 使用带 `Margin=8`、`Padding=8`、`#F02A2A2A` 背景和“选择字母”标题的 Border，内部是 6 列 UniformGrid 和 42 DIP 按钮。这一结构与原版不相似，不能通过改颜色补救，应按 SemanticZoom 的双视图关系重做。
+TileStart 已按双视图 SemanticZoom 重做字母索引：48 DIP 单元、20 DIP 字体、共享中心缩放，几何时长和淡入淡出已根据原版录像校准，并通过用户实机验收。普通列表和索引视图中的字母 type-to-jump 仍未补齐。
 
 ### 18.4 搜索转交 Windows Search
 
@@ -637,7 +636,7 @@ Windows Search 的结果页不属于 TileStart 的视觉复刻范围。
 
 原版磁贴模板保留 28 DIP branding 区域，标题位于左下且不换行，底部 margin 为 5 DIP；普通磁贴的左右 branding 列为 8 DIP。分组内容由 `GroupHeaderControl` 和 `TileGridNestedPanel` 组成，组标题容器高 32 DIP，内部磁贴 panel 使用四周 4 DIP margin。
 
-当前 TileStart 的磁贴 Button 整体 padding 为 8 DIP，标题允许两行并额外显示 subtitle；空名称组仍使用 28 DIP TextBox 占位。即使 `Win10TileMetrics` 的 48/4/52 DIP 网格常量正确，内容 padding、标题占位和组容器关系仍会让磁贴看起来大小不一、首排下移且视觉基线不齐。
+TileStart 已接入 28 DIP branding 区、默认左下标题、8 DIP 水平 inset、5 DIP 底部 margin、32 DIP 组标题和临时组名编辑框；空名称组在静止状态不再永久显示 TextBox。自定义标题位置属于 TileStart 扩展，旧布局默认保持 Win10 左下标题。最终文字基线、图标位置和各尺寸磁贴仍需同尺度截图校准。
 
 ### 18.6 编码前门槛
 
