@@ -25,8 +25,10 @@ namespace TileStart.Host.Controllers;
 internal sealed class TileWorkspaceController : IDisposable
 {
     private int _appFolderAnimationGeneration;
+    private int _recentAppsAnimationGeneration;
     private int _tileFolderAnimationGeneration;
     private bool _isAppFolderAnimating;
+    private bool _isRecentAppsAnimating;
     private bool _isTileFolderAnimating;
     private readonly CancellationTokenSource _lifetimeCancellation = new();
     private readonly CancellationToken _lifetimeToken;
@@ -881,7 +883,79 @@ internal sealed class TileWorkspaceController : IDisposable
         }
     }
 
-    // ── App folder animations ─────────────────────────────────────
+    // ── Application list animations ───────────────────────────────
+
+    public async Task ToggleRecentAppsAsync()
+    {
+        if (_isDisposed || _isRecentAppsAnimating)
+        {
+            return;
+        }
+
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            _appController.ToggleRecentApps();
+            return;
+        }
+
+        _isRecentAppsAnimating = true;
+        var generation = ++_recentAppsAnimationGeneration;
+        try
+        {
+            var recentAppsControl = FindRecentAppsControl();
+            if (!_appController.RecentAppsExpanded)
+            {
+                var previousPositions = CaptureAppEntryPositions();
+                var previousCount = _appController.RecentApps.Count;
+                _appController.ToggleRecentApps();
+                _window.UpdateLayout();
+                AnimateAppEntryReflowFrom(previousPositions);
+                AnimateAppRows(recentAppsControl ?? FindRecentAppsControl(), previousCount, expanding: true);
+                await WaitForAnimationAsync(
+                    Win10FolderMotion.AppOpenDuration(_appController.RecentApps.Count - previousCount));
+                return;
+            }
+
+            if (recentAppsControl is not null)
+            {
+                var collapsedHeight = Math.Min(
+                                          ApplicationPaneController.CollapsedRecentAppCount,
+                                          _appController.RecentApps.Count)
+                                      * Win10VisualMetrics.AllAppsRowHeight;
+                recentAppsControl.BeginAnimation(
+                    FrameworkElement.HeightProperty,
+                    Win10FolderMotion.CreateSplineAnimation(
+                        recentAppsControl.ActualHeight,
+                        collapsedHeight,
+                        0,
+                        Win10FolderMotion.AppChildDurationMilliseconds,
+                        Win10FolderMotion.StandardSpline,
+                        FillBehavior.HoldEnd),
+                    HandoffBehavior.SnapshotAndReplace);
+            }
+
+            AnimateAppRows(
+                recentAppsControl,
+                ApplicationPaneController.CollapsedRecentAppCount,
+                expanding: false);
+            if (!await WaitForAnimationAsync(Win10FolderMotion.AppChildDurationMilliseconds)
+                || generation != _recentAppsAnimationGeneration)
+            {
+                return;
+            }
+
+            _appController.ToggleRecentApps();
+            recentAppsControl?.BeginAnimation(FrameworkElement.HeightProperty, null);
+            _window.UpdateLayout();
+        }
+        finally
+        {
+            if (generation == _recentAppsAnimationGeneration)
+            {
+                _isRecentAppsAnimating = false;
+            }
+        }
+    }
 
     public async Task ToggleAppFolderAsync(AppEntry folder)
     {
@@ -954,12 +1028,12 @@ internal sealed class TileWorkspaceController : IDisposable
         }
     }
 
-    private Dictionary<AppEntry, System.Windows.Point> CaptureAppEntryPositions()
+    private Dictionary<FrameworkElement, System.Windows.Point> CaptureAppEntryPositions()
     {
-        var positions = new Dictionary<AppEntry, System.Windows.Point>();
+        var positions = new Dictionary<FrameworkElement, System.Windows.Point>();
         foreach (var button in FindVisualDescendants<Button>(_appsList))
         {
-            if (button.Tag is not AppEntry app
+            if (button.Tag is not AppEntry
                 || button.Parent is not FrameworkElement root
                 || !root.IsVisible
                 || !root.IsDescendantOf(_appsList))
@@ -967,18 +1041,18 @@ internal sealed class TileWorkspaceController : IDisposable
                 continue;
             }
 
-            positions[app] = root.TransformToAncestor(_appsList).Transform(new System.Windows.Point());
+            positions[root] = root.TransformToAncestor(_appsList).Transform(new System.Windows.Point());
         }
 
         return positions;
     }
 
-    private void AnimateAppEntryReflowFrom(IReadOnlyDictionary<AppEntry, System.Windows.Point> previousPositions)
+    private void AnimateAppEntryReflowFrom(
+        IReadOnlyDictionary<FrameworkElement, System.Windows.Point> previousPositions)
     {
-        foreach (var (app, previous) in previousPositions)
+        foreach (var (root, previous) in previousPositions)
         {
-            var root = FindAppEntryRoot(app);
-            if (root is null)
+            if (!root.IsVisible || !root.IsDescendantOf(_appsList))
             {
                 continue;
             }
@@ -993,41 +1067,44 @@ internal sealed class TileWorkspaceController : IDisposable
         }
     }
 
-    private FrameworkElement? FindAppEntryRoot(AppEntry app) =>
-        FindVisualDescendants<Button>(_appsList)
-            .FirstOrDefault(button => ReferenceEquals(button.Tag, app))?.Parent as FrameworkElement;
-
     private ItemsControl? FindAppFolderControl(AppEntry folder) =>
         FindVisualDescendants<ItemsControl>(_appsList)
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Tag, folder));
 
-    private void AnimateAppFolderChildren(AppEntry folder, bool expanding)
+    private void AnimateAppFolderChildren(AppEntry folder, bool expanding) =>
+        AnimateAppRows(FindAppFolderControl(folder), 0, expanding);
+
+    private ItemsControl? FindRecentAppsControl() =>
+        FindVisualDescendants<ItemsControl>(_appsList)
+            .FirstOrDefault(candidate =>
+                ReferenceEquals(candidate.DataContext, _appController.RecentSection)
+                && ReferenceEquals(candidate.ItemsSource, _appController.RecentApps));
+
+    private static void AnimateAppRows(ItemsControl? control, int firstAnimatedIndex, bool expanding)
     {
-        var control = FindAppFolderControl(folder);
         if (control is null)
         {
             return;
         }
 
         control.UpdateLayout();
-        for (var index = 0; index < folder.Children.Count; index++)
+        for (var index = Math.Max(0, firstAnimatedIndex); index < control.Items.Count; index++)
         {
-            if (control.ItemContainerGenerator.ContainerFromItem(folder.Children[index]) is not FrameworkElement child)
+            if (control.ItemContainerGenerator.ContainerFromIndex(index) is not FrameworkElement child)
             {
                 continue;
             }
 
-            var delay = expanding ? Win10FolderMotion.AppChildDelay(index) : 0;
-            var from = expanding ? -Win10VisualMetrics.AllAppsRowHeight : 0;
-            var to = expanding ? 0 : -Win10VisualMetrics.AllAppsRowHeight;
+            var animationIndex = index - firstAnimatedIndex;
+            var delay = expanding ? Win10FolderMotion.AppChildDelay(animationIndex) : 0;
             var transform = new TranslateTransform();
             child.RenderTransform = transform;
             child.Opacity = 1;
             transform.BeginAnimation(
                 TranslateTransform.YProperty,
                 Win10FolderMotion.CreateSplineAnimation(
-                    from,
-                    to,
+                    expanding ? -Win10VisualMetrics.AllAppsRowHeight : 0,
+                    expanding ? 0 : -Win10VisualMetrics.AllAppsRowHeight,
                     delay,
                     Win10FolderMotion.AppChildDurationMilliseconds,
                     Win10FolderMotion.StandardSpline,
@@ -1423,8 +1500,10 @@ internal sealed class TileWorkspaceController : IDisposable
 
         _isDisposed = true;
         _appFolderAnimationGeneration++;
+        _recentAppsAnimationGeneration++;
         _tileFolderAnimationGeneration++;
         _isAppFolderAnimating = false;
+        _isRecentAppsAnimating = false;
         _isTileFolderAnimating = false;
         _lifetimeCancellation.Cancel();
         _lifetimeCancellation.Dispose();

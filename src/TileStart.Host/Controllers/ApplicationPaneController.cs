@@ -19,7 +19,7 @@ namespace TileStart.Host.Controllers;
 
 internal sealed class ApplicationPaneController : IDisposable
 {
-    private const int CollapsedRecentAppCount = 3;
+    internal const int CollapsedRecentAppCount = 3;
     private const int ExpandedRecentAppCount = 10;
     private static readonly TimeSpan ApplicationRefreshDebounce = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan PackagedAppRefreshInterval = TimeSpan.FromMinutes(5);
@@ -108,6 +108,8 @@ internal sealed class ApplicationPaneController : IDisposable
     public IReadOnlyList<AppEntry> LaunchableApps => _launchableApps;
 
     public bool ApplicationContentReady => _applicationContentReady;
+
+    public bool RecentAppsExpanded => _recentAppsExpanded;
 
     public IList<AppEntry> AllApps => _apps;
 
@@ -812,7 +814,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private readonly record struct LoadedApplicationIcon(AppEntry App, ImageSource Icon);
 
-    public void RecentExpandButtonClick()
+    public void ToggleRecentApps()
     {
         _recentAppsExpanded = !_recentAppsExpanded;
         RefreshRecentApps();

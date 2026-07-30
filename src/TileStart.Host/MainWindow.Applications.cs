@@ -11,7 +11,7 @@ public partial class MainWindow
         _appController.HandleHostRequest(request);
 
     private void RecentExpandButton_Click(object sender, RoutedEventArgs e) =>
-        _appController.RecentExpandButtonClick();
+        _ = _tileWorkspaceController.ToggleRecentAppsAsync();
 
     private void AppButton_Click(object sender, RoutedEventArgs e)
     {
