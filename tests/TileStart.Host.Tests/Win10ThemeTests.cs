@@ -58,7 +58,7 @@ public sealed class Win10ThemeTests
 
         Assert.True(material.UseAcrylic);
         Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xBF101010), material.AcrylicGradientColor);
+        Assert.Equal(unchecked((int)0xCC101010), material.AcrylicGradientColor);
     }
 
     [Fact]
@@ -108,6 +108,17 @@ public sealed class Win10ThemeTests
         Assert.Equal(
             Color.FromRgb(0x1C, 0x1C, 0x1C),
             Win10Theme.ResolveStartSurfaceColor(startColorMenu: null));
+    }
+
+    [Fact]
+    public void Win10TileBackgroundSharesTheStartSurfaceHue()
+    {
+        Assert.Equal(
+            Color.FromRgb(0x90, 0x60, 0x68),
+            Win10Theme.ResolveWin10StartTileBackgroundColor(unchecked((int)0x00574E84)));
+        Assert.Equal(
+            Color.FromRgb(0x33, 0x33, 0x33),
+            Win10Theme.ResolveWin10StartTileBackgroundColor(startColorMenu: null));
     }
 
     [Theory]

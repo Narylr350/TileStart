@@ -56,6 +56,9 @@ public sealed class Win10VisualSpecTests
             (Win10VisualMetrics.AllAppsWidth - Win10VisualMetrics.AllAppsGridItemWidth) / 2,
             Win10VisualMetrics.AllAppsItemMargin.Left);
         Assert.Equal(Win10VisualMetrics.AllAppsItemMargin.Left, Win10VisualMetrics.AllAppsItemMargin.Right);
+        Assert.Equal(14, Win10VisualMetrics.AllAppsGroupHeaderPresenterPadding.Left);
+        Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderPadding.Bottom,
+            Win10VisualMetrics.AllAppsGroupHeaderPresenterPadding.Bottom);
 
         using var alphabet = ReadSpec("alphabet-index.json");
         var alphabetMetrics = alphabet.RootElement.GetProperty("metrics");
@@ -97,6 +100,8 @@ public sealed class Win10VisualSpecTests
         AssertThickness(Win10VisualMetrics.TileNestedPanelMargin, metrics.GetProperty("nestedPanelMargin").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.TileBrandingMargin, metrics.GetProperty("bottomAlignedTextMargin").GetProperty("value"), horizontalInset: 8);
         Assert.Equal("NoWrap", metrics.GetProperty("groupTitleWrapping").GetProperty("value").GetString());
+        Assert.Equal(12, Win10VisualMetrics.TileScrollViewerMargin.Left);
+        Assert.Equal(14, Win10VisualMetrics.TileScrollViewerMargin.Top);
     }
 
     [Fact]

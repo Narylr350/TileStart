@@ -16,7 +16,7 @@ public static class Win10Theme
     private const string AccentRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent";
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
-    private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
+    private const int StartAcrylicGradientColor = unchecked((int)0xCC101010);
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
@@ -62,6 +62,13 @@ public static class Win10Theme
     /// </summary>
     public static MediaColor StartTileBackgroundColor { get; } =
         Blend(StartSurfaceColor, Colors.Black, 0.32);
+
+    /// <summary>
+    /// Windows 10 default tile face: keep the wallpaper-derived Start hue and lift it just enough
+    /// to separate tiles from the acrylic surface, rather than falling back to an unrelated grey.
+    /// </summary>
+    public static MediaColor Win10StartTileBackgroundColor { get; } =
+        Blend(StartSurfaceColor, Colors.White, 0.10);
 
     internal static MediaColor ResolveAccentColor(object? accentColorMenu, byte[]? palette, MediaColor fallback)
     {
@@ -169,6 +176,9 @@ public static class Win10Theme
             ? MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16))
             : NeutralStartSurfaceColor;
     }
+
+    internal static MediaColor ResolveWin10StartTileBackgroundColor(object? startColorMenu) =>
+        Blend(ResolveStartSurfaceColor(startColorMenu), Colors.White, 0.10);
 
     private static MediaColor ReadAccentColor()
     {

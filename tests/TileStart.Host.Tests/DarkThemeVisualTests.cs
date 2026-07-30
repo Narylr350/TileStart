@@ -41,8 +41,45 @@ public sealed class DarkThemeVisualTests
                 && (string?)element.Attribute("Margin") == "8,0,0,0");
 
         Assert.Equal("Wrap", (string?)appName.Attribute("TextWrapping"));
-        Assert.Equal("34", (string?)appName.Attribute("MaxHeight"));
-        Assert.Equal("17", (string?)appName.Attribute("LineHeight"));
+        Assert.Equal("12", (string?)appName.Attribute("FontSize"));
+        Assert.Equal("Normal", (string?)appName.Attribute("FontWeight"));
+        Assert.Equal("32", (string?)appName.Attribute("MaxHeight"));
+        Assert.Equal("16", (string?)appName.Attribute("LineHeight"));
+    }
+
+    [Fact]
+    public void Win10StaticCalibrationUsesTheNativeScaleAndQuietScrollBar()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        Assert.Equal("640", (string?)document.Root?.Attribute("Height"));
+
+        var tileTitle = document.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute(x + "Name") == "TileTitle");
+        Assert.Equal("12", (string?)tileTitle.Attribute("FontSize"));
+        Assert.Equal("Normal", (string?)tileTitle.Attribute("FontWeight"));
+
+        var recentTitle = document.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute("Text") == "最近添加");
+        var recentTitleRow = Assert.IsType<XElement>(recentTitle.Parent);
+        Assert.Equal("Grid", recentTitleRow.Name.LocalName);
+        Assert.Equal("{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}",
+            (string?)recentTitleRow.Attribute("Height"));
+        Assert.Equal("Center", (string?)recentTitle.Attribute("VerticalAlignment"));
+        Assert.Null(recentTitle.Attribute("Height"));
+
+        var letterHeaderStyle = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "LetterHeaderStyle");
+        Assert.Contains(letterHeaderStyle.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Padding"
+            && (string?)setter.Attribute("Value") ==
+            "{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPresenterPadding}");
+
+        var scrollThumb = document.Descendants(presentation + "Thumb")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ScrollThumb");
+        Assert.Equal("0", (string?)scrollThumb.Attribute("Opacity"));
     }
 
     [Fact]

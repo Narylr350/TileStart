@@ -11,7 +11,7 @@
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="TileStart"
         Width="1252"
-        Height="768"
+        Height="640"
         MinWidth="680"
         MinHeight="480"
         Background="Transparent"
@@ -65,7 +65,7 @@
                                            MinHeight="24"
                                            HorizontalAlignment="Right"
                                            Background="{StaticResource TileStartTextTertiaryBrush}"
-                                           Opacity="0.72">
+                                           Opacity="0">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border Background="{TemplateBinding Background}" CornerRadius="1" />
@@ -225,7 +225,7 @@
         <Style x:Key="LetterHeaderStyle" TargetType="Button">
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
-            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPadding}" />
+            <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPresenterPadding}" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="VerticalContentAlignment" Value="Bottom" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
@@ -418,11 +418,11 @@
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"
                                    FontFamily="{StaticResource TileStartContentFont}"
-                                   FontSize="14"
-                                   FontWeight="Medium"
-                                   LineHeight="17"
-                                   LineStackingStrategy="BlockLineHeight"
-                                   MaxHeight="34"
+                                    FontSize="12"
+                                    FontWeight="Normal"
+                                    LineHeight="16"
+                                    LineStackingStrategy="BlockLineHeight"
+                                    MaxHeight="32"
                                    Text="{Binding Name}"
                                    TextTrimming="CharacterEllipsis"
                                    TextWrapping="Wrap" />
@@ -859,12 +859,12 @@
                                            BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
                                     <DataTemplate DataType="{x:Type apps:RecentApplicationsSection}">
                                         <StackPanel>
-                                            <TextBlock
-                                                Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
-                                                Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
-                                                VerticalAlignment="Center"
-                                                FontSize="12"
-                                                Text="最近添加" />
+                                            <Grid Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
+                                                  Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}">
+                                                <TextBlock VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Text="最近添加" />
+                                            </Grid>
                                             <ItemsControl ItemsSource="{Binding Apps}"
                                                           ItemTemplate="{StaticResource AppEntryTemplate}" />
                                             <Button HorizontalContentAlignment="Left"
@@ -1172,8 +1172,8 @@
                                                                  <!-- 预览仍遵循 Win10 的三列图标槽位；TileStart 按产品选择保留普通磁贴品牌区，
                                                                       让文件夹名称与其他磁贴一致显示，而不是复制原版的展开名称行。 -->
                                                                  <ItemsControl x:Name="FolderPreview"
-                                                                               Width="66"
-                                                                               Height="66"
+                                                                                Width="72"
+                                                                                Height="72"
                                                                                HorizontalAlignment="Center"
                                                                                VerticalAlignment="Center"
                                                                                ClipToBounds="True"
@@ -1185,23 +1185,34 @@
                                                                      </ItemsControl.ItemsPanel>
                                                                      <ItemsControl.ItemTemplate>
                                                                          <DataTemplate>
-                                                                             <Grid Margin="2">
-                                                                                     <Image
-                                                                                         RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                         Stretch="Uniform">
+                                                                              <!-- Packaged icons often include a transparent plate. Each 24 DIP slot clips a
+                                                                                   2x visual compensation so the visible glyph matches native folder previews. -->
+                                                                              <Grid Margin="0" ClipToBounds="True">
+                                                                                      <Image
+                                                                                          RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                          RenderTransformOrigin="0.5,0.5"
+                                                                                          Stretch="Uniform">
                                                                                         <Image.Source>
                                                                                             <MultiBinding
                                                                                                 Converter="{StaticResource NonGifImageSourceConverter}">
                                                                                                 <Binding Path="Icon" />
                                                                                                 <Binding Path="IconPath" />
                                                                                             </MultiBinding>
-                                                                                        </Image.Source>
-                                                                                    </Image>
-                                                                                    <Image
-                                                                                        RenderOptions.BitmapScalingMode="HighQuality"
-                                                                                        gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
-                                                                                         gif:ImageBehavior.RepeatBehavior="Forever"
-                                                                                         Stretch="Uniform" />
+                                                                                         </Image.Source>
+                                                                                         <Image.RenderTransform>
+                                                                                             <ScaleTransform ScaleX="2" ScaleY="2" />
+                                                                                         </Image.RenderTransform>
+                                                                                     </Image>
+                                                                                     <Image
+                                                                                         RenderOptions.BitmapScalingMode="HighQuality"
+                                                                                         gif:ImageBehavior.AnimatedSource="{Binding IconPath, Converter={StaticResource GifImageSourceConverter}}"
+                                                                                          gif:ImageBehavior.RepeatBehavior="Forever"
+                                                                                          RenderTransformOrigin="0.5,0.5"
+                                                                                          Stretch="Uniform">
+                                                                                         <Image.RenderTransform>
+                                                                                             <ScaleTransform ScaleX="2" ScaleY="2" />
+                                                                                         </Image.RenderTransform>
+                                                                                     </Image>
                                                                              </Grid>
                                                                          </DataTemplate>
                                                                      </ItemsControl.ItemTemplate>
@@ -1221,7 +1232,7 @@
                                                                  <TextBlock x:Name="TileTitle"
                                                                             FontFamily="{StaticResource TileStartContentFont}"
                                                                             FontSize="12"
-                                                                            FontWeight="SemiBold"
+                                                                             FontWeight="Normal"
                                                                             Style="{StaticResource TileStartTileTitleTextStyle}"
                                                                             Text="{Binding Name}"
                                                                            TextAlignment="Left"

@@ -29,10 +29,22 @@ public sealed class TileFolderAppearanceTests
         Assert.Equal("0", visual.Attribute("Grid.Row")?.Value);
         Assert.Null(visual.Attribute("Grid.RowSpan"));
         Assert.Null(preview.Attribute("Grid.Row"));
-        Assert.Equal("66", preview.Attribute("Width")?.Value);
-        Assert.Equal("66", preview.Attribute("Height")?.Value);
+        Assert.Equal("72", preview.Attribute("Width")?.Value);
+        Assert.Equal("72", preview.Attribute("Height")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Rows")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Columns")?.Value);
+        var slot = Assert.Single(preview.Descendants(), element =>
+            element.Name.LocalName == "Grid" && element.Attribute("ClipToBounds")?.Value == "True");
+        Assert.Equal("0", slot.Attribute("Margin")?.Value);
+        var previewImages = slot.Elements().Where(element => element.Name.LocalName == "Image").ToArray();
+        Assert.Equal(2, previewImages.Length);
+        Assert.All(previewImages, image =>
+        {
+            Assert.Equal("0.5,0.5", image.Attribute("RenderTransformOrigin")?.Value);
+            var scale = Assert.Single(image.Descendants(), element => element.Name.LocalName == "ScaleTransform");
+            Assert.Equal("2", scale.Attribute("ScaleX")?.Value);
+            Assert.Equal("2", scale.Attribute("ScaleY")?.Value);
+        });
         Assert.Equal("{Binding Name}", NamedElement("TileTitle").Attribute("Text")?.Value);
         Assert.DoesNotContain(preview.Descendants(), element =>
             element.Name.LocalName == "Border"
