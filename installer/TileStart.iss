@@ -200,6 +200,8 @@ begin
     StopTileStart;
     if FileExists(ExpandConstant('{app}\TileStart.Host.exe')) then
     begin
+      Exec(ExpandConstant('{app}\TileStart.Host.exe'), '--remove-startup-registration', '', SW_HIDE,
+        ewWaitUntilTerminated, ResultCode);
       Exec(ExpandConstant('{app}\TileStart.Host.exe'), '--remove-nvidia-overlay-configuration', '', SW_HIDE,
         ewWaitUntilTerminated, ResultCode);
     end;

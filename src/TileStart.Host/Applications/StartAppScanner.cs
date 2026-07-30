@@ -156,7 +156,7 @@ public static class StartAppScanner
         {
             IsBackground = true,
             Name = "TileStart AppsFolder Scanner",
-            Priority = ThreadPriority.BelowNormal,
+            Priority = ThreadPriority.Lowest,
         };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
@@ -184,7 +184,7 @@ public static class StartAppScanner
             IsBackground = true,
             Name = name,
             // 应用枚举属于维护工作，不能与开始菜单动画争抢普通优先级 CPU 时间。
-            Priority = ThreadPriority.BelowNormal,
+            Priority = ThreadPriority.Lowest,
         };
         thread.SetApartmentState(apartmentState);
         thread.Start();

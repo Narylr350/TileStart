@@ -111,10 +111,20 @@ public partial class App : System.Windows.Application
         }
 
         DiagnosticLog.Write("Host startup completed.");
+        ThreadPool.UnsafeQueueUserWorkItem(static _ => StartupRegistration.MigrateLegacyRegistration(), null);
     }
 
     private bool TryHandleCompatibilityCommand(IReadOnlyList<string> arguments)
     {
+        if (arguments.Contains("--remove-startup-registration", StringComparer.OrdinalIgnoreCase))
+        {
+            var startupRemoved = StartupRegistration.SetEnabled(false);
+            DiagnosticLog.Write($"Login startup removal: success={startupRemoved}.");
+            DiagnosticLog.Flush();
+            Shutdown(startupRemoved ? 0 : 1);
+            return true;
+        }
+
         var remove = arguments.Contains("--remove-nvidia-overlay-configuration",
             StringComparer.OrdinalIgnoreCase);
         if (!remove && !arguments.Contains("--configure-nvidia-overlay", StringComparer.OrdinalIgnoreCase))

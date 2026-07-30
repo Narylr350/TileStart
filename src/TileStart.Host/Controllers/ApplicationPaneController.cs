@@ -41,6 +41,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private bool _applicationRefreshInProgress;
     private bool _applicationRefreshPending;
     private bool _recentAppsExpanded;
+    private bool _layoutRestored;
     private bool _isDisposed;
 
     private readonly TileLayout _tileLayout;
@@ -113,6 +114,31 @@ internal sealed class ApplicationPaneController : IDisposable
 
     public IList<AppEntry> AllApps => _apps;
 
+    public void RestoreSavedLayout()
+    {
+        if (_layoutRestored)
+        {
+            return;
+        }
+
+        _layoutRestored = true;
+        var layout = _savedLayout ?? new TileLayout();
+        foreach (var group in layout.Groups)
+        {
+            _tileLayout.Groups.Add(group);
+        }
+
+        _updateLayout();
+        var migratedGroupCoordinates = _ensureGroupGridCoordinates();
+        if (_savedLayout is null || migratedGroupCoordinates)
+        {
+            TileLayoutStore.Save(_tileLayout);
+        }
+
+        _prepareMotionElements();
+        DiagnosticLog.Write($"Tile layout ready: {_tileLayout.Groups.Sum(group => group.Tiles.Count)} tiles.");
+    }
+
     public async Task LoadAppsAsync()
     {
         if (_isDisposed)
@@ -137,25 +163,12 @@ internal sealed class ApplicationPaneController : IDisposable
             RefreshRecentApps();
 
             AlphabetIndex.UpdateAvailability(AlphabetLetters, apps, RecentApps.Count > 0);
-            var layout = _savedLayout ?? new TileLayout();
-            RestoreTileIcons(layout, launchableApps);
-            foreach (var group in layout.Groups)
-            {
-                _tileLayout.Groups.Add(group);
-            }
-
-            _updateLayout();
-            var migratedGroupCoordinates = _ensureGroupGridCoordinates();
-            if (_savedLayout is null || migratedGroupCoordinates)
-            {
-                TileLayoutStore.Save(_tileLayout);
-            }
-
-            _prepareMotionElements();
+            RestoreSavedLayout();
+            _applicationContentReady = true;
             DiagnosticLog.Write("Application content ready.");
             QueueContextMenuPrewarm();
+            _ = LoadTileVisualsAsync(launchableApps);
             _ = LoadApplicationIconsAsync(launchableApps);
-            _applicationContentReady = true;
             StartApplicationChangeMonitoring();
             while (_pendingHostRequests.Count > 0)
             {
@@ -709,7 +722,7 @@ internal sealed class ApplicationPaneController : IDisposable
             var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
             var packagedApps = apps.Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
             var loadedGroups = await Task.WhenAll(
-                Task.Run(() => LoadApplicationIcons(classicApps)),
+                RunBackgroundThreadAsync(() => LoadApplicationIcons(classicApps), "TileStart Classic Icon Loader"),
                 RunStaThreadAsync(() => LoadApplicationIcons(packagedApps), "TileStart Packaged Icon Loader"));
             var loadedIcons = loadedGroups.SelectMany(group => group).ToArray();
             _lifetimeToken.ThrowIfCancellationRequested();
@@ -789,6 +802,29 @@ internal sealed class ApplicationPaneController : IDisposable
         }
     }
 
+    private static Task<T> RunBackgroundThreadAsync<T>(Func<T> action, string name)
+    {
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                completion.SetResult(action());
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = name,
+            Priority = ThreadPriority.Lowest,
+        };
+        thread.Start();
+        return completion.Task;
+    }
+
     private static Task<T> RunStaThreadAsync<T>(Func<T> action, string name)
     {
         var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -806,6 +842,7 @@ internal sealed class ApplicationPaneController : IDisposable
         {
             IsBackground = true,
             Name = name,
+            Priority = ThreadPriority.Lowest,
         };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
@@ -888,31 +925,88 @@ internal sealed class ApplicationPaneController : IDisposable
         return tile;
     }
 
-    public static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)
+    private async Task LoadTileVisualsAsync(IReadOnlyList<AppEntry> apps)
     {
-        foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
+        try
         {
-            RestoreTileIconTree(tile, apps);
+            var loadedVisuals = await RunStaThreadAsync(
+                () => LoadTileVisuals(_tileLayout, apps),
+                "TileStart Tile Visual Loader");
+            _lifetimeToken.ThrowIfCancellationRequested();
+            await _dispatcher.InvokeAsync(
+                () => ApplyTileVisuals(loadedVisuals),
+                System.Windows.Threading.DispatcherPriority.Background,
+                _lifetimeToken);
+            DiagnosticLog.Write($"Tile visual loading completed: {loadedVisuals.Count} tiles processed.");
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Tile visual load failed: {exception}");
         }
     }
 
-    private static void RestoreTileIconTree(TileItem tile, IReadOnlyList<AppEntry> apps)
+    private static IReadOnlyList<LoadedTileVisual> LoadTileVisuals(
+        TileLayout layout,
+        IReadOnlyList<AppEntry> apps)
     {
-        tile.BackgroundImage = ShellIconLoader.LoadImage(tile.BackgroundImagePath);
-        RestoreTileIcon(tile, apps);
+        var loadedVisuals = new List<LoadedTileVisual>();
+        foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
+        {
+            LoadTileVisualTree(tile, apps, loadedVisuals);
+        }
+
+        return loadedVisuals;
+    }
+
+    private static void LoadTileVisualTree(
+        TileItem tile,
+        IReadOnlyList<AppEntry> apps,
+        ICollection<LoadedTileVisual> loadedVisuals)
+    {
+        var (icon, usesFullTileLogo) = LoadTileIcon(tile, apps);
+        loadedVisuals.Add(new LoadedTileVisual(
+            tile,
+            ShellIconLoader.LoadImage(tile.BackgroundImagePath),
+            icon,
+            usesFullTileLogo));
         foreach (var child in tile.FolderTiles)
         {
-            RestoreTileIconTree(child, apps);
+            LoadTileVisualTree(child, apps, loadedVisuals);
         }
+    }
+
+    private static void ApplyTileVisuals(IReadOnlyList<LoadedTileVisual> loadedVisuals)
+    {
+        foreach (var loaded in loadedVisuals)
+        {
+            loaded.Tile.BackgroundImage = loaded.BackgroundImage;
+            loaded.Tile.Icon = loaded.Icon;
+            loaded.Tile.UsesFullTileLogo = loaded.UsesFullTileLogo;
+        }
+    }
+
+    public static void RestoreTileIcons(TileLayout layout, IReadOnlyList<AppEntry> apps)
+    {
+        ApplyTileVisuals(LoadTileVisuals(layout, apps));
     }
 
     public static void RestoreTileIcon(TileItem tile, IReadOnlyList<AppEntry> apps)
     {
-        tile.UsesFullTileLogo = false;
+        var (icon, usesFullTileLogo) = LoadTileIcon(tile, apps);
+        tile.Icon = icon;
+        tile.UsesFullTileLogo = usesFullTileLogo;
+    }
+
+    private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
+        TileItem tile,
+        IReadOnlyList<AppEntry> apps)
+    {
         if (!string.IsNullOrWhiteSpace(tile.IconPath))
         {
-            tile.Icon = ShellIconLoader.Load(tile.IconPath) ?? GenericAppIcon.Image;
-            return;
+            return (ShellIconLoader.Load(tile.IconPath) ?? GenericAppIcon.Image, false);
         }
 
         var app = apps.FirstOrDefault(candidate =>
@@ -924,17 +1018,20 @@ internal sealed class ApplicationPaneController : IDisposable
                 : null;
             if (tileLogo is not null)
             {
-                tile.Icon = tileLogo;
-                tile.UsesFullTileLogo = true;
-                return;
+                return (tileLogo, true);
             }
 
-            tile.Icon = app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image;
-            return;
+            return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
         }
 
-        tile.Icon = ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image;
+        return (ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
     }
+
+    private readonly record struct LoadedTileVisual(
+        TileItem Tile,
+        ImageSource? BackgroundImage,
+        ImageSource Icon,
+        bool UsesFullTileLogo);
 
     private static IEnumerable<T> FindVisualDescendants<T>(DependencyObject parent)
         where T : DependencyObject

@@ -144,6 +144,7 @@ public partial class MainWindow : Window
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;
         TileLayout.Groups.CollectionChanged += TileGroups_CollectionChanged;
+        _appController.RestoreSavedLayout();
         _ = _appController.LoadAppsAsync();
     }
 

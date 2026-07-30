@@ -58,6 +58,7 @@ public sealed class InstallerSafetyTests
             line => line.Contains("ValueName: \"TileStart\"", StringComparison.Ordinal));
         Assert.DoesNotContain("Tasks:", startupRegistration, StringComparison.Ordinal);
         Assert.DoesNotContain("Name: \"autostart\"", source, StringComparison.Ordinal);
+        Assert.Contains("--remove-startup-registration", source, StringComparison.Ordinal);
     }
 
     [Fact]

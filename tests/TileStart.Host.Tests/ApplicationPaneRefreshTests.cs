@@ -91,7 +91,7 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
-    public void ApplicationEnumerationUsesLowPriorityWorkerThreads()
+    public void ApplicationEnumerationUsesLowestPriorityWorkerThreads()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -100,6 +100,6 @@ public sealed class ApplicationPaneRefreshTests
             "Applications",
             "StartAppScanner.cs"));
 
-        Assert.Equal(2, source.Split("Priority = ThreadPriority.BelowNormal", StringSplitOptions.None).Length - 1);
+        Assert.Equal(2, source.Split("Priority = ThreadPriority.Lowest", StringSplitOptions.None).Length - 1);
     }
 }

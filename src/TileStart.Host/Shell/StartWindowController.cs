@@ -164,6 +164,7 @@ public class StartWindowController : IDisposable
             return;
         }
 
+        InteractiveProcessPriority.Boost();
         _beforeShow();
 
         StopEntranceCache();
@@ -222,6 +223,7 @@ public class StartWindowController : IDisposable
             e.Cancel = true;
             _foregroundWatchdogTimer.Stop();
             _window.Hide();
+            InteractiveProcessPriority.Restore();
         }
     }
 
@@ -233,6 +235,7 @@ public class StartWindowController : IDisposable
         }
 
         _isDisposed = true;
+        InteractiveProcessPriority.Restore();
         _foregroundActivationGeneration++;
         StopEntranceCache();
         _foregroundWatchdogTimer.Stop();
@@ -572,6 +575,7 @@ public class StartWindowController : IDisposable
         {
             _window.Topmost = wasTopmost;
             _isDismissing = false;
+            InteractiveProcessPriority.Restore();
         }
     }
 
