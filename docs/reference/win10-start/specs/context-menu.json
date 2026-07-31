@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "context-menu",
-  "status": "verified-layout-only",
+  "status": "verified-layout-and-material-source",
   "target": {
     "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
     "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
@@ -69,8 +69,23 @@
       }
     }
   },
+  "material": {
+    "transientBackground": {
+      "backgroundSource": "HostBackdrop",
+      "tintOpacity": 0.8,
+      "darkFallbackColor": "#FF2B2B2B",
+      "lightFallbackColor": "#FFF2F2F2",
+      "evidence": "compiled-system-xbf",
+      "anchor": "MenuFlyoutPresenterBackground -> SystemControlTransientBackgroundBrush"
+    },
+    "tileStartWcaMapping": {
+      "gradientAlpha": "0xCC",
+      "evidence": "compatibility-mapping",
+      "notes": "The original HostBackdrop and TintOpacity values are verified. Mapping TintOpacity to WCA GradientColor alpha is a WPF compatibility bridge, not an exact UWP compositor equivalence. Native-call failure preserves the verified fallback colour."
+    }
+  },
   "unresolved": [
     "font weight and DirectWrite text antialiasing settings are not encoded in this layout-only spec",
-    "Reveal brushes, menu icon placeholders and shadow material remain to be extracted"
+    "menu shadow material remains to be extracted"
   ]
 }

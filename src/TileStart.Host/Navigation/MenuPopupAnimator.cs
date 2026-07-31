@@ -26,6 +26,7 @@ internal static class MenuPopupAnimator
             return;
         }
 
+        PopupMaterialManager.Apply(border);
         var opensUpward = ContextMenuOpensUpward(menu, border);
         Animate(
             border,
@@ -36,7 +37,11 @@ internal static class MenuPopupAnimator
 
     public static void CloseTopLevel(ContextMenu menu)
     {
-        GetContextMenuPopupBorder(menu)?.ClearValue(UIElement.ClipProperty);
+        if (GetContextMenuPopupBorder(menu) is { } border)
+        {
+            border.ClearValue(UIElement.ClipProperty);
+            PopupMaterialManager.Clear(border);
+        }
     }
 
     public static void OpenSubmenu(object? sender)
@@ -53,6 +58,7 @@ internal static class MenuPopupAnimator
             return;
         }
 
+        PopupMaterialManager.Apply(border);
         var opensUpward = false;
         if (popup.PlacementTarget is FrameworkElement placementTarget)
         {
@@ -78,6 +84,7 @@ internal static class MenuPopupAnimator
         if (sender is Popup { Child: Border border })
         {
             border.ClearValue(UIElement.ClipProperty);
+            PopupMaterialManager.Clear(border);
         }
     }
 

@@ -25,6 +25,10 @@
         <Setter Property="VerticalAlignment" Value="Bottom" />
         <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileBrandingMargin}" />
         <Style.Triggers>
+            <!-- FolderAppSpaceVisual uses 8,0,0,5 for its display name. -->
+            <DataTrigger Binding="{Binding IsTileFolder}" Value="True">
+                <Setter Property="Margin" Value="8,0,0,5" />
+            </DataTrigger>
             <DataTrigger Binding="{Binding TitlePosition}" Value="TopLeft">
                 <Setter Property="Grid.Row" Value="0" />
                 <Setter Property="VerticalAlignment" Value="Top" />
@@ -46,6 +50,9 @@
     <Style x:Key="TileStartTileTitleTextStyle" TargetType="TextBlock">
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Bottom" />
+        <!-- Tile_DisplayNameText_Style is based on Win10 CaptionTextBlockStyle. -->
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Normal" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding TitlePosition}" Value="BottomCenter">
                 <Setter Property="HorizontalAlignment" Value="Center" />

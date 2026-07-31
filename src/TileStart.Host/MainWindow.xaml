@@ -82,7 +82,8 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ScrollThumb" Property="Width" Value="6" />
+                                <Setter TargetName="ScrollThumb" Property="Width"
+                                        Value="{x:Static local:Win10VisualMetrics.TileScrollBarThumbMouseWidth}" />
                                 <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
                                 <Setter TargetName="ScrollThumb" Property="Background"
                                         Value="{StaticResource TileStartTextSecondaryBrush}" />
@@ -148,14 +149,14 @@
                                                    VerticalAlignment="Center"
                                                    Content="{TemplateBinding Content}"
                                                    TextElement.FontFamily="Segoe MDL2 Assets"
-                                                   TextElement.FontSize="16"
+                                                   TextElement.FontSize="{x:Static local:Win10VisualMetrics.NavigationGlyphFontSize}"
                                                    TextElement.Foreground="{TemplateBinding Foreground}" />
-                                <TextBlock Grid.Column="1"
-                                           Margin="12,0,16,0"
+                                 <TextBlock Grid.Column="1"
+                                           Margin="0"
                                            VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           FontFamily="{StaticResource TileStartContentFont}"
-                                           FontSize="14"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            FontFamily="{StaticResource TileStartContentFont}"
+                                            FontSize="{x:Static local:Win10VisualMetrics.NavigationTextFontSize}"
                                            Text="{TemplateBinding Tag}"
                                            TextTrimming="CharacterEllipsis" />
                             </Grid>
@@ -179,7 +180,9 @@
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="104">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -206,7 +209,7 @@
                                                       HoverFillOpacity="0"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       PressedFillOpacity="0"
-                                                      RevealBorderOpacity="0.42"
+                                                      RevealBorderOpacity="0.5"
                                                       RevealRadius="96"
                                                       UsesSharedPointerLight="True"
                                                       SnapsToDevicePixels="True">
@@ -226,6 +229,8 @@
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}" />
             <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPadding}" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="VerticalContentAlignment" Value="Bottom" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
@@ -239,7 +244,9 @@
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="84">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -264,7 +271,9 @@
                         <local:Win10InteractionBorder x:Name="Background"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="72">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </local:Win10InteractionBorder>
@@ -419,19 +428,16 @@
                                    VerticalAlignment="Center"
                                    FontFamily="{StaticResource TileStartContentFont}"
                                    FontSize="14"
-                                   FontWeight="Medium"
-                                   LineHeight="17"
-                                   LineStackingStrategy="BlockLineHeight"
-                                   MaxHeight="34"
+                                   FontWeight="Normal"
                                    Text="{Binding Name}"
                                    TextTrimming="CharacterEllipsis"
-                                   TextWrapping="Wrap" />
+                                   TextWrapping="NoWrap" />
                         <TextBlock x:Name="FolderChevron"
                                    Grid.Column="2"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    FontFamily="Segoe MDL2 Assets"
-                                   FontSize="11"
+                                   FontSize="14"
                                    Text="{Binding FolderChevron}"
                                    Visibility="Collapsed" />
                     </Grid>
@@ -624,6 +630,19 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+                <Border x:Name="NavigationBackdrop"
+                        Grid.RowSpan="3"
+                        Background="{DynamicResource TileStartNavigationOverlayBrush}"
+                        IsHitTestVisible="False"
+                        Opacity="0">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="{x:Static local:Win10VisualMetrics.NavigationShadowBlurRadius}"
+                                          Color="#FF000000"
+                                          Direction="{x:Static local:Win10VisualMetrics.NavigationShadowDirection}"
+                                          Opacity="{x:Static local:Win10VisualMetrics.NavigationShadowOpacity}"
+                                          ShadowDepth="{x:Static local:Win10VisualMetrics.NavigationShadowDepth}" />
+                    </Border.Effect>
+                </Border>
                 <Button x:Name="NavigationToggleButton"
                         Grid.Row="0"
                         Style="{StaticResource RailButtonStyle}"
@@ -662,14 +681,15 @@
                             ToolTip="用户"
                             Click="UserNavigationButton_Click">
                         <Button.Content>
-                            <Grid Width="{x:Static local:Win10VisualMetrics.NavigationUserPictureSize}"
+                            <Grid x:Name="UserPictureVisual"
+                                  Width="{x:Static local:Win10VisualMetrics.NavigationUserPictureSize}"
                                   Height="{x:Static local:Win10VisualMetrics.NavigationUserPictureSize}">
                                 <Ellipse Fill="#5A5A5A" />
                                 <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16"
-                                           Text="&#xE77B;" />
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            FontSize="{x:Static local:Win10VisualMetrics.NavigationGlyphFontSize}"
+                                            Text="&#xE77B;" />
                                 <Ellipse>
                                     <Ellipse.Fill>
                                         <ImageBrush ImageSource="{Binding CurrentUserPicture}"
@@ -746,10 +766,10 @@
                         <Button.Content>
                             <Grid Width="48" Height="48">
                                 <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16"
-                                           Text="&#xE7E8;" />
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            FontSize="{x:Static local:Win10VisualMetrics.NavigationGlyphFontSize}"
+                                            Text="&#xE7E8;" />
                                 <Ellipse x:Name="PowerUpdateBadge"
                                          Width="6"
                                          Height="6"
@@ -859,12 +879,16 @@
                                            BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
                                     <DataTemplate DataType="{x:Type apps:RecentApplicationsSection}">
                                         <StackPanel>
-                                            <TextBlock
+                                            <Border
                                                 Height="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderHeight}"
                                                 Margin="{x:Static local:Win10VisualMetrics.AllAppsItemMargin}"
-                                                VerticalAlignment="Center"
-                                                FontSize="12"
-                                                Text="最近添加" />
+                                                Background="Transparent">
+                                                <TextBlock x:Name="RecentApplicationsHeader"
+                                                           Margin="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderPadding}"
+                                                           VerticalAlignment="Bottom"
+                                                           FontSize="{x:Static local:Win10VisualMetrics.AllAppsGroupHeaderFontSize}"
+                                                           Text="最近添加" />
+                                            </Border>
                                             <ItemsControl ItemsSource="{Binding Apps}"
                                                           ItemTemplate="{StaticResource AppEntryTemplate}" />
                                             <Button HorizontalContentAlignment="Left"
@@ -884,11 +908,11 @@
                                                     <TextBlock VerticalAlignment="Center"
                                                                FontSize="14"
                                                                Text="{Binding ExpandText}" />
-                                                    <TextBlock Margin="4,0"
-                                                               VerticalAlignment="Center"
-                                                               FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="8"
-                                                               Text="{Binding ExpandGlyph}" />
+                                                     <TextBlock Margin="4,0"
+                                                                VerticalAlignment="Center"
+                                                                FontFamily="Segoe MDL2 Assets"
+                                                                FontSize="{x:Static local:Win10VisualMetrics.AllAppsExpandCollapseCaretFontSize}"
+                                                                Text="{Binding ExpandGlyph}" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -1206,13 +1230,13 @@
                                                                          </DataTemplate>
                                                                      </ItemsControl.ItemTemplate>
                                                                  </ItemsControl>
-                                                                 <Grid x:Name="FolderCollapseGlyph"
-                                                                       Visibility="Collapsed">
+                                                                  <Grid x:Name="FolderCollapseGlyph"
+                                                                        Visibility="Collapsed">
                                                                      <TextBlock HorizontalAlignment="Center"
                                                                                 VerticalAlignment="Center"
                                                                                FontFamily="Segoe MDL2 Assets"
-                                                                               FontSize="18"
-                                                                               Foreground="{DynamicResource TileStartTextSecondaryBrush}"
+                                                                                FontSize="16"
+                                                                                Foreground="{DynamicResource TileStartTextPrimaryBrush}"
                                                                                Text="&#xE70E;" />
                                                                 </Grid>
                                                             </Grid>
@@ -1221,7 +1245,7 @@
                                                                  <TextBlock x:Name="TileTitle"
                                                                             FontFamily="{StaticResource TileStartContentFont}"
                                                                             FontSize="12"
-                                                                            FontWeight="SemiBold"
+                                                                            FontWeight="Normal"
                                                                             Style="{StaticResource TileStartTileTitleTextStyle}"
                                                                             Text="{Binding Name}"
                                                                            TextAlignment="Left"
@@ -1490,7 +1514,7 @@
                                                                                       <TextBlock x:Name="FolderChildTitle"
                                                                                                  FontFamily="{StaticResource TileStartContentFont}"
                                                                                                  FontSize="12"
-                                                                                                 FontWeight="SemiBold"
+                                                                                                 FontWeight="Normal"
                                                                                                  Style="{StaticResource TileStartTileTitleTextStyle}"
                                                                                                  Text="{Binding Name}"
                                                                                                 TextTrimming="CharacterEllipsis"

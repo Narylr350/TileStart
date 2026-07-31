@@ -208,7 +208,8 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         var name = _group?.Name;
         var isPlaceholder = string.IsNullOrWhiteSpace(name);
         NameTextBlock.Text = isPlaceholder ? "命名组" : name;
-        NameTextBlock.Opacity = isPlaceholder ? 0.72 : 1;
+        // TileGroupHeaderPlaceholderTextHoverBrush resolves to SystemBaseMediumColor.
+        NameTextBlock.Opacity = isPlaceholder ? 0.60 : 1;
         UpdateTitleVisibility();
     }
 

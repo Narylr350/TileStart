@@ -68,6 +68,12 @@
       "evidence": "compiled-xbf",
       "anchor": "AllAppsPane.xaml Header.VerticalContentAlignment"
     },
+    "expandCollapseCaretFontSize": {
+      "value": 8.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "SplitViewFrame.xaml AllAppsPanel.ExpandCollapseCaretFontSize"
+    },
     "listPadding": {
       "value": [
         0.0,

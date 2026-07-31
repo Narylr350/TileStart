@@ -73,6 +73,7 @@ public partial class MainWindow : Window
             captureElement: CaptureElement);
         _navigationController = new Controllers.NavigationController(
             NavigationPane,
+            NavigationBackdrop,
             NavigationToggleButton,
             UserNavigationButton,
             DocumentsNavigationButton,

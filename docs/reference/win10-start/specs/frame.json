@@ -33,6 +33,24 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     },
+    "navigationGlyphFontSize": {
+      "value": 16.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "NavigationPaneGlyphSmallFontSize"
+    },
+    "navigationTextFontSize": {
+      "value": 15.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "NavigationPaneItemTextStyle.FontSize"
+    },
+    "navigationUserPictureSize": {
+      "value": 20.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "UserAccountPictureSmallWidthAndHeight"
+    },
     "allAppsWidth": {
       "value": 260.0,
       "unit": "DIP",
@@ -96,6 +114,26 @@
         "xamlSha256": "2362F8F53F077B9FE51487F8DC7D3FAA8A2DA7342FA4248BAC9B68030537A752",
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
+    },
+    "navigationPaneExpandedLayer": {
+      "backgroundTransitionOpenMilliseconds": 350,
+      "backgroundTransitionCloseMilliseconds": 240,
+      "shadowAsset": "Assets/DropShadow.png",
+      "shadowAssetSize": [53, 53],
+      "shadowAssetSha256": "A2FC7B848391AFF7CC4DE119343E782F93E5EF726D01DD0811589E0A01DAB5FF",
+      "shadowNineGrid": 13,
+      "shadowMargin": -13,
+      "shadowAlphaMaximum": 57,
+      "shadowFit": {
+        "gaussianRadiusPixels": 4.75,
+        "offsetXPixels": 1,
+        "offsetYPixels": 1,
+        "opacity": 0.392,
+        "alphaRmse": 2.411
+      },
+      "evidence": "compiled-xbf",
+      "anchor": "NavigationPaneView BackgroundStates + DropShadow",
+      "tileStartCompatibility": "The original PNG remains in the external research baseline and is not copied into the product repository. TileStart maps its measured 1 px right/down offset and alpha profile to a 10 DIP WPF blur, depth sqrt(2), direction 315 degrees."
     },
     "tileStartWcaMapping": {
       "gradientColor": "0xBF101010",

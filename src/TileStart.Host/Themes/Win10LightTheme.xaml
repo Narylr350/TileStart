@@ -4,30 +4,36 @@
     <FontFamily x:Key="TileStartContentFont">Segoe UI, Microsoft YaHei UI</FontFamily>
     <FontFamily x:Key="TileStartDisplayFont">Segoe UI, Microsoft YaHei UI</FontFamily>
 
-    <SolidColorBrush x:Key="TileStartTextPrimaryBrush" Color="#E4000000" />
-    <SolidColorBrush x:Key="TileStartTextSecondaryBrush" Color="#A3000000" />
-    <SolidColorBrush x:Key="TileStartTextTertiaryBrush" Color="#73000000" />
-    <SolidColorBrush x:Key="TileStartTextDisabledBrush" Color="#5C000000" />
+    <!-- Win10 19041 ThemeResources: SystemBaseHigh/MediumHigh/Medium/Low. -->
+    <SolidColorBrush x:Key="TileStartTextPrimaryBrush" Color="#FF000000" />
+    <SolidColorBrush x:Key="TileStartTextSecondaryBrush" Color="#CC000000" />
+    <SolidColorBrush x:Key="TileStartTextTertiaryBrush" Color="#99000000" />
+    <SolidColorBrush x:Key="TileStartTextDisabledBrush" Color="#33000000" />
     <SolidColorBrush x:Key="TileStartWindowBackgroundBrush" Color="#F2F2F2" />
     <SolidColorBrush x:Key="TileStartLayerBackgroundBrush" Color="#FAFAFA" />
     <SolidColorBrush x:Key="TileStartLayerAltBackgroundBrush" Color="#EDEDED" />
     <SolidColorBrush x:Key="TileStartCardBackgroundBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="TileStartControlBackgroundBrush" Color="#FFFFFFFF" />
-    <SolidColorBrush x:Key="TileStartControlHoverBrush" Color="#E5E5E5" />
-    <SolidColorBrush x:Key="TileStartControlPressedBrush" Color="#D6D6D6" />
-    <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#8A8A8A" />
-    <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#5A5A5A" />
-    <SolidColorBrush x:Key="TileStartDividerBrush" Color="#D0D0D0" />
-    <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#B8B8B8" />
-    <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FCFAFAFA" />
-    <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="TileStartControlHoverBrush" Color="#19000000" />
+    <SolidColorBrush x:Key="TileStartControlPressedBrush" Color="#33000000" />
+    <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#66000000" />
+    <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#99000000" />
+    <SolidColorBrush x:Key="TileStartDividerBrush" Color="#19000000" />
+    <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#33000000" />
+    <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#99FFFFFF" />
+    <!-- MenuFlyoutPresenter fallback and transient border from Win10 ThemeResources. -->
+    <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FFF2F2F2" />
+    <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#24000000" />
     <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
+                     Color="#19000000" />
+    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00000000" />
+    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#19000000" />
+    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#33000000" />
+    <!-- StartUI NavigationPaneAcrylicBackgroundBrush tint; composited over the main acrylic. -->
+    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#80E9E9E9" />
+    <!-- StartUI DefaultItem_BackgroundBrush resolves directly to SystemAccentColor. -->
+    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"
                      Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#0A000000" />
-    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#14000000" />
-    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#1E000000" />
-    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#EEF2F2F2" />
-    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#3A3A3A" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#107C10" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#8A4F00" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#C42B1C" />

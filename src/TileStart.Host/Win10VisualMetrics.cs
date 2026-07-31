@@ -7,7 +7,15 @@ public static class Win10VisualMetrics
     public const double CollapsedNavigationWidth = 48;
     public const double ExpandedNavigationWidth = 256;
     public const double NavigationItemHeight = 48;
-    public const double NavigationUserPictureSize = 32;
+    public const double NavigationGlyphFontSize = 16;
+    public const double NavigationTextFontSize = 15;
+    public const double NavigationUserPictureSize = 20;
+    public const double NavigationShadowBlurRadius = 10;
+    public const double NavigationShadowDepth = 1.4142135623730951;
+    public const double NavigationShadowDirection = 315;
+    public const double NavigationShadowOpacity = 0.8;
+    public const int NavigationBackdropOpenDurationMilliseconds = 350;
+    public const int NavigationBackdropCloseDurationMilliseconds = 240;
     public const double Windows11TaskbarLeftInset = 8;
     public const double AllAppsWidth = 260;
     public const double AllAppsGridItemWidth = 244;
@@ -15,6 +23,7 @@ public static class Win10VisualMetrics
     public const double AllAppsRowHeight = 36;
     public const double AllAppsGroupHeaderHeight = 36;
     public const double AllAppsGroupHeaderFontSize = 12;
+    public const double AllAppsExpandCollapseCaretFontSize = 8;
     public const double AlphabetCellSize = 48;
     public const double AlphabetFontSize = 20;
     public const double ContextMenuFontSize = 12;
@@ -38,8 +47,10 @@ public static class Win10VisualMetrics
     public const double TileReservedBrandingSpace = 28;
     public const double TileLogoVerticalOffset = -2;
     public const double TileFolderBottomMargin = 4;
-    public const double TileScrollBarWidth = 6;
-    public const double TileScrollBarRightMargin = 2;
+    // StartUI TileStyles exposes a 14 DIP scrollbar slot and a 12 DIP mouse indicator.
+    public const double TileScrollBarWidth = 14;
+    public const double TileScrollBarThumbMouseWidth = 12;
+    public const double TileScrollBarRightMargin = 0;
     public const double TileScrollBarLayoutWidth = TileScrollBarWidth + TileScrollBarRightMargin;
     public const double TileScrollViewerLeftMargin = 28;
 

@@ -13,6 +13,8 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.NavigationItemHeight, Win10VisualMetrics.NavigationItemGridLength.Value);
         Assert.Equal(Win10VisualMetrics.AllAppsWidth, Win10VisualMetrics.AllAppsGridLength.Value);
         Assert.Equal(Win10VisualMetrics.NavigationPaneHorizontalOffset, Win10VisualMetrics.NavigationPaneMargin.Left);
+        Assert.Equal(14, Win10VisualMetrics.TileScrollBarWidth);
+        Assert.Equal(12, Win10VisualMetrics.TileScrollBarThumbMouseWidth);
     }
 
     [Theory]
@@ -32,6 +34,9 @@ public sealed class Win10VisualSpecTests
 
         Assert.Equal(Win10VisualMetrics.CollapsedNavigationWidth, Value(metrics, "collapsedNavigationWidth"));
         Assert.Equal(Win10VisualMetrics.NavigationItemHeight, Value(metrics, "navigationItemHeight"));
+        Assert.Equal(Win10VisualMetrics.NavigationGlyphFontSize, Value(metrics, "navigationGlyphFontSize"));
+        Assert.Equal(Win10VisualMetrics.NavigationTextFontSize, Value(metrics, "navigationTextFontSize"));
+        Assert.Equal(Win10VisualMetrics.NavigationUserPictureSize, Value(metrics, "navigationUserPictureSize"));
         Assert.Equal(Win10VisualMetrics.AllAppsWidth, Value(metrics, "allAppsWidth"));
         AssertThickness(Win10VisualMetrics.AllAppsMargin, metrics.GetProperty("allAppsMargin").GetProperty("value"));
     }
@@ -45,6 +50,9 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.AllAppsRowHeight, Value(allAppsMetrics, "rowHeight"));
         Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderHeight, Value(allAppsMetrics, "groupHeaderHeight"));
         Assert.Equal(Win10VisualMetrics.AllAppsGroupHeaderFontSize, Value(allAppsMetrics, "groupHeaderFontSize"));
+        Assert.Equal(
+            Win10VisualMetrics.AllAppsExpandCollapseCaretFontSize,
+            Value(allAppsMetrics, "expandCollapseCaretFontSize"));
         AssertThickness(
             Win10VisualMetrics.AllAppsGroupHeaderPadding,
             allAppsMetrics.GetProperty("groupHeaderPadding").GetProperty("value"));

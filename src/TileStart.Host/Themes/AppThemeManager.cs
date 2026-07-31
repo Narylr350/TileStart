@@ -11,6 +11,8 @@ public static class AppThemeManager
 
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
 
+    public static AppThemeStyle CurrentStyle { get; private set; } = AppThemeStyle.Windows10;
+
     public static Uri GetThemeUri(AppThemeStyle style, bool useDarkMode = true)
     {
         var styleName = style == AppThemeStyle.Windows10 ? "Win10" : "Win11";
@@ -41,6 +43,7 @@ public static class AppThemeManager
 
     public static void Apply(ResourceDictionary resources, AppThemeStyle style, AppColorMode colorMode)
     {
+        CurrentStyle = style;
         var dictionaries = resources.MergedDictionaries;
         var existing = dictionaries.FirstOrDefault(dictionary => IsThemeDictionary(dictionary.Source));
         var replacement = new ResourceDictionary { Source = GetThemeUri(style, ResolveDarkMode(colorMode)) };

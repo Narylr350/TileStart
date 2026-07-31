@@ -5,29 +5,35 @@
     <FontFamily x:Key="TileStartDisplayFont">Segoe UI, Microsoft YaHei UI</FontFamily>
 
     <SolidColorBrush x:Key="TileStartTextPrimaryBrush" Color="#FFFFFFFF" />
-    <SolidColorBrush x:Key="TileStartTextSecondaryBrush" Color="#D9FFFFFF" />
-    <SolidColorBrush x:Key="TileStartTextTertiaryBrush" Color="#A8FFFFFF" />
-    <SolidColorBrush x:Key="TileStartTextDisabledBrush" Color="#61FFFFFF" />
+    <!-- Win10 19041 ThemeResources: SystemBaseHigh/MediumHigh/Medium/Low. -->
+    <SolidColorBrush x:Key="TileStartTextSecondaryBrush" Color="#CCFFFFFF" />
+    <SolidColorBrush x:Key="TileStartTextTertiaryBrush" Color="#99FFFFFF" />
+    <SolidColorBrush x:Key="TileStartTextDisabledBrush" Color="#33FFFFFF" />
     <SolidColorBrush x:Key="TileStartWindowBackgroundBrush" Color="#1F1F1F" />
     <SolidColorBrush x:Key="TileStartLayerBackgroundBrush" Color="#252525" />
     <SolidColorBrush x:Key="TileStartLayerAltBackgroundBrush" Color="#181818" />
     <SolidColorBrush x:Key="TileStartCardBackgroundBrush" Color="#242424" />
     <SolidColorBrush x:Key="TileStartControlBackgroundBrush" Color="#2B2B2B" />
-    <SolidColorBrush x:Key="TileStartControlHoverBrush" Color="#3B3B3B" />
-    <SolidColorBrush x:Key="TileStartControlPressedBrush" Color="#484848" />
-    <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#686868" />
-    <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#A0A0A0" />
-    <SolidColorBrush x:Key="TileStartDividerBrush" Color="#3A3A3A" />
-    <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#454545" />
-    <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FC232323" />
-    <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#171717" />
+    <SolidColorBrush x:Key="TileStartControlHoverBrush" Color="#19FFFFFF" />
+    <SolidColorBrush x:Key="TileStartControlPressedBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#66FFFFFF" />
+    <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#99FFFFFF" />
+    <SolidColorBrush x:Key="TileStartDividerBrush" Color="#19FFFFFF" />
+    <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#99000000" />
+    <!-- MenuFlyoutPresenter fallback and transient border from Win10 ThemeResources. -->
+    <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FF2B2B2B" />
+    <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#5C000000" />
     <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
+                     Color="#19FFFFFF" />
+    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#19FFFFFF" />
+    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#33FFFFFF" />
+    <!-- StartUI NavigationPaneAcrylicBackgroundBrush tint; composited over the main acrylic. -->
+    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#802C2C2C" />
+    <!-- StartUI DefaultItem_BackgroundBrush resolves directly to SystemAccentColor. -->
+    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"
                      Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#12FFFFFF" />
-    <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#20FFFFFF" />
-    <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#18FFFFFF" />
-    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#EE202020" />
-    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#3A3A3A" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#69C56D" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#FFFFB900" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#FF8C8C" />

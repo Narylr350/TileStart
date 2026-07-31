@@ -33,6 +33,7 @@ internal sealed class NavigationController : IDisposable
     private bool _isDisposed;
 
     private readonly Grid _navigationPane;
+    private readonly Border _navigationBackdrop;
     private readonly Button _navigationToggleButton;
     private readonly Button _userNavigationButton;
     private readonly Button _documentsNavigationButton;
@@ -70,6 +71,7 @@ internal sealed class NavigationController : IDisposable
 
     public NavigationController(
         Grid navigationPane,
+        Border navigationBackdrop,
         Button navigationToggleButton,
         Button userNavigationButton,
         Button documentsNavigationButton,
@@ -104,6 +106,7 @@ internal sealed class NavigationController : IDisposable
         Func<bool, bool, bool, bool> setSuspendState)
     {
         _navigationPane = navigationPane;
+        _navigationBackdrop = navigationBackdrop;
         _navigationToggleButton = navigationToggleButton;
         _userNavigationButton = userNavigationButton;
         _documentsNavigationButton = documentsNavigationButton;
@@ -240,32 +243,49 @@ internal sealed class NavigationController : IDisposable
 
     private void ApplyNavigationAppearance(bool expanded)
     {
-        if (!expanded)
-        {
-            _navigationPane.Background = System.Windows.Media.Brushes.Transparent;
-            var themeForeground =
-                (System.Windows.Media.Brush)_navigationPane.FindResource("TileStartTextPrimaryBrush");
-            foreach (var button in _navigationButtons)
-            {
-                button.Foreground = themeForeground;
-            }
-
-            return;
-        }
-
-        // The main window keeps the original Acrylic/material behavior. The expanded rail
-        // must sample that actual surface instead of blindly using the light-theme overlay;
-        // otherwise a light resource dictionary can paint a white veil over a dark Start pane.
-        var surface = Win10Theme.StartSurfaceColor;
-        _navigationPane.Background = new SolidColorBrush(
-            System.Windows.Media.Color.FromArgb(0xEE, surface.R, surface.G, surface.B));
-        var foreground = new SolidColorBrush(
-            Win10Theme.UseDarkForeground(surface) ? Colors.Black : Colors.White);
-        foreground.Freeze();
+        _navigationPane.Background = System.Windows.Media.Brushes.Transparent;
+        AnimateNavigationBackdrop(expanded);
+        var foreground =
+            (System.Windows.Media.Brush)_navigationPane.FindResource("TileStartTextPrimaryBrush");
         foreach (var button in _navigationButtons)
         {
             button.Foreground = foreground;
         }
+    }
+
+    private void AnimateNavigationBackdrop(bool expanded)
+    {
+        var targetOpacity = expanded ? 1d : 0d;
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
+            _navigationBackdrop.Opacity = targetOpacity;
+            return;
+        }
+
+        // 原版会让独立导航 Acrylic 与 NineGrid 阴影同步显隐。这里让 WPF 的背景和阴影
+        // 共用同一条透明度动画，避免面板移动时阴影脱离背景单独漂移。
+        var animation = new DoubleAnimation
+        {
+            From = _navigationBackdrop.Opacity,
+            To = targetOpacity,
+            Duration = TimeSpan.FromMilliseconds(
+                expanded
+                    ? Win10VisualMetrics.NavigationBackdropOpenDurationMilliseconds
+                    : Win10VisualMetrics.NavigationBackdropCloseDurationMilliseconds),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+        animation.Completed += (_, _) =>
+        {
+            if (_isDisposed || _navigationExpanded != expanded)
+            {
+                return;
+            }
+
+            _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
+            _navigationBackdrop.Opacity = targetOpacity;
+        };
+        _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
     }
 
     private void SetNavigationToolTipsEnabled(bool enabled)
