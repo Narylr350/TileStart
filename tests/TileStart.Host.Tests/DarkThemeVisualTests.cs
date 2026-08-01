@@ -291,6 +291,21 @@ public sealed class DarkThemeVisualTests
         Assert.Equal("0.5", (string?)border.Attribute("RevealBorderOpacity"));
         Assert.Equal("0", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
         Assert.Equal("0", ReadThemeResourceValue("Win10Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+
+        var primaryFocus = style.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "TilePrimaryFocusVisual");
+        var secondaryFocus = style.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "TileSecondaryFocusVisual");
+        Assert.Equal("{x:Static local:Win10VisualMetrics.TileFocusVisualMargin}",
+            (string?)primaryFocus.Attribute("Margin"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.TilePrimaryFocusBorderThickness}",
+            (string?)primaryFocus.Attribute("BorderThickness"));
+        Assert.Equal("{DynamicResource TileStartTextPrimaryBrush}",
+            (string?)primaryFocus.Attribute("BorderBrush"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.TileSecondaryFocusBorderThickness}",
+            (string?)secondaryFocus.Attribute("BorderThickness"));
+        Assert.Equal("{DynamicResource TileStartFocusSecondaryBrush}",
+            (string?)secondaryFocus.Attribute("BorderBrush"));
     }
 
     [Fact]

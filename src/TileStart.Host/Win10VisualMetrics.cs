@@ -44,6 +44,9 @@ public static class Win10VisualMetrics
     public const double TileGroupHeaderStrokeThickness = 2;
     public const double TileGroupPrimaryFocusThickness = 2;
     public const double TileGroupSecondaryFocusThickness = 1;
+    public const double TilePrimaryFocusThickness = 2;
+    public const double TileSecondaryFocusThickness = 1;
+    public const double TileFocusVisualOffset = -2;
     public const double TileGroupHeaderToTilesSpacing = 3;
     public const double TileNestedPanelHorizontalMargin = 4;
 
@@ -123,6 +126,12 @@ public static class Win10VisualMetrics
     public static Thickness TileGroupPrimaryFocusBorderThickness { get; } = new(TileGroupPrimaryFocusThickness);
 
     public static Thickness TileGroupSecondaryFocusBorderThickness { get; } = new(TileGroupSecondaryFocusThickness);
+
+    public static Thickness TilePrimaryFocusBorderThickness { get; } = new(TilePrimaryFocusThickness);
+
+    public static Thickness TileSecondaryFocusBorderThickness { get; } = new(TileSecondaryFocusThickness);
+
+    public static Thickness TileFocusVisualMargin { get; } = new(TileFocusVisualOffset);
 
     public static Thickness TileGroupTitleRestMargin { get; } = new(0);
 

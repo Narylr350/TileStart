@@ -200,6 +200,27 @@
             <Setter Property="Background" Value="{StaticResource TileStartDefaultTileBackgroundBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style TargetType="Control">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Control">
+                                    <Grid IsHitTestVisible="False">
+                                        <Border x:Name="TilePrimaryFocusVisual"
+                                                Margin="{x:Static local:Win10VisualMetrics.TileFocusVisualMargin}"
+                                                BorderBrush="{DynamicResource TileStartTextPrimaryBrush}"
+                                                BorderThickness="{x:Static local:Win10VisualMetrics.TilePrimaryFocusBorderThickness}" />
+                                        <Border x:Name="TileSecondaryFocusVisual"
+                                                BorderBrush="{DynamicResource TileStartFocusSecondaryBrush}"
+                                                BorderThickness="{x:Static local:Win10VisualMetrics.TileSecondaryFocusBorderThickness}" />
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">

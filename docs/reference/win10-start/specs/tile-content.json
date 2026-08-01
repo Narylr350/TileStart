@@ -92,6 +92,24 @@
         "observation": "The native 3-column preview centers are approximately 25/75/125 physical pixels across a 150-pixel medium tile. A centered 66-DIP host shifts them to approximately 42/75/108 pixels."
       }
     },
+    "tileFocusVisualMargin": {
+      "value": [-2.0, -2.0, -2.0, -2.0],
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileStyles.xaml TilesFocusVisualMargin"
+    },
+    "tileFocusPrimaryThickness": {
+      "value": 2.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileStyles.xaml TilesFocusVisualPrimaryThickness"
+    },
+    "tileFocusSecondaryThickness": {
+      "value": 1.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileStyles.xaml TilesFocusVisualSecondaryThickness"
+    },
     "scrollBarThumbRestColor": {
       "dark": "#33FFFFFF",
       "light": "#33000000",
