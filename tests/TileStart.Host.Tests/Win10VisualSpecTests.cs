@@ -151,6 +151,7 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.TilePrimaryFocusThickness, Value(metrics, "tileFocusPrimaryThickness"));
         Assert.Equal(Win10VisualMetrics.TileSecondaryFocusThickness, Value(metrics, "tileFocusSecondaryThickness"));
         Assert.Equal(Win10VisualMetrics.TileRevealBorderThickness, Value(metrics, "tileRevealBorderThickness"));
+        Assert.True(metrics.GetProperty("tileRevealBackgroundShowsAboveContent").GetProperty("value").GetBoolean());
         var pressedScale = metrics.GetProperty("tilePressedScale").GetProperty("value");
         Assert.Equal(
             [Win10InteractionMotion.SmallTilePressedScale, Win10InteractionMotion.SmallTilePressedScale],

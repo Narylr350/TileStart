@@ -230,15 +230,29 @@
                                                       HoverFillOpacity="0"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       PressedFillOpacity="0"
-                                                      RevealBorderOpacity="0.5"
-                                                      RevealBorderThickness="{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}"
-                                                      RevealRadius="96"
-                                                      UsesSharedPointerLight="True"
+                                                      RevealBorderOpacity="0"
                                                       UsesTilePressedScale="True"
                                                       SnapsToDevicePixels="True">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            <Grid>
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                <!-- StartUI 的 ListViewItemPresenter 会把 Reveal chrome 画在磁贴内容上方。
+                                     外层只负责整体按压缩放，末层覆盖件负责光效；合并后图片会遮住边缘光。 -->
+                                <local:Win10InteractionBorder x:Name="TileRevealOverlay"
+                                                              Background="Transparent"
+                                                              CornerRadius="{StaticResource TileStartTileCornerRadius}"
+                                                              HoverFillOpacity="0"
+                                                              IsHitTestVisible="False"
+                                                              IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                              PressedFillOpacity="0"
+                                                              RenderTransform="{x:Null}"
+                                                              RevealBorderOpacity="0.5"
+                                                              RevealBorderThickness="{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}"
+                                                              RevealRadius="96"
+                                                              SnapsToDevicePixels="True"
+                                                              UsesSharedPointerLight="True" />
+                            </Grid>
                         </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>

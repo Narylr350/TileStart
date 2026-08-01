@@ -121,6 +121,17 @@
         "file": "TileGridView.xaml"
       }
     },
+    "tileRevealBackgroundShowsAboveContent": {
+      "value": true,
+      "evidence": "compiled-xbf",
+      "anchor": "TileGridView.xaml LightweightItemContainerStyle ListViewItemPresenter.RevealBackgroundShowsAboveContent",
+      "source": {
+        "baseline": "Win10 19041.2965 ISO",
+        "priSha256": "9758E0E5CF3A8CC8E90AD731BDA55400ED18767A462D2319BDA1D121A5784EA3",
+        "file": "TileGridView.xaml"
+      },
+      "implementation": "WPF compatibility mapping: a non-hit-testable reveal overlay is the final tile content layer, while the outer border owns pressed scaling."
+    },
     "tilePressedScale": {
       "value": {
         "small": [0.8958, 0.8958],

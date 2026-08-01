@@ -286,12 +286,21 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Key") == "TileStyle");
         var border = style.Descendants(XName.Get("Win10InteractionBorder", "clr-namespace:TileStart.Host"))
             .Single(element => (string?)element.Attribute(x + "Name") == "TileBorder");
+        var overlay = style.Descendants(XName.Get("Win10InteractionBorder", "clr-namespace:TileStart.Host"))
+            .Single(element => (string?)element.Attribute(x + "Name") == "TileRevealOverlay");
 
         Assert.Equal("{StaticResource TileStartTileCornerRadius}", (string?)border.Attribute("CornerRadius"));
-        Assert.Equal("0.5", (string?)border.Attribute("RevealBorderOpacity"));
+        Assert.Equal("0", (string?)border.Attribute("RevealBorderOpacity"));
+        Assert.Equal("0.5", (string?)overlay.Attribute("RevealBorderOpacity"));
         Assert.Equal("{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}",
-            (string?)border.Attribute("RevealBorderThickness"));
+            (string?)overlay.Attribute("RevealBorderThickness"));
+        Assert.Equal("False", (string?)overlay.Attribute("IsHitTestVisible"));
+        Assert.Equal("{x:Null}", (string?)overlay.Attribute("RenderTransform"));
+        Assert.Equal("True", (string?)overlay.Attribute("UsesSharedPointerLight"));
         Assert.Equal("True", (string?)border.Attribute("UsesTilePressedScale"));
+        var tileLayers = border.Element(presentation + "Grid")!.Elements().ToArray();
+        Assert.Equal(presentation + "ContentPresenter", tileLayers[0].Name);
+        Assert.Same(overlay, tileLayers[1]);
         Assert.Equal("0", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
         Assert.Equal("0", ReadThemeResourceValue("Win10Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
 
