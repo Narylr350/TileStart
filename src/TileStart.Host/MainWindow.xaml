@@ -231,6 +231,7 @@
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       PressedFillOpacity="0"
                                                       RevealBorderOpacity="0.5"
+                                                      RevealBorderThickness="{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}"
                                                       RevealRadius="96"
                                                       UsesSharedPointerLight="True"
                                                       UsesTilePressedScale="True"

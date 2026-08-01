@@ -110,6 +110,17 @@
       "evidence": "compiled-xbf",
       "anchor": "TileStyles.xaml TilesFocusVisualSecondaryThickness"
     },
+    "tileRevealBorderThickness": {
+      "value": 2.0,
+      "unit": "DIP",
+      "evidence": "compiled-xbf",
+      "anchor": "TileGridView.xaml LightweightItemContainerStyle ListViewItemPresenter.RevealBorderThickness",
+      "source": {
+        "baseline": "Win10 19041.2965 ISO",
+        "priSha256": "9758E0E5CF3A8CC8E90AD731BDA55400ED18767A462D2319BDA1D121A5784EA3",
+        "file": "TileGridView.xaml"
+      }
+    },
     "tilePressedScale": {
       "value": {
         "small": [0.8958, 0.8958],

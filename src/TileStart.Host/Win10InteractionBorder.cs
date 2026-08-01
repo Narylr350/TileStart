@@ -161,6 +161,12 @@ public sealed class Win10InteractionBorder : Border
         typeof(Win10InteractionBorder),
         new FrameworkPropertyMetadata(0.50d, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty RevealBorderThicknessProperty = DependencyProperty.Register(
+        nameof(RevealBorderThickness),
+        typeof(double),
+        typeof(Win10InteractionBorder),
+        new FrameworkPropertyMetadata(1d, FrameworkPropertyMetadataOptions.AffectsRender));
+
     private readonly ScaleTransform _pressScale = new(1, 1);
     private Point _pointerPosition;
     private bool _hasPointerLight;
@@ -228,6 +234,12 @@ public sealed class Win10InteractionBorder : Border
         set => SetValue(RevealBorderOpacityProperty, value);
     }
 
+    public double RevealBorderThickness
+    {
+        get => (double)GetValue(RevealBorderThicknessProperty);
+        set => SetValue(RevealBorderThicknessProperty, value);
+    }
+
     internal void UpdatePointerLight(Point position, bool isActive)
     {
         _pointerPosition = position;
@@ -293,18 +305,27 @@ public sealed class Win10InteractionBorder : Border
             drawingContext.DrawRoundedRectangle(fill, null, bounds, cornerRadius, cornerRadius);
         }
 
-        if (RevealBorderOpacity <= 0 || ActualWidth <= 1 || ActualHeight <= 1)
+        var borderThickness = Math.Max(0, RevealBorderThickness);
+        if (RevealBorderOpacity <= 0
+            || borderThickness <= 0
+            || ActualWidth <= borderThickness
+            || ActualHeight <= borderThickness)
         {
             return;
         }
 
         var border = CreateRevealBrush(pointer, RevealBorderOpacity);
-        var pen = new Pen(border, 1);
-        var borderCornerRadius = Math.Max(0, cornerRadius - 0.5);
+        var pen = new Pen(border, borderThickness);
+        var borderInset = borderThickness / 2;
+        var borderCornerRadius = Math.Max(0, cornerRadius - borderInset);
         drawingContext.DrawRoundedRectangle(
             null,
             pen,
-            new Rect(0.5, 0.5, ActualWidth - 1, ActualHeight - 1),
+            new Rect(
+                borderInset,
+                borderInset,
+                ActualWidth - borderThickness,
+                ActualHeight - borderThickness),
             borderCornerRadius,
             borderCornerRadius);
     }

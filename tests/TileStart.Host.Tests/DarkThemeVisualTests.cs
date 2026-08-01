@@ -289,6 +289,8 @@ public sealed class DarkThemeVisualTests
 
         Assert.Equal("{StaticResource TileStartTileCornerRadius}", (string?)border.Attribute("CornerRadius"));
         Assert.Equal("0.5", (string?)border.Attribute("RevealBorderOpacity"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}",
+            (string?)border.Attribute("RevealBorderThickness"));
         Assert.Equal("True", (string?)border.Attribute("UsesTilePressedScale"));
         Assert.Equal("0", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
         Assert.Equal("0", ReadThemeResourceValue("Win10Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
