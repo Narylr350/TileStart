@@ -15,10 +15,18 @@ namespace TileStart.Host;
 public static class Win10InteractionMotion
 {
     public const double PressedScale = 0.975;
+    // StartUI 按 CellSize 分别保存 X/Y 缩放，目标是每个方向约收缩 5 DIP；
+    // 宽磁贴因此必须横向 0.9755、纵向 0.95，不能重新合并成统一比例。
+    public const double SmallTilePressedScale = 0.8958;
+    public const double MediumTilePressedScale = 0.95;
+    public const double WideTilePressedScale = 0.9755;
     public const int PressTransitionDurationMilliseconds = 167;
 
     public static readonly Point PressSplineControlPoint1 = new(0.1, 0.9);
     public static readonly Point PressSplineControlPoint2 = new(0.2, 1);
+
+    public static Size TilePressedScale(Size bounds) =>
+        new(TilePressedScaleForLength(bounds.Width), TilePressedScaleForLength(bounds.Height));
 
     public static DoubleAnimationUsingKeyFrames CreateScaleAnimation(double from, double to)
     {
@@ -34,6 +42,26 @@ public static class Win10InteractionMotion
             KeyTime.FromTimeSpan(duration),
             new KeySpline(PressSplineControlPoint1, PressSplineControlPoint2)));
         return animation;
+    }
+
+    private static double TilePressedScaleForLength(double length)
+    {
+        if (length <= 0)
+        {
+            return 1;
+        }
+
+        if (length <= Win10TileMetrics.CellSize)
+        {
+            return SmallTilePressedScale;
+        }
+
+        if (length <= Win10TileMetrics.WidthForColumns(2))
+        {
+            return MediumTilePressedScale;
+        }
+
+        return WideTilePressedScale;
     }
 
     public static bool IsPointerWithinRevealRadius(Point pointer, Size bounds, double radius)
@@ -75,6 +103,12 @@ public sealed class Win10InteractionBorder : Border
         typeof(bool),
         typeof(Win10InteractionBorder),
         new FrameworkPropertyMetadata(true));
+
+    public static readonly DependencyProperty UsesTilePressedScaleProperty = DependencyProperty.Register(
+        nameof(UsesTilePressedScale),
+        typeof(bool),
+        typeof(Win10InteractionBorder),
+        new FrameworkPropertyMetadata(false));
 
     public static readonly DependencyProperty UsesSharedPointerLightProperty = DependencyProperty.Register(
         nameof(UsesSharedPointerLight),
@@ -135,6 +169,12 @@ public sealed class Win10InteractionBorder : Border
     {
         get => (bool)GetValue(IsPressAnimationEnabledProperty);
         set => SetValue(IsPressAnimationEnabledProperty, value);
+    }
+
+    public bool UsesTilePressedScale
+    {
+        get => (bool)GetValue(UsesTilePressedScaleProperty);
+        set => SetValue(UsesTilePressedScaleProperty, value);
     }
 
     public bool UsesSharedPointerLight
@@ -252,7 +292,12 @@ public sealed class Win10InteractionBorder : Border
         DependencyPropertyChangedEventArgs args)
     {
         var border = (Win10InteractionBorder)dependencyObject;
-        border.AnimatePressScale((bool)args.NewValue ? Win10InteractionMotion.PressedScale : 1);
+        var target = (bool)args.NewValue
+            ? border.UsesTilePressedScale
+                ? Win10InteractionMotion.TilePressedScale(new Size(border.ActualWidth, border.ActualHeight))
+                : new Size(Win10InteractionMotion.PressedScale, Win10InteractionMotion.PressedScale)
+            : new Size(1, 1);
+        border.AnimatePressScale(target);
         border.InvalidateVisual();
     }
 
@@ -286,14 +331,14 @@ public sealed class Win10InteractionBorder : Border
 
     private void OnUnloaded(object sender, RoutedEventArgs e) => Win10SharedPointerLight.Unregister(this);
 
-    private void AnimatePressScale(double target)
+    private void AnimatePressScale(Size target)
     {
         var currentX = _pressScale.ScaleX;
         var currentY = _pressScale.ScaleY;
         _pressScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
         _pressScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-        _pressScale.ScaleX = target;
-        _pressScale.ScaleY = target;
+        _pressScale.ScaleX = target.Width;
+        _pressScale.ScaleY = target.Height;
 
         if (!IsPressAnimationEnabled || !SystemParameters.ClientAreaAnimation)
         {
@@ -302,11 +347,11 @@ public sealed class Win10InteractionBorder : Border
 
         _pressScale.BeginAnimation(
             ScaleTransform.ScaleXProperty,
-            Win10InteractionMotion.CreateScaleAnimation(currentX, target),
+            Win10InteractionMotion.CreateScaleAnimation(currentX, target.Width),
             HandoffBehavior.SnapshotAndReplace);
         _pressScale.BeginAnimation(
             ScaleTransform.ScaleYProperty,
-            Win10InteractionMotion.CreateScaleAnimation(currentY, target),
+            Win10InteractionMotion.CreateScaleAnimation(currentY, target.Height),
             HandoffBehavior.SnapshotAndReplace);
     }
 

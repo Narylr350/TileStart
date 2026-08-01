@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "tile-content",
-  "status": "verified-layout-only",
+  "status": "verified-layout-and-selected-interaction",
   "target": {
     "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
     "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
@@ -109,6 +109,23 @@
       "unit": "DIP",
       "evidence": "compiled-xbf",
       "anchor": "TileStyles.xaml TilesFocusVisualSecondaryThickness"
+    },
+    "tilePressedScale": {
+      "value": {
+        "small": [0.8958, 0.8958],
+        "medium": [0.95, 0.95],
+        "wide": [0.9755, 0.95],
+        "large": [0.9755, 0.9755]
+      },
+      "evidence": "binary-verified",
+      "anchor": "StartUI::TileViewControl::UpdateTileScaling@0x180061f60",
+      "source": {
+        "small": "DAT_1805ddb20",
+        "medium": "DAT_1805ddb40",
+        "wide": "DAT_1805ddb38",
+        "large": "DAT_1805ddb28"
+      },
+      "observation": "Each axis loses approximately 5 DIP, so wide tiles use different X and Y scales."
     },
     "scrollBarThumbRestColor": {
       "dark": "#33FFFFFF",

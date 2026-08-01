@@ -150,6 +150,19 @@ public sealed class Win10VisualSpecTests
             metrics.GetProperty("tileFocusVisualMargin").GetProperty("value"));
         Assert.Equal(Win10VisualMetrics.TilePrimaryFocusThickness, Value(metrics, "tileFocusPrimaryThickness"));
         Assert.Equal(Win10VisualMetrics.TileSecondaryFocusThickness, Value(metrics, "tileFocusSecondaryThickness"));
+        var pressedScale = metrics.GetProperty("tilePressedScale").GetProperty("value");
+        Assert.Equal(
+            [Win10InteractionMotion.SmallTilePressedScale, Win10InteractionMotion.SmallTilePressedScale],
+            pressedScale.GetProperty("small").EnumerateArray().Select(value => value.GetDouble()).ToArray());
+        Assert.Equal(
+            [Win10InteractionMotion.MediumTilePressedScale, Win10InteractionMotion.MediumTilePressedScale],
+            pressedScale.GetProperty("medium").EnumerateArray().Select(value => value.GetDouble()).ToArray());
+        Assert.Equal(
+            [Win10InteractionMotion.WideTilePressedScale, Win10InteractionMotion.MediumTilePressedScale],
+            pressedScale.GetProperty("wide").EnumerateArray().Select(value => value.GetDouble()).ToArray());
+        Assert.Equal(
+            [Win10InteractionMotion.WideTilePressedScale, Win10InteractionMotion.WideTilePressedScale],
+            pressedScale.GetProperty("large").EnumerateArray().Select(value => value.GetDouble()).ToArray());
         Assert.Equal(
             "#33FFFFFF",
             metrics.GetProperty("scrollBarThumbRestColor").GetProperty("dark").GetString());

@@ -16,6 +16,23 @@ public sealed class Win10InteractionMotionTests
         Assert.Equal(1, Win10InteractionMotion.PressSplineControlPoint2.Y);
     }
 
+    [Theory]
+    [InlineData(48, 48, 0.8958, 0.8958)]
+    [InlineData(100, 100, 0.95, 0.95)]
+    [InlineData(204, 100, 0.9755, 0.95)]
+    [InlineData(204, 204, 0.9755, 0.9755)]
+    public void TilePressedScaleMatchesStartUiForEveryTileSize(
+        double width,
+        double height,
+        double expectedX,
+        double expectedY)
+    {
+        var scale = Win10InteractionMotion.TilePressedScale(new System.Windows.Size(width, height));
+
+        Assert.Equal(expectedX, scale.Width);
+        Assert.Equal(expectedY, scale.Height);
+    }
+
     [Fact]
     public void ScaleAnimationStartsAtCurrentValueAndUsesRecoveredSpline()
     {

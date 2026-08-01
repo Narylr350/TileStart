@@ -233,6 +233,7 @@
                                                       RevealBorderOpacity="0.5"
                                                       RevealRadius="96"
                                                       UsesSharedPointerLight="True"
+                                                      UsesTilePressedScale="True"
                                                       SnapsToDevicePixels="True">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
