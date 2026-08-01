@@ -119,6 +119,10 @@ public sealed class Win10VisualSpecTests
         Assert.Equal("SystemAccentColor", submenuOpenedBackground.GetProperty("colorSource").GetString());
         Assert.Equal(0.6, submenuOpenedBackground.GetProperty("darkOpacity").GetDouble());
         Assert.Equal(0.4, submenuOpenedBackground.GetProperty("lightOpacity").GetDouble());
+        var pressedBackground = metrics.GetProperty("pressedBackground");
+        Assert.Equal("SystemAccentColor", pressedBackground.GetProperty("colorSource").GetString());
+        Assert.Equal(0.9, pressedBackground.GetProperty("darkOpacity").GetDouble());
+        Assert.Equal(0.7, pressedBackground.GetProperty("lightOpacity").GetDouble());
         Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
     }
 

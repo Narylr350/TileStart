@@ -553,6 +553,10 @@
     </Style>
 
     <Style x:Key="TileStartMenuItemStyle" TargetType="MenuItem">
+        <EventSetter Event="PreviewMouseLeftButtonDown" Handler="MenuItem_PreviewMouseLeftButtonDown" />
+        <EventSetter Event="PreviewMouseLeftButtonUp" Handler="MenuItem_ClearPressedState" />
+        <EventSetter Event="MouseLeave" Handler="MenuItem_ClearPressedState" />
+        <EventSetter Event="LostMouseCapture" Handler="MenuItem_ClearPressedState" />
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="{x:Static local:Win10VisualMetrics.ContextMenuItemPadding}" />
         <Setter Property="Foreground" Value="{DynamicResource TileStartTextPrimaryBrush}" />

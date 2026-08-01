@@ -79,6 +79,20 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(expectedOpacity, ReadThemeBrushAttribute(theme, key, "Opacity"));
     }
 
+    [Theory]
+    [InlineData("Win10Theme.xaml", "0.9")]
+    [InlineData("Win10LightTheme.xaml", "0.7")]
+    public void Windows10MenuPressedBackgroundUsesNativeAccentHighOpacity(
+        string theme,
+        string expectedOpacity)
+    {
+        const string key = "TileStartContextMenuPressedBrush";
+        Assert.Equal(
+            "{x:Static local:Win10Theme.AccentColor}",
+            ReadThemeBrushColor(theme, key));
+        Assert.Equal(expectedOpacity, ReadThemeBrushAttribute(theme, key, "Opacity"));
+    }
+
     [Fact]
     public void ApplicationNamesUseTheNativeSingleLineTextStyle()
     {
@@ -446,6 +460,15 @@ public sealed class DarkThemeVisualTests
 
         var menuItemStyle = sharedStyles.Descendants(presentation + "Style")
             .Single(element => (string?)element.Attribute(x + "Key") == "TileStartMenuItemStyle");
+        var pressedEvents = menuItemStyle.Elements(presentation + "EventSetter")
+            .Select(setter => (
+                Event: (string?)setter.Attribute("Event"),
+                Handler: (string?)setter.Attribute("Handler")))
+            .ToArray();
+        Assert.Contains(("PreviewMouseLeftButtonDown", "MenuItem_PreviewMouseLeftButtonDown"), pressedEvents);
+        Assert.Contains(("PreviewMouseLeftButtonUp", "MenuItem_ClearPressedState"), pressedEvents);
+        Assert.Contains(("MouseLeave", "MenuItem_ClearPressedState"), pressedEvents);
+        Assert.Contains(("LostMouseCapture", "MenuItem_ClearPressedState"), pressedEvents);
         var activeTriggers = menuItemStyle.Descendants(presentation + "Trigger")
             .Where(trigger => (string?)trigger.Attribute("Property") is "IsHighlighted" or "IsSubmenuOpen")
             .ToArray();

@@ -27,6 +27,8 @@
                      Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartContextMenuSubmenuOpenedBrush"
                      Color="{x:Static local:Win10Theme.AccentColor}" />
+    <SolidColorBrush x:Key="TileStartContextMenuPressedBrush"
+                     Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#09000000" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0F000000" />

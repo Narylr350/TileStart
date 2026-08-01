@@ -97,6 +97,13 @@
       "evidence": "compiled-system-xbf",
       "anchor": "MenuFlyoutSubItemBackgroundSubMenuOpened -> SystemControlHighlightListAccentLowBrush"
     },
+    "pressedBackground": {
+      "colorSource": "SystemAccentColor",
+      "darkOpacity": 0.9,
+      "lightOpacity": 0.7,
+      "evidence": "compiled-system-xbf",
+      "anchor": "MenuFlyoutItemBackgroundPressed -> SystemControlHighlightListAccentHighBrush"
+    },
     "submenuArrow": {
       "glyph": "U+E0E3",
       "fontSize": 12.0,
