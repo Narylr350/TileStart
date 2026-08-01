@@ -1194,14 +1194,15 @@
                                                                         Y="{x:Static local:Win10VisualMetrics.TileLogoVerticalOffset}" />
                                                                 </Image.RenderTransform>
                                                             </Image>
-                                                             <Grid x:Name="FolderVisual"
-                                                                   Grid.Row="0"
-                                                                   Visibility="Collapsed">
+                                                              <Grid x:Name="FolderVisual"
+                                                                    Grid.Row="0"
+                                                                    Grid.RowSpan="2"
+                                                                    Visibility="Collapsed">
                                                                  <!-- 预览仍遵循 Win10 的三列图标槽位；TileStart 按产品选择保留普通磁贴品牌区，
                                                                       让文件夹名称与其他磁贴一致显示，而不是复制原版的展开名称行。 -->
-                                                                 <ItemsControl x:Name="FolderPreview"
-                                                                               Width="66"
-                                                                               Height="66"
+                                                                  <ItemsControl x:Name="FolderPreview"
+                                                                                Width="{Binding PixelWidth}"
+                                                                                Height="{Binding PixelHeight}"
                                                                                HorizontalAlignment="Center"
                                                                                VerticalAlignment="Center"
                                                                                ClipToBounds="True"

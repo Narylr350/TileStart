@@ -82,6 +82,16 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     },
+    "folderPreviewHost": {
+      "value": "full-tile",
+      "evidence": "compiled-xbf-and-same-scale-screenshot",
+      "anchor": "FolderAppSpaceVisual.xaml TilesGrid",
+      "source": {
+        "file": "FolderAppSpaceVisual.xaml",
+        "screenshot": "native/current medium-tile comparison at 150 percent",
+        "observation": "The native 3-column preview centers are approximately 25/75/125 physical pixels across a 150-pixel medium tile. A centered 66-DIP host shifts them to approximately 42/75/108 pixels."
+      }
+    },
     "scrollBarThumbRestColor": {
       "dark": "#33FFFFFF",
       "light": "#33000000",

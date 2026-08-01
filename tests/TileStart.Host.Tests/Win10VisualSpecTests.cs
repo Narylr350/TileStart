@@ -145,6 +145,7 @@ public sealed class Win10VisualSpecTests
         AssertThickness(Win10VisualMetrics.TileNestedPanelMargin, metrics.GetProperty("nestedPanelMargin").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.TileBrandingMargin, metrics.GetProperty("bottomAlignedTextMargin").GetProperty("value"), horizontalInset: 8);
         Assert.Equal("NoWrap", metrics.GetProperty("groupTitleWrapping").GetProperty("value").GetString());
+        Assert.Equal("full-tile", metrics.GetProperty("folderPreviewHost").GetProperty("value").GetString());
         Assert.Equal(
             "#33FFFFFF",
             metrics.GetProperty("scrollBarThumbRestColor").GetProperty("dark").GetString());

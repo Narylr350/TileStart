@@ -27,10 +27,10 @@ public sealed class TileFolderAppearanceTests
         var previewPanel = Assert.Single(preview.Descendants(), element => element.Name.LocalName == "UniformGrid");
 
         Assert.Equal("0", visual.Attribute("Grid.Row")?.Value);
-        Assert.Null(visual.Attribute("Grid.RowSpan"));
+        Assert.Equal("2", visual.Attribute("Grid.RowSpan")?.Value);
         Assert.Null(preview.Attribute("Grid.Row"));
-        Assert.Equal("66", preview.Attribute("Width")?.Value);
-        Assert.Equal("66", preview.Attribute("Height")?.Value);
+        Assert.Equal("{Binding PixelWidth}", preview.Attribute("Width")?.Value);
+        Assert.Equal("{Binding PixelHeight}", preview.Attribute("Height")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Rows")?.Value);
         Assert.Equal("3", previewPanel.Attribute("Columns")?.Value);
         Assert.Equal("{Binding Name}", NamedElement("TileTitle").Attribute("Text")?.Value);
