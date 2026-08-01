@@ -73,6 +73,31 @@
       "status": "compiled-xbf",
       "evidence": "GroupHeaderControl.xaml BackgroundElement.StrokeThickness"
     },
+    "pressedAndEditAccentAlpha": {
+      "value": 255,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-and-theme-resource",
+      "evidence": "GroupHeaderControl.xaml InteractionState_Pressed/InteractionState_Edit use AccentHighlightBrush; THEMERESOURCES.xaml resolves AccentHighlightBrush to opaque SystemAccentColor"
+    },
+    "pressedAndEditAccentBorderAlpha": {
+      "value": 255,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-and-theme-resource",
+      "evidence": "Pressed and Edit set BackgroundElement Fill and Stroke to AccentHighlightBrush while retaining the default 2-DIP StrokeThickness"
+    },
+    "dragAccentAlpha": {
+      "value": 204,
+      "compiledOpacity": 0.8,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-wpf-mapping",
+      "evidence": "InteractionState_Drag sets Fill/Stroke to AccentHighlightBrush, Opacity=0.8 and StrokeThickness=0. TileStart maps the opacity to #CC accent fill so title content does not become translucent."
+    },
+    "dragStrokeThickness": {
+      "value": 0,
+      "unit": "dip",
+      "status": "compiled-xbf",
+      "evidence": "GroupHeaderControl.xaml InteractionState_Drag sets BackgroundElement.StrokeThickness=0"
+    },
     "primaryFocusThickness": {
       "value": 2,
       "unit": "dip",
@@ -133,6 +158,15 @@
       ]
     },
     {
+      "status": "compiled-xbf-and-theme-resource",
+      "fact": "Hover keeps the header surface transparent. Pressed and Edit use opaque SystemAccentColor for both fill and the 2-DIP stroke. Drag uses the same accent at 0.8 opacity and removes the stroke.",
+      "evidence": [
+        "GroupHeaderControl.xaml FocusState_Hover/FocusState_HoverPlaceholder",
+        "GroupHeaderControl.xaml InteractionState_Pressed/InteractionState_Edit/InteractionState_Drag",
+        "THEMERESOURCES.xaml AccentHighlightBrush/TransparentHighlightBrush"
+      ]
+    },
+    {
       "status": "binary-verified",
       "fact": "Group rearrangement is transactional: begin creates TileGroupLayoutState, preview updates the group location, drop commits, and cancel reapplies the saved state.",
       "evidence": [
@@ -178,7 +212,7 @@
   },
   "unresolved": [
     "The exact desktop mouse drag threshold is encapsulated by the native MouseGestureProvider. TileStart uses the Windows system drag distance until runtime tracing provides the internal value.",
-    "The exact native brush colors for placeholder hover, pressed, and drag depend on theme resources. The same-scale pointer-over reference shows no visible full-width hover fill, so TileStart keeps the ordinary pointer-over surface transparent while retaining accent feedback for pressed and drag states.",
+    "The placeholder text hover brush resolves to SystemBaseMediumColor, but its final appearance still needs same-scale light/dark runtime validation. The ordinary pointer-over header surface is confirmed transparent by the compiled visual state and retained as such.",
     "The exact group displacement easing is not yet isolated from the native theme transition. TileStart initially reuses the already calibrated Win10 reorder spline and requires Win10 runtime comparison.",
     "The native vertical group CellLocation quantum and empty-cell persistence rules are not yet isolated. TileStart persists column/row order and stacks each column by the measured group height, so inserting a group shifts only later groups in that column without claiming the native layout uses the same height accumulator."
   ]

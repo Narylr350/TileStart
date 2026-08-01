@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using TileStart.Host.Themes;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
@@ -222,23 +223,19 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         Gripper.Visibility = interactive ? Visibility.Visible : Visibility.Collapsed;
         UpdateTitleVisibility();
 
-        if (_isEditing)
-        {
-            var accent = Win10Theme.AccentColor;
-            InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
-            InteractionBorder.BorderBrush = CreateBrush(0xd0, accent.R, accent.G, accent.B);
-        }
-        else if (_isDragging || _isPressed)
-        {
-            var accent = Win10Theme.AccentColor;
-            InteractionBorder.Background = CreateBrush(0x38, accent.R, accent.G, accent.B);
-            InteractionBorder.BorderBrush = TransparentBrush;
-        }
-        else
-        {
-            InteractionBorder.Background = TransparentBrush;
-            InteractionBorder.BorderBrush = TransparentBrush;
-        }
+        var interactionVisual = ResolveInteractionVisual(
+            AppThemeManager.CurrentStyle,
+            _isEditing,
+            _isDragging,
+            _isPressed);
+        var accent = Win10Theme.AccentColor;
+        InteractionBorder.BorderThickness = new Thickness(interactionVisual.BorderThickness);
+        InteractionBorder.Background = interactionVisual.BackgroundAlpha == 0
+            ? TransparentBrush
+            : CreateBrush(interactionVisual.BackgroundAlpha, accent.R, accent.G, accent.B);
+        InteractionBorder.BorderBrush = interactionVisual.BorderAlpha == 0
+            ? TransparentBrush
+            : CreateBrush(interactionVisual.BorderAlpha, accent.R, accent.G, accent.B);
 
         var keyboardFocus = IsKeyboardFocusWithin && !_isEditing && !_isPressed && !_isDragging;
         PrimaryFocusVisual.Visibility = keyboardFocus ? Visibility.Visible : Visibility.Collapsed;
@@ -252,6 +249,40 @@ public partial class TileGroupHeader : System.Windows.Controls.UserControl
         NameTextBlockHost.Visibility = !_isEditing && (!isPlaceholder || showPlaceholder)
             ? Visibility.Visible
             : Visibility.Collapsed;
+    }
+
+    internal static (byte BackgroundAlpha, byte BorderAlpha, double BorderThickness) ResolveInteractionVisual(
+        AppThemeStyle style,
+        bool isEditing,
+        bool isDragging,
+        bool isPressed)
+    {
+        if (style == AppThemeStyle.Windows10)
+        {
+            // StartUI 的 AccentHighlightBrush 是完整 SystemAccentColor；Drag 只通过控件 Opacity=0.8 降低强度。
+            // WPF 这里将该整体透明度映射到背景 alpha，同时保持原版 Drag 的零描边，避免改变标题内容透明度。
+            if (isDragging)
+            {
+                // 透明 BorderBrush 仍会让 WPF Border 把 Background 向内挤；原版 Drag 必须是真正的零描边。
+                return (0xcc, 0, 0);
+            }
+
+            if (isEditing || isPressed)
+            {
+                return (0xff, 0xff, Win10VisualMetrics.TileGroupHeaderStrokeThickness);
+            }
+
+            return (0, 0, Win10VisualMetrics.TileGroupHeaderStrokeThickness);
+        }
+
+        if (isEditing)
+        {
+            return (0x38, 0xd0, Win10VisualMetrics.TileGroupHeaderStrokeThickness);
+        }
+
+        return isDragging || isPressed
+            ? ((byte)0x38, (byte)0, Win10VisualMetrics.TileGroupHeaderStrokeThickness)
+            : ((byte)0, (byte)0, Win10VisualMetrics.TileGroupHeaderStrokeThickness);
     }
 
     private static Brush CreateBrush(byte alpha, byte red, byte green, byte blue)

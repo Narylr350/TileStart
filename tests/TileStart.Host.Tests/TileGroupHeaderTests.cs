@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Windows;
 using TileStart.Host;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
 
@@ -65,7 +66,55 @@ public sealed class TileGroupHeaderTests
             var border = Assert.IsType<System.Windows.Controls.Border>(header.FindName("InteractionBorder"));
             var brush = Assert.IsType<System.Windows.Media.SolidColorBrush>(border.BorderBrush);
             Assert.Equal(0, brush.Color.A);
+            Assert.Equal(new Thickness(), border.BorderThickness);
         });
+    }
+
+    [Theory]
+    [InlineData(false, false, true, 0xff, 0xff, 2)]
+    [InlineData(true, false, false, 0xff, 0xff, 2)]
+    [InlineData(false, true, true, 0xcc, 0x00, 0)]
+    [InlineData(false, false, false, 0x00, 0x00, 2)]
+    public void Win10InteractionStatesUseExtractedAccentHighlightValues(
+        bool isEditing,
+        bool isDragging,
+        bool isPressed,
+        byte expectedBackgroundAlpha,
+        byte expectedBorderAlpha,
+        double expectedBorderThickness)
+    {
+        var visual = TileGroupHeader.ResolveInteractionVisual(
+            AppThemeStyle.Windows10,
+            isEditing,
+            isDragging,
+            isPressed);
+
+        Assert.Equal(expectedBackgroundAlpha, visual.BackgroundAlpha);
+        Assert.Equal(expectedBorderAlpha, visual.BorderAlpha);
+        Assert.Equal(expectedBorderThickness, visual.BorderThickness);
+    }
+
+    [Theory]
+    [InlineData(true, false, false, 0x38, 0xd0, 2)]
+    [InlineData(false, true, true, 0x38, 0x00, 2)]
+    [InlineData(false, false, true, 0x38, 0x00, 2)]
+    public void Win11InteractionStatesKeepTheExistingVisualTokens(
+        bool isEditing,
+        bool isDragging,
+        bool isPressed,
+        byte expectedBackgroundAlpha,
+        byte expectedBorderAlpha,
+        double expectedBorderThickness)
+    {
+        var visual = TileGroupHeader.ResolveInteractionVisual(
+            AppThemeStyle.Windows11,
+            isEditing,
+            isDragging,
+            isPressed);
+
+        Assert.Equal(expectedBackgroundAlpha, visual.BackgroundAlpha);
+        Assert.Equal(expectedBorderAlpha, visual.BorderAlpha);
+        Assert.Equal(expectedBorderThickness, visual.BorderThickness);
     }
 
     [Fact]

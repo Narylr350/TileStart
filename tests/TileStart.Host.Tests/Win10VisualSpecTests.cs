@@ -172,6 +172,10 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.TileGroupHeaderStrokeThickness, Value(metrics, "backgroundStrokeThickness"));
         Assert.Equal(Win10VisualMetrics.TileGroupPrimaryFocusThickness, Value(metrics, "primaryFocusThickness"));
         Assert.Equal(Win10VisualMetrics.TileGroupSecondaryFocusThickness, Value(metrics, "secondaryFocusThickness"));
+        Assert.Equal(0xff, Value(metrics, "pressedAndEditAccentAlpha"));
+        Assert.Equal(0xff, Value(metrics, "pressedAndEditAccentBorderAlpha"));
+        Assert.Equal(0xcc, Value(metrics, "dragAccentAlpha"));
+        Assert.Equal(0, Value(metrics, "dragStrokeThickness"));
         Assert.Equal(Win10VisualMetrics.TileGroupGripperWidth, Win10VisualMetrics.TileGroupGripperGridLength.Value);
         AssertThickness(Win10VisualMetrics.TileGroupTitleRestMargin, metrics.GetProperty("titleMarginRest").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.TileGroupTitleInteractiveMargin, metrics.GetProperty("titleMarginInteractive").GetProperty("value"));
