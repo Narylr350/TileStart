@@ -15,6 +15,7 @@ internal static class PopupMaterialManager
     private const int AccentEnableAcrylicBlurBehind = 4;
     private const int AcrylicAccentFlags = 2;
     private const byte NativeTransientTintAlpha = 0xCC;
+    private const byte PopupHitTestAlpha = 1;
     private static readonly ConditionalWeakTable<System.Windows.Controls.Border, PopupState> States = new();
 
     private sealed class PopupState
@@ -70,7 +71,10 @@ internal static class PopupMaterialManager
                 States.Add(popupSurface, new PopupState { Background = popupSurface.Background });
             }
 
-            popupSurface.Background = System.Windows.Media.Brushes.Transparent;
+            // AllowsTransparency Popup 使用分层 HWND。若 WPF 内容完全透明，WCA 虽能画出
+            // Acrylic，原生窗口仍可能把 alpha=0 像素视为透明并把鼠标交给下方磁贴。
+            // 保留最小非零 alpha 仅用于维持 HWND 命中区域，不承担可见 tint。
+            popupSurface.Background = CreateHitTestBackground(fallbackBrush.Color);
         }
     }
 
@@ -86,6 +90,17 @@ internal static class PopupMaterialManager
 
     internal static int ComposeGradientColor(System.Windows.Media.Color color, byte alpha) =>
         unchecked((int)(((uint)alpha << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R));
+
+    internal static SolidColorBrush CreateHitTestBackground(System.Windows.Media.Color color)
+    {
+        var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(
+            PopupHitTestAlpha,
+            color.R,
+            color.G,
+            color.B));
+        brush.Freeze();
+        return brush;
+    }
 
     private static void RestoreBackground(System.Windows.Controls.Border popupSurface)
     {
