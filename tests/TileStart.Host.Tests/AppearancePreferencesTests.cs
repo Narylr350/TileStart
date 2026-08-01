@@ -102,4 +102,19 @@ public sealed class AppearancePreferencesTests
             previousDarkMode: true,
             resolvedDarkMode: true));
     }
+
+    [Theory]
+    [InlineData(AppThemeStyle.Windows10, true, 0.8, 0.8)]
+    [InlineData(AppThemeStyle.Windows10, false, 0.8, 1.0)]
+    [InlineData(AppThemeStyle.Windows11, true, 0.8, 1.0)]
+    public void DefaultTileOpacityOnlyFollowsWin10Transparency(
+        AppThemeStyle style,
+        bool useAcrylic,
+        double resourceOpacity,
+        double expected)
+    {
+        Assert.Equal(
+            expected,
+            AppThemeManager.ResolveDefaultTileBackgroundOpacity(style, useAcrylic, resourceOpacity));
+    }
 }

@@ -23,6 +23,27 @@ public class TileItemBackgroundColorTests : IDisposable
     }
 
     [Fact]
+    public void DefaultTileKeepsThemeColorSeparateFromItsSurfaceOpacity()
+    {
+        TileItem.SetThemeDefaultBackgroundColor("#5A353B", 0.8);
+
+        var tile = new TileItem();
+
+        Assert.Equal("#5A353B", tile.BackgroundColor);
+        Assert.Equal(0.8, tile.BackgroundBrush.Opacity);
+    }
+
+    [Fact]
+    public void CustomTileColorDoesNotInheritDefaultSurfaceOpacity()
+    {
+        TileItem.SetThemeDefaultBackgroundColor("#5A353B", 0.8);
+
+        var tile = new TileItem { BackgroundColor = "#112233" };
+
+        Assert.Equal(1, tile.BackgroundBrush.Opacity);
+    }
+
+    [Fact]
     public void AssigningColorMarksTileAsCustomised()
     {
         var tile = new TileItem { BackgroundColor = "#112233" };

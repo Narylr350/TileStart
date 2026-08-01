@@ -24,7 +24,7 @@ public sealed class TileItem : INotifyPropertyChanged
     /// Applies the active theme's default tile colour. Tiles whose
     /// <see cref="HasCustomBackgroundColor"/> is false follow it.
     /// </summary>
-    public static void SetThemeDefaultBackgroundColor(string color)
+    public static void SetThemeDefaultBackgroundColor(string color, double opacity = 1)
     {
         if (string.IsNullOrWhiteSpace(color))
         {
@@ -32,7 +32,7 @@ public sealed class TileItem : INotifyPropertyChanged
         }
 
         ThemeDefaultBackgroundColor = color.Trim();
-        ThemeDefaultBackgroundBrush = CreateFrozenBrush(ThemeDefaultBackgroundColor);
+        ThemeDefaultBackgroundBrush = CreateFrozenBrush(ThemeDefaultBackgroundColor, opacity);
     }
 
     private int _column;
@@ -594,9 +594,10 @@ public sealed class TileItem : INotifyPropertyChanged
         }
     }
 
-    private static MediaBrush CreateFrozenBrush(string value)
+    private static MediaBrush CreateFrozenBrush(string value, double opacity = 1)
     {
         var brush = (MediaBrush)new BrushConverter().ConvertFromString(value)!;
+        brush.Opacity = double.IsFinite(opacity) ? Math.Clamp(opacity, 0, 1) : 1;
         brush.Freeze();
         return brush;
     }

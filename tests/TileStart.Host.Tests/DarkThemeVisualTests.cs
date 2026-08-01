@@ -303,6 +303,8 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(
             "{x:Static local:Win10Theme.AccentColor}",
             ReadThemeBrushColor("Win10Theme.xaml", key));
+        Assert.Equal("0.8", ReadThemeBrushOpacity("Win10Theme.xaml", key));
+        Assert.Equal("0.8", ReadThemeBrushOpacity("Win10LightTheme.xaml", key));
     }
 
     [Fact]
@@ -730,6 +732,9 @@ public sealed class DarkThemeVisualTests
 
     private static string? ReadThemeBrushColor(string fileName, string key)
         => ReadThemeBrushAttribute(fileName, key, "Color");
+
+    private static string? ReadThemeBrushOpacity(string fileName, string key)
+        => ReadThemeBrushAttribute(fileName, key, "Opacity");
 
     private static string? ReadThemeBrushAttribute(string fileName, string key, string attribute)
     {

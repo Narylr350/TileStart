@@ -57,7 +57,7 @@ public static class AppThemeManager
             dictionaries[index] = replacement;
         }
 
-        ApplyDefaultTileBackground(resources);
+        ApplyDefaultTileBackground(resources, style);
     }
 
     private static bool IsThemeDictionary(Uri? source)
@@ -74,11 +74,23 @@ public static class AppThemeManager
     /// Feeds the theme's tile colour to <see cref="TileItem"/> so tiles the user never recoloured
     /// follow the active theme.
     /// </summary>
-    private static void ApplyDefaultTileBackground(ResourceDictionary resources)
+    private static void ApplyDefaultTileBackground(ResourceDictionary resources, AppThemeStyle style)
     {
         if (resources["TileStartDefaultTileBackgroundBrush"] is SolidColorBrush brush)
         {
-            TileItem.SetThemeDefaultBackgroundColor(brush.Color.ToString());
+            var useAcrylic = style == AppThemeStyle.Windows10
+                             && Win10Theme.ReadStartMaterial(style).UseAcrylic;
+            TileItem.SetThemeDefaultBackgroundColor(
+                brush.Color.ToString(),
+                ResolveDefaultTileBackgroundOpacity(style, useAcrylic, brush.Opacity));
         }
     }
+
+    internal static double ResolveDefaultTileBackgroundOpacity(
+        AppThemeStyle style,
+        bool useAcrylic,
+        double transparencyEnabledOpacity) =>
+        style == AppThemeStyle.Windows10 && useAcrylic
+            ? Math.Clamp(transparencyEnabledOpacity, 0, 1)
+            : 1;
 }

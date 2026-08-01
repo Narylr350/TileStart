@@ -43,9 +43,10 @@
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#33000000" />
     <!-- StartUI NavigationPaneAcrylicBackgroundBrush tint; composited over the main acrylic. -->
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#80E9E9E9" />
-    <!-- StartUI DefaultItem_BackgroundBrush resolves directly to SystemAccentColor. -->
+    <!-- StartUI：默认磁贴使用 SystemAccentColor；开启透明效果时背景不透明度为 0.8。 -->
     <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
+                     Color="{x:Static local:Win10Theme.AccentColor}"
+                     Opacity="0.8" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#107C10" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#8A4F00" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#C42B1C" />
