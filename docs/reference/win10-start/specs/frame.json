@@ -99,6 +99,25 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     },
+    "accentMenuAcrylic": {
+      "state": "AccentAcrylic",
+      "backgroundSource": "Backdrop",
+      "tintColor": "SystemAccentColorDark1",
+      "tintOpacity": 0.8,
+      "fallbackColor": "SystemAccentColorDark1",
+      "navigationTintColor": "SystemAccentColorDark2",
+      "navigationTintOpacity": 0.5,
+      "evidence": "compiled-xbf",
+      "anchor": "SplitViewFrame.AccentAcrylic + SystemControlAcrylicAccentElementBrush + NavigationPaneAcrylicAccentBackgroundBrush",
+      "source": {
+        "files": [
+          "SplitViewFrame.xaml",
+          "SharedThemeManagerBrushes.xaml",
+          "TileStyles.xaml"
+        ],
+        "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
+      }
+    },
     "menuBackgroundOverlay": {
       "defaultVisibility": "Collapsed",
       "visibleStartModes": [
@@ -142,6 +161,13 @@
       "validatedAt": "2026-07-21",
       "result": "acceptable approximate match",
       "notes": "The original UWP AcrylicBrush values are verified. Mapping TintOpacity directly to the undocumented WCA GradientColor alpha is an independent approximation, not an exact API-equivalent reconstruction."
+    },
+    "tileStartAccentWcaMapping": {
+      "selection": "ColorPrevalence != 0",
+      "gradientColor": "0xB8BBGGRR from AccentPalette Dark1, falling back to StartColorMenu",
+      "fallbackColor": "AccentPalette Dark1",
+      "evidence": "compiled-xbf + registry-state-selection + independent-wca-mapping",
+      "notes": "StartUI's AccentAcrylic brush and its Dark1/0.8 values are exact XBF evidence. ColorPrevalence is the Windows user setting that selects Start accent colouring. WCA alpha 0xB8 is an empirical same-wallpaper screenshot calibration after the direct 0xCC mapping proved too bright, saturated, and uniform; it is not an original StartUI value. The navigation pane's separate Dark2/0.5 layer is not yet represented independently by TileStart."
     }
   }
 }

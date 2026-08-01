@@ -16,7 +16,11 @@ public static class Win10Theme
     private const string AccentRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent";
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
+    private const int AccentDark1PaletteOffset = 4 * 4;
     private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
+    // 原版 UWP TintOpacity=0.8 不能直接等同于 WCA GradientColor alpha；0xCC 会把
+    // 壁纸压成均匀的高饱和蓝板。0xB8 是同壁纸对照 Win10 原生截图后的兼容校准值。
+    private const uint Win10AccentAcrylicTintAlpha = 0xB8;
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
@@ -90,14 +94,58 @@ public static class Win10Theme
         bool highContrast,
         AppThemeStyle themeStyle,
         object? startColorMenu)
+        => ResolveStartMaterial(
+            enableTransparency,
+            highContrast,
+            themeStyle,
+            startColorMenu,
+            colorPrevalence: null,
+            accentPalette: null);
+
+    internal static StartMaterialConfiguration ResolveStartMaterial(
+        object? enableTransparency,
+        bool highContrast,
+        AppThemeStyle themeStyle,
+        object? startColorMenu,
+        object? colorPrevalence,
+        byte[]? accentPalette)
     {
         var transparencyEnabled = enableTransparency is int value && value != 0;
+        var useWin10AccentAcrylic = themeStyle == AppThemeStyle.Windows10
+                                    && colorPrevalence is int prevalence
+                                    && prevalence != 0;
+        var win10AccentColor = useWin10AccentAcrylic
+            ? ResolveWin10AccentAcrylicColor(startColorMenu, accentPalette)
+            : StartFallbackColor;
+
         return new StartMaterialConfiguration(
             transparencyEnabled && !highContrast,
-            StartFallbackColor,
+            useWin10AccentAcrylic && !highContrast ? win10AccentColor : StartFallbackColor,
             themeStyle == AppThemeStyle.Windows11
                 ? ResolveWindows11GradientColor(startColorMenu)
-                : StartAcrylicGradientColor);
+                : useWin10AccentAcrylic
+                    ? PackAccentPolicyColor(win10AccentColor, Win10AccentAcrylicTintAlpha)
+                    : StartAcrylicGradientColor);
+    }
+
+    /// <summary>
+    /// StartUI 的 AccentAcrylic 状态固定使用 SystemAccentColorDark1 和 0.8 TintOpacity。
+    /// AccentPalette 是权威来源；缺失时回退到 StartColorMenu，因为 Windows 启用开始菜单强调色后
+    /// 通常会在那里发布相同的 Dark1 色阶。
+    /// </summary>
+    internal static MediaColor ResolveWin10AccentAcrylicColor(object? startColorMenu, byte[]? accentPalette)
+    {
+        if (accentPalette is { Length: >= AccentDark1PaletteOffset + 3 })
+        {
+            return MediaColor.FromRgb(
+                accentPalette[AccentDark1PaletteOffset],
+                accentPalette[AccentDark1PaletteOffset + 1],
+                accentPalette[AccentDark1PaletteOffset + 2]);
+        }
+
+        return TryReadPackedColor(startColorMenu, out var packed)
+            ? MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16))
+            : StartFallbackColor;
     }
 
     /// <summary>
@@ -121,20 +169,24 @@ public static class Win10Theme
     internal static StartMaterialConfiguration ReadStartMaterial(AppThemeStyle themeStyle)
     {
         object? enableTransparency = null;
+        object? colorPrevalence = null;
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(PersonalizeRegistryPath);
             enableTransparency = key?.GetValue("EnableTransparency");
+            colorPrevalence = key?.GetValue("ColorPrevalence");
         }
         catch (Exception)
         {
         }
 
         object? startColorMenu = null;
+        byte[]? accentPalette = null;
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(AccentRegistryPath);
             startColorMenu = key?.GetValue("StartColorMenu");
+            accentPalette = key?.GetValue("AccentPalette") as byte[];
         }
         catch (Exception)
         {
@@ -144,7 +196,9 @@ public static class Win10Theme
             enableTransparency,
             SystemParameters.HighContrast,
             themeStyle,
-            startColorMenu);
+            startColorMenu,
+            colorPrevalence,
+            accentPalette);
     }
 
     private static MediaColor ReadStartSurfaceColor()
@@ -218,6 +272,9 @@ public static class Win10Theme
                 return false;
         }
     }
+
+    private static int PackAccentPolicyColor(MediaColor color, uint alpha) =>
+        unchecked((int)((alpha << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R));
 
     internal static MediaColor Blend(MediaColor source, MediaColor target, double amount)
     {

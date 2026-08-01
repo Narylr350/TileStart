@@ -62,6 +62,87 @@ public sealed class Win10ThemeTests
     }
 
     [Fact]
+    public void Win10StartMaterialUsesDark1AccentAcrylicWhenStartAccentIsEnabled()
+    {
+        var palette = new byte[32];
+        palette[16] = 0x00;
+        palette[17] = 0x5F;
+        palette[18] = 0xBA;
+
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0xFFBA5F00),
+            colorPrevalence: 1,
+            accentPalette: palette);
+
+        Assert.True(material.UseAcrylic);
+        Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8BA5F00), material.AcrylicGradientColor);
+    }
+
+    [Fact]
+    public void Win10AccentAcrylicFallsBackToPackedStartColorWithoutPalette()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0xFFBA5F00),
+            colorPrevalence: 1,
+            accentPalette: null);
+
+        Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8BA5F00), material.AcrylicGradientColor);
+    }
+
+    [Fact]
+    public void Win10StartMaterialKeepsNormalAcrylicWhenStartAccentIsDisabled()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0xFFBA5F00),
+            colorPrevalence: 0,
+            accentPalette: new byte[32]);
+
+        Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xBF101010), material.AcrylicGradientColor);
+    }
+
+    [Fact]
+    public void Win10AccentFallbackRemainsColoredWhenTransparencyIsDisabled()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            0,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0xFFBA5F00),
+            colorPrevalence: 1,
+            accentPalette: null);
+
+        Assert.False(material.UseAcrylic);
+        Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
+    }
+
+    [Fact]
+    public void HighContrastDoesNotUseWin10AccentFallback()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: true,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0xFFBA5F00),
+            colorPrevalence: 1,
+            accentPalette: null);
+
+        Assert.False(material.UseAcrylic);
+        Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.FallbackColor);
+    }
+
+    [Fact]
     public void Windows11StartMaterialKeepsWallpaperColorVisibleThroughAcrylic()
     {
         var material = Win10Theme.ResolveStartMaterial(
