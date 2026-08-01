@@ -1,3 +1,4 @@
+using System.Windows.Media.Animation;
 using TileStart.Host;
 
 namespace TileStart.Host.Tests;
@@ -15,6 +16,20 @@ public sealed class Win10MenuPopupMotionTests
         Assert.Equal(0, Win10MenuPopupMotion.OpenSpline.ControlPoint1.Y, 3);
         Assert.Equal(0, Win10MenuPopupMotion.OpenSpline.ControlPoint2.X, 3);
         Assert.Equal(1, Win10MenuPopupMotion.OpenSpline.ControlPoint2.Y, 3);
+    }
+
+    [Fact]
+    public void ContentFadeUsesTheFullPopupOpenDuration()
+    {
+        var animation = Win10MenuPopupMotion.CreateContentFadeAnimation();
+
+        Assert.Equal(
+            TimeSpan.FromMilliseconds(Win10MenuPopupMotion.OpenDurationMilliseconds),
+            animation.Duration.TimeSpan);
+        Assert.Equal(FillBehavior.Stop, animation.FillBehavior);
+        Assert.Equal(2, animation.KeyFrames.Count);
+        Assert.Equal(0.15, animation.KeyFrames[0].Value, 2);
+        Assert.Equal(1, animation.KeyFrames[1].Value, 2);
     }
 
     [Fact]
