@@ -74,6 +74,15 @@
     },
     {
       "status": "binary-verified",
+      "fact": "TileViewControl sets the active rearrangeable or rearranging tile to 0.8 opacity. A tile that is only affected by another item's rearrangement uses 0.5 instead.",
+      "evidence": [
+        "StartUI::TileViewControl::UpdateTileOpacity@0x1800ad170",
+        "IRearrangeableViewModel vtable slots 0x38 IsRearrangeable, 0x40 IsRearranging, and 0x30 IsAnyItemRearranging",
+        "constants __real_3fe99999a0000000 and __real_3fe0000000000000"
+      ]
+    },
+    {
+      "status": "binary-verified",
       "fact": "A tile move is transactional: rearrange event 0 begins the move operation; terminal event 2 or 3 ends it, and event 3 is recorded as a successful completion.",
       "evidence": [
         "StartUI::StartViewModel::OnRearrangeEvent@0x1804f4100",
@@ -164,7 +173,12 @@
         "TileDragHitGeometryTests.SnapshotKeepsInsertionAtTheOriginalFollowingRow"
       ]
     },
-    "tileStartDraggedTilePlaceholderOpacity": 0.24,
+    "tileStartDraggedTileOpacity": {
+      "status": "binary-verified",
+      "value": 0.8,
+      "nativeOtherItemOpacity": 0.5,
+      "mapping": "TileStart IsDragging represents the active rearranging source, not another tile that merely observes IsAnyItemRearranging."
+    },
     "tileStartReflowMotion": {
       "status": "runtime-fitted-to-original-recording",
       "durationMilliseconds": 400,
@@ -203,7 +217,6 @@
   "unresolved": [
     "The native resolver's exact tie-breaking order when several mixed-size tiles can satisfy the same collision.",
     "The native Windows 10 Start implementation's exact source of the detachment bottom boundary has not been isolated. TileStart snapshots the pre-drag group height because its own rollbackable preview can expand live PixelHeight; this is a regression-backed compatibility strategy, not evidence that StartUI stores the same field.",
-    "The exact native placeholder opacity during reflow is not isolated. TileStart retains its independently calibrated value of 0.24; the reflow duration and spline are now runtime-fitted from the 2026-07-20 120 FPS recording.",
     "The exact original cancel/escape return duration and curve are not isolated. TileStart currently uses a clearly marked 200 ms approximation and requires a dedicated original-menu cancel recording before claiming parity.",
     "The exact native Windows 10 Start drag auto-scroll edge size, acceleration curve, and maximum velocity are not yet isolated. TileStart uses one CellPitch as the edge zone and frame-time-based velocity so the behavior remains continuous across 60/120/240 Hz displays.",
     "The private GridLayoutMetrics calls that define the exact new-group creation band are not fully typed in the public PDB. TileStart's internal drag path follows the verified anchor-adjusted tile geometry and now keeps model-like outer hit boundaries stable for the drag transaction, but still uses half the 32-DIP group-header height as a provisional center-point creation band. The exact native entry threshold, exit threshold, and any hysteresis still require runtime tracing or controlled original-menu video measurement. The pointer-only fallback for external WPF drag events retains the older one-CellPitch threshold."

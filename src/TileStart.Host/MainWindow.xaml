@@ -1316,7 +1316,7 @@
                                                          </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsDragging}" Value="True">
                                                             <Setter TargetName="TileButton" Property="Opacity"
-                                                                    Value="0.24" />
+                                                                    Value="{x:Static local:Win10VisualMetrics.TileDraggingOpacity}" />
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsFolderDropTarget}"
                                                                      Value="True">

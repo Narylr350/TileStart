@@ -619,6 +619,26 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(2, menuUsers.Length);
     }
 
+    [Fact]
+    public void DraggedTileUsesTheBinaryVerifiedWin10Opacity()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var draggingTrigger = document.Descendants(presentation + "DataTrigger")
+            .Single(trigger =>
+                (string?)trigger.Attribute("Binding") == "{Binding IsDragging}"
+                && (string?)trigger.Attribute("Value") == "True");
+        var opacitySetter = draggingTrigger.Elements(presentation + "Setter").Single(setter =>
+            (string?)setter.Attribute("TargetName") == "TileButton"
+            && (string?)setter.Attribute("Property") == "Opacity");
+
+        Assert.Equal(
+            "{x:Static local:Win10VisualMetrics.TileDraggingOpacity}",
+            (string?)opacitySetter.Attribute("Value"));
+        Assert.Equal(0.8, Win10VisualMetrics.TileDraggingOpacity);
+    }
+
     private static XDocument LoadMainWindow()
     {
         return LoadXaml("MainWindow.xaml");

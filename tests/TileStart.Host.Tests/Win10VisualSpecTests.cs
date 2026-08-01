@@ -165,6 +165,19 @@ public sealed class Win10VisualSpecTests
     }
 
     [Fact]
+    public void TileDraggingOpacityMatchesBinaryVerifiedRearrangeState()
+    {
+        using var spec = ReadSpec("tile-rearrange.json");
+        var draggingOpacity = spec.RootElement
+            .GetProperty("implementationContract")
+            .GetProperty("tileStartDraggedTileOpacity");
+
+        Assert.Equal("binary-verified", draggingOpacity.GetProperty("status").GetString());
+        Assert.Equal(Win10VisualMetrics.TileDraggingOpacity, draggingOpacity.GetProperty("value").GetDouble());
+        Assert.Equal(0.5, draggingOpacity.GetProperty("nativeOtherItemOpacity").GetDouble());
+    }
+
+    [Fact]
     public void TileGroupMetricsMatchExtractedStartUiSpec()
     {
         using var spec = ReadSpec("tile-group.json");

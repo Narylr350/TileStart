@@ -47,6 +47,9 @@ public static class Win10VisualMetrics
     public const double TilePrimaryFocusThickness = 2;
     public const double TileSecondaryFocusThickness = 1;
     public const double TileFocusVisualOffset = -2;
+    // StartUI::TileViewControl::UpdateTileOpacity 将当前可重排或正在拖动的磁贴设为 0.8；
+    // 0.5 属于仅受全局重排影响的其他磁贴，不能用于 TileStart 的拖动源。
+    public const double TileDraggingOpacity = 0.8;
     public const double TileGroupHeaderToTilesSpacing = 3;
     public const double TileNestedPanelHorizontalMargin = 4;
 
