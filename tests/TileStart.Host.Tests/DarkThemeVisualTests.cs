@@ -360,6 +360,26 @@ public sealed class DarkThemeVisualTests
         Assert.Equal("0.20", (string?)border.Attribute("PressedFillOpacity"));
     }
 
+    [Theory]
+    [InlineData("RailButtonStyle")]
+    [InlineData("AppRowStyle")]
+    [InlineData("TileStyle")]
+    [InlineData("LetterHeaderStyle")]
+    [InlineData("AlphabetButtonStyle")]
+    public void NativeStartInteractionsKeepTheWindowsArrowCursor(string styleKey)
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == styleKey);
+        var cursor = style.Elements(presentation + "Setter")
+            .Single(element => (string?)element.Attribute("Property") == "Cursor");
+
+        Assert.Equal("Arrow", (string?)cursor.Attribute("Value"));
+    }
+
     [Fact]
     public void AllAppsHeadersUseTheNativeStackGeometry()
     {
