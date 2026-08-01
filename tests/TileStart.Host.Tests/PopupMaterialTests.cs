@@ -17,6 +17,20 @@ public sealed class PopupMaterialTests
         Assert.True(brush.IsFrozen);
     }
 
+    [Fact]
+    public void AcrylicTransitionFadesFallbackToTheHitTestAlpha()
+    {
+        var animation = PopupMaterialManager.CreateMaterialTransitionAnimation(
+            Color.FromRgb(0x2B, 0x2B, 0x2B),
+            120);
+
+        Assert.Equal(TimeSpan.FromMilliseconds(120), animation.Duration.TimeSpan);
+        Assert.Equal(1, animation.To!.Value.A);
+        Assert.Equal(0x2B, animation.To.Value.R);
+        Assert.Equal(0x2B, animation.To.Value.G);
+        Assert.Equal(0x2B, animation.To.Value.B);
+    }
+
     [Theory]
     [InlineData(0x2B, 0x2B, 0x2B, 0xCC2B2B2B)]
     [InlineData(0x12, 0x34, 0x56, 0xCC563412)]

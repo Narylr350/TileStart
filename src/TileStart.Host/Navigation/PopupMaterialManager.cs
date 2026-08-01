@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using TileStart.Host.Themes;
 using TileStart.Host.Tiles.Models;
 
@@ -40,7 +41,9 @@ internal static class PopupMaterialManager
         public int SizeOfData;
     }
 
-    public static void Apply(System.Windows.Controls.Border popupSurface)
+    public static void Apply(
+        System.Windows.Controls.Border popupSurface,
+        int transitionDurationMilliseconds = 0)
     {
         if (PresentationSource.FromVisual(popupSurface) is not HwndSource source)
         {
@@ -71,10 +74,32 @@ internal static class PopupMaterialManager
                 States.Add(popupSurface, new PopupState { Background = popupSurface.Background });
             }
 
-            // AllowsTransparency Popup 使用分层 HWND。若 WPF 内容完全透明，WCA 虽能画出
-            // Acrylic，原生窗口仍可能把 alpha=0 像素视为透明并把鼠标交给下方磁贴。
-            // 保留最小非零 alpha 仅用于维持 HWND 命中区域，不承担可见 tint。
-            popupSurface.Background = CreateHitTestBackground(fallbackBrush.Color);
+            if (transitionDurationMilliseconds > 0)
+            {
+                var transitionBrush = new SolidColorBrush(fallbackBrush.Color);
+                popupSurface.Background = transitionBrush;
+                var transition = CreateMaterialTransitionAnimation(
+                    fallbackBrush.Color,
+                    transitionDurationMilliseconds);
+                transition.Completed += (_, _) =>
+                {
+                    if (ReferenceEquals(popupSurface.Background, transitionBrush))
+                    {
+                        popupSurface.Background = CreateHitTestBackground(fallbackBrush.Color);
+                    }
+                };
+                transitionBrush.BeginAnimation(
+                    SolidColorBrush.ColorProperty,
+                    transition,
+                    HandoffBehavior.SnapshotAndReplace);
+            }
+            else
+            {
+                // AllowsTransparency Popup 使用分层 HWND。若 WPF 内容完全透明，WCA 虽能画出
+                // Acrylic，原生窗口仍可能把 alpha=0 像素视为透明并把鼠标交给下方磁贴。
+                // 保留最小非零 alpha 仅用于维持 HWND 命中区域，不承担可见 tint。
+                popupSurface.Background = CreateHitTestBackground(fallbackBrush.Color);
+            }
         }
     }
 
@@ -101,6 +126,17 @@ internal static class PopupMaterialManager
         brush.Freeze();
         return brush;
     }
+
+    internal static ColorAnimation CreateMaterialTransitionAnimation(
+        System.Windows.Media.Color color,
+        int durationMilliseconds) =>
+        new()
+        {
+            To = System.Windows.Media.Color.FromArgb(PopupHitTestAlpha, color.R, color.G, color.B),
+            Duration = TimeSpan.FromMilliseconds(Math.Max(0, durationMilliseconds)),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.HoldEnd,
+        };
 
     private static void RestoreBackground(System.Windows.Controls.Border popupSurface)
     {

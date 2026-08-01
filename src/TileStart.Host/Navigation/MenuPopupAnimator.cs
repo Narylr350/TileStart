@@ -33,7 +33,9 @@ internal static class MenuPopupAnimator
                 Win10MenuPopupMotion.TopLevelClosedRatio,
                 opensUpward,
                 opensUpward ? null : PointerOriginY(border),
-                () => PopupMaterialManager.Apply(border)))
+                () => PopupMaterialManager.Apply(
+                    border,
+                    Win10MenuPopupMotion.MaterialTransitionDurationMilliseconds)))
         {
             PopupMaterialManager.Apply(border);
         }
@@ -81,7 +83,9 @@ internal static class MenuPopupAnimator
                 Win10MenuPopupMotion.SubmenuClosedRatio,
                 opensUpward,
                 opensUpward ? null : PointerOriginY(border),
-                () => PopupMaterialManager.Apply(border)))
+                () => PopupMaterialManager.Apply(
+                    border,
+                    Win10MenuPopupMotion.MaterialTransitionDurationMilliseconds)))
         {
             PopupMaterialManager.Apply(border);
         }

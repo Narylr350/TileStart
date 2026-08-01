@@ -16,9 +16,9 @@ public sealed class Win10MenuPopupMotionTests
             "Navigation",
             "MenuPopupAnimator.cs"));
 
-        Assert.Equal(
-            2,
-            Regex.Matches(source, @"\(\) => PopupMaterialManager\.Apply\(border\)").Count);
+        Assert.Equal(2, Regex.Matches(
+            source,
+            @"\(\) => PopupMaterialManager\.Apply\(\s*border,\s*Win10MenuPopupMotion\.MaterialTransitionDurationMilliseconds\)").Count);
         Assert.Contains("animation.Completed +=", source, StringComparison.Ordinal);
         Assert.Contains("materialReady();", source, StringComparison.Ordinal);
     }
@@ -30,6 +30,7 @@ public sealed class Win10MenuPopupMotionTests
         Assert.Equal(0.67, Win10MenuPopupMotion.SubmenuClosedRatio, 2);
         Assert.Equal(250, Win10MenuPopupMotion.OpenDurationMilliseconds);
         Assert.Equal(83, Win10MenuPopupMotion.CloseOpacityDurationMilliseconds);
+        Assert.Equal(120, Win10MenuPopupMotion.MaterialTransitionDurationMilliseconds);
         Assert.Equal(0, Win10MenuPopupMotion.OpenSpline.ControlPoint1.X, 3);
         Assert.Equal(0, Win10MenuPopupMotion.OpenSpline.ControlPoint1.Y, 3);
         Assert.Equal(0, Win10MenuPopupMotion.OpenSpline.ControlPoint2.X, 3);

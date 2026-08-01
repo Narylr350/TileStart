@@ -9,6 +9,7 @@ public static class Win10MenuPopupMotion
     public const double SubmenuClosedRatio = 0.67;
     public const int OpenDurationMilliseconds = 250;
     public const int CloseOpacityDurationMilliseconds = 83;
+    public const int MaterialTransitionDurationMilliseconds = 120;
 
     public static KeySpline OpenSpline { get; } = new(0, 0, 0, 1);
 
