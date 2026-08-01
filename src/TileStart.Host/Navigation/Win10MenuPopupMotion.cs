@@ -68,22 +68,4 @@ public static class Win10MenuPopupMotion
             OpenSpline));
         return animation;
     }
-
-    public static DoubleAnimationUsingKeyFrames CreateContentFadeAnimation()
-    {
-        var duration = TimeSpan.FromMilliseconds(OpenDurationMilliseconds);
-        var animation = new DoubleAnimationUsingKeyFrames
-        {
-            Duration = duration,
-            FillBehavior = FillBehavior.Stop,
-        };
-        animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(
-            0.15,
-            KeyTime.FromTimeSpan(TimeSpan.Zero)));
-        animation.KeyFrames.Add(new SplineDoubleKeyFrame(
-            1,
-            KeyTime.FromTimeSpan(duration),
-            OpenSpline));
-        return animation;
-    }
 }

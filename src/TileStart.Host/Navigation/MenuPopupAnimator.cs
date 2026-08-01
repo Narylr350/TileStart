@@ -122,15 +122,6 @@ internal static class MenuPopupAnimator
             }
         };
         clip.BeginAnimation(RectangleGeometry.RectProperty, animation, HandoffBehavior.SnapshotAndReplace);
-        if (border.Child is UIElement content)
-        {
-            // Acrylic 由 Popup HWND 立即呈现；内容使用同周期淡入补足可感知的展开过程。
-            // 只动画子内容，不降低根窗口 alpha，避免重新引入原生点击穿透。
-            content.BeginAnimation(
-                UIElement.OpacityProperty,
-                Win10MenuPopupMotion.CreateContentFadeAnimation(),
-                HandoffBehavior.SnapshotAndReplace);
-        }
     }
 
     private static Border? GetContextMenuPopupBorder(ContextMenu menu) =>
