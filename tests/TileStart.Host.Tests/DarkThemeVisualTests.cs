@@ -621,6 +621,23 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
+    public void InternalDragPreviewUsesCenteredScaleBeforeTranslation()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var preview = document.Descendants(presentation + "Image")
+            .Single(element => (string?)element.Attribute(x + "Name") == "InternalDragPreview");
+        Assert.Equal("0.5,0.5", (string?)preview.Attribute("RenderTransformOrigin"));
+        var transforms = preview.Descendants(presentation + "TransformGroup").Single().Elements().ToArray();
+        Assert.Equal("ScaleTransform", transforms[0].Name.LocalName);
+        Assert.Equal("InternalDragPreviewScaleTransform", (string?)transforms[0].Attribute(x + "Name"));
+        Assert.Equal("TranslateTransform", transforms[1].Name.LocalName);
+        Assert.Equal("InternalDragPreviewTransform", (string?)transforms[1].Attribute(x + "Name"));
+    }
+
+    [Fact]
     public void DraggedTileUsesTheBinaryVerifiedWin10Opacity()
     {
         var document = LoadMainWindow();

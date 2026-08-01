@@ -127,6 +127,23 @@
       },
       "observation": "Each axis loses approximately 5 DIP, so wide tiles use different X and Y scales."
     },
+    "tileDragScale": {
+      "value": {
+        "small": 1.08,
+        "medium": 1.04,
+        "wide": 1.04,
+        "large": 1.0
+      },
+      "evidence": "binary-verified",
+      "anchor": "StartUI::TileViewControl::UpdateTileScaling@0x180061f60",
+      "source": {
+        "small": "DAT_1805ddb60",
+        "medium": "DAT_1805ddb58",
+        "wide": "DAT_1805ddb50",
+        "large": "DAT_1805ddb18"
+      },
+      "observation": "TileStart captures the untransformed tile root before applying this scale so the preceding Pressed scale is replaced rather than multiplied."
+    },
     "scrollBarThumbRestColor": {
       "dark": "#33FFFFFF",
       "light": "#33000000",

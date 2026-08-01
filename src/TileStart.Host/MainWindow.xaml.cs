@@ -64,6 +64,7 @@ public partial class MainWindow : Window
             TileScrollViewer,
             TileGroupsControl,
             InternalDragPreview,
+            InternalDragPreviewScaleTransform,
             InternalDragPreviewTransform,
             TileLayout,
             _appController,

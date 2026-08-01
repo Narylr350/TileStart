@@ -39,6 +39,7 @@ internal sealed class TileDragCoordinator : IDisposable
     private readonly ScrollViewer _tileScrollViewer;
     private readonly ItemsControl _tileGroupsControl;
     private readonly Image _internalDragPreview;
+    private readonly ScaleTransform _internalDragPreviewScaleTransform;
     private readonly TranslateTransform _internalDragPreviewTransform;
     private readonly TileLayout _tileLayout;
     private readonly ApplicationPaneController _appController;
@@ -117,6 +118,7 @@ internal sealed class TileDragCoordinator : IDisposable
         ScrollViewer tileScrollViewer,
         ItemsControl tileGroupsControl,
         Image internalDragPreview,
+        ScaleTransform internalDragPreviewScaleTransform,
         TranslateTransform internalDragPreviewTransform,
         TileLayout tileLayout,
         ApplicationPaneController appController,
@@ -130,6 +132,7 @@ internal sealed class TileDragCoordinator : IDisposable
         _tileScrollViewer = tileScrollViewer;
         _tileGroupsControl = tileGroupsControl;
         _internalDragPreview = internalDragPreview;
+        _internalDragPreviewScaleTransform = internalDragPreviewScaleTransform;
         _internalDragPreviewTransform = internalDragPreviewTransform;
         _tileLayout = tileLayout;
         _appController = appController;
@@ -298,7 +301,8 @@ internal sealed class TileDragCoordinator : IDisposable
                 ShowInternalDragPreview(
                     CaptureAppTilePreview(_appDragTile),
                     _appDragTile.PixelWidth,
-                    _appDragTile.PixelHeight);
+                    _appDragTile.PixelHeight,
+                    usesTileScale: true);
             }
             else if (_appDragSourcePreview is not null && _appDragSourceElement is not null)
             {
@@ -551,7 +555,8 @@ internal sealed class TileDragCoordinator : IDisposable
         ShowInternalDragPreview(
             _captureElement(_dragSourceElement),
             _dragSourceElement.ActualWidth,
-            _dragSourceElement.ActualHeight);
+            _dragSourceElement.ActualHeight,
+            usesTileScale: true);
         MoveInternalDragPreview(position);
         _tileDragHitGeometry = new TileDragHitGeometry(CaptureTileAreaDropZones());
         _dragTransaction = new TileDragTransaction(
@@ -749,12 +754,17 @@ internal sealed class TileDragCoordinator : IDisposable
         _isCompletingInternalTileDrag = false;
     }
 
-    private void ShowInternalDragPreview(BitmapSource source, double width, double height)
+    private void ShowInternalDragPreview(BitmapSource source, double width, double height, bool usesTileScale = false)
     {
         _internalDragPreview.BeginAnimation(UIElement.OpacityProperty, null);
         _internalDragPreviewTransform.BeginAnimation(TranslateTransform.XProperty, null);
         _internalDragPreviewTransform.BeginAnimation(TranslateTransform.YProperty, null);
         _internalDragPreview.Opacity = 0.96;
+        var scale = usesTileScale
+            ? Win10InteractionMotion.TileDragScale(new Size(width, height))
+            : 1;
+        _internalDragPreviewScaleTransform.ScaleX = scale;
+        _internalDragPreviewScaleTransform.ScaleY = scale;
         _internalDragPreview.Source = source;
         _internalDragPreview.Width = width;
         _internalDragPreview.Height = height;
@@ -767,6 +777,8 @@ internal sealed class TileDragCoordinator : IDisposable
         _internalDragPreviewTransform.BeginAnimation(TranslateTransform.XProperty, null);
         _internalDragPreviewTransform.BeginAnimation(TranslateTransform.YProperty, null);
         _internalDragPreview.Opacity = 0.96;
+        _internalDragPreviewScaleTransform.ScaleX = 1;
+        _internalDragPreviewScaleTransform.ScaleY = 1;
         _internalDragPreview.Source = null;
         _internalDragPreview.Visibility = Visibility.Collapsed;
     }

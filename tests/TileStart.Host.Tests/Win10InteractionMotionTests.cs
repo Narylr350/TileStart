@@ -33,6 +33,16 @@ public sealed class Win10InteractionMotionTests
         Assert.Equal(expectedY, scale.Height);
     }
 
+    [Theory]
+    [InlineData(48, 48, 1.08)]
+    [InlineData(100, 100, 1.04)]
+    [InlineData(204, 100, 1.04)]
+    [InlineData(204, 204, 1.0)]
+    public void TileDragScaleMatchesStartUiForEveryTileSize(double width, double height, double expected)
+    {
+        Assert.Equal(expected, Win10InteractionMotion.TileDragScale(new System.Windows.Size(width, height)));
+    }
+
     [Fact]
     public void ScaleAnimationStartsAtCurrentValueAndUsesRecoveredSpline()
     {

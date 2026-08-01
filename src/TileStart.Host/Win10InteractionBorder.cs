@@ -20,6 +20,11 @@ public static class Win10InteractionMotion
     public const double SmallTilePressedScale = 0.8958;
     public const double MediumTilePressedScale = 0.95;
     public const double WideTilePressedScale = 0.9755;
+    // UpdateTileScaling 对拖动源使用另一组尺寸常量：小磁贴放大 8%，中/宽磁贴放大 4%，
+    // 大磁贴保持原尺寸；这些状态不能简化为统一的拖动比例。
+    public const double SmallTileDragScale = 1.08;
+    public const double StandardTileDragScale = 1.04;
+    public const double LargeTileDragScale = 1;
     public const int PressTransitionDurationMilliseconds = 167;
 
     public static readonly Point PressSplineControlPoint1 = new(0.1, 0.9);
@@ -27,6 +32,22 @@ public static class Win10InteractionMotion
 
     public static Size TilePressedScale(Size bounds) =>
         new(TilePressedScaleForLength(bounds.Width), TilePressedScaleForLength(bounds.Height));
+
+    public static double TileDragScale(Size bounds)
+    {
+        if (bounds.Width <= Win10TileMetrics.CellSize && bounds.Height <= Win10TileMetrics.CellSize)
+        {
+            return SmallTileDragScale;
+        }
+
+        if (bounds.Width > Win10TileMetrics.WidthForColumns(2)
+            && bounds.Height > Win10TileMetrics.HeightForRows(2))
+        {
+            return LargeTileDragScale;
+        }
+
+        return StandardTileDragScale;
+    }
 
     public static DoubleAnimationUsingKeyFrames CreateScaleAnimation(double from, double to)
     {

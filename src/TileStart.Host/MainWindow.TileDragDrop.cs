@@ -19,7 +19,19 @@ public partial class MainWindow
             96 * dpi.DpiScaleX,
             96 * dpi.DpiScaleY,
             PixelFormats.Pbgra32);
-        bitmap.Render(element);
+        // 内部拖动从仍处于 Pressed 的按钮开始。捕获时若保留根 RenderTransform，
+        // 预览会先带入按压缩小，再叠加拖动放大；同步恢复可避免可见帧发生变化。
+        var renderTransform = element.RenderTransform;
+        element.RenderTransform = Transform.Identity;
+        try
+        {
+            bitmap.Render(element);
+        }
+        finally
+        {
+            element.RenderTransform = renderTransform;
+        }
+
         bitmap.Freeze();
         return bitmap;
     }

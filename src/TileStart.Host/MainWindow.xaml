@@ -1631,9 +1631,13 @@
                        Canvas.Top="0"
                        Opacity="0.96"
                        RenderOptions.BitmapScalingMode="HighQuality"
+                       RenderTransformOrigin="0.5,0.5"
                        Visibility="Collapsed">
                     <Image.RenderTransform>
-                        <TranslateTransform x:Name="InternalDragPreviewTransform" />
+                        <TransformGroup>
+                            <ScaleTransform x:Name="InternalDragPreviewScaleTransform" />
+                            <TranslateTransform x:Name="InternalDragPreviewTransform" />
+                        </TransformGroup>
                     </Image.RenderTransform>
                 </Image>
             </Canvas>

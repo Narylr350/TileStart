@@ -163,6 +163,11 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(
             [Win10InteractionMotion.WideTilePressedScale, Win10InteractionMotion.WideTilePressedScale],
             pressedScale.GetProperty("large").EnumerateArray().Select(value => value.GetDouble()).ToArray());
+        var dragScale = metrics.GetProperty("tileDragScale").GetProperty("value");
+        Assert.Equal(Win10InteractionMotion.SmallTileDragScale, dragScale.GetProperty("small").GetDouble());
+        Assert.Equal(Win10InteractionMotion.StandardTileDragScale, dragScale.GetProperty("medium").GetDouble());
+        Assert.Equal(Win10InteractionMotion.StandardTileDragScale, dragScale.GetProperty("wide").GetDouble());
+        Assert.Equal(Win10InteractionMotion.LargeTileDragScale, dragScale.GetProperty("large").GetDouble());
         Assert.Equal(
             "#33FFFFFF",
             metrics.GetProperty("scrollBarThumbRestColor").GetProperty("dark").GetString());
