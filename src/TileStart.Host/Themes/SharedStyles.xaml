@@ -639,10 +639,18 @@
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="MenuItemRoot" Property="Background"
                                     Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
+                            <Setter TargetName="SubmenuArrow" Property="Foreground"
+                                    Value="{DynamicResource TileStartTextPrimaryBrush}" />
+                            <Setter TargetName="CheckMark" Property="Foreground"
+                                    Value="{DynamicResource TileStartTextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsSubmenuOpen" Value="True">
                             <Setter TargetName="MenuItemRoot" Property="Background"
                                     Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
+                            <Setter TargetName="SubmenuArrow" Property="Foreground"
+                                    Value="{DynamicResource TileStartTextPrimaryBrush}" />
+                            <Setter TargetName="CheckMark" Property="Foreground"
+                                    Value="{DynamicResource TileStartTextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="{x:Static local:Win10VisualMetrics.ContextMenuDisabledOpacity}" />

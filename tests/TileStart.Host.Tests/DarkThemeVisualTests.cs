@@ -437,9 +437,18 @@ public sealed class DarkThemeVisualTests
             .ToArray();
         Assert.Equal(2, activeTriggers.Length);
         Assert.All(activeTriggers, trigger =>
-            Assert.DoesNotContain(trigger.Elements(presentation + "Setter"), setter =>
+        {
+            var activeForegroundSetters = trigger.Elements(presentation + "Setter")
+                .Where(setter =>
                 (string?)setter.Attribute("Property") == "Foreground"
-                && (string?)setter.Attribute("TargetName") is "SubmenuArrow" or "CheckMark"));
+                && (string?)setter.Attribute("TargetName") is "SubmenuArrow" or "CheckMark")
+                .ToArray();
+            Assert.Equal(2, activeForegroundSetters.Length);
+            Assert.All(activeForegroundSetters, setter =>
+                Assert.Equal(
+                    "{DynamicResource TileStartTextPrimaryBrush}",
+                    (string?)setter.Attribute("Value")));
+        });
 
         var submenuArrow = sharedStyles.Descendants(presentation + "TextBlock")
             .Single(element => (string?)element.Attribute(x + "Name") == "SubmenuArrow");
