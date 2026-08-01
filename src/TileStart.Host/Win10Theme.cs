@@ -21,6 +21,9 @@ public static class Win10Theme
     // 原版 UWP TintOpacity=0.8 不能直接等同于 WCA GradientColor alpha；0xCC 会把
     // 壁纸压成均匀的高饱和蓝板。0xB8 是同壁纸对照 Win10 原生截图后的兼容校准值。
     private const uint Win10AccentAcrylicTintAlpha = 0xB8;
+    // WCA 缺少 UWP Acrylic 的 luminosity 合成，直接使用 Dark1 会偏亮、偏纯蓝。
+    // 仅在 WCA tint 中向原版普通 Acrylic 回退色混入 12%，不改变精确的 Dark1 回退色。
+    private const double Win10AccentAcrylicNeutralBlend = 0.12;
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
@@ -124,9 +127,14 @@ public static class Win10Theme
             themeStyle == AppThemeStyle.Windows11
                 ? ResolveWindows11GradientColor(startColorMenu)
                 : useWin10AccentAcrylic
-                    ? PackAccentPolicyColor(win10AccentColor, Win10AccentAcrylicTintAlpha)
+                    ? PackAccentPolicyColor(
+                        ResolveWin10AccentWcaTintColor(win10AccentColor),
+                        Win10AccentAcrylicTintAlpha)
                     : StartAcrylicGradientColor);
     }
+
+    internal static MediaColor ResolveWin10AccentWcaTintColor(MediaColor accentDark1) =>
+        Blend(accentDark1, StartFallbackColor, Win10AccentAcrylicNeutralBlend);
 
     /// <summary>
     /// StartUI 的 AccentAcrylic 状态固定使用 SystemAccentColorDark1 和 0.8 TintOpacity。
