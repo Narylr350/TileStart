@@ -358,15 +358,14 @@ public partial class App : System.Windows.Application
 
     private void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
-        if (_appearancePreferences.ColorMode != AppColorMode.System)
-        {
-            return;
-        }
-
         Dispatcher.BeginInvoke(() =>
         {
-            var resolvedDarkMode = AppThemeManager.ResolveDarkMode(AppColorMode.System);
-            if (resolvedDarkMode == _resolvedDarkMode)
+            var resolvedDarkMode = AppThemeManager.ResolveDarkMode(_appearancePreferences.ColorMode);
+            if (!ShouldRestartForUserPreferenceChange(
+                    e.Category,
+                    _appearancePreferences.ColorMode,
+                    _resolvedDarkMode,
+                    resolvedDarkMode))
             {
                 return;
             }
@@ -375,6 +374,16 @@ public partial class App : System.Windows.Application
             ScheduleApplicationRestart();
         });
     }
+
+    internal static bool ShouldRestartForUserPreferenceChange(
+        UserPreferenceCategory category,
+        AppColorMode colorMode,
+        bool previousDarkMode,
+        bool resolvedDarkMode) =>
+        // Accent resources remain active in explicit Light/Dark modes, so a Color change must
+        // reload the process independently from the system light/dark-mode decision.
+        category == UserPreferenceCategory.Color
+        || (colorMode == AppColorMode.System && previousDarkMode != resolvedDarkMode);
 
     private void ScheduleApplicationRestart()
     {

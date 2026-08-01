@@ -117,7 +117,7 @@
 | 动画效果 | 已实现 | 主要动画路径读取 `SystemParameters.ClientAreaAnimation` |
 | 透明效果 | 已实现 | 每次显示菜单重新读取 `EnableTransparency` |
 | 高对比度 | 部分实现 | 禁用 Acrylic，托盘回退；主界面没有完整高对比度主题 |
-| 系统强调色 | 部分实现 | 启动时读取 `AccentColorMenu` / `AccentPalette`，运行中不统一刷新 |
+| 系统强调色 | 已实现 | 启动时读取 `AccentColorMenu` / `AccentPalette`；系统颜色变化触发 TileStart 自动重启，使磁贴、菜单状态和主题资源统一刷新 |
 | 壁纸派生开始菜单色 | 部分实现 | Acrylic 显示时重新读取；导航 Overlay 和默认磁贴背景仍含进程级静态资源 |
 | 鼠标 Hover 时间 | 已实现 | 导航轨展开使用系统值 |
 | 鼠标滚轮行数 | 已实现 | 平滑滚动使用系统值 |

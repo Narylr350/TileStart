@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
@@ -67,5 +68,38 @@ public sealed class AppearancePreferencesTests
         bool expectedDarkMode)
     {
         Assert.Equal(expectedDarkMode, AppThemeManager.ResolveDarkMode(colorMode, systemUsesLightTheme));
+    }
+
+    [Theory]
+    [InlineData(AppColorMode.System)]
+    [InlineData(AppColorMode.Light)]
+    [InlineData(AppColorMode.Dark)]
+    public void SystemAccentChangesRestartEveryColorMode(AppColorMode colorMode)
+    {
+        Assert.True(App.ShouldRestartForUserPreferenceChange(
+            UserPreferenceCategory.Color,
+            colorMode,
+            previousDarkMode: true,
+            resolvedDarkMode: true));
+    }
+
+    [Fact]
+    public void SystemColorModeRestartsWhenDarkModeChanges()
+    {
+        Assert.True(App.ShouldRestartForUserPreferenceChange(
+            UserPreferenceCategory.General,
+            AppColorMode.System,
+            previousDarkMode: true,
+            resolvedDarkMode: false));
+    }
+
+    [Fact]
+    public void UnrelatedPreferenceChangesDoNotRestartAnExplicitColorMode()
+    {
+        Assert.False(App.ShouldRestartForUserPreferenceChange(
+            UserPreferenceCategory.General,
+            AppColorMode.Dark,
+            previousDarkMode: true,
+            resolvedDarkMode: true));
     }
 }
