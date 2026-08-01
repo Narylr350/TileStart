@@ -55,9 +55,11 @@ public sealed class DarkThemeVisualTests
     [InlineData("Win10Theme.xaml", "TileStartPopupBackgroundBrush", "#FF2B2B2B")]
     [InlineData("Win10Theme.xaml", "TileStartPopupStrokeBrush", "#5C000000")]
     [InlineData("Win10Theme.xaml", "TileStartContextMenuHighlightBrush", "#19FFFFFF")]
+    [InlineData("Win10Theme.xaml", "TileStartMenuSeparatorBrush", "#FF7A7A7A")]
     [InlineData("Win10LightTheme.xaml", "TileStartPopupBackgroundBrush", "#FFF2F2F2")]
     [InlineData("Win10LightTheme.xaml", "TileStartPopupStrokeBrush", "#24000000")]
     [InlineData("Win10LightTheme.xaml", "TileStartContextMenuHighlightBrush", "#19000000")]
+    [InlineData("Win10LightTheme.xaml", "TileStartMenuSeparatorBrush", "#FF7A7A7A")]
     public void Windows10ContextMenuUsesNativeFallbackPalette(string theme, string key, string expected)
     {
         Assert.Equal(expected, ReadThemeBrushColor(theme, key));
@@ -104,7 +106,7 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void ApplicationListViewportDoesNotApplyCompiledBottomPaddingDirectly()
+    public void ApplicationListAppliesCompiledPaddingInsideScrollableContent()
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -112,12 +114,39 @@ public sealed class DarkThemeVisualTests
 
         var appsList = document.Descendants(presentation + "ListBox")
             .Single(element => (string?)element.Attribute(x + "Name") == "AppsList");
+        var itemsPanel = appsList.Descendants(presentation + "VirtualizingStackPanel")
+            .Single(element =>
+                (string?)element.Attribute("Margin") ==
+                "{x:Static local:Win10VisualMetrics.AllAppsListPadding}");
+
+        Assert.Null(appsList.Attribute("Margin"));
+        Assert.Null(appsList.Attribute("Padding"));
+        Assert.Equal(
+            "{x:Static local:Win10VisualMetrics.AllAppsListPadding}",
+            (string?)itemsPanel.Attribute("Margin"));
+        Assert.Equal(54, Win10VisualMetrics.AllAppsListPadding.Bottom);
+    }
+
+    [Fact]
+    public void ApplicationFolderChevronUsesContentSizedTrailingColumn()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var template = document.Descendants(presentation + "DataTemplate")
+            .Single(element => (string?)element.Attribute(x + "Key") == "AppEntryTemplate");
+        var chevron = template.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute(x + "Name") == "FolderChevron");
+        var columns = chevron.Parent!
+            .Element(presentation + "Grid.ColumnDefinitions")!
+            .Elements(presentation + "ColumnDefinition")
+            .ToArray();
 
         Assert.Equal(
-            "{x:Static local:Win10VisualMetrics.AllAppsViewportMargin}",
-            (string?)appsList.Attribute("Margin"));
-        Assert.Null(appsList.Attribute("Padding"));
-        Assert.Equal(0, Win10VisualMetrics.AllAppsViewportMargin.Bottom);
+            "{x:Static icons:Win10IconMetrics.ClassicAppLogoGridLength}",
+            (string?)columns[0].Attribute("Width"));
+        Assert.Equal("Auto", (string?)columns[^1].Attribute("Width"));
     }
 
     [Fact]
@@ -129,6 +158,8 @@ public sealed class DarkThemeVisualTests
 
         var backdrop = document.Descendants(presentation + "Border")
             .Single(element => (string?)element.Attribute(x + "Name") == "NavigationBackdrop");
+        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}",
+            (string?)backdrop.Attribute("Margin"));
         Assert.Equal("{DynamicResource TileStartNavigationOverlayBrush}",
             (string?)backdrop.Attribute("Background"));
         Assert.Equal("0", (string?)backdrop.Attribute("Opacity"));
@@ -398,6 +429,35 @@ public sealed class DarkThemeVisualTests
             (string?)implicitContextMenuStyle.Attribute("BasedOn"));
         Assert.Equal("{StaticResource TileStartMenuItemStyle}",
             (string?)implicitMenuItemStyle.Attribute("BasedOn"));
+
+        var menuItemStyle = sharedStyles.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "TileStartMenuItemStyle");
+        var activeTriggers = menuItemStyle.Descendants(presentation + "Trigger")
+            .Where(trigger => (string?)trigger.Attribute("Property") is "IsHighlighted" or "IsSubmenuOpen")
+            .ToArray();
+        Assert.Equal(2, activeTriggers.Length);
+        Assert.All(activeTriggers, trigger =>
+            Assert.DoesNotContain(trigger.Elements(presentation + "Setter"), setter =>
+                (string?)setter.Attribute("Property") == "Foreground"
+                && (string?)setter.Attribute("TargetName") is "SubmenuArrow" or "CheckMark"));
+
+        var submenuArrow = sharedStyles.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute(x + "Name") == "SubmenuArrow");
+        Assert.Equal("{x:Static local:Win10VisualMetrics.ContextMenuSubmenuArrowFontSize}",
+            (string?)submenuArrow.Attribute("FontSize"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.ContextMenuSubmenuArrowGlyph}",
+            (string?)submenuArrow.Attribute("Text"));
+        Assert.Equal("{DynamicResource TileStartTextSecondaryBrush}",
+            (string?)submenuArrow.Attribute("Foreground"));
+
+        var checkGlyph = sharedStyles.Descendants(presentation + "TextBlock")
+            .Single(element => (string?)element.Attribute(x + "Name") == "CheckMark");
+        Assert.Equal("{x:Static local:Win10VisualMetrics.ContextMenuCheckGlyphFontSize}",
+            (string?)checkGlyph.Attribute("FontSize"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.ContextMenuCheckGlyph}",
+            (string?)checkGlyph.Attribute("Text"));
+        Assert.Equal("{DynamicResource TileStartTextSecondaryBrush}",
+            (string?)checkGlyph.Attribute("Foreground"));
     }
 
     [Fact]

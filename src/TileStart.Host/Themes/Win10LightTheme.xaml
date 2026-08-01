@@ -19,6 +19,7 @@
     <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#66000000" />
     <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#99000000" />
     <SolidColorBrush x:Key="TileStartDividerBrush" Color="#19000000" />
+    <SolidColorBrush x:Key="TileStartMenuSeparatorBrush" Color="#FF7A7A7A" />
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#33000000" />
     <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#99FFFFFF" />
     <!-- MenuFlyoutPresenter fallback and transient border from Win10 ThemeResources. -->

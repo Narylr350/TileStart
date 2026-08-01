@@ -62,7 +62,8 @@
                                 <Track.Thumb>
                                     <Thumb x:Name="ScrollThumb"
                                            Width="2"
-                                           MinHeight="24"
+                                           MinHeight="{x:Static local:Win10VisualMetrics.TileScrollBarThumbMinHeight}"
+                                           Margin="{x:Static local:Win10VisualMetrics.TileScrollBarThumbRestMargin}"
                                            HorizontalAlignment="Right"
                                            Background="{StaticResource TileStartTextTertiaryBrush}"
                                            Opacity="0.72">
@@ -84,6 +85,7 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ScrollThumb" Property="Width"
                                         Value="{x:Static local:Win10VisualMetrics.TileScrollBarThumbMouseWidth}" />
+                                <Setter TargetName="ScrollThumb" Property="Margin" Value="0" />
                                 <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
                                 <Setter TargetName="ScrollThumb" Property="Background"
                                         Value="{StaticResource TileStartTextSecondaryBrush}" />
@@ -403,9 +405,10 @@
                     </Button.ContextMenu>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition
+                                Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoGridLength}" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
                               Height="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
@@ -632,6 +635,7 @@
                 </Grid.RowDefinitions>
                 <Border x:Name="NavigationBackdrop"
                         Grid.RowSpan="3"
+                        Margin="{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}"
                         Background="{DynamicResource TileStartNavigationOverlayBrush}"
                         IsHitTestVisible="False"
                         Opacity="0">
@@ -858,7 +862,6 @@
                                 </TransformGroup>
                             </Grid.RenderTransform>
                             <ListBox x:Name="AppsList"
-                                     Margin="{x:Static local:Win10VisualMetrics.AllAppsViewportMargin}"
                                      Background="Transparent"
                                      BorderThickness="0"
                                      Foreground="{DynamicResource TileStartTextPrimaryBrush}"
@@ -924,7 +927,10 @@
                                 </ListBox.Resources>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel />
+                                        <!-- StartUI 把 7 DIP 顶部和 54 DIP 底部留白放在滚动内容内部；
+                                             不能放到 ListBox 外层，否则会缩短可视区域。 -->
+                                        <VirtualizingStackPanel
+                                            Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}" />
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                                 <ListBox.ItemContainerStyle>

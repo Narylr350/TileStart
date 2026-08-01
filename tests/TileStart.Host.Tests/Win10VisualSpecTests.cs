@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using TileStart.Host;
+using TileStart.Host.Icons;
 
 namespace TileStart.Host.Tests;
 
@@ -12,9 +13,12 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.CollapsedNavigationWidth, Win10VisualMetrics.CollapsedNavigationGridLength.Value);
         Assert.Equal(Win10VisualMetrics.NavigationItemHeight, Win10VisualMetrics.NavigationItemGridLength.Value);
         Assert.Equal(Win10VisualMetrics.AllAppsWidth, Win10VisualMetrics.AllAppsGridLength.Value);
+        Assert.Equal(Win10IconMetrics.ClassicAppLogoLayoutSize, Win10IconMetrics.ClassicAppLogoGridLength.Value);
         Assert.Equal(Win10VisualMetrics.NavigationPaneHorizontalOffset, Win10VisualMetrics.NavigationPaneMargin.Left);
         Assert.Equal(14, Win10VisualMetrics.TileScrollBarWidth);
         Assert.Equal(12, Win10VisualMetrics.TileScrollBarThumbMouseWidth);
+        Assert.Equal(16, Win10VisualMetrics.TileScrollBarThumbMinHeight);
+        Assert.Equal(2, Win10VisualMetrics.TileScrollBarThumbRestMargin.Right);
     }
 
     [Theory]
@@ -24,6 +28,20 @@ public sealed class Win10VisualSpecTests
     public void NavigationPaneMatchesThePlatformTaskbarInset(int build, double expectedOffset)
     {
         Assert.Equal(expectedOffset, Win10VisualMetrics.NavigationPaneOffsetForWindowsBuild(build));
+    }
+
+    [Theory]
+    [InlineData(19045, 0)]
+    [InlineData(22000, -8)]
+    [InlineData(26200, -8)]
+    public void NavigationBackdropKeepsTheScreenEdgeWhileContentTracksTheTaskbar(int build, double expectedLeft)
+    {
+        var margin = Win10VisualMetrics.NavigationBackdropMarginForWindowsBuild(build);
+
+        Assert.Equal(expectedLeft, margin.Left);
+        Assert.Equal(0, margin.Top);
+        Assert.Equal(0, margin.Right);
+        Assert.Equal(0, margin.Bottom);
     }
 
     [Fact]
@@ -59,6 +77,9 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(
             "Bottom",
             allAppsMetrics.GetProperty("groupHeaderVerticalContentAlignment").GetProperty("value").GetString());
+        Assert.Equal(
+            "Auto",
+            allAppsMetrics.GetProperty("folderChevronColumnSizing").GetProperty("value").GetString());
         AssertThickness(Win10VisualMetrics.AllAppsListPadding, allAppsMetrics.GetProperty("listPadding").GetProperty("value"));
         Assert.Equal(
             (Win10VisualMetrics.AllAppsWidth - Win10VisualMetrics.AllAppsGridItemWidth) / 2,
@@ -83,6 +104,17 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(Win10VisualMetrics.ContextMenuIconPlaceholderWidth, Value(metrics, "iconPlaceholderWidth"));
         AssertThickness(Win10VisualMetrics.ContextMenuItemPadding, metrics.GetProperty("itemPaddingMouse").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.ContextMenuPresenterPadding, metrics.GetProperty("presenterPadding").GetProperty("value"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuSeparatorHeight, Value(metrics, "separatorHeight"));
+        AssertThickness(Win10VisualMetrics.ContextMenuSeparatorMargin, metrics.GetProperty("separatorMargin").GetProperty("value"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuDisabledOpacity, Value(metrics, "disabledForegroundOpacity"));
+        Assert.Equal(Win10VisualMetrics.ContextMenuSubmenuArrowFontSize, metrics.GetProperty("submenuArrow").GetProperty("fontSize").GetDouble());
+        Assert.Equal("U+E0E3", metrics.GetProperty("submenuArrow").GetProperty("glyph").GetString());
+        Assert.Equal("#CC", metrics.GetProperty("submenuArrow").GetProperty("normalForeground").GetString());
+        Assert.Equal("#FF", metrics.GetProperty("submenuArrow").GetProperty("activeForeground").GetString());
+        Assert.Equal(Win10VisualMetrics.ContextMenuCheckGlyphFontSize, metrics.GetProperty("checkGlyph").GetProperty("fontSize").GetDouble());
+        Assert.Equal("U+E001", metrics.GetProperty("checkGlyph").GetProperty("glyph").GetString());
+        Assert.Equal("#CC", metrics.GetProperty("checkGlyph").GetProperty("normalForeground").GetString());
+        Assert.Equal("#FF", metrics.GetProperty("checkGlyph").GetProperty("activeForeground").GetString());
         Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
     }
 

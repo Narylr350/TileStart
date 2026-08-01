@@ -1,3 +1,5 @@
+using System.Windows;
+
 namespace TileStart.Host.Icons;
 
 public static class Win10IconMetrics
@@ -6,6 +8,8 @@ public static class Win10IconMetrics
     // Keep both symbol-derived branches below until the runtime feature flag is identified.
     public const double ClassicAppLogoImageSize = 24;
     public const double ClassicAppLogoLayoutSize = 24;
+
+    public static GridLength ClassicAppLogoGridLength { get; } = new(ClassicAppLogoLayoutSize);
 
     public static double GetAppListImageSize(int appItemLogoType, bool themeAware) =>
         (appItemLogoType, themeAware) switch

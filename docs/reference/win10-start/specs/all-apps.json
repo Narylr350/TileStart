@@ -74,6 +74,11 @@
       "evidence": "compiled-xbf",
       "anchor": "SplitViewFrame.xaml AllAppsPanel.ExpandCollapseCaretFontSize"
     },
+    "folderChevronColumnSizing": {
+      "value": "Auto",
+      "evidence": "compiled-xbf",
+      "anchor": "AllAppsPane.xaml AllAppsGrid_ItemTemplate_Normal trailing ColumnDefinition"
+    },
     "listPadding": {
       "value": [
         0.0,

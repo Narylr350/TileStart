@@ -30,6 +30,13 @@ public static class Win10VisualMetrics
     public const double ContextMenuMinWidth = 256;
     public const double ContextMenuCheckPlaceholderWidth = 24;
     public const double ContextMenuIconPlaceholderWidth = 32;
+    public const double ContextMenuSeparatorHeight = 1;
+    // SystemControlDisabledBaseLowBrush resolves to #33 alpha in Win10 light and dark themes.
+    public const double ContextMenuDisabledOpacity = 0.2;
+    public const double ContextMenuSubmenuArrowFontSize = 12;
+    public const string ContextMenuSubmenuArrowGlyph = "\uE0E3";
+    public const double ContextMenuCheckGlyphFontSize = 16;
+    public const string ContextMenuCheckGlyph = "\uE001";
     public const double TileGroupHeaderHeight = 32;
     public const double TileGroupHeaderFontSize = 14;
     public const double TileGroupGripperWidth = 48;
@@ -47,9 +54,12 @@ public static class Win10VisualMetrics
     public const double TileReservedBrandingSpace = 28;
     public const double TileLogoVerticalOffset = -2;
     public const double TileFolderBottomMargin = 4;
-    // StartUI TileStyles exposes a 14 DIP scrollbar slot and a 12 DIP mouse indicator.
+    // StartUI uses a 14 DIP slot. The system template renders a 16 DIP minimum thumb at
+    // 1/8 scale and shifts it inward by 2 DIP, then removes the offset for MouseIndicator.
     public const double TileScrollBarWidth = 14;
     public const double TileScrollBarThumbMouseWidth = 12;
+    public const double TileScrollBarThumbMinHeight = 16;
+    public const double TileScrollBarThumbRestInset = 2;
     public const double TileScrollBarRightMargin = 0;
     public const double TileScrollBarLayoutWidth = TileScrollBarWidth + TileScrollBarRightMargin;
     public const double TileScrollViewerLeftMargin = 28;
@@ -65,8 +75,17 @@ public static class Win10VisualMetrics
     public static Thickness NavigationPaneMargin { get; } =
         new(NavigationPaneHorizontalOffset, 0, 0, 0);
 
+    // Win11 只需要把导航内容对齐到左对齐任务栏的 8 DIP 内缩；展开背景仍必须贴住
+    // 屏幕左边缘，否则会在 Acrylic 面板左侧露出一条与偏移等宽的空隙。
+    public static Thickness NavigationBackdropMargin { get; } =
+        NavigationBackdropMarginForWindowsBuild(
+            OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000) ? 22000 : 0);
+
     public static double NavigationPaneOffsetForWindowsBuild(int build) =>
         build >= 22000 ? Windows11TaskbarLeftInset : 0;
+
+    public static Thickness NavigationBackdropMarginForWindowsBuild(int build) =>
+        new(-NavigationPaneOffsetForWindowsBuild(build), 0, 0, 0);
 
     public static GridLength NavigationItemGridLength { get; } = new(NavigationItemHeight);
 
@@ -82,18 +101,17 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
-    // Native StartUI applies this padding inside a deeper nested scrolling surface.
-    // It is reference evidence, not a margin that can be copied onto TileStart's flat ListBox viewport.
+    // StartUI 将这组留白应用到滚动内容本身；TileStart 也必须挂在 ItemsPanel 上，
+    // 让底部 54 DIP 随内容滚动，而不是缩短 ListBox 的可视区域。
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
-
-    // TileStart's current ListBox is the viewport itself, so only the verified top inset belongs here.
-    public static Thickness AllAppsViewportMargin { get; } = new(0, 7, 0, 0);
 
     public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);
 
     public static Thickness ContextMenuItemPadding { get; } = new(12, 7, 12, 7);
 
     public static Thickness ContextMenuPresenterPadding { get; } = new(0, 4, 0, 4);
+
+    public static Thickness ContextMenuSeparatorMargin { get; } = new(12, 4, 12, 4);
 
     public static Thickness TileGroupHeaderMargin { get; } =
         new(TileNestedPanelHorizontalMargin, 0, TileNestedPanelHorizontalMargin, 0);
@@ -127,6 +145,8 @@ public static class Win10VisualMetrics
     public static Thickness TileTopBrandingMargin { get; } = new(8, 5, 8, 0);
 
     public static Thickness TileScrollBarMargin { get; } = new(0, 2, TileScrollBarRightMargin, 2);
+
+    public static Thickness TileScrollBarThumbRestMargin { get; } = new(0, 0, TileScrollBarThumbRestInset, 0);
 
     public static Thickness TileScrollViewerMargin { get; } = new(TileScrollViewerLeftMargin, 28, 0, 0);
 }

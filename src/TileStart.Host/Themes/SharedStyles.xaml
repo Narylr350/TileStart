@@ -583,8 +583,9 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12"
-                                       Text="&#xE73E;"
+                                       Foreground="{DynamicResource TileStartTextSecondaryBrush}"
+                                       FontSize="{x:Static local:Win10VisualMetrics.ContextMenuCheckGlyphFontSize}"
+                                       Text="{x:Static local:Win10VisualMetrics.ContextMenuCheckGlyph}"
                                        Visibility="Collapsed" />
                             <ContentPresenter Grid.Column="1"
                                               HorizontalAlignment="Center"
@@ -600,8 +601,9 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontFamily="Segoe MDL2 Assets"
-                                       FontSize="10"
-                                       Text="&#xE76C;"
+                                       Foreground="{DynamicResource TileStartTextSecondaryBrush}"
+                                       FontSize="{x:Static local:Win10VisualMetrics.ContextMenuSubmenuArrowFontSize}"
+                                       Text="{x:Static local:Win10VisualMetrics.ContextMenuSubmenuArrowGlyph}"
                                        Visibility="Collapsed" />
                             <Popup x:Name="PART_Popup"
                                    AllowsTransparency="True"
@@ -643,7 +645,7 @@
                                     Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.38" />
+                            <Setter Property="Opacity" Value="{x:Static local:Win10VisualMetrics.ContextMenuDisabledOpacity}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -652,12 +654,12 @@
     </Style>
 
     <Style x:Key="TileStartMenuSeparatorStyle" TargetType="Separator">
-        <Setter Property="Height" Value="1" />
-        <Setter Property="Margin" Value="8,3" />
+        <Setter Property="Height" Value="{x:Static local:Win10VisualMetrics.ContextMenuSeparatorHeight}" />
+        <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.ContextMenuSeparatorMargin}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Separator">
-                    <Border Background="{DynamicResource TileStartDividerBrush}" />
+                    <Border Background="{DynamicResource TileStartMenuSeparatorBrush}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
