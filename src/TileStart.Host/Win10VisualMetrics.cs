@@ -24,6 +24,8 @@ public static class Win10VisualMetrics
     public const double AllAppsGroupHeaderHeight = 36;
     public const double AllAppsGroupHeaderFontSize = 12;
     public const double AllAppsExpandCollapseCaretFontSize = 8;
+    public const double AllAppsFocusPrimaryThickness = 2;
+    public const double AllAppsFocusSecondaryThickness = 1;
     public const double AlphabetCellSize = 48;
     public const double AlphabetFontSize = 20;
     public const double ContextMenuFontSize = 12;
@@ -113,6 +115,10 @@ public static class Win10VisualMetrics
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
 
     public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);
+
+    public static Thickness AllAppsFocusPrimaryBorderThickness { get; } = new(AllAppsFocusPrimaryThickness);
+
+    public static Thickness AllAppsFocusSecondaryBorderThickness { get; } = new(AllAppsFocusSecondaryThickness);
 
     public static Thickness ContextMenuItemPadding { get; } = new(12, 7, 12, 7);
 

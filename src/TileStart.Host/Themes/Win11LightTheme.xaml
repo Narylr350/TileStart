@@ -23,6 +23,8 @@
     <SolidColorBrush x:Key="TileStartMenuSeparatorBrush" Color="#12000000" />
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#26000000" />
     <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TileStartListFocusPrimaryBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TileStartListFocusSecondaryBrush" Color="#FF000000" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FCF9F9F9" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#26000000" />
     <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"

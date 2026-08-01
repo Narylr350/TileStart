@@ -24,6 +24,9 @@
     <SolidColorBrush x:Key="TileStartMenuSeparatorBrush" Color="#FF7A7A7A" />
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#33000000" />
     <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#99FFFFFF" />
+    <!-- AllAppsPane ListViewItemPresenter: AltHigh outer focus + BaseHigh inner focus. -->
+    <SolidColorBrush x:Key="TileStartListFocusPrimaryBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TileStartListFocusSecondaryBrush" Color="#FF000000" />
     <!-- MenuFlyoutPresenter fallback and transient border from Win10 ThemeResources. -->
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FFF2F2F2" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#24000000" />

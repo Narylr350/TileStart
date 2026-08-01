@@ -97,5 +97,26 @@
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     }
+  },
+  "focusVisual": {
+    "primaryBrush": {
+      "dark": "#FF000000",
+      "light": "#FFFFFFFF",
+      "evidence": "compiled-startui-and-system-xbf",
+      "anchor": "AllAppsPane.xaml Root.FocusBorderBrush -> SystemControlForegroundAltHighBrush"
+    },
+    "secondaryBrush": {
+      "dark": "#FFFFFFFF",
+      "light": "#FF000000",
+      "evidence": "compiled-startui-and-system-xbf",
+      "anchor": "AllAppsPane.xaml Root.FocusSecondaryBorderBrush -> SystemControlForegroundBaseHighBrush"
+    },
+    "tileStartThickness": {
+      "primary": 2.0,
+      "secondary": 1.0,
+      "unit": "DIP",
+      "evidence": "wpf-compatibility-mapping",
+      "observation": "All Apps exports the two presenter brushes but not private presenter stroke widths. TileStart maps them to the same 2/1-DIP dual focus structure verified for StartUI tiles and groups."
+    }
   }
 }

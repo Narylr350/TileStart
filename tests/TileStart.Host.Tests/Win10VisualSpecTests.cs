@@ -80,6 +80,13 @@ public sealed class Win10VisualSpecTests
         Assert.Equal(
             "Auto",
             allAppsMetrics.GetProperty("folderChevronColumnSizing").GetProperty("value").GetString());
+        var focus = allApps.RootElement.GetProperty("focusVisual");
+        Assert.Equal(
+            Win10VisualMetrics.AllAppsFocusPrimaryThickness,
+            focus.GetProperty("tileStartThickness").GetProperty("primary").GetDouble());
+        Assert.Equal(
+            Win10VisualMetrics.AllAppsFocusSecondaryThickness,
+            focus.GetProperty("tileStartThickness").GetProperty("secondary").GetDouble());
         AssertThickness(Win10VisualMetrics.AllAppsListPadding, allAppsMetrics.GetProperty("listPadding").GetProperty("value"));
         Assert.Equal(
             (Win10VisualMetrics.AllAppsWidth - Win10VisualMetrics.AllAppsGridItemWidth) / 2,

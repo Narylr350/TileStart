@@ -221,6 +221,35 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
+    public void ApplicationRowsUseTheNativeDualContrastFocusVisual()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "AppRowStyle");
+        var primary = style.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "AppPrimaryFocusVisual");
+        var secondary = style.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "AppSecondaryFocusVisual");
+
+        Assert.Equal("{DynamicResource TileStartListFocusPrimaryBrush}",
+            (string?)primary.Attribute("BorderBrush"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.AllAppsFocusPrimaryBorderThickness}",
+            (string?)primary.Attribute("BorderThickness"));
+        Assert.Equal("{DynamicResource TileStartListFocusSecondaryBrush}",
+            (string?)secondary.Attribute("BorderBrush"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.AllAppsFocusSecondaryBorderThickness}",
+            (string?)secondary.Attribute("BorderThickness"));
+
+        Assert.Equal("#FF000000", ReadThemeBrushColor("Win10Theme.xaml", "TileStartListFocusPrimaryBrush"));
+        Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("Win10Theme.xaml", "TileStartListFocusSecondaryBrush"));
+        Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("Win10LightTheme.xaml", "TileStartListFocusPrimaryBrush"));
+        Assert.Equal("#FF000000", ReadThemeBrushColor("Win10LightTheme.xaml", "TileStartListFocusSecondaryBrush"));
+    }
+
+    [Fact]
     public void ExpandedNavigationUsesASeparateBackdropAndShadowLayer()
     {
         var document = LoadMainWindow();
