@@ -26,13 +26,17 @@ internal static class MenuPopupAnimator
             return;
         }
 
-        PopupMaterialManager.Apply(border);
+        PopupMaterialManager.Clear(border);
         var opensUpward = ContextMenuOpensUpward(menu, border);
-        Animate(
-            border,
-            Win10MenuPopupMotion.TopLevelClosedRatio,
-            opensUpward,
-            opensUpward ? null : PointerOriginY(border));
+        if (!Animate(
+                border,
+                Win10MenuPopupMotion.TopLevelClosedRatio,
+                opensUpward,
+                opensUpward ? null : PointerOriginY(border),
+                () => PopupMaterialManager.Apply(border)))
+        {
+            PopupMaterialManager.Apply(border);
+        }
     }
 
     public static void CloseTopLevel(ContextMenu menu)
@@ -58,7 +62,7 @@ internal static class MenuPopupAnimator
             return;
         }
 
-        PopupMaterialManager.Apply(border);
+        PopupMaterialManager.Clear(border);
         var opensUpward = false;
         if (popup.PlacementTarget is FrameworkElement placementTarget)
         {
@@ -72,11 +76,15 @@ internal static class MenuPopupAnimator
             }
         }
 
-        Animate(
-            border,
-            Win10MenuPopupMotion.SubmenuClosedRatio,
-            opensUpward,
-            opensUpward ? null : PointerOriginY(border));
+        if (!Animate(
+                border,
+                Win10MenuPopupMotion.SubmenuClosedRatio,
+                opensUpward,
+                opensUpward ? null : PointerOriginY(border),
+                () => PopupMaterialManager.Apply(border)))
+        {
+            PopupMaterialManager.Apply(border);
+        }
     }
 
     public static void CloseSubmenu(object? sender)
@@ -88,21 +96,22 @@ internal static class MenuPopupAnimator
         }
     }
 
-    private static void Animate(
+    private static bool Animate(
         Border border,
         double closedRatio,
         bool opensUpward,
-        double? pointerOriginY)
+        double? pointerOriginY,
+        Action materialReady)
     {
         if (!SystemParameters.ClientAreaAnimation)
         {
-            return;
+            return false;
         }
 
         border.UpdateLayout();
         if (border.ActualWidth <= 0 || border.ActualHeight <= 0)
         {
-            return;
+            return false;
         }
 
         var clip = new RectangleGeometry(new System.Windows.Rect(0, 0, border.ActualWidth, border.ActualHeight));
@@ -120,8 +129,11 @@ internal static class MenuPopupAnimator
             {
                 border.ClearValue(UIElement.ClipProperty);
             }
+
+            materialReady();
         };
         clip.BeginAnimation(RectangleGeometry.RectProperty, animation, HandoffBehavior.SnapshotAndReplace);
+        return true;
     }
 
     private static Border? GetContextMenuPopupBorder(ContextMenu menu) =>

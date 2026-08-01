@@ -1,9 +1,28 @@
+using System.IO;
+using System.Text.RegularExpressions;
 using TileStart.Host;
 
 namespace TileStart.Host.Tests;
 
 public sealed class Win10MenuPopupMotionTests
 {
+    [Fact]
+    public void AcrylicMaterialIsDeferredUntilRevealCompletes()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Navigation",
+            "MenuPopupAnimator.cs"));
+
+        Assert.Equal(
+            2,
+            Regex.Matches(source, @"\(\) => PopupMaterialManager\.Apply\(border\)").Count);
+        Assert.Contains("animation.Completed +=", source, StringComparison.Ordinal);
+        Assert.Contains("materialReady();", source, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TimingsAndCurveMatchMenuPopupThemeTransition()
     {
