@@ -19,6 +19,8 @@
     <SolidColorBrush x:Key="TileStartControlStrokeBrush" Color="#66FFFFFF" />
     <SolidColorBrush x:Key="TileStartControlStrokeHoverBrush" Color="#99FFFFFF" />
     <SolidColorBrush x:Key="TileStartDividerBrush" Color="#19FFFFFF" />
+    <SolidColorBrush x:Key="TileStartScrollBarThumbRestBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TileStartScrollBarThumbHoverBrush" Color="#99FFFFFF" />
     <SolidColorBrush x:Key="TileStartMenuSeparatorBrush" Color="#FF7A7A7A" />
     <SolidColorBrush x:Key="TileStartWindowStrokeBrush" Color="#33FFFFFF" />
     <SolidColorBrush x:Key="TileStartFocusSecondaryBrush" Color="#99000000" />

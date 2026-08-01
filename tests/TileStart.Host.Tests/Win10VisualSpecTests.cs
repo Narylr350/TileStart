@@ -145,6 +145,18 @@ public sealed class Win10VisualSpecTests
         AssertThickness(Win10VisualMetrics.TileNestedPanelMargin, metrics.GetProperty("nestedPanelMargin").GetProperty("value"));
         AssertThickness(Win10VisualMetrics.TileBrandingMargin, metrics.GetProperty("bottomAlignedTextMargin").GetProperty("value"), horizontalInset: 8);
         Assert.Equal("NoWrap", metrics.GetProperty("groupTitleWrapping").GetProperty("value").GetString());
+        Assert.Equal(
+            "#33FFFFFF",
+            metrics.GetProperty("scrollBarThumbRestColor").GetProperty("dark").GetString());
+        Assert.Equal(
+            "#33000000",
+            metrics.GetProperty("scrollBarThumbRestColor").GetProperty("light").GetString());
+        Assert.Equal(
+            "#99FFFFFF",
+            metrics.GetProperty("scrollBarThumbHoverColor").GetProperty("dark").GetString());
+        Assert.Equal(
+            "#99000000",
+            metrics.GetProperty("scrollBarThumbHoverColor").GetProperty("light").GetString());
     }
 
     [Fact]

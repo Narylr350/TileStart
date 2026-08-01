@@ -65,8 +65,7 @@
                                            MinHeight="{x:Static local:Win10VisualMetrics.TileScrollBarThumbMinHeight}"
                                            Margin="{x:Static local:Win10VisualMetrics.TileScrollBarThumbRestMargin}"
                                            HorizontalAlignment="Right"
-                                           Background="{StaticResource TileStartTextTertiaryBrush}"
-                                           Opacity="0.72">
+                                           Background="{DynamicResource TileStartScrollBarThumbRestBrush}">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border Background="{TemplateBinding Background}" CornerRadius="1" />
@@ -86,9 +85,8 @@
                                 <Setter TargetName="ScrollThumb" Property="Width"
                                         Value="{x:Static local:Win10VisualMetrics.TileScrollBarThumbMouseWidth}" />
                                 <Setter TargetName="ScrollThumb" Property="Margin" Value="0" />
-                                <Setter TargetName="ScrollThumb" Property="Opacity" Value="1" />
                                 <Setter TargetName="ScrollThumb" Property="Background"
-                                        Value="{StaticResource TileStartTextSecondaryBrush}" />
+                                        Value="{DynamicResource TileStartScrollBarThumbHoverBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

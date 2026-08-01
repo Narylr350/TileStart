@@ -52,6 +52,49 @@ public sealed class DarkThemeVisualTests
     }
 
     [Theory]
+    [InlineData("Win10Theme.xaml", "TileStartScrollBarThumbRestBrush", "#33FFFFFF")]
+    [InlineData("Win10Theme.xaml", "TileStartScrollBarThumbHoverBrush", "#99FFFFFF")]
+    [InlineData("Win10LightTheme.xaml", "TileStartScrollBarThumbRestBrush", "#33000000")]
+    [InlineData("Win10LightTheme.xaml", "TileStartScrollBarThumbHoverBrush", "#99000000")]
+    [InlineData("Win11Theme.xaml", "TileStartScrollBarThumbRestBrush", "#64FFFFFF")]
+    [InlineData("Win11Theme.xaml", "TileStartScrollBarThumbHoverBrush", "#C5FFFFFF")]
+    [InlineData("Win11LightTheme.xaml", "TileStartScrollBarThumbRestBrush", "#52000000")]
+    [InlineData("Win11LightTheme.xaml", "TileStartScrollBarThumbHoverBrush", "#9E000000")]
+    public void TileScrollBarUsesThemeSpecificThumbColors(string theme, string key, string expected)
+    {
+        Assert.Equal(expected, ReadThemeBrushColor(theme, key));
+    }
+
+    [Fact]
+    public void TileScrollBarUsesDedicatedRestAndHoverBrushesWithoutExtraOpacity()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "StartVerticalScrollBarStyle");
+        var thumb = style.Descendants(presentation + "Thumb")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ScrollThumb");
+        Assert.Equal(
+            "{DynamicResource TileStartScrollBarThumbRestBrush}",
+            (string?)thumb.Attribute("Background"));
+        Assert.Null(thumb.Attribute("Opacity"));
+
+        var hoverTrigger = style.Descendants(presentation + "Trigger")
+            .Single(element =>
+                (string?)element.Attribute("Property") == "IsMouseOver"
+                && (string?)element.Attribute("Value") == "True");
+        Assert.Contains(hoverTrigger.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "ScrollThumb"
+            && (string?)setter.Attribute("Property") == "Background"
+            && (string?)setter.Attribute("Value") ==
+            "{DynamicResource TileStartScrollBarThumbHoverBrush}");
+        Assert.DoesNotContain(hoverTrigger.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "ScrollThumb"
+            && (string?)setter.Attribute("Property") == "Opacity");
+    }
+
+    [Theory]
     [InlineData("Win10Theme.xaml", "TileStartPopupBackgroundBrush", "#FF2B2B2B")]
     [InlineData("Win10Theme.xaml", "TileStartPopupStrokeBrush", "#5C000000")]
     [InlineData("Win10Theme.xaml", "TileStartContextMenuHighlightBrush", "#19FFFFFF")]

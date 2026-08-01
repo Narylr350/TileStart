@@ -81,6 +81,18 @@
         "xamlSha256": "1E5BE4293266DAD89880EB615D997B687545FC66E9BF6E1B42B05ED2CF21FC02",
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
+    },
+    "scrollBarThumbRestColor": {
+      "dark": "#33FFFFFF",
+      "light": "#33000000",
+      "evidence": "compiled-system-xbf",
+      "anchor": "ScrollBarThumbBackgroundColor -> SystemBaseLowColor"
+    },
+    "scrollBarThumbHoverColor": {
+      "dark": "#99FFFFFF",
+      "light": "#99000000",
+      "evidence": "compiled-startui-xbf",
+      "anchor": "ScrollBarPanningThumbBackground -> SystemBaseMediumColor"
     }
   },
   "notes": [
