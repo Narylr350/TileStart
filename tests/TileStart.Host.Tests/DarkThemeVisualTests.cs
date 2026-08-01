@@ -65,6 +65,20 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(expected, ReadThemeBrushColor(theme, key));
     }
 
+    [Theory]
+    [InlineData("Win10Theme.xaml", "0.6")]
+    [InlineData("Win10LightTheme.xaml", "0.4")]
+    public void Windows10SubmenuOpenedBackgroundUsesNativeAccentLowOpacity(
+        string theme,
+        string expectedOpacity)
+    {
+        const string key = "TileStartContextMenuSubmenuOpenedBrush";
+        Assert.Equal(
+            "{x:Static local:Win10Theme.AccentColor}",
+            ReadThemeBrushColor(theme, key));
+        Assert.Equal(expectedOpacity, ReadThemeBrushAttribute(theme, key, "Opacity"));
+    }
+
     [Fact]
     public void ApplicationNamesUseTheNativeSingleLineTextStyle()
     {
@@ -449,6 +463,13 @@ public sealed class DarkThemeVisualTests
                     "{DynamicResource TileStartTextPrimaryBrush}",
                     (string?)setter.Attribute("Value")));
         });
+        var submenuOpenedTrigger = activeTriggers.Single(trigger =>
+            (string?)trigger.Attribute("Property") == "IsSubmenuOpen");
+        Assert.Contains(submenuOpenedTrigger.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "MenuItemRoot"
+            && (string?)setter.Attribute("Property") == "Background"
+            && (string?)setter.Attribute("Value") ==
+            "{DynamicResource TileStartContextMenuSubmenuOpenedBrush}");
 
         var submenuArrow = sharedStyles.Descendants(presentation + "TextBlock")
             .Single(element => (string?)element.Attribute(x + "Name") == "SubmenuArrow");
@@ -529,13 +550,16 @@ public sealed class DarkThemeVisualTests
         ReadThemeBrushColor("Win11Theme.xaml", key);
 
     private static string? ReadThemeBrushColor(string fileName, string key)
+        => ReadThemeBrushAttribute(fileName, key, "Color");
+
+    private static string? ReadThemeBrushAttribute(string fileName, string key, string attribute)
     {
         var document = LoadXaml(fileName);
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         return document.Descendants(presentation + "SolidColorBrush")
             .Single(element => (string?)element.Attribute(x + "Key") == key)
-            .Attribute("Color")?.Value;
+            .Attribute(attribute)?.Value;
     }
 
     private static string? ReadThemeResourceValue(string fileName, string elementName, string key)

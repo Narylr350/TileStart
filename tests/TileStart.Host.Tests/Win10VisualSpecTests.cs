@@ -115,6 +115,10 @@ public sealed class Win10VisualSpecTests
         Assert.Equal("U+E001", metrics.GetProperty("checkGlyph").GetProperty("glyph").GetString());
         Assert.Equal("#CC", metrics.GetProperty("checkGlyph").GetProperty("normalForeground").GetString());
         Assert.Equal("#FF", metrics.GetProperty("checkGlyph").GetProperty("activeForeground").GetString());
+        var submenuOpenedBackground = metrics.GetProperty("submenuOpenedBackground");
+        Assert.Equal("SystemAccentColor", submenuOpenedBackground.GetProperty("colorSource").GetString());
+        Assert.Equal(0.6, submenuOpenedBackground.GetProperty("darkOpacity").GetDouble());
+        Assert.Equal(0.4, submenuOpenedBackground.GetProperty("lightOpacity").GetDouble());
         Assert.NotEmpty(spec.RootElement.GetProperty("unresolved").EnumerateArray());
     }
 

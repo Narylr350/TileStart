@@ -90,6 +90,13 @@
       "evidence": "compiled-system-xbf",
       "anchor": "SystemControlDisabledBaseLowBrush -> SystemBaseLowColor (#33)"
     },
+    "submenuOpenedBackground": {
+      "colorSource": "SystemAccentColor",
+      "darkOpacity": 0.6,
+      "lightOpacity": 0.4,
+      "evidence": "compiled-system-xbf",
+      "anchor": "MenuFlyoutSubItemBackgroundSubMenuOpened -> SystemControlHighlightListAccentLowBrush"
+    },
     "submenuArrow": {
       "glyph": "U+E0E3",
       "fontSize": 12.0,
