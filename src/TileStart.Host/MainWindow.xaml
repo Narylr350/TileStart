@@ -45,6 +45,12 @@
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
         </Style>
+        <ImageBrush x:Key="TileStartAcrylicNoiseBrush"
+                    ImageSource="/TileStart.Host;component/Assets/AcrylicNoise.png"
+                    TileMode="Tile"
+                    Viewport="0,0,256,256"
+                    ViewportUnits="Absolute"
+                    Stretch="None" />
         <Style x:Key="StartVerticalScrollBarStyle" TargetType="ScrollBar">
             <Setter Property="Width" Value="{x:Static local:Win10VisualMetrics.TileScrollBarWidth}" />
             <Setter Property="Margin" Value="{x:Static local:Win10VisualMetrics.TileScrollBarMargin}" />
@@ -673,6 +679,12 @@
                 <ColumnDefinition Width="{x:Static local:Win10VisualMetrics.AllAppsGridLength}" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+            <!-- WinUI Acrylic 的 2% 噪声位于材质层而非内容层；保持磁贴 0.8 透明度和文字/图标清晰度。 -->
+            <Border Grid.ColumnSpan="3"
+                    Background="{StaticResource TileStartAcrylicNoiseBrush}"
+                    IsHitTestVisible="False"
+                    Opacity="0.01"
+                    Panel.ZIndex="0" />
             <Grid x:Name="NavigationPane"
                   Grid.Column="0"
                   Grid.ColumnSpan="2"

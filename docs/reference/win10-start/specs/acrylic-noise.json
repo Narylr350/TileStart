@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "acrylic-noise-compatibility",
+  "status": "host-validated-candidate",
+  "source": {
+    "repository": "microsoft/microsoft-ui-xaml",
+    "commit": "188f602b27cdb47572b28c380e9c087b02e1ccee",
+    "asset": "controls/dev/Materials/Acrylic/Assets/NoiseAsset_256X256_PNG.png",
+    "assetSha256": "41de173d9014b38f8290acf270c490b37fc79a60"
+  },
+  "nativeReference": {
+    "noiseOpacity": 0.02,
+    "tileMode": "wrap",
+    "blend": "SourceOver"
+  },
+  "tileStartCompatibility": {
+    "placement": "MainSurface below content",
+    "opacity": 0.01,
+    "reason": "WCA already contributes part of the host texture; 0.02 over-raises the measured texture on the current Win11 host.",
+    "tileOpacityUnchanged": 0.8
+  },
+  "hostMeasurement": {
+    "reference": "captures/reference/same-settings-2026-08-02/win10-native.png",
+    "candidate": "captures/automated/2026-08-02-wca-noise01-pmv2.png",
+    "baselineMaterialLoss": 5.848781527441705,
+    "candidateMaterialLoss": 5.86229855004479,
+    "baselineTextureError": 0.5242793358487335,
+    "candidateTextureError": 0.5178477942321492,
+    "notes": "Candidate is retained for visual user review; aggregate loss is effectively tied with baseline, while texture error improves slightly."
+  }
+}

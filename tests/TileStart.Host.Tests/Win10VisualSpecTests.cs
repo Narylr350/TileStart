@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Xml.Linq;
 using TileStart.Host;
 using TileStart.Host.Icons;
 
@@ -267,6 +268,26 @@ public sealed class Win10VisualSpecTests
             Assert.Empty(spec.RootElement.GetProperty("missingRequestedSymbols").EnumerateArray());
         }
     }
+
+    [Fact]
+    public void AcrylicNoiseStaysBelowContentAndUsesTheHostCompatibilityOpacity()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var noise = document.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute("Background") == "{StaticResource TileStartAcrylicNoiseBrush}");
+
+        Assert.Equal("False", (string?)noise.Attribute("IsHitTestVisible"));
+        Assert.Equal("0.01", (string?)noise.Attribute("Opacity"));
+        Assert.Equal("0", (string?)noise.Attribute("Panel.ZIndex"));
+        Assert.Contains(
+            document.Descendants(presentation + "ImageBrush"),
+            element => (string?)element.Attribute("ImageSource") == "/TileStart.Host;component/Assets/AcrylicNoise.png");
+    }
+
+    private static XDocument LoadMainWindow() =>
+        XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", "MainWindow.xaml"));
 
     private static JsonDocument ReadSpec(string fileName) =>
         JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "win10-start-specs", fileName)));

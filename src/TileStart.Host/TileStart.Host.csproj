@@ -29,6 +29,7 @@
 
     <ItemGroup>
         <Resource Include="Assets\TileStart-icon-master.png" />
+        <Resource Include="Assets\AcrylicNoise.png" />
     </ItemGroup>
 
 </Project>
