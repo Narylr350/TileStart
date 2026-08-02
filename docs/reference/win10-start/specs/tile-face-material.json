@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "tile-face-material-compatibility",
+  "status": "host-validated-candidate",
+  "nativeEvidence": {
+    "background": "SystemAccentColor",
+    "transparencyEnabledOpacity": 0.8,
+    "transparencyDisabledOpacity": 1.0,
+    "tileFaceNoise": "not present in the exported StartUI XAML",
+    "source": [
+      "TileStyles.xaml",
+      "TileGridItemDataTemplates.xaml"
+    ]
+  },
+  "tileStartCandidate": {
+    "noiseAsset": "Assets/AcrylicNoise.png",
+    "opacity": 0.03,
+    "placement": "inside tile content after background images and before icon/title content",
+    "conditions": {
+      "hasCustomBackgroundColor": false,
+      "backgroundImagePath": "",
+      "backgroundImage": null,
+      "isTileFolder": false
+    },
+    "unchanged": [
+      "SystemAccentColor",
+      "default tile opacity 0.8",
+      "custom solid colours",
+      "custom background images",
+      "GIF backgrounds",
+      "folder previews",
+      "Reveal overlay",
+      "pressed and dragging states"
+    ]
+  },
+  "hostMeasurement": {
+    "reference": "captures/reference/same-settings-2026-08-02/win10-native.png",
+    "candidate": "captures/automated/2026-08-02-wca-tileface03-pmv2.png",
+    "referenceTileRgbStd": [1.0440467600413201, 1.236054722789229, 1.0440467600413201],
+    "candidateTileRgbStd": [1.255778203107259, 1.2631180756761942, 1.2458070107463362],
+    "candidateTileMedianDeltaE00": 4.69983672669526,
+    "candidateMaterialLoss": 5.690779112853509
+  },
+  "notes": [
+    "The exported StartUI XAML does not prove an independent tile-face noise layer.",
+    "This is an evidence-bounded WPF/WCA compatibility candidate retained for user visual review."
+  ]
+}

@@ -286,6 +286,33 @@ public sealed class Win10VisualSpecTests
             element => (string?)element.Attribute("ImageSource") == "/TileStart.Host;component/Assets/AcrylicNoise.png");
     }
 
+    [Fact]
+    public void TileFaceNoiseOnlyTargetsPlainDefaultTilesBeforeContentAndReveal()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var overlay = document.Descendants(presentation + "Rectangle")
+            .Single(element => (string?)element.Attribute(x + "Name") == "TileNoiseOverlay");
+
+        Assert.Equal("0.03", (string?)overlay.Attribute("Opacity"));
+        Assert.Equal("False", (string?)overlay.Attribute("IsHitTestVisible"));
+        Assert.Equal("Collapsed", (string?)overlay.Attribute("Visibility"));
+
+        var triggers = overlay.Ancestors(presentation + "DataTemplate")
+            .First(template => template.Element(presentation + "DataTemplate.Triggers")?.Element(presentation + "MultiDataTrigger") is not null)
+            .Element(presentation + "DataTemplate.Triggers")!
+            .Element(presentation + "MultiDataTrigger")!
+            .Element(presentation + "MultiDataTrigger.Conditions")!
+            .Elements(presentation + "Condition")
+            .ToArray();
+
+        Assert.Contains(triggers, condition => (string?)condition.Attribute("Binding") == "{Binding HasCustomBackgroundColor}" && (string?)condition.Attribute("Value") == "False");
+        Assert.Contains(triggers, condition => (string?)condition.Attribute("Binding") == "{Binding BackgroundImagePath}" && (string?)condition.Attribute("Value") == "");
+        Assert.Contains(triggers, condition => (string?)condition.Attribute("Binding") == "{Binding BackgroundImage}" && (string?)condition.Attribute("Value") == "{x:Null}");
+        Assert.Contains(triggers, condition => (string?)condition.Attribute("Binding") == "{Binding IsTileFolder}" && (string?)condition.Attribute("Value") == "False");
+    }
     private static XDocument LoadMainWindow() =>
         XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", "MainWindow.xaml"));
 

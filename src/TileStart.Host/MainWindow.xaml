@@ -1217,6 +1217,13 @@
                                                                         ScaleY="{Binding BackgroundImageScale}" />
                                                                 </Image.RenderTransform>
                                                             </Image>
+                                                            <!-- 原版没有公开 tile-face noise 资源；这是仅针对纯色默认磁贴的 Host 兼容候选。 -->
+                                                            <Rectangle x:Name="TileNoiseOverlay"
+                                                                      Grid.RowSpan="2"
+                                                                      Fill="{StaticResource TileStartAcrylicNoiseBrush}"
+                                                                      IsHitTestVisible="False"
+                                                                      Opacity="0.03"
+                                                                      Visibility="Collapsed" />
                                                             <TextBlock x:Name="TileInitial"
                                                                        Grid.Row="0"
                                                                        Grid.RowSpan="2"
@@ -1342,6 +1349,15 @@
                                                         </Grid>
                                                     </Button>
                                                     <DataTemplate.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding HasCustomBackgroundColor}" Value="False" />
+                                                                <Condition Binding="{Binding BackgroundImagePath}" Value="" />
+                                                                <Condition Binding="{Binding BackgroundImage}" Value="{x:Null}" />
+                                                                <Condition Binding="{Binding IsTileFolder}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="TileNoiseOverlay" Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
                                                         <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
                                                             <Setter TargetName="TileInitial" Property="Visibility"
                                                                     Value="Visible" />
