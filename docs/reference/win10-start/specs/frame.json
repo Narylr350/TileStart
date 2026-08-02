@@ -164,10 +164,10 @@
     },
     "tileStartAccentWcaMapping": {
       "selection": "ColorPrevalence != 0",
-      "gradientColor": "0xB8BBGGRR from AccentPalette Dark1 blended 12 percent toward #1F1F1F, falling back to StartColorMenu",
+      "gradientColor": "0xB8BBGGRR from AccentPalette Dark1 blended 16 percent toward #1F1F1F, falling back to StartColorMenu",
       "fallbackColor": "AccentPalette Dark1",
       "evidence": "compiled-xbf + registry-state-selection + independent-wca-mapping",
-      "notes": "StartUI's AccentAcrylic brush and its Dark1/0.8 values are exact XBF evidence. ColorPrevalence is the Windows user setting that selects Start accent colouring. WCA alpha 0xB8 and the 12 percent neutral blend are empirical same-wallpaper screenshot calibrations compensating for WCA's missing UWP Acrylic luminosity; neither is an original StartUI value. The exact Dark1 fallback colour remains unchanged. The navigation pane's separate Dark2/0.5 layer is not yet represented independently by TileStart."
+      "notes": "StartUI's AccentAcrylic brush and its Dark1/0.8 values are exact XBF evidence. ColorPrevalence is the Windows user setting that selects Start accent colouring. WCA alpha 0xB8 and the 16 percent neutral blend are empirical same-wallpaper screenshot calibrations compensating for WCA's missing UWP Acrylic luminosity; neither is an original StartUI value. The exact Dark1 fallback colour remains unchanged. The navigation pane's separate Dark2/0.5 layer is not yet represented independently by TileStart."
     }
   }
 }

@@ -79,7 +79,7 @@ public sealed class Win10ThemeTests
 
         Assert.True(material.UseAcrylic);
         Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8A75704), material.AcrylicGradientColor);
+        Assert.Equal(unchecked((int)0xB8A15505), material.AcrylicGradientColor);
     }
 
     [Fact]
@@ -94,14 +94,14 @@ public sealed class Win10ThemeTests
             accentPalette: null);
 
         Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8A75704), material.AcrylicGradientColor);
+        Assert.Equal(unchecked((int)0xB8A15505), material.AcrylicGradientColor);
     }
 
     [Fact]
     public void Win10AccentWcaTintCompensatesForMissingUwpLuminosity()
     {
         Assert.Equal(
-            Color.FromRgb(0x04, 0x57, 0xA7),
+            Color.FromRgb(0x05, 0x55, 0xA1),
             Win10Theme.ResolveWin10AccentWcaTintColor(Color.FromRgb(0x00, 0x5F, 0xBA)));
     }
 
