@@ -1,5 +1,6 @@
 using System.Text.Json;
 using TileStart.Host.Tiles.Models;
+using TileStart.Host.Tiles.Settings;
 
 namespace TileStart.Host.Tests;
 
@@ -41,6 +42,31 @@ public class TileItemBackgroundColorTests : IDisposable
         var tile = new TileItem { BackgroundColor = "#112233" };
 
         Assert.Equal(1, tile.BackgroundBrush.Opacity);
+    }
+
+    [Fact]
+    public void SettingsPreviewKeepsThemeSurfaceOpacityForTheDefaultColor()
+    {
+        TileItem.SetThemeDefaultBackgroundColor("#FFFFFF", 0.35);
+        var preview = new TileItem { BackgroundColor = "#FFFFFF" };
+
+        TileSettingsWindow.ApplyPreviewBackgroundColor(preview, "#FFFFFF");
+
+        Assert.False(preview.HasCustomBackgroundColor);
+        Assert.Equal(0.35, preview.BackgroundBrush.Opacity);
+    }
+
+    [Fact]
+    public void SettingsPreviewKeepsAnExplicitCustomColorOpaque()
+    {
+        TileItem.SetThemeDefaultBackgroundColor("#FFFFFF", 0.35);
+        var preview = new TileItem();
+
+        TileSettingsWindow.ApplyPreviewBackgroundColor(preview, "#112233");
+
+        Assert.True(preview.HasCustomBackgroundColor);
+        Assert.Equal("#112233", preview.BackgroundColor);
+        Assert.Equal(1, preview.BackgroundBrush.Opacity);
     }
 
     [Fact]

@@ -59,7 +59,6 @@ public partial class TileSettingsWindow : Window
             LaunchTarget = tile.LaunchTarget,
             TargetType = tile.TargetType,
             Size = tile.Size,
-            BackgroundColor = tile.BackgroundColor,
             ForegroundColor = tile.ForegroundColor,
             IconPath = tile.IconPath,
             BackgroundImagePath = tile.BackgroundImagePath,
@@ -74,6 +73,11 @@ public partial class TileSettingsWindow : Window
             IsTileFolder = tile.IsTileFolder,
             FolderTiles = tile.FolderTiles,
         };
+        if (tile.HasCustomBackgroundColor)
+        {
+            PreviewTile.BackgroundColor = tile.BackgroundColor;
+        }
+
         InitializeComponent();
         DataContext = this;
         NameBox.Text = tile.Name;
@@ -136,8 +140,10 @@ public partial class TileSettingsWindow : Window
     public string BackgroundColor => BackgroundColorBox.Text.Trim();
     public string ForegroundColor => ForegroundColorBox.Text.Trim();
     public bool ShowTitle => ShowTitleBox.IsChecked == true;
+
     public TileTitlePosition TitlePosition =>
         Enum.Parse<TileTitlePosition>((string)TitlePositionBox.SelectedValue);
+
     public double IconSize => IconSizeBox.Value;
     public TileIconPosition IconPosition => Enum.Parse<TileIconPosition>((string)IconPositionBox.SelectedValue);
     public TileSize TileSize => Enum.Parse<TileSize>((string)SizeBox.SelectedValue);
@@ -359,9 +365,11 @@ public partial class TileSettingsWindow : Window
         }
 
         PreviewTile.Name = string.IsNullOrWhiteSpace(TileName) ? "磁贴名称" : TileName;
-        PreviewTile.BackgroundColor = IsValidColor(BackgroundColor)
-            ? BackgroundColor
-            : TileItem.ThemeDefaultBackgroundColor;
+        ApplyPreviewBackgroundColor(
+            PreviewTile,
+            IsValidColor(BackgroundColor)
+                ? BackgroundColor
+                : TileItem.ThemeDefaultBackgroundColor);
         PreviewTile.ForegroundColor = IsValidColor(ForegroundColor) ? ForegroundColor : "#FFFFFF";
         PreviewTile.IconPath = IconPath;
         PreviewTile.BackgroundImagePath = BackgroundImagePath;
@@ -412,6 +420,19 @@ public partial class TileSettingsWindow : Window
         TileSize.Large => "大",
         _ => "中",
     };
+
+    internal static void ApplyPreviewBackgroundColor(TileItem previewTile, string color)
+    {
+        // 主题默认色还带有材质透明度；把 getter 展开的色值重新写入 setter 会把它
+        // 误标成不透明自定义色，导致设置窗口预览出现纯色白块。
+        if (string.Equals(color, TileItem.ThemeDefaultBackgroundColor, StringComparison.OrdinalIgnoreCase))
+        {
+            previewTile.ClearCustomBackgroundColor();
+            return;
+        }
+
+        previewTile.BackgroundColor = color;
+    }
 
     private static void UpdateColorPreview(Border preview, string value)
     {
