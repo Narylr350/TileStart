@@ -1006,7 +1006,7 @@ internal sealed class ApplicationPaneController : IDisposable
     {
         if (!string.IsNullOrWhiteSpace(tile.IconPath))
         {
-            return (ShellIconLoader.Load(tile.IconPath) ?? GenericAppIcon.Image, false);
+            return (ShellIconLoader.Load(tile.IconPath) ?? ResolveFallbackIcon(tile), false);
         }
 
         var tileTargetKey = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
@@ -1025,7 +1025,7 @@ internal sealed class ApplicationPaneController : IDisposable
                 return (tileLogo, true);
             }
 
-            return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
+            return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
         }
 
         // Chromium Edge 在 AppsFolder 中以 MSEdge shell alias 暴露，PackageInstallPath/PFN 为空，
@@ -1039,8 +1039,11 @@ internal sealed class ApplicationPaneController : IDisposable
             return (shellAliasLogo, true);
         }
 
-        return (ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
+        return (ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
     }
+
+    internal static ImageSource ResolveFallbackIcon(TileItem tile) =>
+        tile.TargetType == TileTargetType.Command ? TileStartAppIcon.Image : GenericAppIcon.Image;
 
     internal static bool UsesDefaultPackagedTileAppearance(TileItem tile) =>
         string.IsNullOrWhiteSpace(tile.IconPath)

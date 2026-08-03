@@ -607,13 +607,15 @@ internal sealed class TileWorkspaceController : IDisposable
 
     public void AddCommandTile_Click(object sender, RoutedEventArgs e)
     {
+        var defaultIcon = TileStartAppIcon.Image;
         var tile = new TileItem
         {
             Name = "新磁贴",
             TargetType = TileTargetType.Command,
             Size = TileSize.Medium,
+            Icon = defaultIcon,
         };
-        var dialog = new TileSettingsWindow(tile, true);
+        var dialog = new TileSettingsWindow(tile, true, defaultIcon);
         if (ShowTileSettingsDialog(dialog) != true)
         {
             return;
