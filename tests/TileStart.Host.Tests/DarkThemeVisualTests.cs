@@ -262,6 +262,8 @@ public sealed class DarkThemeVisualTests
         var background = backdrop.Descendants(presentation + "Border").Single();
         Assert.Equal("{DynamicResource TileStartNavigationOverlayBrush}",
             (string?)background.Attribute("Background"));
+        Assert.Equal("{DynamicResource TileStartNavigationCornerRadius}",
+            (string?)background.Attribute("CornerRadius"));
         Assert.Equal("0", (string?)backdrop.Attribute("Opacity"));
         Assert.Equal("False", (string?)backdrop.Attribute("IsHitTestVisible"));
 
@@ -272,6 +274,15 @@ public sealed class DarkThemeVisualTests
             (string?)shadow.Attribute("NineGrid"));
         Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowMargin}",
             (string?)shadow.Attribute("Margin"));
+
+        Assert.Equal("0", ReadThemeResourceValue(
+            "Win10Theme.xaml",
+            "CornerRadius",
+            "TileStartNavigationCornerRadius"));
+        Assert.Equal("0,8,8,0", ReadThemeResourceValue(
+            "Win11Theme.xaml",
+            "CornerRadius",
+            "TileStartNavigationCornerRadius"));
     }
 
     [Fact]

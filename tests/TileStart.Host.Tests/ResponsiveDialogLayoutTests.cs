@@ -23,6 +23,16 @@ public sealed class ResponsiveDialogLayoutTests
         Assert.Contains(style.Elements(Presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "Opacity"
             && (string?)setter.Attribute("Value") == "0");
+
+        var codeBehind = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Themes",
+            "SharedStyles.xaml.cs"));
+        Assert.True(
+            codeBehind.IndexOf("DialogWindowMaterialManager.Apply(window);", StringComparison.Ordinal)
+            < codeBehind.IndexOf("DialogWindowMotion.Open(window);", StringComparison.Ordinal));
     }
 
     [Fact]

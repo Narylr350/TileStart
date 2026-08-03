@@ -45,6 +45,7 @@
 
     <CornerRadius x:Key="TileStartControlCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="TileStartNavigationCornerRadius">0,8,8,0</CornerRadius>
     <CornerRadius x:Key="TileStartTileCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="TileStartSearchCornerRadius">18</CornerRadius>
     <Thickness x:Key="TileStartTileBorderThickness">0</Thickness>

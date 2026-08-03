@@ -706,7 +706,8 @@
                       Margin="{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}"
                       IsHitTestVisible="False"
                       Opacity="0">
-                    <Border Background="{DynamicResource TileStartNavigationOverlayBrush}" />
+                    <Border Background="{DynamicResource TileStartNavigationOverlayBrush}"
+                            CornerRadius="{DynamicResource TileStartNavigationCornerRadius}" />
                     <local:NineGridImage Source="/TileStart.Host;component/Assets/Win10NavigationDropShadow.png"
                                           NineGrid="{x:Static local:Win10VisualMetrics.NavigationShadowNineGrid}"
                                           Margin="{x:Static local:Win10VisualMetrics.NavigationShadowMargin}" />
