@@ -194,10 +194,17 @@ public sealed class TileDragTransaction : IDisposable
                 Size = folderTarget.Size,
                 Column = folderColumn,
                 Row = folderRow,
-                BackgroundColor = folderTarget.BackgroundColor,
                 ForegroundColor = folderTarget.ForegroundColor,
                 FolderTiles = [folderTarget],
             };
+            // BackgroundColor 的 getter 会把“跟随主题”的磁贴展开成当前主题色；若无条件赋给
+            // 新文件夹，setter 会把它误标成用户自定义色，并丢失默认画刷的透明度。只有来源磁贴
+            // 真正自定义过背景时才复制，避免解散后重建变成不透明黑/白块。
+            if (folderTarget.HasCustomBackgroundColor)
+            {
+                folder.BackgroundColor = folderTarget.BackgroundColor;
+            }
+
             var (childColumn, childRow) = TileFolderLayout.FindFirstAvailable(folder, _tile);
             _tile.Column = childColumn;
             _tile.Row = childRow;

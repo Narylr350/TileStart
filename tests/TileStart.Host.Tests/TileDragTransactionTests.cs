@@ -274,6 +274,39 @@ public sealed class TileDragTransactionTests
     }
 
     [Fact]
+    public void PreviewFolderKeepsThemeDefaultBackgroundUncustomized()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var target = Tile("target", TileSize.Medium, 0, 0);
+        var group = new TileGroup { Tiles = [target, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        Assert.False(target.HasCustomBackgroundColor);
+        using var transaction = new TileDragTransaction(layout, group, moving);
+        Assert.True(transaction.PreviewFolder(group, target));
+
+        var folder = Assert.Single(group.Tiles);
+        Assert.False(folder.HasCustomBackgroundColor);
+    }
+
+    [Fact]
+    public void PreviewFolderCopiesAnExplicitlyCustomizedBackground()
+    {
+        var moving = Tile("moving", TileSize.Medium, 2, 0);
+        var target = Tile("target", TileSize.Medium, 0, 0);
+        target.BackgroundColor = "#FF123456";
+        var group = new TileGroup { Tiles = [target, moving] };
+        var layout = new TileLayout { Groups = [group] };
+
+        using var transaction = new TileDragTransaction(layout, group, moving);
+        Assert.True(transaction.PreviewFolder(group, target));
+
+        var folder = Assert.Single(group.Tiles);
+        Assert.True(folder.HasCustomBackgroundColor);
+        Assert.Equal("#FF123456", folder.BackgroundColor);
+    }
+
+    [Fact]
     public void RepeatedDragOverOnCreatedFolderKeepsFolderPreviewStable()
     {
         var moving = Tile("moving", TileSize.Medium, 2, 0);
