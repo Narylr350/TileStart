@@ -10,6 +10,8 @@
         <Setter Property="FontFamily" Value="{DynamicResource TileStartContentFont}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
+        <!-- Loaded 后由 DialogWindowMotion 淡入；初始 0 避免首帧先闪出完整窗口。 -->
+        <Setter Property="Opacity" Value="0" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
@@ -438,7 +440,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="ItemBorder" Property="Background"
-                                    Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                    Value="{DynamicResource TileStartContextMenuHighlightBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="FontWeight" Value="SemiBold" />

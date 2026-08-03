@@ -17,6 +17,9 @@ public sealed class UpdateProgressWindowTests
         Assert.Equal("{StaticResource TileStartDialogWindowStyle}", (string?)window.Attribute("Style"));
         Assert.Equal("None", (string?)window.Attribute("WindowStyle"));
         Assert.Equal("False", (string?)window.Attribute("ShowInTaskbar"));
+        Assert.Equal("False", window.Attributes()
+            .Single(attribute => attribute.Name.LocalName.EndsWith("IsCloseAnimationEnabled", StringComparison.Ordinal))
+            .Value);
 
         var progress = Assert.Single(document.Descendants(presentation + "ProgressBar"));
         Assert.Equal("DownloadProgress", (string?)progress.Attribute(x + "Name"));

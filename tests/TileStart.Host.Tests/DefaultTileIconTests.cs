@@ -21,4 +21,34 @@ public sealed class DefaultTileIconTests
 
         Assert.Same(GenericAppIcon.Image, ApplicationPaneController.ResolveFallbackIcon(tile));
     }
+
+    [Fact]
+    public void SettingsReuseAnAlreadyLoadedDefaultIcon()
+    {
+        var tile = new TileItem
+        {
+            Icon = GenericAppIcon.Image,
+            IconSourceKind = CustomIconSourceKind.Default,
+        };
+
+        Assert.True(TileWorkspaceController.CanReuseLoadedDefaultIcon(tile));
+    }
+
+    [Theory]
+    [InlineData(CustomIconSourceKind.LocalFile, "custom.png")]
+    [InlineData(CustomIconSourceKind.Network, "cached.png")]
+    [InlineData(CustomIconSourceKind.Svg, "cached.png")]
+    public void SettingsRebuildTheDefaultIconWhenTheTileUsesACustomSource(
+        CustomIconSourceKind sourceKind,
+        string iconPath)
+    {
+        var tile = new TileItem
+        {
+            Icon = GenericAppIcon.Image,
+            IconSourceKind = sourceKind,
+            IconPath = iconPath,
+        };
+
+        Assert.False(TileWorkspaceController.CanReuseLoadedDefaultIcon(tile));
+    }
 }

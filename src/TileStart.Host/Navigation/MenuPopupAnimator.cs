@@ -52,8 +52,7 @@ internal static class MenuPopupAnimator
 
     public static void OpenSubmenu(object? sender)
     {
-        if (!SystemParameters.ClientAreaAnimation
-            || sender is not Popup { Child: Border border } popup)
+        if (sender is not Popup { Child: Border border } popup)
         {
             return;
         }

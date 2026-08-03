@@ -15,7 +15,11 @@ internal static class PopupMaterialManager
     private const int AccentDisabled = 0;
     private const int AccentEnableAcrylicBlurBehind = 4;
     private const int AcrylicAccentFlags = 2;
-    private const byte NativeTransientTintAlpha = 0xCC;
+    private const int DwmWindowCornerPreference = 33;
+    private const int DwmWindowCornerDoNotRound = 1;
+    private const int DwmWindowCornerRound = 2;
+    private const byte Win10TransientTintAlpha = 0xCC;
+    private const byte Win11TransientTintAlpha = 0xD9;
     private const byte PopupHitTestAlpha = 1;
     private static readonly ConditionalWeakTable<System.Windows.Controls.Border, PopupState> States = new();
 
@@ -51,8 +55,9 @@ internal static class PopupMaterialManager
         }
 
         source.CompositionTarget.BackgroundColor = Colors.Transparent;
-        var useAcrylic = AppThemeManager.CurrentStyle == AppThemeStyle.Windows10
-                         && Win10Theme.ReadStartMaterial(AppThemeStyle.Windows10).UseAcrylic;
+        var themeStyle = AppThemeManager.CurrentStyle;
+        ApplyCornerPreference(source.Handle, themeStyle);
+        var useAcrylic = Win10Theme.ReadStartMaterial(themeStyle).UseAcrylic;
         if (!useAcrylic || popupSurface.Background is not SolidColorBrush fallbackBrush)
         {
             SetAccentPolicy(source.Handle, AccentDisabled, 0, 0);
@@ -60,14 +65,16 @@ internal static class PopupMaterialManager
             return;
         }
 
-        // Win10 临时浮层使用 HostBackdrop 和 0.8 TintOpacity。WCA 没有等价的独立 tint
-        // 参数，因此这里只能映射到 GradientColor alpha；调用失败必须保留已验证的回退色，
-        // 不能留下完全透明的菜单。
+        var tintBrush = popupSurface.TryFindResource("TileStartPopupAcrylicTintBrush") as SolidColorBrush
+                        ?? fallbackBrush;
+        // Popup 是独立的分层 HWND，必须在它自己的窗口上启用 HostBackdrop Acrylic。
+        // Win10 临时浮层使用 0.8 tint；Win11 使用已导出 Acrylic 资源的 0.85 tint。
+        // WCA 没有等价的独立 TintOpacity，只能映射到 GradientColor alpha。
         if (SetAccentPolicy(
                 source.Handle,
                 AccentEnableAcrylicBlurBehind,
                 AcrylicAccentFlags,
-                ComposeGradientColor(fallbackBrush.Color, NativeTransientTintAlpha)))
+                ComposeGradientColor(tintBrush.Color, ResolveTransientTintAlpha(themeStyle))))
         {
             if (!States.TryGetValue(popupSurface, out _))
             {
@@ -115,6 +122,12 @@ internal static class PopupMaterialManager
 
     internal static int ComposeGradientColor(System.Windows.Media.Color color, byte alpha) =>
         unchecked((int)(((uint)alpha << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R));
+
+    internal static byte ResolveTransientTintAlpha(AppThemeStyle themeStyle) =>
+        themeStyle == AppThemeStyle.Windows11 ? Win11TransientTintAlpha : Win10TransientTintAlpha;
+
+    internal static int ResolveCornerPreference(AppThemeStyle themeStyle) =>
+        themeStyle == AppThemeStyle.Windows11 ? DwmWindowCornerRound : DwmWindowCornerDoNotRound;
 
     internal static SolidColorBrush CreateHitTestBackground(System.Windows.Media.Color color)
     {
@@ -173,8 +186,25 @@ internal static class PopupMaterialManager
         }
     }
 
+    private static void ApplyCornerPreference(nint window, AppThemeStyle themeStyle)
+    {
+        var preference = ResolveCornerPreference(themeStyle);
+        _ = DwmSetWindowAttribute(
+            window,
+            DwmWindowCornerPreference,
+            ref preference,
+            Marshal.SizeOf<int>());
+    }
+
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(
         nint window,
         ref WindowCompositionAttributeData data);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(
+        nint window,
+        int attribute,
+        ref int value,
+        int valueSize);
 }

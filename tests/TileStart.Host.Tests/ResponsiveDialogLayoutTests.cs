@@ -20,6 +20,9 @@ public sealed class ResponsiveDialogLayoutTests
         Assert.Contains(style.Elements(Presentation + "EventSetter"), setter =>
             (string?)setter.Attribute("Event") == "Loaded"
             && (string?)setter.Attribute("Handler") == "DialogWindow_Loaded");
+        Assert.Contains(style.Elements(Presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Opacity"
+            && (string?)setter.Attribute("Value") == "0");
     }
 
     [Fact]

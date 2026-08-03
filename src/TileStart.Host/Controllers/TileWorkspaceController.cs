@@ -370,19 +370,34 @@ internal sealed class TileWorkspaceController : IDisposable
             return;
         }
 
-        var defaultVisual = new TileItem
+        ImageSource? defaultIcon;
+        bool defaultUsesFullTileLogo;
+        if (CanReuseLoadedDefaultIcon(tile))
         {
-            LaunchTarget = tile.LaunchTarget,
-            TargetType = tile.TargetType,
-            Size = tile.Size,
-            IconSize = tile.IconSize,
-            IconPosition = tile.IconPosition,
-        };
-        ApplicationPaneController.RestoreTileIcon(defaultVisual, _appController.LaunchableApps);
+            // 普通默认外观磁贴已经在启动阶段解析完成。设置窗口直接复用该冻结图像，
+            // 避免每次点击设置都在 UI 线程重新读取包资产或 Shell 图标。
+            defaultIcon = tile.Icon;
+            defaultUsesFullTileLogo = tile.UsesFullTileLogo;
+        }
+        else
+        {
+            var defaultVisual = new TileItem
+            {
+                LaunchTarget = tile.LaunchTarget,
+                TargetType = tile.TargetType,
+                Size = tile.Size,
+                IconSize = tile.IconSize,
+                IconPosition = tile.IconPosition,
+            };
+            ApplicationPaneController.RestoreTileIcon(defaultVisual, _appController.LaunchableApps);
+            defaultIcon = defaultVisual.Icon;
+            defaultUsesFullTileLogo = defaultVisual.UsesFullTileLogo;
+        }
+
         var dialog = new TileSettingsWindow(
             tile,
-            defaultIcon: defaultVisual.Icon,
-            defaultUsesFullTileLogo: defaultVisual.UsesFullTileLogo);
+            defaultIcon: defaultIcon,
+            defaultUsesFullTileLogo: defaultUsesFullTileLogo);
 
         void CommitSettings()
         {
@@ -425,6 +440,11 @@ internal sealed class TileWorkspaceController : IDisposable
             TileLayoutStore.Save(_tileLayout);
         }
     }
+
+    internal static bool CanReuseLoadedDefaultIcon(TileItem tile) =>
+        tile.Icon is not null
+        && tile.IconSourceKind == CustomIconSourceKind.Default
+        && string.IsNullOrWhiteSpace(tile.IconPath);
 
     public void DissolveFolder_Click(object sender, RoutedEventArgs e)
     {

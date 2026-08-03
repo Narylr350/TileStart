@@ -26,13 +26,11 @@
     <SolidColorBrush x:Key="TileStartListFocusPrimaryBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="TileStartListFocusSecondaryBrush" Color="#FF000000" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FCF9F9F9" />
+    <SolidColorBrush x:Key="TileStartPopupAcrylicTintBrush" Color="#FFF9F9F9" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#26000000" />
-    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartContextMenuSubmenuOpenedBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartContextMenuPressedBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
+    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush" Color="#09000000" />
+    <SolidColorBrush x:Key="TileStartContextMenuSubmenuOpenedBrush" Color="#09000000" />
+    <SolidColorBrush x:Key="TileStartContextMenuPressedBrush" Color="#0F000000" />
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#09000000" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0F000000" />

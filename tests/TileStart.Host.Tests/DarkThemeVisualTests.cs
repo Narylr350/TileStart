@@ -721,10 +721,26 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void Windows11ContextMenusUseAccentColorHighlightWithInsetPadding()
+    public void Windows11ContextMenusUseFluentSubtleFillWithInsetPadding()
     {
-        Assert.Equal("{x:Static local:Win10Theme.AccentColor}",
-            ReadThemeBrushColor("TileStartContextMenuHighlightBrush"));
+        Assert.Equal("#0FFFFFFF", ReadThemeBrushColor(
+            "Win11Theme.xaml",
+            "TileStartContextMenuHighlightBrush"));
+        Assert.Equal("#0FFFFFFF", ReadThemeBrushColor(
+            "Win11Theme.xaml",
+            "TileStartContextMenuSubmenuOpenedBrush"));
+        Assert.Equal("#0AFFFFFF", ReadThemeBrushColor(
+            "Win11Theme.xaml",
+            "TileStartContextMenuPressedBrush"));
+        Assert.Equal("#FF242424", ReadThemeBrushColor(
+            "Win11Theme.xaml",
+            "TileStartPopupAcrylicTintBrush"));
+        Assert.Equal("#09000000", ReadThemeBrushColor(
+            "Win11LightTheme.xaml",
+            "TileStartContextMenuHighlightBrush"));
+        Assert.Equal("#0F000000", ReadThemeBrushColor(
+            "Win11LightTheme.xaml",
+            "TileStartContextMenuPressedBrush"));
         Assert.Equal("4", ReadThemeResourceValue(
             "Win11Theme.xaml",
             "Thickness",
@@ -738,6 +754,18 @@ public sealed class DarkThemeVisualTests
         Assert.Contains(contextMenuStyle.Elements(presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "Padding"
             && (string?)setter.Attribute("Value") == "{DynamicResource TileStartContextMenuPresenterPadding}");
+
+        var comboItemStyle = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "TileStartComboBoxItemStyle");
+        var highlighted = comboItemStyle.Descendants(presentation + "Trigger")
+            .Single(element =>
+                (string?)element.Attribute("Property") == "IsHighlighted"
+                && (string?)element.Attribute("Value") == "True");
+        Assert.Contains(highlighted.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "ItemBorder"
+            && (string?)setter.Attribute("Property") == "Background"
+            && (string?)setter.Attribute("Value") ==
+            "{DynamicResource TileStartContextMenuHighlightBrush}");
     }
 
     [Fact]

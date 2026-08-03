@@ -26,13 +26,12 @@
     <SolidColorBrush x:Key="TileStartListFocusPrimaryBrush" Color="#FF000000" />
     <SolidColorBrush x:Key="TileStartListFocusSecondaryBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#F92C2C2C" />
+    <!-- StartDocked SystemControlAcrylicElementBrush tint: #242424 at 0.85. -->
+    <SolidColorBrush x:Key="TileStartPopupAcrylicTintBrush" Color="#FF242424" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#33FFFFFF" />
-    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartContextMenuSubmenuOpenedBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
-    <SolidColorBrush x:Key="TileStartContextMenuPressedBrush"
-                     Color="{x:Static local:Win10Theme.AccentColor}" />
+    <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="TileStartContextMenuSubmenuOpenedBrush" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="TileStartContextMenuPressedBrush" Color="#0AFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0AFFFFFF" />

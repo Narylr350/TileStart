@@ -29,6 +29,7 @@
     <SolidColorBrush x:Key="TileStartListFocusSecondaryBrush" Color="#FF000000" />
     <!-- MenuFlyoutPresenter fallback and transient border from Win10 ThemeResources. -->
     <SolidColorBrush x:Key="TileStartPopupBackgroundBrush" Color="#FFF2F2F2" />
+    <SolidColorBrush x:Key="TileStartPopupAcrylicTintBrush" Color="#FFF2F2F2" />
     <SolidColorBrush x:Key="TileStartPopupStrokeBrush" Color="#24000000" />
     <SolidColorBrush x:Key="TileStartContextMenuHighlightBrush"
                      Color="#19000000" />

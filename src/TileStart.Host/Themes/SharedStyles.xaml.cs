@@ -13,6 +13,7 @@ public partial class SharedStyles : ResourceDictionary
         if (sender is Window window)
         {
             DialogWindowManager.Attach(window);
+            DialogWindowMotion.Open(window);
         }
     }
 

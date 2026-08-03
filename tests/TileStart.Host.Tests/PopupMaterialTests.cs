@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using TileStart.Host.Navigation;
+using TileStart.Host.Themes;
 
 namespace TileStart.Host.Tests;
 
@@ -39,5 +40,14 @@ public sealed class PopupMaterialTests
         var actual = PopupMaterialManager.ComposeGradientColor(Color.FromRgb(red, green, blue), 0xCC);
 
         Assert.Equal(unchecked((int)expected), actual);
+    }
+
+    [Fact]
+    public void Windows11PopupUsesTheExportedHigherAcrylicTintOpacity()
+    {
+        Assert.Equal(0xCC, PopupMaterialManager.ResolveTransientTintAlpha(AppThemeStyle.Windows10));
+        Assert.Equal(0xD9, PopupMaterialManager.ResolveTransientTintAlpha(AppThemeStyle.Windows11));
+        Assert.Equal(1, PopupMaterialManager.ResolveCornerPreference(AppThemeStyle.Windows10));
+        Assert.Equal(2, PopupMaterialManager.ResolveCornerPreference(AppThemeStyle.Windows11));
     }
 }
