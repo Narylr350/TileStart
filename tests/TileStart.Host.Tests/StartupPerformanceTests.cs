@@ -31,6 +31,35 @@ public sealed class StartupPerformanceTests
     }
 
     [Fact]
+    public void SavedTilesBeginRestoringVisualsBeforeApplicationEnumerationCompletes()
+    {
+        var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
+        var layoutReady = source.IndexOf("Tile layout ready:", StringComparison.Ordinal);
+        var initialVisuals = source.IndexOf("_ = LoadTileVisualsAsync([]);", StringComparison.Ordinal);
+        var applicationScan = source.IndexOf("var apps = await ScanApplicationsAsync();", StringComparison.Ordinal);
+
+        Assert.True(layoutReady >= 0 && layoutReady < initialVisuals);
+        Assert.True(initialVisuals < applicationScan);
+    }
+
+    [Theory]
+    [InlineData(1, 0, true)]
+    [InlineData(2, 1, true)]
+    [InlineData(1, 2, false)]
+    [InlineData(2, 2, false)]
+    public void OlderTileVisualBatchCannotOverwriteANewerBatch(
+        int generation,
+        int appliedGeneration,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            TileStart.Host.Controllers.ApplicationPaneController.ShouldApplyTileVisualGeneration(
+                generation,
+                appliedGeneration));
+    }
+
+    [Fact]
     public void StartWindowBoostsOnlyWhileInteractive()
     {
         var controller = File.ReadAllText(HostSource("Shell", "StartWindowController.cs"));

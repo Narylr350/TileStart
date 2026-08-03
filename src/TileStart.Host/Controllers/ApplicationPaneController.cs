@@ -43,6 +43,8 @@ internal sealed class ApplicationPaneController : IDisposable
     private bool _recentAppsExpanded;
     private bool _layoutRestored;
     private bool _isDisposed;
+    private int _tileVisualLoadGeneration;
+    private int _tileVisualAppliedGeneration;
 
     private readonly TileLayout _tileLayout;
     private readonly TileLayout? _savedLayout;
@@ -137,6 +139,9 @@ internal sealed class ApplicationPaneController : IDisposable
 
         _prepareMotionElements();
         DiagnosticLog.Write($"Tile layout ready: {_tileLayout.Groups.Sum(group => group.Tiles.Count)} tiles.");
+        // 已保存布局会先于开始菜单应用扫描显示。立即从磁贴自身的路径恢复本地图标，
+        // 否则完整扫描结束前所有磁贴都会退化成名称首字母；扫描后的新批次再补齐 UWP/MSIX 资产。
+        _ = LoadTileVisualsAsync([]);
     }
 
     public async Task LoadAppsAsync()
@@ -927,6 +932,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private async Task LoadTileVisualsAsync(IReadOnlyList<AppEntry> apps)
     {
+        var generation = Interlocked.Increment(ref _tileVisualLoadGeneration);
         try
         {
             var loadedVisuals = await RunStaThreadAsync(
@@ -934,7 +940,18 @@ internal sealed class ApplicationPaneController : IDisposable
                 "TileStart Tile Visual Loader");
             _lifetimeToken.ThrowIfCancellationRequested();
             await _dispatcher.InvokeAsync(
-                () => ApplyTileVisuals(loadedVisuals),
+                () =>
+                {
+                    // 初始本地图标恢复和完整应用扫描并行执行。较旧批次若更晚返回，
+                    // 不得把完整批次已解析出的打包应用 Logo 覆盖回通用 Shell 图标。
+                    if (!ShouldApplyTileVisualGeneration(generation, _tileVisualAppliedGeneration))
+                    {
+                        return;
+                    }
+
+                    _tileVisualAppliedGeneration = generation;
+                    ApplyTileVisuals(loadedVisuals);
+                },
                 System.Windows.Threading.DispatcherPriority.Background,
                 _lifetimeToken);
             DiagnosticLog.Write($"Tile visual loading completed: {loadedVisuals.Count} tiles processed.");
@@ -947,6 +964,9 @@ internal sealed class ApplicationPaneController : IDisposable
             DiagnosticLog.Write($"Tile visual load failed: {exception}");
         }
     }
+
+    internal static bool ShouldApplyTileVisualGeneration(int generation, int appliedGeneration) =>
+        generation > appliedGeneration;
 
     private static IReadOnlyList<LoadedTileVisual> LoadTileVisuals(
         TileLayout layout,
