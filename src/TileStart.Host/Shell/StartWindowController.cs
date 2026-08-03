@@ -750,11 +750,12 @@ public class StartWindowController : IDisposable
         _restoreMaterialAfterLiveResize = true;
         // Acrylic composition is substantially more expensive during native live resize,
         // especially on integrated GPUs and software-rendered sessions. Disable only the
-        // blur effect while the pointer is moving, but retain the wallpaper-derived Start
-        // surface color so the menu does not visibly lose the user's theme. Restore the full
-        // material once the final snapped layout has settled.
+        // blur effect while the pointer is moving. The temporary surface must be resolved from
+        // the current ColorPrevalence state; StartColorMenu can retain an old accent after the
+        // user disables Start accent, so using the cached wallpaper colour would flash it back.
         SetAccentPolicy(0, 0, 0);
-        _mainSurface.Background = new SolidColorBrush(Win10Theme.StartSurfaceColor);
+        var material = Win10Theme.ReadStartMaterial(_themeStyle);
+        _mainSurface.Background = new SolidColorBrush(material.LiveResizeColor);
         DiagnosticLog.Write(
             $"Window live resize begin: width={_window.ActualWidth:F1}, min={_window.MinWidth:F1}, " +
             $"max={_window.MaxWidth:F1}, renderTier={RenderCapability.Tier >> 16}.");

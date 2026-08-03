@@ -59,6 +59,38 @@ public sealed class Win10ThemeTests
         Assert.True(material.UseAcrylic);
         Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.FallbackColor);
         Assert.Equal(unchecked((int)0xBF101010), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.LiveResizeColor);
+    }
+
+    [Fact]
+    public void Win10LiveResizeKeepsAccentDisabledEvenWhenStartColorMenuRetainsOldColor()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0x00574E84),
+            colorPrevalence: 0,
+            accentPalette: null,
+            accentColorMenu: unchecked((int)0x0070649E));
+
+        Assert.True(material.UseAcrylic);
+        Assert.Equal(Color.FromRgb(0x1F, 0x1F, 0x1F), material.LiveResizeColor);
+    }
+
+    [Fact]
+    public void Win10LiveResizeUsesDerivedAccentWhenStartAccentIsEnabled()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0x00574E84),
+            colorPrevalence: 1,
+            accentPalette: null,
+            accentColorMenu: unchecked((int)0x0070649E));
+
+        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.LiveResizeColor);
     }
 
     [Fact]
@@ -210,6 +242,7 @@ public sealed class Win10ThemeTests
 
         Assert.True(material.UseAcrylic);
         Assert.Equal(unchecked((int)0xBF574E84), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x84, 0x4E, 0x57), material.LiveResizeColor);
     }
 
     [Fact]

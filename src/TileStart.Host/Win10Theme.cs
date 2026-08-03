@@ -9,7 +9,8 @@ namespace TileStart.Host;
 internal readonly record struct StartMaterialConfiguration(
     bool UseAcrylic,
     MediaColor FallbackColor,
-    int AcrylicGradientColor);
+    int AcrylicGradientColor,
+    MediaColor LiveResizeColor);
 
 public static class Win10Theme
 {
@@ -121,16 +122,23 @@ public static class Win10Theme
             ? ResolveWin10AccentAcrylicColor(accentColorMenu, startColorMenu, accentPalette)
             : StartFallbackColor;
 
+        var useAcrylic = transparencyEnabled && !highContrast;
+        var fallbackColor = useWin10AccentAcrylic && !highContrast ? win10AccentColor : StartFallbackColor;
+        var liveResizeColor = useAcrylic && themeStyle == AppThemeStyle.Windows11
+            ? ResolveStartSurfaceColor(startColorMenu)
+            : fallbackColor;
+
         return new StartMaterialConfiguration(
-            transparencyEnabled && !highContrast,
-            useWin10AccentAcrylic && !highContrast ? win10AccentColor : StartFallbackColor,
+            useAcrylic,
+            fallbackColor,
             themeStyle == AppThemeStyle.Windows11
                 ? ResolveWindows11GradientColor(startColorMenu)
                 : useWin10AccentAcrylic
                     ? PackAccentPolicyColor(
                         ResolveWin10AccentWcaTintColor(win10AccentColor),
                         Win10AccentAcrylicTintAlpha)
-                    : StartAcrylicGradientColor);
+                    : StartAcrylicGradientColor,
+            liveResizeColor);
     }
 
     internal static MediaColor ResolveWin10AccentWcaTintColor(MediaColor accentDark1) =>
