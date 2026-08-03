@@ -175,6 +175,49 @@ public sealed class Win10ThemeTests
     }
 
     [Fact]
+    public void Win10Dark2ApproximationMatchesCapturedNavigationPalette()
+    {
+        Assert.Equal(
+            Color.FromRgb(0x86, 0x48, 0x55),
+            Win10Theme.DeriveWin10Dark2(Color.FromRgb(0x9E, 0x64, 0x70)));
+    }
+
+    [Fact]
+    public void Win10NavigationOverlayUsesDerivedDark2InsteadOfHostPaletteDark2()
+    {
+        var palette = new byte[32];
+        palette[12] = 0x9E;
+        palette[13] = 0x64;
+        palette[14] = 0x70;
+        palette[20] = 0x63;
+        palette[21] = 0x32;
+        palette[22] = 0x38;
+
+        var overlay = Win10Theme.ResolveWin10NavigationOverlayColor(
+            1,
+            accentColorMenu: null,
+            palette,
+            Color.FromArgb(0x80, 0x2C, 0x2C, 0x2C));
+
+        Assert.Equal(Color.FromArgb(0x80, 0x86, 0x48, 0x55), overlay);
+        Assert.NotEqual(Color.FromArgb(0x80, 0x63, 0x32, 0x38), overlay);
+    }
+
+    [Fact]
+    public void Win10NavigationOverlayKeepsNeutralTintWhenStartAccentIsDisabled()
+    {
+        var neutral = Color.FromArgb(0x80, 0x2C, 0x2C, 0x2C);
+
+        Assert.Equal(
+            neutral,
+            Win10Theme.ResolveWin10NavigationOverlayColor(
+                0,
+                unchecked((int)0x0070649E),
+                accentPalette: null,
+                neutral));
+    }
+
+    [Fact]
     public void Win10StartMaterialKeepsNormalAcrylicWhenStartAccentIsDisabled()
     {
         var material = Win10Theme.ResolveStartMaterial(

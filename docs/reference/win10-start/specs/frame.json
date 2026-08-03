@@ -164,10 +164,13 @@
     },
     "tileStartAccentWcaMapping": {
       "selection": "ColorPrevalence != 0",
-      "gradientColor": "0xB8BBGGRR from AccentPalette Dark1 blended 16 percent toward #1F1F1F, falling back to StartColorMenu",
-      "fallbackColor": "AccentPalette Dark1",
-      "evidence": "compiled-xbf + registry-state-selection + independent-wca-mapping",
-      "notes": "StartUI's AccentAcrylic brush and its Dark1/0.8 values are exact XBF evidence. ColorPrevalence is the Windows user setting that selects Start accent colouring. WCA alpha 0xB8 and the 16 percent neutral blend are empirical same-wallpaper screenshot calibrations compensating for WCA's missing UWP Acrylic luminosity; neither is an original StartUI value. The exact Dark1 fallback colour remains unchanged. The navigation pane's separate Dark2/0.5 layer is not yet represented independently by TileStart."
+      "gradientColor": "0xB8BBGGRR from a Win10-compatible Dark1 derived from AccentColorMenu or AccentPalette index 3, blended 7 percent toward #1F1F1F",
+      "fallbackColor": "Win10-compatible Dark1 derived as round(accent channel * 0.90)",
+      "navigationTintColor": "Win10-compatible Dark2 derived from AccentColorMenu or AccentPalette index 3",
+      "navigationTintOpacity": 0.5,
+      "navigationContentIsolation": "All Apps content is hidden while the expanded navigation backdrop is visible because a WPF alpha overlay cannot reproduce the original independent Acrylic blur of underlying controls.",
+      "evidence": "compiled-xbf + Win10 19045 registry palette capture + cross-screenshot ROI calibration + independent-wca-mapping",
+      "notes": "StartUI's AccentAcrylic Dark1/0.8 and navigation Dark2/0.5 values are exact XBF evidence. ColorPrevalence selects Start accent colouring. The Win10-compatible Dark1 and Dark2 derivations avoid consuming the host Win11 Palette[4]/Palette[5], which are materially darker for the same AccentColorMenu. WCA alpha 0xB8, the 7 percent neutral blend, and the one-pair Dark1/Dark2 derivations are visible-result compatibility mappings rather than reconstructed Windows palette internals."
     }
   }
 }

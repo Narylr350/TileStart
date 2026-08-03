@@ -138,6 +138,23 @@ public sealed class PerformanceGuardTests
         Assert.Contains("ApplyWindowMaterial();", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ExpandedNavigationCoversTheUnderlyingApplicationPane()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Controllers",
+            "NavigationController.cs");
+        var source = File.ReadAllText(path);
+
+        Assert.Contains("SetAllAppsCoveredByNavigation(true);", source, StringComparison.Ordinal);
+        Assert.Contains("_semanticZoomViewport.Opacity = opacity;", source, StringComparison.Ordinal);
+        Assert.Contains("_semanticZoomViewport.IsHitTestVisible = !covered;", source, StringComparison.Ordinal);
+        Assert.Contains("SetAllAppsCoveredByNavigation(false);", source, StringComparison.Ordinal);
+    }
+
     private static string ReadShowFromShellMethod()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "TestData", "Performance", "StartWindowController.cs");

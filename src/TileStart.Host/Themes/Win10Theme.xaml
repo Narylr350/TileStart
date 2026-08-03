@@ -41,8 +41,9 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#19FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#33FFFFFF" />
-    <!-- StartUI NavigationPaneAcrylicBackgroundBrush tint; composited over the main acrylic. -->
-    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#802C2C2C" />
+    <!-- StartUI AccentAcrylic uses SystemAccentColorDark2 at 0.5; neutral mode falls back to #802C2C2C. -->
+    <SolidColorBrush x:Key="TileStartNavigationOverlayBrush"
+                     Color="{x:Static local:Win10Theme.NavigationOverlayColor}" />
     <!-- 两组原生截图的底板/磁贴配对均等价于约 9.9% 白色覆盖；
          让主 Start Acrylic 的模糊、色相和噪声自然从下层透出，不再按强调色计算固定填充。 -->
     <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"

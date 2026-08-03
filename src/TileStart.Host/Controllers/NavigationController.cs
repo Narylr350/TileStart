@@ -206,6 +206,11 @@ internal sealed class NavigationController : IDisposable
 
         _navigationExpanded = expanded;
         SetNavigationToolTipsEnabled(!expanded);
+        if (expanded)
+        {
+            SetAllAppsCoveredByNavigation(true);
+        }
+
         var targetWidth = expanded
             ? Win10VisualMetrics.ExpandedNavigationWidth
             : Win10VisualMetrics.CollapsedNavigationWidth;
@@ -260,6 +265,11 @@ internal sealed class NavigationController : IDisposable
         {
             _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
             _navigationBackdrop.Opacity = targetOpacity;
+            if (!expanded)
+            {
+                SetAllAppsCoveredByNavigation(false);
+            }
+
             return;
         }
 
@@ -284,8 +294,21 @@ internal sealed class NavigationController : IDisposable
 
             _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
             _navigationBackdrop.Opacity = targetOpacity;
+            if (!expanded)
+            {
+                SetAllAppsCoveredByNavigation(false);
+            }
         };
         _navigationBackdrop.BeginAnimation(UIElement.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void SetAllAppsCoveredByNavigation(bool covered)
+    {
+        var opacity = covered ? 0d : 1d;
+        _searchPanel.Opacity = opacity;
+        _semanticZoomViewport.Opacity = opacity;
+        _searchPanel.IsHitTestVisible = !covered;
+        _semanticZoomViewport.IsHitTestVisible = !covered;
     }
 
     private void SetNavigationToolTipsEnabled(bool enabled)

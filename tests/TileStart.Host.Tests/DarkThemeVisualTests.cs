@@ -35,7 +35,7 @@ public sealed class DarkThemeVisualTests
     [InlineData("Win10Theme.xaml", "TileStartTextDisabledBrush", "#33FFFFFF")]
     [InlineData("Win10Theme.xaml", "TileStartControlHoverBrush", "#19FFFFFF")]
     [InlineData("Win10Theme.xaml", "TileStartControlPressedBrush", "#33FFFFFF")]
-    [InlineData("Win10Theme.xaml", "TileStartNavigationOverlayBrush", "#802C2C2C")]
+    [InlineData("Win10Theme.xaml", "TileStartNavigationOverlayBrush", "{x:Static local:Win10Theme.NavigationOverlayColor}")]
     [InlineData("Win10LightTheme.xaml", "TileStartTextPrimaryBrush", "#FF000000")]
     [InlineData("Win10LightTheme.xaml", "TileStartTextSecondaryBrush", "#CC000000")]
     [InlineData("Win10LightTheme.xaml", "TileStartTextTertiaryBrush", "#99000000")]
@@ -272,6 +272,21 @@ public sealed class DarkThemeVisualTests
             (string?)shadow.Attribute("NineGrid"));
         Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowMargin}",
             (string?)shadow.Attribute("Margin"));
+    }
+
+    [Fact]
+    public void NavigationRailDoesNotLeaveTheWpfPointerFocusRectangle()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == "RailButtonStyle");
+        var focusSetter = style.Elements(presentation + "Setter")
+            .Single(element => (string?)element.Attribute("Property") == "FocusVisualStyle");
+
+        Assert.Equal("{x:Null}", (string?)focusSetter.Attribute("Value"));
     }
 
     [Fact]

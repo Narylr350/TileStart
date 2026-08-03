@@ -24,6 +24,11 @@ public static class Win10Theme
     // WCA 缺少 UWP Acrylic 的 luminosity 合成。修正 Dark1 来源后，同壁纸 ROI 表明 16% 会明显压暗；
     // 7% 是当前跨原生/复刻截图的兼容拟合值，不是 StartUI 内部公开参数。
     private const double Win10AccentAcrylicNeutralBlend = 0.07;
+    // Win10 19045 同一强调色样本中，Dark2 相当于先降低约 15% value，再把 HSV saturation
+    // 放大约 1.26 倍；该兼容派生用于 NavigationPane 的独立 0.5 tint，不能读取宿主 Win11 Palette[5]。
+    private const double Win10Dark2DarkenAmount = 0.15;
+    private const double Win10Dark2SaturationScale = 1.26;
+    private const byte Win10NavigationOverlayAlpha = 0x80;
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
@@ -54,6 +59,8 @@ public static class Win10Theme
     /// Windows 11 theme for surfaces that sit over the acrylic and must share its hue.
     /// </summary>
     public static MediaColor StartSurfaceColor { get; } = ReadStartSurfaceColor();
+
+    public static MediaColor NavigationOverlayColor { get; } = ReadNavigationOverlayColor();
 
     /// <summary>
     /// Windows 11 navigation overlay: the wallpaper-derived Start colour at the same opacity
@@ -177,6 +184,40 @@ public static class Win10Theme
     internal static MediaColor DeriveWin10Dark1(MediaColor accentColor) =>
         Blend(accentColor, Colors.Black, 0.10);
 
+    internal static MediaColor DeriveWin10Dark2(MediaColor accentColor) =>
+        ScaleSaturation(
+            Blend(accentColor, Colors.Black, Win10Dark2DarkenAmount),
+            Win10Dark2SaturationScale);
+
+    internal static MediaColor ResolveWin10NavigationOverlayColor(
+        object? colorPrevalence,
+        object? accentColorMenu,
+        byte[]? accentPalette,
+        MediaColor neutralOverlay)
+    {
+        if (colorPrevalence is not int prevalence || prevalence == 0)
+        {
+            return neutralOverlay;
+        }
+
+        MediaColor accent;
+        if (!TryReadAccentColorMenu(accentColorMenu, out accent))
+        {
+            if (accentPalette is not { Length: >= AccentPaletteOffset + 3 })
+            {
+                return neutralOverlay;
+            }
+
+            accent = MediaColor.FromRgb(
+                accentPalette[AccentPaletteOffset],
+                accentPalette[AccentPaletteOffset + 1],
+                accentPalette[AccentPaletteOffset + 2]);
+        }
+
+        var dark2 = DeriveWin10Dark2(accent);
+        return MediaColor.FromArgb(Win10NavigationOverlayAlpha, dark2.R, dark2.G, dark2.B);
+    }
+
     /// <summary>
     /// Windows 11 tints the Start surface with the wallpaper-derived colour DWM publishes as
     /// StartColorMenu, so the menu picks up the desktop hue instead of a fixed grey. Falls back
@@ -248,6 +289,30 @@ public static class Win10Theme
         return ResolveStartSurfaceColor(startColorMenu);
     }
 
+    private static MediaColor ReadNavigationOverlayColor()
+    {
+        object? colorPrevalence = null;
+        object? accentColorMenu = null;
+        byte[]? accentPalette = null;
+        try
+        {
+            using var personalize = Registry.CurrentUser.OpenSubKey(PersonalizeRegistryPath);
+            colorPrevalence = personalize?.GetValue("ColorPrevalence");
+            using var accent = Registry.CurrentUser.OpenSubKey(AccentRegistryPath);
+            accentColorMenu = accent?.GetValue("AccentColorMenu");
+            accentPalette = accent?.GetValue("AccentPalette") as byte[];
+        }
+        catch (Exception)
+        {
+        }
+
+        return ResolveWin10NavigationOverlayColor(
+            colorPrevalence,
+            accentColorMenu,
+            accentPalette,
+            MediaColor.FromArgb(Win10NavigationOverlayAlpha, 0x2C, 0x2C, 0x2C));
+    }
+
     internal static MediaColor ResolveStartSurfaceColor(object? startColorMenu)
     {
         // StartColorMenu is packed as 0x00BBGGRR.
@@ -315,6 +380,21 @@ public static class Win10Theme
             (byte)Math.Round(source.R + ((target.R - source.R) * amount)),
             (byte)Math.Round(source.G + ((target.G - source.G) * amount)),
             (byte)Math.Round(source.B + ((target.B - source.B) * amount)));
+    }
+
+    internal static MediaColor ScaleSaturation(MediaColor color, double factor)
+    {
+        factor = Math.Max(0, factor);
+        var maximum = Math.Max(color.R, Math.Max(color.G, color.B));
+
+        static byte ScaleChannel(byte channel, byte maximum, double factor) =>
+            (byte)Math.Clamp(Math.Round(maximum - ((maximum - channel) * factor)), 0, 255);
+
+        return MediaColor.FromArgb(
+            color.A,
+            ScaleChannel(color.R, maximum, factor),
+            ScaleChannel(color.G, maximum, factor),
+            ScaleChannel(color.B, maximum, factor));
     }
 
     internal static bool UseDarkForeground(MediaColor background)
