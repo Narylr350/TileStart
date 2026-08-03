@@ -110,9 +110,11 @@ public static class Win10VisualMetrics
 
     public static Thickness AllAppsMargin { get; } = new(12, 0, 0, 0);
 
-    // StartUI 将这组留白应用到滚动内容本身；TileStart 也必须挂在 ItemsPanel 上，
-    // 让底部 54 DIP 随内容滚动，而不是缩短 ListBox 的可视区域。
+    // 原版 XBF 的嵌套列表留白证据，保留用于规格校验；当前扁平 WPF 虚拟化列表不能直接使用底部 54 DIP，
+    // 否则最后一行会被视口截断，且分组模板会重复应用。运行时只使用顶部 7 DIP。
     public static Thickness AllAppsListPadding { get; } = new(0, 7, 0, 54);
+
+    public static Thickness AllAppsViewportMargin { get; } = new(0, 7, 0, 0);
 
     public static Thickness AllAppsItemMargin { get; } = new(AllAppsHorizontalInset, 0, AllAppsHorizontalInset, 0);
 
@@ -130,6 +132,8 @@ public static class Win10VisualMetrics
         new(TileNestedPanelHorizontalMargin, 0, TileNestedPanelHorizontalMargin, 0);
 
     public static Thickness AllAppsGroupHeaderPadding { get; } = new(4, 0, 0, 10);
+
+    public static Thickness AllAppsLetterHeaderContentMargin { get; } = new(0, 0, 0, 10);
 
     public static Thickness TileGroupHeaderBorderThickness { get; } = new(TileGroupHeaderStrokeThickness);
 

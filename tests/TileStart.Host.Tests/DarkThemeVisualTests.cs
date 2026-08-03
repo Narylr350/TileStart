@@ -177,7 +177,7 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void ApplicationListAppliesCompiledPaddingInsideScrollableContent()
+    public void ApplicationListUsesTheValidatedViewportMarginWithoutCompiledBottomPadding()
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -185,16 +185,15 @@ public sealed class DarkThemeVisualTests
 
         var appsList = document.Descendants(presentation + "ListBox")
             .Single(element => (string?)element.Attribute(x + "Name") == "AppsList");
-        var itemsPanel = appsList.Descendants(presentation + "VirtualizingStackPanel")
-            .Single(element =>
-                (string?)element.Attribute("Margin") ==
-                "{x:Static local:Win10VisualMetrics.AllAppsListPadding}");
 
-        Assert.Null(appsList.Attribute("Margin"));
-        Assert.Null(appsList.Attribute("Padding"));
         Assert.Equal(
-            "{x:Static local:Win10VisualMetrics.AllAppsListPadding}",
-            (string?)itemsPanel.Attribute("Margin"));
+            "{x:Static local:Win10VisualMetrics.AllAppsViewportMargin}",
+            (string?)appsList.Attribute("Margin"));
+        Assert.Null(appsList.Attribute("Padding"));
+        Assert.DoesNotContain(
+            appsList.Descendants(presentation + "VirtualizingStackPanel"),
+            panel => panel.Attribute("Margin") is not null);
+        Assert.Equal(0, Win10VisualMetrics.AllAppsViewportMargin.Bottom);
         Assert.Equal(54, Win10VisualMetrics.AllAppsListPadding.Bottom);
     }
 
@@ -426,6 +425,21 @@ public sealed class DarkThemeVisualTests
         Assert.Contains(letterStyle.Elements(presentation + "Setter"), setter =>
             (string?)setter.Attribute("Property") == "IsTabStop"
             && (string?)setter.Attribute("Value") == "False");
+        var letterIconColumn = letterStyle.Descendants(presentation + "Grid")
+            .Single(element =>
+                (string?)element.Attribute("Width") ==
+                "{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}");
+        Assert.Equal("Left", (string?)letterIconColumn.Attribute("HorizontalAlignment"));
+        var letterContent = letterIconColumn.Element(presentation + "ContentPresenter")!;
+        Assert.Equal("Center", (string?)letterContent.Attribute("HorizontalAlignment"));
+        Assert.Equal(
+            "{x:Static local:Win10VisualMetrics.AllAppsLetterHeaderContentMargin}",
+            (string?)letterContent.Attribute("Margin"));
+
+        var groupItemsPresenter = document.Descendants(presentation + "GroupStyle.ContainerStyle")
+            .Descendants(presentation + "ItemsPresenter")
+            .Single();
+        Assert.Null(groupItemsPresenter.Attribute("Margin"));
 
         var recentHeader = document.Descendants(presentation + "TextBlock")
             .Single(element => (string?)element.Attribute(x + "Name") == "RecentApplicationsHeader");

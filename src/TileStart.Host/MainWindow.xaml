@@ -311,9 +311,13 @@
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
                                                       PressedFillOpacity="0.20"
                                                       RevealRadius="84">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            <!-- 字母标题保持整行交互框，字形单独对齐下方应用图标列。 -->
+                            <Grid Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
+                                  HorizontalAlignment="Left">
+                                <ContentPresenter Margin="{x:Static local:Win10VisualMetrics.AllAppsLetterHeaderContentMargin}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </Grid>
                         </local:Win10InteractionBorder>
                     </ControlTemplate>
                 </Setter.Value>
@@ -933,6 +937,7 @@
                                      BorderThickness="0"
                                      Foreground="{DynamicResource TileStartTextPrimaryBrush}"
                                      ItemsSource="{Binding AppsView}"
+                                     Margin="{x:Static local:Win10VisualMetrics.AllAppsViewportMargin}"
                                      ScrollViewer.CanContentScroll="True"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                      ScrollViewer.PanningMode="VerticalOnly"
@@ -994,10 +999,7 @@
                                 </ListBox.Resources>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <!-- StartUI 把 7 DIP 顶部和 54 DIP 底部留白放在滚动内容内部；
-                                             不能放到 ListBox 外层，否则会缩短可视区域。 -->
-                                        <VirtualizingStackPanel
-                                            Margin="{x:Static local:Win10VisualMetrics.AllAppsListPadding}" />
+                                        <VirtualizingStackPanel />
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                                 <ListBox.ItemContainerStyle>
@@ -1018,6 +1020,26 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.GroupStyle>
                                     <GroupStyle>
+                                        <GroupStyle.ContainerStyle>
+                                            <Style TargetType="GroupItem">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="GroupItem">
+                                                            <StackPanel>
+                                                                <ContentPresenter x:Name="PART_Header"
+                                                                                  Content="{TemplateBinding Content}"
+                                                                                  ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}" />
+                                                                <!-- WPF 默认 GroupItem 会把组内容额外右移 5 DIP，
+                                                                     导致应用行高亮框比字母标题框更窄。 -->
+                                                                <ItemsPresenter />
+                                                            </StackPanel>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </GroupStyle.ContainerStyle>
                                         <GroupStyle.Panel>
                                             <ItemsPanelTemplate>
                                                 <VirtualizingStackPanel />
