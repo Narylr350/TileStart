@@ -7,8 +7,15 @@ public sealed class Win10GroupWrapPanelTests
     [Fact]
     public void TwelveWorkspaceUnitsFitAtCurrentSavedTilePaneWidth()
     {
-        Assert.Equal(12, Win10GroupWrapPanel.ColumnsForWidth(1275.33));
-        Assert.Equal(1273.33, Win10GroupWrapPanel.RequiredWidth(12), precision: 2);
+        Assert.Equal(12, Win10GroupWrapPanel.ColumnsForWidth(1276));
+        Assert.Equal(1276, Win10GroupWrapPanel.RequiredWidth(12));
+    }
+
+    [Fact]
+    public void LegacyGroupWidthAndNativeCrossGroupFaceGapAreBothPreserved()
+    {
+        Assert.Equal(420, TileWorkspaceMetrics.GroupVisualWidth(4));
+        Assert.Equal(16, TileWorkspaceMetrics.Left(4) - Win10TileMetrics.GroupWidth);
     }
 
     [Fact]
@@ -22,7 +29,7 @@ public sealed class Win10GroupWrapPanelTests
     public void OverlayClearanceUsesTheMeasuredRuntimeWidths()
     {
         Assert.Equal(
-            6,
+            8.67,
             Win10GroupWrapPanel.OverlayClearanceDeficit(
                 viewportWidth: 1275.33,
                 columns: 12,

@@ -1,21 +1,33 @@
 {
   "schemaVersion": 1,
   "kind": "tile-face-material-compatibility",
-  "status": "host-validated-candidate",
+  "status": "screenshot-validated-compatibility",
   "nativeEvidence": {
-    "background": "SystemAccentColor",
-    "transparencyEnabledOpacity": 0.8,
-    "transparencyDisabledOpacity": 1.0,
-    "tileFaceNoise": "not present in the exported StartUI XAML",
+    "confirmedBindingChain": "TileGrid item template Rectangle.Background <- ITileViewModel.BackgroundBrush -> Shape.Fill",
+    "evidence": "compiled-xbf-and-static-binary-analysis",
     "source": [
-      "TileStyles.xaml",
-      "TileGridItemDataTemplates.xaml"
+      "TileGridView.xaml",
+      "TileGridItemDataTemplates.xaml",
+      "StartUI static exports for ITileViewModel.BackgroundBrush"
+    ],
+    "notConfirmed": [
+      "a literal SystemAccentColor times 0.8 brush for an ordinary idle tile",
+      "a literal white brush with the TileStart compatibility alpha",
+      "an independent per-tile noise layer"
     ]
   },
-  "tileStartCandidate": {
-    "noiseAsset": "Assets/AcrylicNoise.png",
-    "opacity": 0.03,
-    "placement": "inside tile content after background images and before icon/title content",
+  "sameScaleScreenshotModel": {
+    "model": "source-over white on the already composited Start Acrylic surface",
+    "whiteOpacity": 0.09896,
+    "pairedScreenshotRgbRmse": 1.248,
+    "evidence": "92 native background/tile ROI pairs across blue and pink Start colours",
+    "visibleResult": "the tile preserves roughly 90 percent of the parent Acrylic colour variation, blur and continuous texture"
+  },
+  "tileStartImplementation": {
+    "brush": "solid white",
+    "opacity": 0.09896,
+    "placement": "default tile surface above the shared MainSurface Acrylic and below tile content",
+    "independentTileNoise": false,
     "conditions": {
       "hasCustomBackgroundColor": false,
       "backgroundImagePath": "",
@@ -23,8 +35,6 @@
       "isTileFolder": false
     },
     "unchanged": [
-      "SystemAccentColor",
-      "default tile opacity 0.8",
       "custom solid colours",
       "custom background images",
       "GIF backgrounds",
@@ -33,16 +43,9 @@
       "pressed and dragging states"
     ]
   },
-  "hostMeasurement": {
-    "reference": "captures/reference/same-settings-2026-08-02/win10-native.png",
-    "candidate": "captures/automated/2026-08-02-wca-tileface03-pmv2.png",
-    "referenceTileRgbStd": [1.0440467600413201, 1.236054722789229, 1.0440467600413201],
-    "candidateTileRgbStd": [1.255778203107259, 1.2631180756761942, 1.2458070107463362],
-    "candidateTileMedianDeltaE00": 4.69983672669526,
-    "candidateMaterialLoss": 5.690779112853509
-  },
   "notes": [
-    "The exported StartUI XAML does not prove an independent tile-face noise layer.",
-    "This is an evidence-bounded WPF/WCA compatibility candidate retained for user visual review."
+    "The 9.896 percent white overlay is a cross-colour, screenshot-verified WPF compatibility model.",
+    "It describes the visible composition at the current reference scale and does not claim that StartUI stores the same literal brush or alpha internally.",
+    "SystemAccentColor and 0.8 values found in StartUI resources also serve Acrylic and interaction states, so they must not be promoted to the ordinary idle tile surface without runtime brush evidence."
   ]
 }

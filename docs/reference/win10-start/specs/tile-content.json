@@ -1,23 +1,29 @@
 {
   "schemaVersion": 1,
   "kind": "tile-content",
-  "status": "verified-layout-and-selected-interaction",
+  "status": "verified-layout-selected-interaction-and-visible-default-surface",
   "target": {
     "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488",
     "xbfToolsCommit": "dbeadcd75f30fb8dea3109039e0082854cb9a89d"
   },
   "metrics": {
     "defaultTileBackground": {
-      "color": "SystemAccentColor",
-      "transparencyEnabledOpacity": 0.8,
-      "transparencyDisabledOpacity": 1.0,
-      "evidence": "compiled-xbf",
-      "anchor": "DefaultItem_BackgroundBrush + Opacity_DefaultItem_TransparencyEnabled_Background + Opacity_DefaultItem_TransparencyDisabled_Background",
+      "nativeBindingChain": "TileGrid item template Rectangle.Background <- ITileViewModel.BackgroundBrush -> Shape.Fill",
+      "staticEvidence": "compiled-xbf-and-static-binary-analysis",
+      "staticEvidenceBoundary": "The binding chain is confirmed, but the ordinary idle tile brush's runtime colour and opacity are not exposed as a literal by the static resources.",
+      "tileStartCompatibilityModel": {
+        "composition": "source-over white on the already composited Start Acrylic surface",
+        "whiteOpacity": 0.09896,
+        "independentTileNoise": false,
+        "evidence": "same-scale screenshots",
+        "sample": "92 native background/tile ROI pairs across blue and pink Start colours",
+        "rgbRmse": 1.248
+      },
       "source": {
-        "file": "TileStyles.xaml",
-        "xbfResource": "TileStyles.xbf",
-        "xbfSha256": "27EAA1206414863D1691B374106DC0D102C227C28A110EEB5068FEF24A8546F4",
-        "xamlSha256": "604015D8D09A87865A808596630B697C72E8E3616EA175386DB2E36E5D41084B",
+        "files": [
+          "TileGridView.xaml",
+          "TileGridItemDataTemplates.xaml"
+        ],
         "priSha256": "FAE49AD9998F75C3A1246D2E7309146E96A4DDA94F01CAD7459CD98FFEAAD488"
       }
     },
@@ -194,6 +200,9 @@
     }
   },
   "notes": [
-    "This spec confirms compiled layout resources only. Tile logo selection and rendering remain unresolved."
+    "This spec confirms compiled layout resources and selected interaction constants.",
+    "For the ordinary idle tile surface, static analysis confirms only the ITileViewModel.BackgroundBrush binding chain; the 9.896 percent white overlay is a screenshot-verified TileStart compatibility model, not a claimed StartUI literal.",
+    "Packaged tile logos use the manifest size-specific assets. The MSEdge shell alias is additionally resolved through the installed Edge Appx manifest because AppsFolder exposes no PFN or package path for that alias.",
+    "Do not globally enlarge application icons: same-scale measurements show the corrected Edge full-tile asset within about one strong-edge pixel of the native visible glyph, while Store and ordinary desktop icons already use different asset paths."
   ]
 }

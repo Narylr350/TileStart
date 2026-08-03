@@ -16,14 +16,13 @@ public static class Win10Theme
     private const string AccentRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent";
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
-    private const int AccentDark1PaletteOffset = 4 * 4;
     private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
     // 原版 UWP TintOpacity=0.8 不能直接等同于 WCA GradientColor alpha；0xCC 会把
     // 壁纸压成均匀的高饱和蓝板。0xB8 是同壁纸对照 Win10 原生截图后的兼容校准值。
     private const uint Win10AccentAcrylicTintAlpha = 0xB8;
-    // WCA 缺少 UWP Acrylic 的 luminosity 合成，直接使用 Dark1 会偏亮、偏纯蓝。
-    // 仅在 WCA tint 中向原版普通 Acrylic 回退色混入 16%，不改变精确的 Dark1 回退色。
-    private const double Win10AccentAcrylicNeutralBlend = 0.16;
+    // WCA 缺少 UWP Acrylic 的 luminosity 合成。修正 Dark1 来源后，同壁纸 ROI 表明 16% 会明显压暗；
+    // 7% 是当前跨原生/复刻截图的兼容拟合值，不是 StartUI 内部公开参数。
+    private const double Win10AccentAcrylicNeutralBlend = 0.07;
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
@@ -111,14 +110,15 @@ public static class Win10Theme
         AppThemeStyle themeStyle,
         object? startColorMenu,
         object? colorPrevalence,
-        byte[]? accentPalette)
+        byte[]? accentPalette,
+        object? accentColorMenu = null)
     {
         var transparencyEnabled = enableTransparency is int value && value != 0;
         var useWin10AccentAcrylic = themeStyle == AppThemeStyle.Windows10
                                     && colorPrevalence is int prevalence
                                     && prevalence != 0;
         var win10AccentColor = useWin10AccentAcrylic
-            ? ResolveWin10AccentAcrylicColor(startColorMenu, accentPalette)
+            ? ResolveWin10AccentAcrylicColor(accentColorMenu, startColorMenu, accentPalette)
             : StartFallbackColor;
 
         return new StartMaterialConfiguration(
@@ -137,24 +137,37 @@ public static class Win10Theme
         Blend(accentDark1, StartFallbackColor, Win10AccentAcrylicNeutralBlend);
 
     /// <summary>
-    /// StartUI 的 AccentAcrylic 状态固定使用 SystemAccentColorDark1 和 0.8 TintOpacity。
-    /// AccentPalette 是权威来源；缺失时回退到 StartColorMenu，因为 Windows 启用开始菜单强调色后
-    /// 通常会在那里发布相同的 Dark1 色阶。
+    /// StartUI 的 AccentAcrylic 状态使用 SystemAccentColorDark1。宿主 Win11 的 Palette[4] 与 Win10
+    /// Dark1 不同，不能直接复用；当前由 AccentColorMenu/Palette[3] 按实测 90% 通道比例派生。
+    /// 该比例来自同一强调色的 Win10/Win11 注册表证据，后续取得更多色样后再替换为更完整的算法。
     /// </summary>
-    internal static MediaColor ResolveWin10AccentAcrylicColor(object? startColorMenu, byte[]? accentPalette)
+    internal static MediaColor ResolveWin10AccentAcrylicColor(
+        object? accentColorMenu,
+        object? startColorMenu,
+        byte[]? accentPalette)
     {
-        if (accentPalette is { Length: >= AccentDark1PaletteOffset + 3 })
+        if (TryReadAccentColorMenu(accentColorMenu, out var accent))
         {
-            return MediaColor.FromRgb(
-                accentPalette[AccentDark1PaletteOffset],
-                accentPalette[AccentDark1PaletteOffset + 1],
-                accentPalette[AccentDark1PaletteOffset + 2]);
+            return DeriveWin10Dark1(accent);
         }
 
+        if (accentPalette is { Length: >= AccentPaletteOffset + 3 })
+        {
+            return DeriveWin10Dark1(MediaColor.FromRgb(
+                accentPalette[AccentPaletteOffset],
+                accentPalette[AccentPaletteOffset + 1],
+                accentPalette[AccentPaletteOffset + 2]));
+        }
+
+        // 旧系统或损坏配置可能只留下 StartColorMenu。此值已经是 Start 使用色，无法确认其基础强调色时
+        // 不再二次压暗，避免把真实 Win10 Dark1 再乘一次 0.9。
         return TryReadPackedColor(startColorMenu, out var packed)
             ? MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16))
             : StartFallbackColor;
     }
+
+    internal static MediaColor DeriveWin10Dark1(MediaColor accentColor) =>
+        Blend(accentColor, Colors.Black, 0.10);
 
     /// <summary>
     /// Windows 11 tints the Start surface with the wallpaper-derived colour DWM publishes as
@@ -189,11 +202,13 @@ public static class Win10Theme
         }
 
         object? startColorMenu = null;
+        object? accentColorMenu = null;
         byte[]? accentPalette = null;
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(AccentRegistryPath);
             startColorMenu = key?.GetValue("StartColorMenu");
+            accentColorMenu = key?.GetValue("AccentColorMenu");
             accentPalette = key?.GetValue("AccentPalette") as byte[];
         }
         catch (Exception)
@@ -206,7 +221,8 @@ public static class Win10Theme
             themeStyle,
             startColorMenu,
             colorPrevalence,
-            accentPalette);
+            accentPalette,
+            accentColorMenu);
     }
 
     private static MediaColor ReadStartSurfaceColor()

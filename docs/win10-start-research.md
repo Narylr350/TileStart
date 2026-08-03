@@ -195,23 +195,23 @@ Microsoft Learn 对 Windows 10 Start layout 的说明确认：
 
 ## 9. TileStart 当前主要偏差
 
-当前生产状态统一维护在 `ui-implementation-status.md`。截至 2026-07-30，早期列出的分组换行、实时让位、组名编辑、创建组、跨组移动、字母索引、应用文件夹和 Win10 风格上下文菜单均已接入生产实现，不再属于结构性缺失。
+当前生产状态统一维护在 `ui-implementation-status.md`。截至 2026-08-03，分组换行、实时让位、组名编辑、创建组、跨组移动、字母索引、应用/磁贴文件夹、Win10 风格上下文菜单以及主要 Press / Reveal / Motion 路径均已接入；原版与 TileStart 的同物理尺度截图也已取得并用于多轮校准，不再属于“尚无同尺度证据”的阶段。
 
-仍需继续解决的主要差距是：
+当前剩余差距应按证据层区分：
 
-### P0：Win10 UI / UX 边界
+### P0：Win10 宏观视觉收尾
 
-1. 尚未完成原版与 TileStart 的同物理尺度整窗截图验收，不能仅凭常量和局部结构宣称外观已经精确复原。
-2. 当前直接输入仍显示 TileStart 自己的搜索框并原地过滤应用，没有按产品目标转交 Windows Search。
-3. All Apps 的字母 type-to-jump、完整方向键导航、Tab 顺序和跨区域焦点尚未补齐。
-4. 主窗口、导航轨、应用列表、磁贴内容、组间距和滚动条仍需逐项做像素级校准。
+1. 主页面仍使用 Win32 WCA AccentPolicy 兼容 Acrylic，而原版使用 UWP AcrylicBrush / HostBackdrop；luminosity、模糊采样、tint 和透明关闭/高对比度状态仍需在 Win10 环境定向核验，不能宣称材质逐像素等价。
+2. 普通默认磁贴已由蓝色、粉色两组同尺度截图的 92 对底板/磁贴 ROI 验证为兼容模型：在已合成的主 Start Acrylic 上覆盖约 `9.896%` 白色，RGB RMSE 为 `1.248`。该结论描述可见合成结果，不代表 StartUI 内部存有相同字面量。
+3. 静态逆向对普通磁贴只确认 `ITileViewModel.BackgroundBrush` 绑定到模板背景并进入 `Shape.Fill`；不能再把其他 Acrylic、Pressed、Selected、安装或拖动态资源中的 `SystemAccentColor × 0.8` 解释为普通静止磁贴画刷，也没有证据支持独立逐磁贴噪声层。
+4. 打包应用图标仍存在按应用而异的资产选择/透明留白差异；不能用全局放大修正。跨组磁贴面间距的当前同尺度测量约为 TileStart 22 px、原版 24 px，调整前必须验证不改变旧布局的组数、组宽和换列兼容模型。
 
 ### P1：主题、输入与系统设置
 
 1. Win11 主题已提供字体、材质、颜色、描边和圆角，但主窗口中的本地模板仍需逐项确认 Fluent token 覆盖。
-2. Accent、高对比度和壁纸派生颜色的运行时刷新不完整。
-3. 鼠标拖动已实现；触摸、笔、长按、Narrator、文本缩放和完整高对比度主题尚未实现。
-4. 菜单关闭和应用启动只有基础退出行为，没有与当前开启动画配套的内容级过渡。
+2. 深色/浅色、透明开启/关闭、高对比度、多强调色、壁纸派生颜色和不同 DPI 的组合状态尚未形成完整回归矩阵。
+3. 当前直接输入仍显示 TileStart 自己的搜索框并原地过滤应用，没有按产品目标转交 Windows Search；All Apps 的字母 type-to-jump、完整方向键导航、Tab 顺序和跨区域焦点也未补齐。
+4. 鼠标拖动已实现；触摸、笔、长按、Narrator、文本缩放和完整高对比度主题尚未实现。
 
 ### P2：自定义磁贴内容
 
@@ -573,9 +573,9 @@ Win10 拖动转场：未实现
 高度还原：不成立
 ```
 
-截至 2026-07-30，布局换行、开启动画、字母索引、应用/磁贴文件夹、拖动、120 ms reflow、让位重排、右键菜单和 Press / Reveal 均已实现。仍不能宣称整体外观精确完成，原因是缺少同尺度整窗视觉验收、完整键盘/搜索边界以及部分主题和系统设置响应。当前矩阵见 `ui-implementation-status.md`。
+截至 2026-08-03，布局换行、开启动画、字母索引、应用/磁贴文件夹、拖动、120 ms reflow、让位重排、右键菜单和 Press / Reveal 均已实现，并已使用后来采集的同物理尺度截图完成多轮应用列表、磁贴几何、导航阴影和默认磁贴材质校准。当前不能宣称整体外观精确完成的主要原因，已从“没有同尺度截图”收敛为主 Acrylic 合成和系统状态矩阵仍未闭环；完整键盘与搜索转交则属于尚未补齐的 UX 边界。当前矩阵见 `ui-implementation-status.md`。
 
-此前保存的 TileStart 截图不能作为视觉一致或 Motion 完成的验收结论。2026-07-16 核验发现该文件实际为 1707×1067，而原版总览为 2560×1600，文件名中的分辨率声明不成立。后续必须重新采集同物理尺度证据；在视觉细节和剩余 Motion 通过原版对照前，不再把构建称为 Win10 高度还原版本。
+2026-07-16 发现的旧 TileStart 截图仍不能作为验收证据：该文件实际为 1707×1067，而原版总览为 2560×1600，文件名中的分辨率声明不成立。此限制只适用于那份旧截图；后续已经取得并使用同物理尺度原版/TileStart 对照材料，不能再据此写成“尚未取得同尺度截图”。
 
 ## 18. 2026-07-16 静态视觉与 All Apps 结构复核
 
@@ -636,17 +636,19 @@ Windows Search 的结果页不属于 TileStart 的视觉复刻范围。
 
 原版磁贴模板保留 28 DIP branding 区域，标题位于左下且不换行，底部 margin 为 5 DIP；普通磁贴的左右 branding 列为 8 DIP。分组内容由 `GroupHeaderControl` 和 `TileGridNestedPanel` 组成，组标题容器高 32 DIP，内部磁贴 panel 使用四周 4 DIP margin。
 
-TileStart 已接入 28 DIP branding 区、默认左下标题、8 DIP 水平 inset、5 DIP 底部 margin、32 DIP 组标题和临时组名编辑框；空名称组在静止状态不再永久显示 TextBox。自定义标题位置属于 TileStart 扩展，旧布局默认保持 Win10 左下标题。最终文字基线、图标位置和各尺寸磁贴仍需同尺度截图校准。
+TileStart 已接入 28 DIP branding 区、默认左下标题、8 DIP 水平 inset、5 DIP 底部 margin、32 DIP 组标题和临时组名编辑框；空名称组在静止状态不再永久显示 TextBox。自定义标题位置属于 TileStart 扩展，旧布局默认保持 Win10 左下标题。文字基线、各尺寸磁贴、文件夹预览和应用列表节奏已通过后续同尺度材料多轮校准。打包应用图标不能全局放大；当前对 `MSEdge` 这类不发布 PFN/PackageInstallPath 的 shell alias 单独恢复 Appx `Square150x150Logo` 链，实拍 Edge 可见图形与原生在强边缘阈值下约为 `51×51 px` 对 `50×50 px`。
 
-### 18.6 编码前门槛
+跨组间距也已在不改变旧组宽的前提下闭环：workspace unit 使用 `99 DIP` 内容加 `8 DIP` gap，使 4-unit 组仍严格为 `420 DIP`，相邻默认组起点 pitch 为 `428 DIP`。同尺度 150% 截图确认组内磁贴面间距保持 `6 px`，跨组间距由 `22 px` 修正为原生的 `24 px`，右侧仍保留 `24 px` 余量且没有改变可见组数。
 
-恢复 UI 编码前必须具备：
+普通静止磁贴的静态证据边界也已纠正：`TileGrid` 模板背景从 `ITileViewModel.BackgroundBrush` 取得并进入 `Shape.Fill`，但现有 XBF/反编译材料没有给出其运行时最终画刷的字面颜色和 opacity。蓝色、粉色两组同尺度截图共 92 对 ROI 的当前可验证结果是 `Tile ≈ 0.90104 × StartSurface + 0.09896 × White`，RGB RMSE 为 `1.248`。TileStart 因此采用在共享主 Start Acrylic 上覆盖约 `9.896%` 白色的 WPF 兼容模型，并让主表面的连续纹理透出；不再使用固定 `SystemAccentColor × 0.8` 或独立逐磁贴噪声。该模型不得表述为原版内部字面实现。
 
-1. 原版主菜单与 TileStart 的同物理尺度静态截图。
-2. 由本节 XAML 和原版字母索引截图生成的 DIP 规格表。
-3. 第一批改动只处理容器几何、列表/索引模板、搜索转交边界和图标资源，不改入口或退出动画。
+Win10 Accent Acrylic 还存在跨系统调色板差异：同一 `AccentColorMenu=#9E6470` 下，Win10 19045 发布的 Dark1 为 `#8F5964`，Win11 26200 主机的 `AccentPalette[4]` / `StartColorMenu` 为 `#844E57`，因此 Win10 主题不能直接消费宿主 Win11 的 Dark1。当前兼容实现优先读取 `AccentColorMenu`，其次读取 `AccentPalette[3]`，并按逐通道 `round(accent × 0.90)` 派生 Win10 Dark1；该单色样本得到 `#8E5A65`，与原生每通道误差不超过 1。WCA alpha 保持有来源依据的 `0xB8`，修正 Dark1 后 neutral blend 从旧补偿值 `0.16` 降为截图 ROI 拟合候选 `0.07`。这仍是 WPF/WCA 可见结果兼容模型，只由一个精确同色 pair 支持，后续需要蓝色、绿色 Win10 注册表 pair 验证通用性。完整独立审计固定在 `D:\Narylr\TileStart-Research\exports\win10-material-calibration\ACRYLIC-AUDIT-2026-08-03.md`，不随仓库分发。
 
-静态验收顺序固定为：窗口与 pane 几何 → 应用列表/索引 → 磁贴组和内容模板 → 图标与字体 → Acrylic/Reveal → 同尺度截图验收 → 剩余 Motion。
+### 18.6 已满足的静态证据门槛与后续顺序
+
+原版主菜单与 TileStart 的同物理尺度静态截图、由编译 XAML/截图生成的 DIP 规格以及可重复的视觉规格导出均已具备。早期“恢复 UI 编码前必须先取得同尺度截图”的门槛已经满足，不再是当前阻塞。
+
+后续静态验收顺序调整为：主 Acrylic 与系统状态 → Win11 主题 token 覆盖 → 多颜色/主题/DPI 回归。搜索转交、完整键盘、触摸和 Narrator 作为独立 UX/可访问性工作，不与剩余材质微调混为同一完成度结论。
 
 ### 18.7 可复现证据闭环（2026-07-16）
 

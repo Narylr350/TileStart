@@ -62,47 +62,84 @@ public sealed class Win10ThemeTests
     }
 
     [Fact]
-    public void Win10StartMaterialUsesDark1AccentAcrylicWhenStartAccentIsEnabled()
+    public void Win10StartMaterialDerivesWin10Dark1FromMainAccentInsteadOfHostDark1()
     {
         var palette = new byte[32];
-        palette[16] = 0x00;
-        palette[17] = 0x5F;
-        palette[18] = 0xBA;
+        palette[12] = 0x9E;
+        palette[13] = 0x64;
+        palette[14] = 0x70;
+        palette[16] = 0x84;
+        palette[17] = 0x4E;
+        palette[18] = 0x57;
 
         var material = Win10Theme.ResolveStartMaterial(
             1,
             highContrast: false,
             AppThemeStyle.Windows10,
-            startColorMenu: unchecked((int)0xFFBA5F00),
+            startColorMenu: unchecked((int)0x00574E84),
             colorPrevalence: 1,
             accentPalette: palette);
 
         Assert.True(material.UseAcrylic);
-        Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8A15505), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.FallbackColor);
+        Assert.NotEqual(Color.FromRgb(0x84, 0x4E, 0x57), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8605686), material.AcrylicGradientColor);
     }
 
     [Fact]
-    public void Win10AccentAcrylicFallsBackToPackedStartColorWithoutPalette()
+    public void Win10AccentAcrylicPrefersAccentColorMenuWhenAvailable()
     {
         var material = Win10Theme.ResolveStartMaterial(
             1,
             highContrast: false,
             AppThemeStyle.Windows10,
-            startColorMenu: unchecked((int)0xFFBA5F00),
+            startColorMenu: unchecked((int)0x00574E84),
             colorPrevalence: 1,
-            accentPalette: null);
+            accentPalette: null,
+            accentColorMenu: unchecked((int)0x0070649E));
 
-        Assert.Equal(Color.FromRgb(0x00, 0x5F, 0xBA), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8A15505), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8605686), material.AcrylicGradientColor);
     }
 
     [Fact]
     public void Win10AccentWcaTintCompensatesForMissingUwpLuminosity()
     {
         Assert.Equal(
-            Color.FromRgb(0x05, 0x55, 0xA1),
-            Win10Theme.ResolveWin10AccentWcaTintColor(Color.FromRgb(0x00, 0x5F, 0xBA)));
+            Color.FromRgb(0x86, 0x56, 0x60),
+            Win10Theme.ResolveWin10AccentWcaTintColor(Color.FromRgb(0x8E, 0x5A, 0x65)));
+    }
+
+    [Fact]
+    public void Win10Dark1ApproximationMatchesCapturedWin10PaletteWithinOneChannelValue()
+    {
+        var derived = Win10Theme.DeriveWin10Dark1(Color.FromRgb(0x9E, 0x64, 0x70));
+        var captured = Color.FromRgb(0x8F, 0x59, 0x64);
+
+        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), derived);
+        Assert.InRange(Math.Abs(derived.R - captured.R), 0, 1);
+        Assert.InRange(Math.Abs(derived.G - captured.G), 0, 1);
+        Assert.InRange(Math.Abs(derived.B - captured.B), 0, 1);
+    }
+
+    [Theory]
+    [InlineData(0x00, 0x00, 0x00, 0x00, 0x00, 0x00)]
+    [InlineData(0xFF, 0xFF, 0xFF, 0xE6, 0xE6, 0xE6)]
+    [InlineData(0x80, 0x80, 0x80, 0x73, 0x73, 0x73)]
+    [InlineData(0xFF, 0x00, 0x00, 0xE6, 0x00, 0x00)]
+    [InlineData(0x00, 0xFF, 0x00, 0x00, 0xE6, 0x00)]
+    [InlineData(0x00, 0x00, 0xFF, 0x00, 0x00, 0xE6)]
+    public void Win10Dark1ApproximationUsesTheSameRuleForRepresentativeAccents(
+        byte red,
+        byte green,
+        byte blue,
+        byte expectedRed,
+        byte expectedGreen,
+        byte expectedBlue)
+    {
+        Assert.Equal(
+            Color.FromRgb(expectedRed, expectedGreen, expectedBlue),
+            Win10Theme.DeriveWin10Dark1(Color.FromRgb(red, green, blue)));
     }
 
     [Fact]

@@ -87,6 +87,40 @@ public sealed class PackagedTileAssetLoaderTests
         }
     }
 
+    [Fact]
+    public void ResolveKnownEdgeShellAliasUsesTheFullMediumTileLogo()
+    {
+        var package = CreatePackage();
+        try
+        {
+            File.WriteAllText(Path.Combine(package, "Logo.png"), string.Empty);
+            File.WriteAllText(Path.Combine(package, "SmallLogo.png"), string.Empty);
+            File.WriteAllText(Path.Combine(package, "AppxManifest.xml"), """
+                <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10">
+                  <Applications>
+                    <Application Id="App">
+                      <uap:VisualElements AppListEntry="none"
+                                          Square150x150Logo="Logo.png"
+                                          Square44x44Logo="SmallLogo.png" />
+                    </Application>
+                  </Applications>
+                </Package>
+                """);
+
+            var path = PackagedTileAssetLoader.ResolveKnownShellAliasAssetPath(
+                "shell:AppsFolder\\MSEdge",
+                TileSize.Medium,
+                [Path.Combine(package, "AppxManifest.xml")]);
+
+            Assert.Equal("Logo.png", Path.GetFileName(path));
+        }
+        finally
+        {
+            Directory.Delete(package, recursive: true);
+        }
+    }
+
     private static string CreatePackage()
     {
         var package = Path.Combine(Path.GetTempPath(), "TileStart.Tests", Guid.NewGuid().ToString("N"));

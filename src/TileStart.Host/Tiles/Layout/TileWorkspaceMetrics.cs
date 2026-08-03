@@ -10,9 +10,10 @@ public static class TileWorkspaceMetrics
     public const int MaximumGroupHeightUnits = 8;
     public const int LegacyGroupWidthUnits = 4;
 
-    // Four workspace units preserve the existing 420 DIP group visual width.
-    public const double UnitWidth = 100;
-    public const double ColumnGap = 20d / 3d;
+    // 4 * 99 + 3 * 8 = 420 DIP，保持旧布局组宽不变；107 DIP pitch 则让
+    // 两个默认组的 412 DIP 磁贴面在 150% DPI 下相距 24 px，而不是旧实现的 22 px。
+    public const double UnitWidth = 99;
+    public const double ColumnGap = 8;
     public const double ColumnPitch = UnitWidth + ColumnGap;
 
     public static int ColumnsForWidth(double availableWidth)

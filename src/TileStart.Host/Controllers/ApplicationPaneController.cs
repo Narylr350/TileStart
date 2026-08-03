@@ -1009,11 +1009,15 @@ internal sealed class ApplicationPaneController : IDisposable
             return (ShellIconLoader.Load(tile.IconPath) ?? GenericAppIcon.Image, false);
         }
 
+        var tileTargetKey = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
         var app = apps.FirstOrDefault(candidate =>
-            candidate.LaunchTarget.Equals(tile.LaunchTarget, StringComparison.OrdinalIgnoreCase));
+            LaunchTargetIdentity.GetKey(candidate.LaunchTarget).Equals(
+                tileTargetKey,
+                StringComparison.OrdinalIgnoreCase));
+        var usesDefaultPackagedAppearance = UsesDefaultPackagedTileAppearance(tile);
         if (app is not null)
         {
-            var tileLogo = tile.IconPosition == TileIconPosition.Center && tile.IconSize == 32
+            var tileLogo = usesDefaultPackagedAppearance
                 ? PackagedTileAssetLoader.Load(app.PackageInstallPath, app.AppUserModelId, tile.Size)
                 : null;
             if (tileLogo is not null)
@@ -1024,8 +1028,24 @@ internal sealed class ApplicationPaneController : IDisposable
             return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
         }
 
+        // Chromium Edge 在 AppsFolder 中以 MSEdge shell alias 暴露，PackageInstallPath/PFN 为空，
+        // 但原生开始菜单仍使用其 Appx Square150x150Logo。只在默认外观下补这条系统资产链，
+        // 避免覆盖用户主动设置的图标路径、大小或位置。
+        var shellAliasLogo = usesDefaultPackagedAppearance
+            ? PackagedTileAssetLoader.LoadKnownShellAlias(tile.LaunchTarget, tile.Size)
+            : null;
+        if (shellAliasLogo is not null)
+        {
+            return (shellAliasLogo, true);
+        }
+
         return (ShellIconLoader.Load(tile.LaunchTarget) ?? GenericAppIcon.Image, false);
     }
+
+    internal static bool UsesDefaultPackagedTileAppearance(TileItem tile) =>
+        string.IsNullOrWhiteSpace(tile.IconPath)
+        && tile.IconPosition == TileIconPosition.Center
+        && Math.Abs(tile.IconSize - 32) < 0.01;
 
     private readonly record struct LoadedTileVisual(
         TileItem Tile,

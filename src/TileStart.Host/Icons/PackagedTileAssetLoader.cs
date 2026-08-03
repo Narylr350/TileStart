@@ -1,4 +1,6 @@
+using Microsoft.Win32;
 using System.IO;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -9,6 +11,9 @@ namespace TileStart.Host.Icons;
 
 internal static partial class PackagedTileAssetLoader
 {
+    private const string AppxApplicationsRegistryPath =
+        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Applications";
+
     public static ImageSource? Load(string packageInstallPath, string appUserModelId, TileSize size)
     {
         return LoadAsset(ResolveAssetPath(packageInstallPath, appUserModelId, size));
@@ -17,6 +22,11 @@ internal static partial class PackagedTileAssetLoader
     public static ImageSource? LoadApplicationIcon(string packageInstallPath, string appUserModelId)
     {
         return LoadAsset(ResolveApplicationIconAssetPath(packageInstallPath, appUserModelId));
+    }
+
+    public static ImageSource? LoadKnownShellAlias(string launchTarget, TileSize size)
+    {
+        return LoadAsset(ResolveKnownShellAliasAssetPath(launchTarget, size));
     }
 
     private static ImageSource? LoadAsset(string? path)
@@ -103,6 +113,36 @@ internal static partial class PackagedTileAssetLoader
         }
     }
 
+    internal static string? ResolveKnownShellAliasAssetPath(
+        string launchTarget,
+        TileSize size,
+        IEnumerable<string>? packageManifestPaths = null)
+    {
+        const string appsFolderPrefix = "shell:AppsFolder\\";
+        if (!launchTarget.StartsWith(appsFolderPrefix, StringComparison.OrdinalIgnoreCase)
+            || !launchTarget[appsFolderPrefix.Length..].Equals("MSEdge", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        foreach (var manifestPath in packageManifestPaths ?? EnumerateEdgePackageManifestPaths())
+        {
+            var packageInstallPath = Path.GetDirectoryName(manifestPath);
+            if (packageInstallPath is null)
+            {
+                continue;
+            }
+
+            var path = ResolveFirstApplicationAssetPath(packageInstallPath, size);
+            if (path is not null)
+            {
+                return path;
+            }
+        }
+
+        return null;
+    }
+
     private static XElement? FindVisualElements(string manifestPath, string appUserModelId)
     {
         var applicationId = appUserModelId[(appUserModelId.LastIndexOf('!') + 1)..];
@@ -114,6 +154,70 @@ internal static partial class PackagedTileAssetLoader
                                                StringComparison.OrdinalIgnoreCase)));
         return application?.Elements()
             .FirstOrDefault(element => element.Name.LocalName == "VisualElements");
+    }
+
+    private static string? ResolveFirstApplicationAssetPath(string packageInstallPath, TileSize size)
+    {
+        var manifestPath = Path.Combine(packageInstallPath, "AppxManifest.xml");
+        if (!File.Exists(manifestPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var document = XDocument.Load(manifestPath);
+            var visualElements = document.Descendants()
+                .FirstOrDefault(element => element.Name.LocalName == "VisualElements");
+            var defaultTile = visualElements?.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "DefaultTile");
+            var asset = size switch
+            {
+                TileSize.Small => Attribute(defaultTile, "Square71x71Logo"),
+                TileSize.Wide => Attribute(defaultTile, "Wide310x150Logo"),
+                TileSize.Large => Attribute(defaultTile, "Square310x310Logo"),
+                _ => null,
+            } ?? Attribute(visualElements, "Square150x150Logo");
+            return asset is null ? null : ResolveQualifiedAsset(packageInstallPath, asset);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                               or System.Xml.XmlException)
+        {
+            return null;
+        }
+    }
+
+    private static IReadOnlyList<string> EnumerateEdgePackageManifestPaths()
+    {
+        try
+        {
+            using var root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+            using var applications = root.OpenSubKey(AppxApplicationsRegistryPath);
+            if (applications is null)
+            {
+                return [];
+            }
+
+            return applications.GetSubKeyNames()
+                .Where(name => name.StartsWith("Microsoft.MicrosoftEdge.Stable_",
+                                   StringComparison.OrdinalIgnoreCase)
+                               || name.StartsWith("Microsoft.MicrosoftEdge_",
+                                   StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(name => name, StringComparer.OrdinalIgnoreCase)
+                .Select(name =>
+                {
+                    using var package = applications.OpenSubKey(name);
+                    return package?.GetValue("Path") as string;
+                })
+                .Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                .Cast<string>()
+                .ToArray();
+        }
+        catch (Exception exception) when (exception is SecurityException or UnauthorizedAccessException
+                                               or IOException)
+        {
+            return [];
+        }
     }
 
     private static string? Attribute(XElement? element, string name) =>
