@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Windows.Media;
 using TileStart.Host.Tiles.Models;
 using TileStart.Host.Tiles.Settings;
 
@@ -82,20 +83,27 @@ public class TileItemBackgroundColorTests : IDisposable
     public void CustomisedTileKeepsColorWhenThemeDefaultChanges()
     {
         var tile = new TileItem { BackgroundColor = "#112233" };
+        var customBrush = tile.BackgroundBrush;
 
         TileItem.SetThemeDefaultBackgroundColor("#5A353B");
 
         Assert.Equal("#112233", tile.BackgroundColor);
+        Assert.Same(customBrush, tile.BackgroundBrush);
     }
 
     [Fact]
     public void DefaultTileFollowsThemeDefaultWhenItChanges()
     {
         var tile = new TileItem();
+        var previousBrush = tile.BackgroundBrush;
 
-        TileItem.SetThemeDefaultBackgroundColor("#5A353B");
+        TileItem.SetThemeDefaultBackgroundColor("#5A353B", 0.65);
 
         Assert.Equal("#5A353B", tile.BackgroundColor);
+        Assert.NotSame(previousBrush, tile.BackgroundBrush);
+        var brush = Assert.IsType<SolidColorBrush>(tile.BackgroundBrush);
+        Assert.Equal(Color.FromRgb(0x5A, 0x35, 0x3B), brush.Color);
+        Assert.Equal(0.65, brush.Opacity);
     }
 
     [Fact]

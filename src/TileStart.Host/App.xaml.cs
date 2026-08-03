@@ -80,7 +80,7 @@ public partial class App : System.Windows.Application
         _isSystemThemeSubscribed = true;
 
         DiagnosticLog.Write("Creating main window.");
-        MainWindow = new MainWindow(_appearancePreferences.ThemeStyle);
+        MainWindow = new MainWindow(_appearancePreferences.ThemeStyle, _resolvedDarkMode);
         PrimeApplicationActivation();
         DiagnosticLog.Write("Main window created.");
         _server = new OpenRequestServer(HandleHostRequest, Dispatcher);

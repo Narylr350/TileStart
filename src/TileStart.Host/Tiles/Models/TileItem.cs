@@ -13,12 +13,14 @@ namespace TileStart.Host.Tiles.Models;
 public sealed class TileItem : INotifyPropertyChanged
 {
     /// <summary>
-    /// Colour used by tiles the user has never recoloured. Set once at startup from the active
-    /// theme so switching themes restyles default tiles without touching customised ones.
+    /// Colour used by tiles the user has never recoloured. Updated whenever the active theme
+    /// changes so default tiles restyle without touching customised ones.
     /// </summary>
     public static string ThemeDefaultBackgroundColor { get; private set; } = "#3A3A3A";
 
     private static MediaBrush ThemeDefaultBackgroundBrush { get; set; } = CreateFrozenBrush("#3A3A3A");
+    private static readonly object ThemeFollowersLock = new();
+    private static readonly List<WeakReference<TileItem>> ThemeFollowers = [];
 
     /// <summary>
     /// Applies the active theme's default tile colour. Tiles whose
@@ -31,8 +33,32 @@ public sealed class TileItem : INotifyPropertyChanged
             return;
         }
 
-        ThemeDefaultBackgroundColor = color.Trim();
-        ThemeDefaultBackgroundBrush = CreateFrozenBrush(ThemeDefaultBackgroundColor, opacity);
+        var normalizedColor = color.Trim();
+        var backgroundBrush = CreateFrozenBrush(normalizedColor, opacity);
+        TileItem[] followers;
+        lock (ThemeFollowersLock)
+        {
+            ThemeDefaultBackgroundColor = normalizedColor;
+            ThemeDefaultBackgroundBrush = backgroundBrush;
+            var liveFollowers = new List<TileItem>(ThemeFollowers.Count);
+            for (var index = ThemeFollowers.Count - 1; index >= 0; index--)
+            {
+                if (!ThemeFollowers[index].TryGetTarget(out var tile))
+                {
+                    ThemeFollowers.RemoveAt(index);
+                    continue;
+                }
+
+                liveFollowers.Add(tile);
+            }
+
+            followers = liveFollowers.ToArray();
+        }
+
+        foreach (var tile in followers)
+        {
+            tile.ApplyThemeDefaultBackgroundBrush(backgroundBrush);
+        }
     }
 
     private int _column;
@@ -71,6 +97,10 @@ public sealed class TileItem : INotifyPropertyChanged
     {
         FolderPreviewTiles = new ReadOnlyObservableCollection<TileItem>(_folderPreviewTiles);
         AttachFolderTiles(_folderTiles);
+        lock (ThemeFollowersLock)
+        {
+            ThemeFollowers.Add(new WeakReference<TileItem>(this));
+        }
     }
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -195,11 +225,9 @@ public sealed class TileItem : INotifyPropertyChanged
         }
     }
 
-    [JsonIgnore]
-    public ReadOnlyObservableCollection<TileItem> FolderPreviewTiles { get; }
+    [JsonIgnore] public ReadOnlyObservableCollection<TileItem> FolderPreviewTiles { get; }
 
-    [JsonIgnore]
-    public string SettingsMenuHeader => IsTileFolder ? "文件夹设置…" : "TileStart 设置…";
+    [JsonIgnore] public string SettingsMenuHeader => IsTileFolder ? "文件夹设置…" : "TileStart 设置…";
 
     /// <summary>
     /// Tile face colour. Assigning a value marks the tile as customised; assigning blank clears
@@ -269,6 +297,18 @@ public sealed class TileItem : INotifyPropertyChanged
         _backgroundBrush = ThemeDefaultBackgroundBrush;
         OnPropertyChanged(nameof(BackgroundColor));
         OnPropertyChanged(nameof(HasCustomBackgroundColor));
+        OnPropertyChanged(nameof(BackgroundBrush));
+    }
+
+    private void ApplyThemeDefaultBackgroundBrush(MediaBrush backgroundBrush)
+    {
+        if (_hasCustomBackgroundColor)
+        {
+            return;
+        }
+
+        _backgroundBrush = backgroundBrush;
+        OnPropertyChanged(nameof(BackgroundColor));
         OnPropertyChanged(nameof(BackgroundBrush));
     }
 

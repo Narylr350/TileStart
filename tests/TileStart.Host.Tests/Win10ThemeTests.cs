@@ -63,6 +63,38 @@ public sealed class Win10ThemeTests
     }
 
     [Fact]
+    public void Win10LightModeUsesTheExportedLightAcrylicMaterial()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            useDarkMode: false);
+
+        Assert.True(material.UseAcrylic);
+        Assert.Equal(Color.FromRgb(0xE4, 0xE4, 0xE4), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xDAE4E4E4), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0xE4, 0xE4, 0xE4), material.LiveResizeColor);
+    }
+
+    [Fact]
+    public void Win10LightModeIgnoresTheDarkModeOnlyStartAccentSetting()
+    {
+        var material = Win10Theme.ResolveStartMaterial(
+            1,
+            highContrast: false,
+            AppThemeStyle.Windows10,
+            startColorMenu: unchecked((int)0x00574E84),
+            colorPrevalence: 1,
+            accentPalette: null,
+            accentColorMenu: unchecked((int)0x0070649E),
+            useDarkMode: false);
+
+        Assert.Equal(Color.FromRgb(0xE4, 0xE4, 0xE4), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xDAE4E4E4), material.AcrylicGradientColor);
+    }
+
+    [Fact]
     public void Win10LiveResizeKeepsAccentDisabledEvenWhenStartColorMenuRetainsOldColor()
     {
         var material = Win10Theme.ResolveStartMaterial(

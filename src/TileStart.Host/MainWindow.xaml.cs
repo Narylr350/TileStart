@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     private readonly HashSet<TileGroup> _observedTileGroups = [];
     private bool _controllersDisposed;
 
-    public MainWindow(AppThemeStyle themeStyle = AppThemeStyle.Windows11)
+    public MainWindow(AppThemeStyle themeStyle = AppThemeStyle.Windows11, bool useDarkMode = true)
     {
         InitializeComponent();
         MinWidth = StartWindowSizing.WidthForColumns(StartWindowSizing.MinimumGroupColumns);
@@ -135,13 +135,11 @@ public partial class MainWindow : Window
             animateGroupReorderFrom: p => _tileDragCoordinator.AnimateGroupReorderFrom(p),
             isAnyDragActive: () => _tileDragCoordinator.IsDragging,
             hasOpenContextMenu: () => _hasOpenContextMenu,
-            cancelActiveDrag: () =>
-            {
-                _tileDragCoordinator.CancelCurrentDrag();
-            },
+            cancelActiveDrag: () => { _tileDragCoordinator.CancelCurrentDrag(); },
             preferredWorkspaceColumns,
             preferredHeight,
-            themeStyle);
+            themeStyle,
+            useDarkMode);
         _controller.WindowDismissing += _tileWorkspaceController.CloseOpenContextMenu;
         _navigationController.ApplyNavigationPreferences();
         DataContext = this;

@@ -79,6 +79,7 @@ public class StartWindowController : IDisposable
     private nint _pendingDisplayMonitor;
     private double _requestedMinimumWidth = StartWindowSizing.WidthForColumns(0);
     private readonly double _requestedMinimumHeight;
+    private readonly bool _useDarkMode;
     private int _preferredWorkspaceColumns;
     private double _preferredHeight;
 
@@ -102,7 +103,8 @@ public class StartWindowController : IDisposable
         Action cancelActiveDrag,
         int preferredWorkspaceColumns,
         double preferredHeight,
-        AppThemeStyle themeStyle = AppThemeStyle.Windows11)
+        AppThemeStyle themeStyle = AppThemeStyle.Windows11,
+        bool useDarkMode = true)
     {
         _window = window;
         _windowRoot = windowRoot;
@@ -124,6 +126,7 @@ public class StartWindowController : IDisposable
             ? preferredHeight
             : window.Height;
         _themeStyle = themeStyle;
+        _useDarkMode = useDarkMode;
 
         _foregroundWatchdogTimer.Tick += ForegroundWatchdogTimer_Tick;
         _displayChangeRefreshTimer.Tick += DisplayChangeRefreshTimer_Tick;
@@ -256,7 +259,7 @@ public class StartWindowController : IDisposable
         }
 
         ApplyWindowCornerPreference();
-        var material = Win10Theme.ReadStartMaterial(_themeStyle);
+        var material = Win10Theme.ReadStartMaterial(_themeStyle, _useDarkMode);
         var acrylicApplied = SetAccentPolicy(
             material.UseAcrylic ? AccentEnableAcrylicBlurBehind : 0,
             material.UseAcrylic ? 2 : 0,

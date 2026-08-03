@@ -17,13 +17,21 @@ public static class Win10Theme
     private const string AccentRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent";
     private const string PersonalizeRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const int AccentPaletteOffset = 3 * 4;
+
     private const int StartAcrylicGradientColor = unchecked((int)0xBF101010);
+
+    // StartUI LightThemeEnabledNormalAcrylic: #E4E4E4 at TintOpacity 0.853.
+    // WCA does not expose TintOpacity separately, so 0xDA is the compatible alpha mapping.
+    private const int StartLightAcrylicGradientColor = unchecked((int)0xDAE4E4E4);
+
     // 原版 UWP TintOpacity=0.8 不能直接等同于 WCA GradientColor alpha；0xCC 会把
     // 壁纸压成均匀的高饱和蓝板。0xB8 是同壁纸对照 Win10 原生截图后的兼容校准值。
     private const uint Win10AccentAcrylicTintAlpha = 0xB8;
+
     // WCA 缺少 UWP Acrylic 的 luminosity 合成。修正 Dark1 来源后，同壁纸 ROI 表明 16% 会明显压暗；
     // 7% 是当前跨原生/复刻截图的兼容拟合值，不是 StartUI 内部公开参数。
     private const double Win10AccentAcrylicNeutralBlend = 0.07;
+
     // Win10 19045 同一强调色样本中，Dark2 相当于先降低约 15% value，再把 HSV saturation
     // 放大约 1.26 倍；该兼容派生用于 NavigationPane 的独立 0.5 tint，不能读取宿主 Win11 Palette[5]。
     private const double Win10Dark2DarkenAmount = 0.15;
@@ -33,10 +41,12 @@ public static class Win10Theme
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
     // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
     private const int Windows11StartAcrylicGradientColor = unchecked((int)0xCC1C1C1C);
+
     // TintOpacity 0.75 from the StartDocked HostBackdrop acrylic; leaves enough of the
     // blurred wallpaper visible instead of covering it.
     private const uint Windows11StartAcrylicTintAlpha = 0xBF;
     private static readonly MediaColor StartFallbackColor = MediaColor.FromRgb(0x1F, 0x1F, 0x1F);
+    private static readonly MediaColor StartLightFallbackColor = MediaColor.FromRgb(0xE4, 0xE4, 0xE4);
     private static readonly MediaColor NeutralStartSurfaceColor = MediaColor.FromRgb(0x1C, 0x1C, 0x1C);
 
     public static MediaColor AccentColor { get; } = ReadAccentColor();
@@ -96,21 +106,29 @@ public static class Win10Theme
     internal static StartMaterialConfiguration ResolveStartMaterial(
         object? enableTransparency,
         bool highContrast,
-        AppThemeStyle themeStyle)
-        => ResolveStartMaterial(enableTransparency, highContrast, themeStyle, startColorMenu: null);
+        AppThemeStyle themeStyle,
+        bool useDarkMode = true)
+        => ResolveStartMaterial(
+            enableTransparency,
+            highContrast,
+            themeStyle,
+            startColorMenu: null,
+            useDarkMode: useDarkMode);
 
     internal static StartMaterialConfiguration ResolveStartMaterial(
         object? enableTransparency,
         bool highContrast,
         AppThemeStyle themeStyle,
-        object? startColorMenu)
+        object? startColorMenu,
+        bool useDarkMode = true)
         => ResolveStartMaterial(
             enableTransparency,
             highContrast,
             themeStyle,
             startColorMenu,
             colorPrevalence: null,
-            accentPalette: null);
+            accentPalette: null,
+            useDarkMode: useDarkMode);
 
     internal static StartMaterialConfiguration ResolveStartMaterial(
         object? enableTransparency,
@@ -119,18 +137,27 @@ public static class Win10Theme
         object? startColorMenu,
         object? colorPrevalence,
         byte[]? accentPalette,
-        object? accentColorMenu = null)
+        object? accentColorMenu = null,
+        bool useDarkMode = true)
     {
         var transparencyEnabled = enableTransparency is int value && value != 0;
         var useWin10AccentAcrylic = themeStyle == AppThemeStyle.Windows10
+                                    && useDarkMode
                                     && colorPrevalence is int prevalence
                                     && prevalence != 0;
         var win10AccentColor = useWin10AccentAcrylic
             ? ResolveWin10AccentAcrylicColor(accentColorMenu, startColorMenu, accentPalette)
             : StartFallbackColor;
+        var useWin10LightAcrylic = themeStyle == AppThemeStyle.Windows10
+                                   && !useDarkMode
+                                   && !useWin10AccentAcrylic;
 
         var useAcrylic = transparencyEnabled && !highContrast;
-        var fallbackColor = useWin10AccentAcrylic && !highContrast ? win10AccentColor : StartFallbackColor;
+        var fallbackColor = useWin10AccentAcrylic && !highContrast
+            ? win10AccentColor
+            : useWin10LightAcrylic
+                ? StartLightFallbackColor
+                : StartFallbackColor;
         var liveResizeColor = useAcrylic && themeStyle == AppThemeStyle.Windows11
             ? ResolveStartSurfaceColor(startColorMenu)
             : fallbackColor;
@@ -144,7 +171,9 @@ public static class Win10Theme
                     ? PackAccentPolicyColor(
                         ResolveWin10AccentWcaTintColor(win10AccentColor),
                         Win10AccentAcrylicTintAlpha)
-                    : StartAcrylicGradientColor,
+                    : useWin10LightAcrylic
+                        ? StartLightAcrylicGradientColor
+                        : StartAcrylicGradientColor,
             liveResizeColor);
     }
 
@@ -236,7 +265,7 @@ public static class Win10Theme
         return unchecked((int)((Windows11StartAcrylicTintAlpha << 24) | (packed & 0x00FFFFFF)));
     }
 
-    internal static StartMaterialConfiguration ReadStartMaterial(AppThemeStyle themeStyle)
+    internal static StartMaterialConfiguration ReadStartMaterial(AppThemeStyle themeStyle, bool useDarkMode = true)
     {
         object? enableTransparency = null;
         object? colorPrevalence = null;
@@ -271,7 +300,8 @@ public static class Win10Theme
             startColorMenu,
             colorPrevalence,
             accentPalette,
-            accentColorMenu);
+            accentColorMenu,
+            useDarkMode);
     }
 
     private static MediaColor ReadStartSurfaceColor()
