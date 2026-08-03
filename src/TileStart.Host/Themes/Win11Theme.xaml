@@ -35,6 +35,7 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#0FFFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="TileStartAccentBrush" Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush"
                      Color="{x:Static local:Win10Theme.StartSurfaceOverlayColor}" />
     <!-- Win11 cards sit as a weak state layer over the live Acrylic instead of becoming an opaque tile. -->
@@ -71,6 +72,13 @@
     <Style x:Key="TileStartTileRevealInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
         <Setter Property="HoverFillOpacity" Value="0" />
         <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
+    <Style x:Key="TileStartEditorListInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="HoverFillBrush" Value="{StaticResource TileStartSubtleFillHoverBrush}" />
+        <Setter Property="PressedFillBrush" Value="{StaticResource TileStartSubtleFillPressedBrush}" />
         <Setter Property="RevealBorderOpacity" Value="0" />
     </Style>
 </ResourceDictionary>

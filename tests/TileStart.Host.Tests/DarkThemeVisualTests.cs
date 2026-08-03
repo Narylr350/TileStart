@@ -448,6 +448,49 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
+    public void SecondaryEditorsUseThemeAwareInteractionsAndSliderAccent()
+    {
+        Assert.Equal("0.34", ReadThemeStyleSetter(
+            "Win10Theme.xaml",
+            "TileStartEditorListInteractionStyle",
+            "RevealBorderOpacity"));
+        Assert.Equal("0", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartEditorListInteractionStyle",
+            "RevealBorderOpacity"));
+        Assert.Equal("{StaticResource TileStartSubtleFillHoverBrush}", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartEditorListInteractionStyle",
+            "HoverFillBrush"));
+
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var groupSettings = LoadXaml("GroupSettingsWindow.xaml");
+        var itemBorder = groupSettings.Descendants()
+            .Single(element => (string?)element.Attribute(x + "Name") == "ItemBorder");
+        Assert.Equal("{StaticResource TileStartEditorListInteractionStyle}",
+            (string?)itemBorder.Attribute("Style"));
+        Assert.Null(itemBorder.Attribute("RevealBorderOpacity"));
+
+        var selectedTrigger = itemBorder.Ancestors(presentation + "ControlTemplate")
+            .Single()
+            .Descendants(presentation + "Trigger")
+            .Single(trigger => (string?)trigger.Attribute("Property") == "IsSelected");
+        Assert.Contains(selectedTrigger.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "ItemBorder"
+            && (string?)setter.Attribute("Property") == "BorderBrush"
+            && (string?)setter.Attribute("Value") == "{DynamicResource TileStartAccentBrush}");
+
+        var tileSettings = LoadXaml("TileSettingsWindow.xaml");
+        var slider = tileSettings.Descendants(presentation + "Style")
+            .Single(style => (string?)style.Attribute("TargetType") == "Slider");
+        var thumb = slider.Descendants(presentation + "Thumb").Single();
+        Assert.Equal("{DynamicResource TileStartAccentBrush}", (string?)thumb.Attribute("Background"));
+        Assert.Contains(slider.Descendants(presentation + "Border"), border =>
+            (string?)border.Attribute("Background") == "{DynamicResource TileStartAccentBrush}");
+    }
+
+    [Fact]
     public void SearchPanelUsesAWin11PillWithoutChangingGeneralControlRadius()
     {
         var document = LoadMainWindow();

@@ -34,6 +34,7 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#09000000" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0F000000" />
+    <SolidColorBrush x:Key="TileStartAccentBrush" Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#E8F3F3F3" />
     <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#0A000000" />
     <SolidColorBrush x:Key="TileStartTileBorderBrush" Color="Transparent" />
@@ -68,6 +69,13 @@
     <Style x:Key="TileStartTileRevealInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
         <Setter Property="HoverFillOpacity" Value="0" />
         <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
+    <Style x:Key="TileStartEditorListInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="HoverFillBrush" Value="{StaticResource TileStartSubtleFillHoverBrush}" />
+        <Setter Property="PressedFillBrush" Value="{StaticResource TileStartSubtleFillPressedBrush}" />
         <Setter Property="RevealBorderOpacity" Value="0" />
     </Style>
 </ResourceDictionary>

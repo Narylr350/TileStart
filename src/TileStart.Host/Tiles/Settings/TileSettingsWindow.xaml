@@ -106,15 +106,17 @@
                                     <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="3" VerticalAlignment="Center"
-                                                        Background="{x:Static local:Win10Theme.ContextMenuHighlightBrush}"
-                                                        CornerRadius="2" />
+                                                 <Border Height="3" VerticalAlignment="Center"
+                                                         Background="{DynamicResource TileStartAccentBrush}"
+                                                         CornerRadius="2" />
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Width="12" Height="20" Background="White">
+                                    <Thumb Width="12"
+                                           Height="20"
+                                           Background="{DynamicResource TileStartAccentBrush}">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border Background="{TemplateBinding Background}"

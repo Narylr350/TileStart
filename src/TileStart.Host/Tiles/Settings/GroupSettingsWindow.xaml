@@ -91,14 +91,12 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <local:Win10InteractionBorder x:Name="ItemBorder"
+                                                      Style="{StaticResource TileStartEditorListInteractionStyle}"
                                                       Padding="8"
                                                       Background="{TemplateBinding Background}"
                                                       BorderBrush="{StaticResource TileStartControlStrokeBrush}"
                                                       BorderThickness="1"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
-                                                      HoverFillOpacity="0.10"
-                                                      PressedFillOpacity="0.16"
-                                                      RevealBorderOpacity="0.34"
                                                       RevealRadius="80"
                                                       SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -111,7 +109,7 @@
                                         Value="{StaticResource TileStartControlPressedBrush}" />
                                 <Setter TargetName="ItemBorder"
                                         Property="BorderBrush"
-                                        Value="{x:Static local:Win10Theme.ContextMenuHighlightBrush}" />
+                                        Value="{DynamicResource TileStartAccentBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

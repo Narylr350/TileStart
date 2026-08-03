@@ -42,6 +42,7 @@
     <SolidColorBrush x:Key="TileStartSubtleFillBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#19FFFFFF" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TileStartAccentBrush" Color="{x:Static local:Win10Theme.AccentColor}" />
     <!-- StartUI AccentAcrylic uses SystemAccentColorDark2 at 0.5; neutral mode falls back to #802C2C2C. -->
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush"
                      Color="{x:Static local:Win10Theme.NavigationOverlayColor}" />
@@ -78,5 +79,10 @@
         <Setter Property="HoverFillOpacity" Value="0" />
         <Setter Property="PressedFillOpacity" Value="0" />
         <Setter Property="RevealBorderOpacity" Value="0.5" />
+    </Style>
+    <Style x:Key="TileStartEditorListInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0.10" />
+        <Setter Property="PressedFillOpacity" Value="0.16" />
+        <Setter Property="RevealBorderOpacity" Value="0.34" />
     </Style>
 </ResourceDictionary>
