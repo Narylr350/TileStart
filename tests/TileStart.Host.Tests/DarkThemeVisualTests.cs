@@ -255,24 +255,23 @@ public sealed class DarkThemeVisualTests
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-        var backdrop = document.Descendants(presentation + "Border")
+        var backdrop = document.Descendants()
             .Single(element => (string?)element.Attribute(x + "Name") == "NavigationBackdrop");
         Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}",
             (string?)backdrop.Attribute("Margin"));
+        var background = backdrop.Descendants(presentation + "Border").Single();
         Assert.Equal("{DynamicResource TileStartNavigationOverlayBrush}",
-            (string?)backdrop.Attribute("Background"));
+            (string?)background.Attribute("Background"));
         Assert.Equal("0", (string?)backdrop.Attribute("Opacity"));
         Assert.Equal("False", (string?)backdrop.Attribute("IsHitTestVisible"));
 
-        var shadow = backdrop.Descendants(presentation + "DropShadowEffect").Single();
-        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowBlurRadius}",
-            (string?)shadow.Attribute("BlurRadius"));
-        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowOpacity}",
-            (string?)shadow.Attribute("Opacity"));
-        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowDepth}",
-            (string?)shadow.Attribute("ShadowDepth"));
-        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowDirection}",
-            (string?)shadow.Attribute("Direction"));
+        var shadow = backdrop.Descendants().Single(element => element.Name.LocalName == "NineGridImage");
+        Assert.Equal("/TileStart.Host;component/Assets/Win10NavigationDropShadow.png",
+            (string?)shadow.Attribute("Source"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowNineGrid}",
+            (string?)shadow.Attribute("NineGrid"));
+        Assert.Equal("{x:Static local:Win10VisualMetrics.NavigationShadowMargin}",
+            (string?)shadow.Attribute("Margin"));
     }
 
     [Fact]

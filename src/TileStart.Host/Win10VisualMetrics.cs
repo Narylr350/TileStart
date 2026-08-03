@@ -14,6 +14,8 @@ public static class Win10VisualMetrics
     public const double NavigationShadowDepth = 1.4142135623730951;
     public const double NavigationShadowDirection = 315;
     public const double NavigationShadowOpacity = 0.8;
+    public const double NavigationShadowNineGrid = 13;
+    public static Thickness NavigationShadowMargin { get; } = new(-NavigationShadowNineGrid);
     public const int NavigationBackdropOpenDurationMilliseconds = 350;
     public const int NavigationBackdropCloseDurationMilliseconds = 240;
     public const double Windows11TaskbarLeftInset = 8;

@@ -30,6 +30,7 @@
     <ItemGroup>
         <Resource Include="Assets\TileStart-icon-master.png" />
         <Resource Include="Assets\AcrylicNoise.png" />
+        <Resource Include="Assets\Win10NavigationDropShadow.png" />
     </ItemGroup>
 
 </Project>

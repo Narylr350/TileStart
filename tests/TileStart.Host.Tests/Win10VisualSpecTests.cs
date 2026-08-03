@@ -293,10 +293,11 @@ public sealed class Win10VisualSpecTests
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-        var overlay = document.Descendants(presentation + "Rectangle")
+        var overlay = document.Descendants()
             .Single(element => (string?)element.Attribute(x + "Name") == "TileNoiseOverlay");
 
-        Assert.Equal("0.03", (string?)overlay.Attribute("Opacity"));
+        Assert.Equal("0.037", (string?)overlay.Attribute("Opacity"));
+        Assert.Equal("/TileStart.Host;component/Assets/AcrylicNoise.png", (string?)overlay.Attribute("Source"));
         Assert.Equal("False", (string?)overlay.Attribute("IsHitTestVisible"));
         Assert.Equal("Collapsed", (string?)overlay.Attribute("Visibility"));
 

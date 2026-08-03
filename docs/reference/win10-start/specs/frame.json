@@ -152,7 +152,7 @@
       },
       "evidence": "compiled-xbf",
       "anchor": "NavigationPaneView BackgroundStates + DropShadow",
-      "tileStartCompatibility": "The original PNG remains in the external research baseline and is not copied into the product repository. TileStart maps its measured 1 px right/down offset and alpha profile to a 10 DIP WPF blur, depth sqrt(2), direction 315 degrees."
+      "tileStartCompatibility": "TileStart bundles the fixed exported PNG and draws it with a nine-slice compatibility layer using NineGrid=13 and Margin=-13; the original 1 px right/down alpha profile is therefore preserved instead of approximated by DropShadowEffect."
     },
     "tileStartWcaMapping": {
       "gradientColor": "0xBF101010",

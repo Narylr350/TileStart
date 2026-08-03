@@ -704,20 +704,16 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border x:Name="NavigationBackdrop"
-                        Grid.RowSpan="3"
-                        Margin="{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}"
-                        Background="{DynamicResource TileStartNavigationOverlayBrush}"
-                        IsHitTestVisible="False"
-                        Opacity="0">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="{x:Static local:Win10VisualMetrics.NavigationShadowBlurRadius}"
-                                          Color="#FF000000"
-                                          Direction="{x:Static local:Win10VisualMetrics.NavigationShadowDirection}"
-                                          Opacity="{x:Static local:Win10VisualMetrics.NavigationShadowOpacity}"
-                                          ShadowDepth="{x:Static local:Win10VisualMetrics.NavigationShadowDepth}" />
-                    </Border.Effect>
-                </Border>
+                <Grid x:Name="NavigationBackdrop"
+                      Grid.RowSpan="3"
+                      Margin="{x:Static local:Win10VisualMetrics.NavigationBackdropMargin}"
+                      IsHitTestVisible="False"
+                      Opacity="0">
+                    <Border Background="{DynamicResource TileStartNavigationOverlayBrush}" />
+                    <local:NineGridImage Source="/TileStart.Host;component/Assets/Win10NavigationDropShadow.png"
+                                          NineGrid="{x:Static local:Win10VisualMetrics.NavigationShadowNineGrid}"
+                                          Margin="{x:Static local:Win10VisualMetrics.NavigationShadowMargin}" />
+                </Grid>
                 <Button x:Name="NavigationToggleButton"
                         Grid.Row="0"
                         Style="{StaticResource RailButtonStyle}"
@@ -1240,12 +1236,12 @@
                                                                 </Image.RenderTransform>
                                                             </Image>
                                                             <!-- 原版没有公开 tile-face noise 资源；这是仅针对纯色默认磁贴的 Host 兼容候选。 -->
-                                                            <Rectangle x:Name="TileNoiseOverlay"
-                                                                      Grid.RowSpan="2"
-                                                                      Fill="{StaticResource TileStartAcrylicNoiseBrush}"
-                                                                      IsHitTestVisible="False"
-                                                                      Opacity="0.03"
-                                                                      Visibility="Collapsed" />
+                                                            <local:WindowAlignedImageTile x:Name="TileNoiseOverlay"
+                                                                                          Grid.RowSpan="2"
+                                                                                          Source="/TileStart.Host;component/Assets/AcrylicNoise.png"
+                                                                                          IsHitTestVisible="False"
+                                                                                          Opacity="0.037"
+                                                                                          Visibility="Collapsed" />
                                                             <TextBlock x:Name="TileInitial"
                                                                        Grid.Row="0"
                                                                        Grid.RowSpan="2"

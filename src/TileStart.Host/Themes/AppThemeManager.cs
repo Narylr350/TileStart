@@ -80,8 +80,11 @@ public static class AppThemeManager
         {
             var useAcrylic = style == AppThemeStyle.Windows10
                              && Win10Theme.ReadStartMaterial(style).UseAcrylic;
+            var tileColor = style == AppThemeStyle.Windows10 && useAcrylic
+                ? Win10Theme.ResolveWin10DefaultTileFaceColor()
+                : brush.Color;
             TileItem.SetThemeDefaultBackgroundColor(
-                brush.Color.ToString(),
+                tileColor.ToString(),
                 ResolveDefaultTileBackgroundOpacity(style, useAcrylic, brush.Opacity));
         }
     }

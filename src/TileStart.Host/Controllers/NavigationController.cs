@@ -33,7 +33,7 @@ internal sealed class NavigationController : IDisposable
     private bool _isDisposed;
 
     private readonly Grid _navigationPane;
-    private readonly Border _navigationBackdrop;
+    private readonly FrameworkElement _navigationBackdrop;
     private readonly Button _navigationToggleButton;
     private readonly Button _userNavigationButton;
     private readonly Button _documentsNavigationButton;
@@ -71,7 +71,7 @@ internal sealed class NavigationController : IDisposable
 
     public NavigationController(
         Grid navigationPane,
-        Border navigationBackdrop,
+        FrameworkElement navigationBackdrop,
         Button navigationToggleButton,
         Button userNavigationButton,
         Button documentsNavigationButton,

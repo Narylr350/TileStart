@@ -284,6 +284,55 @@ public static class Win10Theme
     private static int PackAccentPolicyColor(MediaColor color, uint alpha) =>
         unchecked((int)((alpha << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R));
 
+    private static bool ToHsv(MediaColor color, out double hue, out double saturation, out double value)
+    {
+        var r = color.R / 255d;
+        var g = color.G / 255d;
+        var b = color.B / 255d;
+        var max = Math.Max(r, Math.Max(g, b));
+        var min = Math.Min(r, Math.Min(g, b));
+        var delta = max - min;
+        value = max;
+        saturation = max <= double.Epsilon ? 0 : delta / max;
+        if (delta <= double.Epsilon)
+        {
+            hue = 0;
+            return false;
+        }
+
+        hue = max == r
+            ? 60 * (((g - b) / delta) % 6)
+            : max == g
+                ? 60 * (((b - r) / delta) + 2)
+                : 60 * (((r - g) / delta) + 4);
+        if (hue < 0)
+        {
+            hue += 360;
+        }
+
+        return true;
+    }
+
+    private static MediaColor FromHsv(double hue, double saturation, double value)
+    {
+        var chroma = value * saturation;
+        var x = chroma * (1 - Math.Abs((hue / 60 % 2) - 1));
+        var match = value - chroma;
+        var (r, g, b) = hue switch
+        {
+            < 60 => (chroma, x, 0d),
+            < 120 => (x, chroma, 0d),
+            < 180 => (0d, chroma, x),
+            < 240 => (0d, x, chroma),
+            < 300 => (x, 0d, chroma),
+            _ => (chroma, 0d, x),
+        };
+        return MediaColor.FromRgb(
+            (byte)Math.Round((r + match) * 255),
+            (byte)Math.Round((g + match) * 255),
+            (byte)Math.Round((b + match) * 255));
+    }
+
     internal static MediaColor Blend(MediaColor source, MediaColor target, double amount)
     {
         amount = Math.Clamp(amount, 0, 1);
@@ -293,6 +342,18 @@ public static class Win10Theme
             (byte)Math.Round(source.B + ((target.B - source.B) * amount)));
     }
 
+    /// <summary>
+    /// WPF 兼容层的默认磁贴色：原版保留 0.8 透明度，但 WPF 直接叠加 AccentColor 会变成高饱和亮蓝色块。
+    /// 只借用系统强调色的色相，并从当前 Start 表面推导灰度和明度；自定义磁贴颜色不走这里。
+    /// </summary>
+    internal static MediaColor ResolveWin10DefaultTileFaceColor()
+    {
+        ToHsv(StartSurfaceColor, out _, out var surfaceSaturation, out var surfaceValue);
+        var hue = ToHsv(AccentColor, out var accentHue, out _, out _) ? accentHue : 210d;
+        var saturation = Math.Clamp(surfaceSaturation + 0.02, 0.42, 0.62);
+        var value = Math.Clamp(surfaceValue + 0.05, 0.48, 0.70);
+        return FromHsv(hue, saturation, value);
+    }
     internal static bool UseDarkForeground(MediaColor background)
     {
         static double Linearize(byte channel)
