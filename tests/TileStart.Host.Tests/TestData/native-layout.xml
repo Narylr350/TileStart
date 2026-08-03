@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LayoutModificationTemplate xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification">
+  <LayoutOptions StartTileGroupCellWidth="8" />
+  <DefaultLayoutOverride>
+    <StartLayoutCollection>
+      <defaultlayout:StartLayout GroupCellWidth="8">
+        <start:Group Name="">
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="0" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" />
+          <start:DesktopApplicationTile Size="4x2" Column="4" Row="0" />
+          <start:DesktopApplicationTile Size="4x4" Column="0" Row="2" />
+          <start:DesktopApplicationTile Size="1x1" Column="4" Row="2" />
+        </start:Group>
+      </defaultlayout:StartLayout>
+    </StartLayoutCollection>
+  </DefaultLayoutOverride>
+</LayoutModificationTemplate>

@@ -37,10 +37,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\docs\reference\win10-start\native-layout.xml"
+    <Content Include="TestData\native-layout.xml"
              Link="TestData\native-layout.xml"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\docs\reference\win10-start\specs\*.json"
+    <Content Include="TestData\visual-contracts\*.json"
              Link="TestData\win10-start-specs\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\TileStart.Host\MainWindow.xaml"

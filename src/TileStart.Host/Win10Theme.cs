@@ -39,7 +39,7 @@ public static class Win10Theme
     private const byte Win10NavigationOverlayAlpha = 0x80;
 
     // Neutral fallback used when DWM publishes no wallpaper-derived Start colour.
-    // See docs/reference/win11-start/specs/theme-brushes.json (hostBackdropVariant).
+    // The matching StartDocked HostBackdrop resource evidence is retained outside the public repository.
     private const int Windows11StartAcrylicGradientColor = unchecked((int)0xCC1C1C1C);
 
     // TintOpacity 0.75 from the StartDocked HostBackdrop acrylic; leaves enough of the

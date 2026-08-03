@@ -1,0 +1,90 @@
+{
+  "kind": "TileStart public visual contract",
+  "schemaVersion": 1,
+  "status": "partial-symbol-verified",
+  "derivedMappings": {
+    "appItemLogoTypeToLogoType": [
+      {
+        "appItemLogoType": 1,
+        "logoType": 2
+      },
+      {
+        "appItemLogoType": 2,
+        "logoType": 3
+      },
+      {
+        "appItemLogoType": 3,
+        "logoType": 4
+      }
+    ],
+    "logoTypeToVisualCacheContentType": [
+      {
+        "logoType": 0,
+        "contentType": 1
+      },
+      {
+        "logoType": 1,
+        "contentType": 3
+      },
+      {
+        "logoType": 2,
+        "contentType": 5
+      },
+      {
+        "logoType": 3,
+        "contentType": 6
+      },
+      {
+        "logoType": 4,
+        "contentType": 6
+      },
+      {
+        "logoType": 5,
+        "contentType": 8
+      }
+    ],
+    "appListLogoSizeDip": {
+      "themeAware": [
+        {
+          "appItemLogoType": 1,
+          "image": 16,
+          "layout": 24
+        },
+        {
+          "appItemLogoType": 2,
+          "image": 24,
+          "layout": 32
+        },
+        {
+          "appItemLogoType": 3,
+          "image": 24,
+          "layout": 32
+        }
+      ],
+      "legacy": [
+        {
+          "appItemLogoType": 1,
+          "image": 24,
+          "layout": 24
+        },
+        {
+          "appItemLogoType": 2,
+          "image": 32,
+          "layout": 32
+        },
+        {
+          "appItemLogoType": 3,
+          "image": 32,
+          "layout": 32
+        }
+      ]
+    },
+    "tileAssetImageSizeRaw": {
+      "appList": 0,
+      "tileBrandingSmallLogo": 5
+    }
+  },
+  "unresolved": [
+    "Detailed evidence is retained in the private research archive."
+  ]
+}

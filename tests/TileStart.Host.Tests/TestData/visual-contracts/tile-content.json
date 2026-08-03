@@ -1,0 +1,111 @@
+{
+  "kind": "TileStart public visual contract",
+  "metrics": {
+    "defaultTileBackground": {
+      "nativeBindingChain": "TileGrid item template Rectangle.Background <- ITileViewModel.BackgroundBrush -> Shape.Fill",
+      "staticEvidence": "compiled-xbf-and-static-binary-analysis",
+      "staticEvidenceBoundary": "The binding chain is confirmed, but the ordinary idle tile brush's runtime colour and opacity are not exposed as a literal by the static resources.",
+      "tileStartCompatibilityModel": {
+        "composition": "source-over white on the already composited Start Acrylic surface",
+        "whiteOpacity": 0.09896,
+        "independentTileNoise": false,
+        "sample": "92 native background/tile ROI pairs across blue and pink Start colours",
+        "rgbRmse": 1.248
+      }
+    },
+    "reservedBrandingSpace": {
+      "value": 28,
+      "unit": "DIP"
+    },
+    "bottomAlignedTextMargin": {
+      "value": [
+        0,
+        0,
+        0,
+        5
+      ],
+      "unit": "DIP"
+    },
+    "nestedPanelMargin": {
+      "value": [
+        4,
+        0,
+        4,
+        4
+      ],
+      "unit": "DIP"
+    },
+    "groupHeaderHeight": {
+      "value": 32,
+      "unit": "DIP"
+    },
+    "groupTitleWrapping": {
+      "value": "NoWrap",
+      "unit": "DIP"
+    },
+    "folderPreviewHost": {
+      "value": "full-tile"
+    },
+    "tileFocusVisualMargin": {
+      "value": [
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "unit": "DIP"
+    },
+    "tileFocusPrimaryThickness": {
+      "value": 2,
+      "unit": "DIP"
+    },
+    "tileFocusSecondaryThickness": {
+      "value": 1,
+      "unit": "DIP"
+    },
+    "tileRevealBorderThickness": {
+      "value": 2,
+      "unit": "DIP"
+    },
+    "tileRevealBackgroundShowsAboveContent": {
+      "value": true,
+      "implementation": "WPF compatibility mapping: a non-hit-testable reveal overlay is the final tile content layer, while the outer border owns pressed scaling."
+    },
+    "tilePressedScale": {
+      "value": {
+        "small": [
+          0.8958,
+          0.8958
+        ],
+        "medium": [
+          0.95,
+          0.95
+        ],
+        "wide": [
+          0.9755,
+          0.95
+        ],
+        "large": [
+          0.9755,
+          0.9755
+        ]
+      }
+    },
+    "tileDragScale": {
+      "value": {
+        "small": 1.08,
+        "medium": 1.04,
+        "wide": 1.04,
+        "large": 1
+      }
+    },
+    "scrollBarThumbRestColor": {
+      "dark": "#33FFFFFF",
+      "light": "#33000000"
+    },
+    "scrollBarThumbHoverColor": {
+      "dark": "#99FFFFFF",
+      "light": "#99000000"
+    }
+  }
+}

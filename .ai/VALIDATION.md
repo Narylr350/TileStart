@@ -76,7 +76,7 @@ StartMenuExperienceHost 10.0.26100.4768
 
 注册表 `ProductName` 可能仍显示升级前的 Windows 10 字符串；平台判断和验证记录以系统 build 为准。
 
-Win11 开始菜单由 `StartDocked.dll` 实现，不是 Win10 的 `StartUI.dll`；`docs/win10-start-research.md` 与 `docs/startui-layout-symbols.md` 的符号、常量和布局公式只对 Win10 成立，不可直接迁移到 Win11。Win11 的编译期 XAML 资源位于 `Windows.UI.ShellCommon.pri` 的 `/Files/StartDocked/`，可用 `tools\reverse\Export-StartUiXbf.ps1 -ResourceFolder StartDocked` 导出。
+Win11 开始菜单由 `StartDocked.dll` 实现，不是 Win10 的 `StartUI.dll`；私有研究档案中的 Win10 符号、常量和布局公式不可直接迁移到 Win11。必要的原版截图、布局导出和逆向证据保存在仓库外，不随公共源码分发。
 
 当前 Windows 11 环境已确认 Computer Use 可用，需要桌面自动化时按对应 skill 初始化后直接使用。只有实际失败、恢复后仍阻塞验证时才记录具体限制和未覆盖项，不在每轮重复说明可用性或降级策略。
 

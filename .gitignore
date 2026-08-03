@@ -5,3 +5,10 @@
 /src/**/obj/
 /tests/**/bin/
 /tests/**/obj/
+/docs/reference/
+/docs/startui-layout-symbols.md
+/docs/win10-start-motion-reverse.md
+/docs/win10-start-research.md
+/docs/tilestart-win10-start-menu.png
+/docs/name.md
+/tools/reverse/

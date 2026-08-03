@@ -1,0 +1,11 @@
+{
+  "kind": "TileStart public visual contract",
+  "implementationContract": {
+    "tileStartDraggedTileOpacity": {
+      "status": "binary-verified",
+      "value": 0.8,
+      "nativeOtherItemOpacity": 0.5,
+      "mapping": "TileStart IsDragging represents the active rearranging source, not another tile that merely observes IsAnyItemRearranging."
+    }
+  }
+}

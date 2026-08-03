@@ -1,0 +1,122 @@
+{
+  "kind": "TileStart public visual contract",
+  "metrics": {
+    "headerHeight": {
+      "value": 32,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "columns": {
+      "value": [
+        "Auto",
+        "*",
+        48
+      ],
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "titleMarginRest": {
+      "value": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "titleMarginInteractive": {
+      "value": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "compiledVisualStateValue": [
+        8,
+        0,
+        0,
+        0
+      ],
+      "unit": "dip",
+      "status": "runtime-screenshot-verified"
+    },
+    "titleFontSize": {
+      "value": 14,
+      "unit": "dip",
+      "status": "platform-default-approximation"
+    },
+    "titleVerticalAlignment": {
+      "value": "Center",
+      "status": "runtime-screenshot-verified"
+    },
+    "gripperColumnWidth": {
+      "value": 48,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "gripperFontSize": {
+      "value": 16,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "gripperMargin": {
+      "value": [
+        16,
+        6,
+        16,
+        6
+      ],
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "gripperGlyph": {
+      "value": "U+E76F",
+      "status": "compiled-xbf"
+    },
+    "backgroundStrokeThickness": {
+      "value": 2,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "pressedAndEditAccentAlpha": {
+      "value": 255,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-and-theme-resource"
+    },
+    "pressedAndEditAccentBorderAlpha": {
+      "value": 255,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-and-theme-resource"
+    },
+    "dragAccentAlpha": {
+      "value": 204,
+      "compiledOpacity": 0.8,
+      "unit": "byte-alpha",
+      "status": "compiled-xbf-wpf-mapping"
+    },
+    "dragStrokeThickness": {
+      "value": 0,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "primaryFocusThickness": {
+      "value": 2,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "secondaryFocusThickness": {
+      "value": 1,
+      "unit": "dip",
+      "status": "compiled-xbf"
+    },
+    "tileStartHeaderToTilesSpacing": {
+      "value": 3,
+      "unit": "dip",
+      "status": "same-scale-screenshot-calibration"
+    }
+  },
+  "unresolved": [
+    "Detailed evidence is retained in the private research archive."
+  ]
+}

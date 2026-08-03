@@ -1,0 +1,85 @@
+{
+  "kind": "TileStart public visual contract",
+  "metrics": {
+    "fontSize": {
+      "value": 12,
+      "unit": "DIP"
+    },
+    "minimumWidth": {
+      "value": 256,
+      "unit": "DIP"
+    },
+    "checkPlaceholderWidth": {
+      "value": 24,
+      "unit": "DIP"
+    },
+    "iconPlaceholderWidth": {
+      "value": 32,
+      "unit": "DIP"
+    },
+    "itemPaddingMouse": {
+      "value": [
+        12,
+        7,
+        12,
+        7
+      ],
+      "unit": "DIP"
+    },
+    "presenterPadding": {
+      "value": [
+        0,
+        4,
+        0,
+        4
+      ],
+      "unit": "DIP"
+    },
+    "separatorHeight": {
+      "value": 1,
+      "unit": "DIP"
+    },
+    "separatorMargin": {
+      "value": [
+        12,
+        4,
+        12,
+        4
+      ],
+      "unit": "DIP"
+    },
+    "separatorColor": {
+      "value": "#FF7A7A7A"
+    },
+    "disabledForegroundOpacity": {
+      "value": 0.2
+    },
+    "submenuOpenedBackground": {
+      "colorSource": "SystemAccentColor",
+      "darkOpacity": 0.6,
+      "lightOpacity": 0.4
+    },
+    "pressedBackground": {
+      "colorSource": "SystemAccentColor",
+      "darkOpacity": 0.9,
+      "lightOpacity": 0.7
+    },
+    "submenuArrow": {
+      "glyph": "U+E0E3",
+      "fontSize": 12,
+      "normalForeground": "#CC",
+      "activeForeground": "#FF",
+      "unit": "DIP"
+    },
+    "checkGlyph": {
+      "glyph": "U+E001",
+      "fontSize": 16,
+      "normalForeground": "#CC",
+      "activeForeground": "#FF",
+      "unit": "DIP"
+    }
+  },
+  "unresolved": [
+    "Detailed evidence is retained in the private research archive."
+  ]
+}

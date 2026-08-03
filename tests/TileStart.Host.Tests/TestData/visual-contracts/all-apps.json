@@ -1,0 +1,64 @@
+{
+  "kind": "TileStart public visual contract",
+  "metrics": {
+    "gridItemWidth": {
+      "value": 244,
+      "unit": "DIP"
+    },
+    "rowHeight": {
+      "value": 36,
+      "unit": "DIP"
+    },
+    "groupHeaderHeight": {
+      "value": 36,
+      "unit": "DIP"
+    },
+    "groupHeaderFontSize": {
+      "value": 12,
+      "unit": "DIP"
+    },
+    "groupHeaderPadding": {
+      "value": [
+        4,
+        0,
+        0,
+        10
+      ],
+      "unit": "DIP"
+    },
+    "groupHeaderVerticalContentAlignment": {
+      "value": "Bottom"
+    },
+    "expandCollapseCaretFontSize": {
+      "value": 8,
+      "unit": "DIP"
+    },
+    "folderChevronColumnSizing": {
+      "value": "Auto"
+    },
+    "listPadding": {
+      "value": [
+        0,
+        7,
+        0,
+        54
+      ],
+      "unit": "DIP"
+    }
+  },
+  "focusVisual": {
+    "primaryBrush": {
+      "dark": "#FF000000",
+      "light": "#FFFFFFFF"
+    },
+    "secondaryBrush": {
+      "dark": "#FFFFFFFF",
+      "light": "#FF000000"
+    },
+    "tileStartThickness": {
+      "primary": 2,
+      "secondary": 1,
+      "unit": "DIP"
+    }
+  }
+}

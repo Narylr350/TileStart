@@ -1,0 +1,13 @@
+{
+  "kind": "TileStart public visual contract",
+  "metrics": {
+    "cellSize": {
+      "value": 48,
+      "unit": "DIP"
+    },
+    "fontSize": {
+      "value": 20,
+      "unit": "DIP"
+    }
+  }
+}

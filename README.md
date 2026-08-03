@@ -23,8 +23,6 @@ Windows 11 把磁贴开始菜单整个移除了。TileStart 在 Windows 10 / 11 
 > [!WARNING]
 > 当前安装器和可执行文件尚未进行 Authenticode 代码签名，Windows Defender SmartScreen 可能显示"未知发布者"。请只从本仓库的 [Releases](https://github.com/Narylr350/TileStart/releases) 页面下载，并用随 Release 提供的 `SHA256SUMS.txt` 校验文件。
 
-![TileStart 深色主题下的 Win10 风格开始菜单](docs/tilestart-win10-start-menu.png)
-
 ## 为什么做 TileStart
 
 Windows 10 的磁贴开始菜单在 Windows 11 里消失了。习惯用分组磁贴管理常用程序的人，很难接受那排小图标作为替代。TileStart 最初就是为填这个缺口而写的。

@@ -34,7 +34,7 @@ public sealed class Win10GroupLayoutTests
     }
 
     [Fact]
-    public void NativeWin10LayoutUsesEightColumnMetricsWithoutOverlap()
+    public void AnonymousWin10LayoutContractUsesEightColumnMetricsWithoutOverlap()
     {
         var path = System.IO.Path.Combine(AppContext.BaseDirectory, "TestData", "native-layout.xml");
         var document = System.Xml.Linq.XDocument.Load(path);

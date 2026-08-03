@@ -2,9 +2,9 @@
 
 > 最近审计：2026-07-30
 >
-> 状态依据：当前 `main` 源码、自动测试、已保存的实机验收记录和 Win10 / Win11 逆向规格。
+> 状态依据：当前 `main` 源码、自动测试和已保存的实机验收记录。
 >
-> 本文描述当前生产实现；`win10-start-research.md` 与 `win10-start-motion-reverse.md` 主要保存原版证据和研究过程，不再用其中带日期的“当前 TileStart”段落判断现状。
+> 原版截图、布局导出、符号和逆向过程保存在仓库外的私有研究档案中，不随公共源码分发。
 
 ## 1. 产品边界
 
@@ -136,9 +136,6 @@
 
 ## 8. 证据入口
 
-- Win10 原版结构与静态规格：`docs/win10-start-research.md`
-- Win10 原版动画与状态机：`docs/win10-start-motion-reverse.md`
-- Win10 符号和布局证据：`docs/startui-layout-symbols.md`
-- Win10 机器可读规格：`docs/reference/win10-start/specs/*.json`
-- Win11 主题资源证据：`docs/reference/win11-start/specs/theme-brushes.json`
+- 原版截图、布局导出、符号和逆向过程：私有研究档案，不随公共仓库分发。
+- 自动测试使用的数值契约：`tests/TileStart.Host.Tests/TestData/visual-contracts/`，只保留实现验证所需的匿名参数。
 - 当前构建、测试与实机覆盖：`docs/mvp-validation.md`
