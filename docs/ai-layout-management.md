@@ -5,6 +5,8 @@ TileStart 将完整的运行时布局保存在 `%LOCALAPPDATA%\TileStart\layout.
 
 当 AI 或本地自动化需要安全检查或替换布局时，请使用 `scripts\Manage-Layout.ps1`。
 
+这个脚本只管理版本化的布局数据，不会修改 TileStart 的产品默认设置，也不会把某个用户的分类方式写回仓库。对正在运行的安装版或便携版使用 `Apply` 时，它会优先复用当前 Host 的实际路径，因此不需要假设固定安装目录。
+
 ## 命令
 
 ```powershell
@@ -23,6 +25,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply
 
 `Apply` 会将安全备份保存在 `%LOCALAPPDATA%\TileStart\layout-backups`。
 候选文件使用与 `layout.json` 相同的版本化结构，因此可以保留自定义磁贴外观、命令、文件夹和稳定 ID。
+如果只需要生成或检查候选布局，应先使用 `Summary` 和 `Validate`；只有明确准备替换当前布局时才使用 `Apply`。
 
 ## 本机偏好
 

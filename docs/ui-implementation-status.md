@@ -1,6 +1,6 @@
 # TileStart UI / UX 实现状态
 
-> 最近审计：2026-07-30
+> 最近审计：2026-08-03
 >
 > 状态依据：当前 `main` 源码、自动测试和已保存的实机验收记录。
 >
@@ -68,8 +68,8 @@
 
 ### 4.2 部分实现或待精确校准
 
-- 主窗口、导航轨、应用列表、磁贴区和滚动条尚未完成同物理尺度的最终截图验收。
-- 应用名称基线、图标盒、Hover / Press、组标题、组间距和磁贴内容需要继续做像素级校准。
+- 主窗口、导航轨、应用列表、磁贴区、文件夹和右键菜单已在 Windows 10 22H2 虚拟机完成当前一轮 Light / Dark 视觉验收；主页面已达到肉眼对照基本一致。
+- 尚未为所有 Hover、Pressed、Disabled、空布局和极端窗口尺寸建立成套公开截图证据，后续按实际发现的问题继续校准。
 - Acrylic 使用 Win32 AccentPolicy 映射，已经实机验证为可接受近似，但不等同于 UWP AcrylicBrush 的完整合成实现。
 - 应用列表图标尺寸与 Shell 高分辨率加载已经接入；StartUI 内部 Logo 类型 raw value 5、资产优先级和全部状态尺寸仍未闭环。
 - 键盘焦点只覆盖 Escape、搜索、字母索引返回和组名编辑等局部路径，尚未形成完整方向键、Tab、Enter、Space 和 Menu 键矩阵。
@@ -91,17 +91,18 @@
 - Win11 使用 Segoe UI Variable Text / Display。
 - 提供 Win11 深色和浅色文字层级、表面色、Subtle Fill、描边和错误/警告/成功色。
 - 普通控件使用 4 DIP 圆角，弹窗、菜单和卡片使用 8 DIP 圆角。
-- 磁贴继续保持 0 圆角，保留 Win10 磁贴语言。
+- 磁贴使用 4 DIP 圆角、弱半透明表面和无常驻描边，保留 Win10 磁贴尺寸、分组和信息层级。
 - Win11 窗口使用 DWM 圆角，Win10 窗口明确关闭 DWM 圆角。
 - Win11 Acrylic 使用壁纸派生 `StartColorMenu` 色调；透明关闭或高对比度时使用不透明回退。
-- SharedStyles 已覆盖 Button、TextBox、CheckBox、ComboBox、Expander、ToolTip、ContextMenu、MenuItem、Dialog、Card 等常用控件。
+- Win11 顶层菜单和子菜单使用独立 Popup Acrylic 与 DWM 圆角；公共设置、编辑和信息窗口在可用时使用 Mica。
+- 公共对话框具有响应系统动画设置的淡入位移和关闭过渡，导航展开底板只在远离屏幕边缘的一侧使用圆角。
+- SharedStyles 已覆盖 Button、TextBox、CheckBox、ComboBox、Slider、Expander、ToolTip、ContextMenu、MenuItem、Dialog、Card 以及组设置应用条目等常用控件。
 
 ### 5.2 待补齐
 
-- 主开始菜单中本地定义的导航按钮、应用列表项、字母索引、组标题、磁贴、文件夹、滚动条、焦点框和拖动预览仍需逐项确认是否完整使用 Win11 token。
-- Win11 Light / Dark 的全部 Hover、Pressed、Selected、Disabled 状态尚未完成同尺度视觉验收。
-- Accent、StartColorMenu 和高对比度变化没有统一的实时资源刷新机制。
-- 不能因为控件圆角和颜色已经切换，就宣称 Win11 主题已完整 Fluent 化。
+- 当前一轮已覆盖主窗口、导航、应用列表、磁贴、菜单、公共对话框和主要二级编辑控件；不再为了覆盖率继续主动扩张。
+- 少见控件状态、极端布局和 High Contrast 仍可能存在未被当前实机路径触发的遗漏，后续只按明确复现修复。
+- Win11 主题是 TileStart 对 Win10 UI / UX 的 Fluent 化设计，不宣称复刻 Win11 原生开始菜单。
 
 ### 5.3 无需实现
 
@@ -118,7 +119,7 @@
 | 透明效果 | 已实现 | 每次显示菜单重新读取 `EnableTransparency` |
 | 高对比度 | 部分实现 | 禁用 Acrylic，托盘回退；主界面没有完整高对比度主题 |
 | 系统强调色 | 已实现 | 启动时读取 `AccentColorMenu` / `AccentPalette`；系统颜色变化触发 TileStart 自动重启，使磁贴、菜单状态和主题资源统一刷新 |
-| 壁纸派生开始菜单色 | 部分实现 | Acrylic 显示时重新读取；导航 Overlay 和默认磁贴背景仍含进程级静态资源 |
+| 壁纸派生开始菜单色 | 已实现 | Win11 Acrylic 使用 `StartColorMenu`，主题重载同步默认磁贴表面；Win10 强调色开关和实时缩放回退已有专项修复 |
 | 鼠标 Hover 时间 | 已实现 | 导航轨展开使用系统值 |
 | 鼠标滚轮行数 | 已实现 | 平滑滚动使用系统值 |
 | 系统拖动阈值 | 已实现 | 使用 Windows 最小水平/垂直拖动距离 |
@@ -127,12 +128,11 @@
 
 ## 7. 当前优先级
 
-1. 完成 Win10 同尺度静态截图验收，逐区域校准外观。
-2. 将直接输入改为 Windows Search 转交，并补 All Apps 字母 type-to-jump。
-3. 补齐键盘焦点和方向导航。
-4. 逐项完善 Win11 纯视觉主题覆盖，不改变 Win10 布局。
-5. 统一 Accent、透明、高对比度和壁纸派生颜色的运行时刷新。
-6. 最后补菜单关闭和应用启动内容动画；不重写已经可用的文件夹、拖动和让位动画。
+1. 将直接输入改为 Windows Search 转交，并补 All Apps 字母 type-to-jump。
+2. 补齐键盘焦点和方向导航。
+3. 扩大 Win10 / Win11 Shell、DPI、任务栏位置和极端布局回归。
+4. 补齐 High Contrast、Narrator、文本缩放、触摸和笔输入等可访问性路径。
+5. 视觉主题进入维护阶段，只修复实际使用中发现的明确问题，不重写已经验收的主界面和动画。
 
 ## 8. 证据入口
 

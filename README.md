@@ -10,7 +10,6 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D4?style=flat-square&logo=windows)
 ![Runtime](https://img.shields.io/badge/runtime-.NET%208-512BD4?style=flat-square&logo=dotnet)
 ![License](https://img.shields.io/badge/license-Apache--2.0-1D76DB?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-553%20passed-2EA44F?style=flat-square)
 
 [下载安装器](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-Setup-win-x64.exe) ·
 [下载便携版](https://github.com/Narylr350/TileStart/releases/latest/download/TileStart-portable-win-x64.zip) ·
@@ -72,6 +71,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Manage-Layout.ps1 -Action Apply
 - 使用应用默认图标、程序资源或本地图片，支持 PNG、JPEG、BMP、ICO、GIF、SVG，也可主动下载网络图标。
 - 静态图片与 GIF 可作为磁贴背景。
 - 界面风格和颜色模式分别设置：Windows 10 / 11 风格，随系统 / 浅色 / 深色模式；两种风格共享 Win10 主布局，Win11 主题只更换字体、材质、颜色、描边和圆角。
+- Win10 主题按 Windows 10 22H2 原版开始菜单校准应用列表、导航层、磁贴材质、文件夹、右键菜单与 Light / Dark 状态；Win11 主题在同一布局上使用 4 DIP 磁贴圆角、Subtle Fill、Popup Acrylic、对话框 Mica 和现代窗口过渡。
 - 自定义背景色、文字色、图标大小与位置、标题显示、六种标题位置和背景缩放；旧布局默认保持 Win10 风格的左下标题。
 - 磁贴设置窗口有实时预览，支持一键恢复默认外观，以及"应用"和"保存并关闭"两种提交方式。
 - 文件夹设置只显示实际生效的名称、标题、颜色、背景和内容管理能力，不再暴露无效的父磁贴图标或启动选项。
@@ -156,7 +156,7 @@ ShellHook.log        Explorer Hook 诊断日志
 
 ## 兼容性
 
-TileStart 面向 Windows 10 / 11 x64。当前主动开发和日常回归在 Windows 11 上进行；Windows 10 记录来自升级前保存的实机基线，不表示每次提交仍在 Win10 实机同步验证。
+TileStart 面向 Windows 10 / 11 x64。当前主动开发和日常回归在 Windows 11 上进行，同时保留 Windows 10 22H2 虚拟机用于 Win10 主题、Light / Dark、布局边界和安装包回归。两个平台使用独立 Shell 适配器族，视觉验收也分别记录。
 
 ### 当前 Windows 11 验证环境
 
@@ -168,7 +168,7 @@ Windows 11 25H2 build 26200.8875 x64
 
 该环境已验证 Win11-modern 适配器选择、ShellHook 注入、单独 `Win` 键、磁贴拖动、文件夹展开动画和不同磁贴区列数。应用扫描已与菜单显示路径完全解耦，不再在按 Win 时执行目录或 `AppsFolder` 全量枚举。
 
-### Windows 10 历史基线
+### Windows 10 回归环境
 
 ```text
 Windows 10 Pro for Workstations
@@ -177,7 +177,7 @@ Windows 10 Pro for Workstations
 任务栏位于底部
 ```
 
-Windows 10 build 19045 曾完成开始按钮、单独 `Win` 键、磁贴布局、150% DPI 和底部任务栏的基线实机验证。Win10 与 Win11 使用独立适配路径，不能用当前 Win11 结果替代 Win10 回归结论。
+Windows 10 build 19045 已用于开始按钮、单独 `Win` 键、磁贴布局、150% DPI、底部任务栏以及 Win10 Light / Dark 主界面的回归。Win10 与 Win11 使用独立适配路径，不能用其中一个平台的结果替代另一个平台。
 
 Shell 接管与 Windows build 强相关。build 号只用于选择最接近的适配器族，不是精确白名单；未知或未来 build 会先尝试兼容路径，并在日志中记录实际 build 与适配器选择。Host、Injector、Hook 或 IPC 不可用时必须放行原生开始菜单。
 
@@ -188,7 +188,7 @@ Shell 接管与 Windows build 强相关。build 号只用于选择最接近的�
 - 任务栏开始按钮接管和 Explorer 重启后自动恢复曾在 Windows 11 build 22631 验证，当前 build 26200 尚未完成同等范围的正式回归。
 - 非底部任务栏、任务栏自动隐藏、多显示器混合 DPI 和全屏游戏中的单独 `Win` 键仍需要扩大实机覆盖。
 - 传统 Win32 安装程序创建开始菜单快捷方式后可由目录监听及时刷新；纯 UWP/MSIX 安装、更新或卸载依赖独立的低频后台兜底扫描，应用列表最多可能延迟约 5 分钟更新。
-- 当前主动开发环境已经升级到 Windows 11；涉及 Win10 Shell、布局或动画的改动仍需在 Win10 实机重新验证后，才能更新 Windows 10 基线结论。
+- Win10 虚拟机可以覆盖安装、主题和常规桌面交互，但任务栏位置、多显示器、混合 DPI、触摸和全屏游戏等环境仍需独立扩大实机覆盖。
 - 当前直接输入会打开 TileStart 自己的应用列表搜索框并原地过滤应用，尚未按目标行为转交 Windows Search；All Apps 的字母 type-to-jump 也尚未补齐。
 - 当前不提供后台自动更新、云同步、插件市场或视频背景；更新检查仅在用户从托盘主动触发时联网。
 
@@ -271,23 +271,6 @@ artifacts\installer\TileStart-Setup-win-x64.exe
 
 `artifacts/` 是本地构建输出，不提交到 Git。
 
-### 自动发布
-
-推送符合 `v主版本.次版本.修订号` 格式的标签后，GitHub Actions 会自动运行测试、构建完整 x64 解决方案、生成便携包与安装器、计算 SHA-256，并创建 GitHub Release：
-
-```powershell
-git tag v0.1.19
-git push origin v0.1.19
-```
-
-也可以在 GitHub 仓库的 **Actions → Release → Run workflow** 中输入 `0.1.19`。手动运行会在当前 `main` 提交上创建对应标签和 Release。
-
-本地为指定版本生成相同产物：
-
-```powershell
-.\scripts\Build-Package.ps1 -Version 0.1.19
-```
-
 ## 项目结构
 
 ```text
@@ -298,7 +281,7 @@ src/TileStart.ShellProbe/    Shell / IPC 验证工具
 tests/TileStart.Host.Tests/  托管单元、行为与 XAML 回归测试
 installer/                   Inno Setup 安装配置
 scripts/                     构建、打包与 AI 辅助布局管理脚本
-docs/                        设计、验证和用户反馈资料
+docs/                        公共设计、验证和使用说明
 ```
 
 ## 参与开发
