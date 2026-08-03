@@ -9,6 +9,7 @@ using MouseEventHandler = System.Windows.Input.MouseEventHandler;
 using Pen = System.Windows.Media.Pen;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
+using MediaBrush = System.Windows.Media.Brush;
 
 namespace TileStart.Host;
 
@@ -155,6 +156,18 @@ public sealed class Win10InteractionBorder : Border
         typeof(Win10InteractionBorder),
         new FrameworkPropertyMetadata(0.20d, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty HoverFillBrushProperty = DependencyProperty.Register(
+        nameof(HoverFillBrush),
+        typeof(MediaBrush),
+        typeof(Win10InteractionBorder),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty PressedFillBrushProperty = DependencyProperty.Register(
+        nameof(PressedFillBrush),
+        typeof(MediaBrush),
+        typeof(Win10InteractionBorder),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public static readonly DependencyProperty RevealBorderOpacityProperty = DependencyProperty.Register(
         nameof(RevealBorderOpacity),
         typeof(double),
@@ -228,6 +241,18 @@ public sealed class Win10InteractionBorder : Border
         set => SetValue(PressedFillOpacityProperty, value);
     }
 
+    public MediaBrush? HoverFillBrush
+    {
+        get => (MediaBrush?)GetValue(HoverFillBrushProperty);
+        set => SetValue(HoverFillBrushProperty, value);
+    }
+
+    public MediaBrush? PressedFillBrush
+    {
+        get => (MediaBrush?)GetValue(PressedFillBrushProperty);
+        set => SetValue(PressedFillBrushProperty, value);
+    }
+
     public double RevealBorderOpacity
     {
         get => (double)GetValue(RevealBorderOpacityProperty);
@@ -298,11 +323,20 @@ public sealed class Win10InteractionBorder : Border
         var cornerRadius = Win10InteractionMotion.ConstrainCornerRadius(
             CornerRadius,
             new Size(ActualWidth, ActualHeight));
-        var fillOpacity = IsPressedState ? PressedFillOpacity : HoverFillOpacity;
-        if (fillOpacity > 0)
+        var stateFill = IsPressedState ? PressedFillBrush : HoverFillBrush;
+        if (stateFill is not null)
         {
-            var fill = CreateRevealBrush(pointer, fillOpacity);
-            drawingContext.DrawRoundedRectangle(fill, null, bounds, cornerRadius, cornerRadius);
+            // Win11 subtle fill 是均匀状态层，不是 Win10 随指针移动的 Reveal 光斑。
+            drawingContext.DrawRoundedRectangle(stateFill, null, bounds, cornerRadius, cornerRadius);
+        }
+        else
+        {
+            var fillOpacity = IsPressedState ? PressedFillOpacity : HoverFillOpacity;
+            if (fillOpacity > 0)
+            {
+                var fill = CreateRevealBrush(pointer, fillOpacity);
+                drawingContext.DrawRoundedRectangle(fill, null, bounds, cornerRadius, cornerRadius);
+            }
         }
 
         var borderThickness = Math.Max(0, RevealBorderThickness);

@@ -45,8 +45,11 @@
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#80E9E9E9" />
     <!-- Win10 普通磁贴最终可见结果等价于在 Start 表面上覆盖约 9.9% 白色。 -->
     <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"
-                     Color="#FFFFFFFF"
-                     Opacity="0.09896" />
+                      Color="#FFFFFFFF"
+                      Opacity="0.09896" />
+    <SolidColorBrush x:Key="TileStartTileBorderBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="TileStartSearchBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TileStartSearchStrokeBrush" Color="#99000000" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#107C10" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#8A4F00" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#C42B1C" />
@@ -54,5 +57,22 @@
     <CornerRadius x:Key="TileStartControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="TileStartTileCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="TileStartSearchCornerRadius">0</CornerRadius>
+    <Thickness x:Key="TileStartTileBorderThickness">0</Thickness>
     <Thickness x:Key="TileStartContextMenuPresenterPadding">0,4,0,4</Thickness>
+
+    <Style x:Key="TileStartListInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0.10" />
+        <Setter Property="PressedFillOpacity" Value="0.20" />
+    </Style>
+    <Style x:Key="TileStartTileInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
+    <Style x:Key="TileStartTileRevealInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="RevealBorderOpacity" Value="0.5" />
+    </Style>
 </ResourceDictionary>

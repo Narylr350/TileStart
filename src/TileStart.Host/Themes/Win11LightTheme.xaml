@@ -37,14 +37,38 @@
     <SolidColorBrush x:Key="TileStartSubtleFillHoverBrush" Color="#09000000" />
     <SolidColorBrush x:Key="TileStartSubtleFillPressedBrush" Color="#0F000000" />
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush" Color="#E8F3F3F3" />
-    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush"
-                     Color="{x:Static local:Win10Theme.StartTileBackgroundColor}" />
+    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#0A000000" />
+    <SolidColorBrush x:Key="TileStartTileBorderBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="TileStartSearchBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TileStartSearchStrokeBrush" Color="#26000000" />
     <SolidColorBrush x:Key="TileStartSuccessBrush" Color="#0F7B0F" />
     <SolidColorBrush x:Key="TileStartWarningBrush" Color="#9D5D00" />
     <SolidColorBrush x:Key="TileStartErrorBrush" Color="#C42B1C" />
 
     <CornerRadius x:Key="TileStartControlCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="TileStartOverlayCornerRadius">8</CornerRadius>
-    <CornerRadius x:Key="TileStartTileCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="TileStartTileCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="TileStartSearchCornerRadius">18</CornerRadius>
+    <Thickness x:Key="TileStartTileBorderThickness">0</Thickness>
     <Thickness x:Key="TileStartContextMenuPresenterPadding">4</Thickness>
+
+    <Style x:Key="TileStartListInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="HoverFillBrush" Value="{StaticResource TileStartSubtleFillHoverBrush}" />
+        <Setter Property="PressedFillBrush" Value="{StaticResource TileStartSubtleFillPressedBrush}" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
+    <Style x:Key="TileStartTileInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="HoverFillBrush" Value="{StaticResource TileStartSubtleFillHoverBrush}" />
+        <Setter Property="PressedFillBrush" Value="{StaticResource TileStartSubtleFillPressedBrush}" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
+    <Style x:Key="TileStartTileRevealInteractionStyle" TargetType="{x:Type local:Win10InteractionBorder}">
+        <Setter Property="HoverFillOpacity" Value="0" />
+        <Setter Property="PressedFillOpacity" Value="0" />
+        <Setter Property="RevealBorderOpacity" Value="0" />
+    </Style>
 </ResourceDictionary>

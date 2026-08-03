@@ -205,11 +205,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
+                                                      Style="{StaticResource TileStartListInteractionStyle}"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
-                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="104">
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -225,7 +224,8 @@
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{StaticResource TileStartTextPrimaryBrush}" />
             <Setter Property="Background" Value="{StaticResource TileStartDefaultTileBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="{StaticResource TileStartTileBorderBrush}" />
+            <Setter Property="BorderThickness" Value="{StaticResource TileStartTileBorderThickness}" />
             <Setter Property="Cursor" Value="Arrow" />
             <Setter Property="FocusVisualStyle">
                 <Setter.Value>
@@ -252,12 +252,12 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="TileBorder"
+                                                      Style="{StaticResource TileStartTileInteractionStyle}"
                                                       Background="{TemplateBinding Background}"
+                                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                                      BorderThickness="{TemplateBinding BorderThickness}"
                                                       CornerRadius="{StaticResource TileStartTileCornerRadius}"
-                                                      HoverFillOpacity="0"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                      PressedFillOpacity="0"
-                                                      RevealBorderOpacity="0"
                                                       UsesTilePressedScale="True"
                                                       SnapsToDevicePixels="True">
                             <Grid>
@@ -267,14 +267,12 @@
                                 <!-- StartUI 的 ListViewItemPresenter 会把 Reveal chrome 画在磁贴内容上方。
                                      外层只负责整体按压缩放，末层覆盖件负责光效；合并后图片会遮住边缘光。 -->
                                 <local:Win10InteractionBorder x:Name="TileRevealOverlay"
+                                                              Style="{StaticResource TileStartTileRevealInteractionStyle}"
                                                               Background="Transparent"
                                                               CornerRadius="{StaticResource TileStartTileCornerRadius}"
-                                                              HoverFillOpacity="0"
                                                               IsHitTestVisible="False"
                                                               IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                              PressedFillOpacity="0"
                                                               RenderTransform="{x:Null}"
-                                                              RevealBorderOpacity="0.5"
                                                               RevealBorderThickness="{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}"
                                                               RevealRadius="96"
                                                               SnapsToDevicePixels="True"
@@ -306,11 +304,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
+                                                      Style="{StaticResource TileStartListInteractionStyle}"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
-                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="84">
                             <!-- 字母标题保持整行交互框，字形单独对齐下方应用图标列。 -->
                             <Grid Width="{x:Static icons:Win10IconMetrics.ClassicAppLogoLayoutSize}"
@@ -337,11 +334,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <local:Win10InteractionBorder x:Name="Background"
+                                                      Style="{StaticResource TileStartListInteractionStyle}"
                                                       Background="{TemplateBinding Background}"
                                                       CornerRadius="{StaticResource TileStartControlCornerRadius}"
-                                                      HoverFillOpacity="0.10"
                                                       IsPressedState="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                      PressedFillOpacity="0.20"
                                                       RevealRadius="72">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </local:Win10InteractionBorder>
@@ -882,10 +878,10 @@
                 <Border x:Name="SearchPanel"
                         Margin="8,8,8,4"
                         Height="36"
-                        Background="{StaticResource TileStartControlBackgroundBrush}"
-                        BorderBrush="{StaticResource TileStartControlStrokeHoverBrush}"
+                        Background="{StaticResource TileStartSearchBackgroundBrush}"
+                        BorderBrush="{StaticResource TileStartSearchStrokeBrush}"
                         BorderThickness="1"
-                        CornerRadius="{StaticResource TileStartControlCornerRadius}"
+                        CornerRadius="{StaticResource TileStartSearchCornerRadius}"
                         Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>

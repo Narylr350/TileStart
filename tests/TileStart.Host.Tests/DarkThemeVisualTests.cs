@@ -303,23 +303,22 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
-    public void LightShellKeepsTheSameDefaultTileFaceAsItsMatchingStyle()
+    public void DefaultTileFacesUseStyleSpecificSurfaceLayers()
     {
         const string key = "TileStartDefaultTileBackgroundBrush";
 
         Assert.Equal(
             ReadThemeBrushColor("Win10Theme.xaml", key),
             ReadThemeBrushColor("Win10LightTheme.xaml", key));
-        Assert.Equal(
-            ReadThemeBrushColor("Win11Theme.xaml", key),
-            ReadThemeBrushColor("Win11LightTheme.xaml", key));
         Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("Win10Theme.xaml", key));
         Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10Theme.xaml", key));
         Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10LightTheme.xaml", key));
+        Assert.Equal("#0AFFFFFF", ReadThemeBrushColor("Win11Theme.xaml", key));
+        Assert.Equal("#0A000000", ReadThemeBrushColor("Win11LightTheme.xaml", key));
     }
 
     [Fact]
-    public void TileButtonsUseDedicatedSquareGeometry()
+    public void TileButtonsConsumeThemeSpecificCardGeometryAndStates()
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -332,8 +331,11 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Name") == "TileRevealOverlay");
 
         Assert.Equal("{StaticResource TileStartTileCornerRadius}", (string?)border.Attribute("CornerRadius"));
-        Assert.Equal("0", (string?)border.Attribute("RevealBorderOpacity"));
-        Assert.Equal("0.5", (string?)overlay.Attribute("RevealBorderOpacity"));
+        Assert.Equal("{StaticResource TileStartTileInteractionStyle}", (string?)border.Attribute("Style"));
+        Assert.Equal("{TemplateBinding BorderBrush}", (string?)border.Attribute("BorderBrush"));
+        Assert.Equal("{TemplateBinding BorderThickness}", (string?)border.Attribute("BorderThickness"));
+        Assert.Equal("{StaticResource TileStartTileRevealInteractionStyle}",
+            (string?)overlay.Attribute("Style"));
         Assert.Equal("{x:Static local:Win10VisualMetrics.TileRevealBorderThickness}",
             (string?)overlay.Attribute("RevealBorderThickness"));
         Assert.Equal("False", (string?)overlay.Attribute("IsHitTestVisible"));
@@ -343,8 +345,25 @@ public sealed class DarkThemeVisualTests
         var tileLayers = border.Element(presentation + "Grid")!.Elements().ToArray();
         Assert.Equal(presentation + "ContentPresenter", tileLayers[0].Name);
         Assert.Same(overlay, tileLayers[1]);
-        Assert.Equal("0", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+        Assert.Equal("4", ReadThemeResourceValue("Win11Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+        Assert.Equal("4", ReadThemeResourceValue("Win11LightTheme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+        Assert.Equal("0", ReadThemeResourceValue(
+            "Win11Theme.xaml",
+            "Thickness",
+            "TileStartTileBorderThickness"));
         Assert.Equal("0", ReadThemeResourceValue("Win10Theme.xaml", "CornerRadius", "TileStartTileCornerRadius"));
+        Assert.Equal("0.5", ReadThemeStyleSetter(
+            "Win10Theme.xaml",
+            "TileStartTileRevealInteractionStyle",
+            "RevealBorderOpacity"));
+        Assert.Equal("0", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartTileRevealInteractionStyle",
+            "RevealBorderOpacity"));
+        Assert.Equal("{StaticResource TileStartSubtleFillHoverBrush}", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartTileInteractionStyle",
+            "HoverFillBrush"));
 
         var primaryFocus = style.Descendants(presentation + "Border")
             .Single(element => (string?)element.Attribute(x + "Name") == "TilePrimaryFocusVisual");
@@ -387,7 +406,7 @@ public sealed class DarkThemeVisualTests
     [InlineData("AppRowStyle")]
     [InlineData("LetterHeaderStyle")]
     [InlineData("AlphabetButtonStyle")]
-    public void AllAppsInteractionsUseNativeListFallbackOpacities(string styleKey)
+    public void AllAppsInteractionsUseThemeSpecificStateLayers(string styleKey)
     {
         var document = LoadMainWindow();
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -398,8 +417,49 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Key") == styleKey);
         var border = style.Descendants(local + "Win10InteractionBorder").Single();
 
-        Assert.Equal("0.10", (string?)border.Attribute("HoverFillOpacity"));
-        Assert.Equal("0.20", (string?)border.Attribute("PressedFillOpacity"));
+        Assert.Equal("{StaticResource TileStartListInteractionStyle}", (string?)border.Attribute("Style"));
+        Assert.Equal("0.10", ReadThemeStyleSetter(
+            "Win10Theme.xaml",
+            "TileStartListInteractionStyle",
+            "HoverFillOpacity"));
+        Assert.Equal("0.20", ReadThemeStyleSetter(
+            "Win10Theme.xaml",
+            "TileStartListInteractionStyle",
+            "PressedFillOpacity"));
+        Assert.Equal("{StaticResource TileStartSubtleFillHoverBrush}", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartListInteractionStyle",
+            "HoverFillBrush"));
+        Assert.Equal("{StaticResource TileStartSubtleFillPressedBrush}", ReadThemeStyleSetter(
+            "Win11Theme.xaml",
+            "TileStartListInteractionStyle",
+            "PressedFillBrush"));
+    }
+
+    [Fact]
+    public void SearchPanelUsesAWin11PillWithoutChangingGeneralControlRadius()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var search = document.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "SearchPanel");
+
+        Assert.Equal("{StaticResource TileStartSearchBackgroundBrush}", (string?)search.Attribute("Background"));
+        Assert.Equal("{StaticResource TileStartSearchStrokeBrush}", (string?)search.Attribute("BorderBrush"));
+        Assert.Equal("{StaticResource TileStartSearchCornerRadius}", (string?)search.Attribute("CornerRadius"));
+        Assert.Equal("18", ReadThemeResourceValue(
+            "Win11Theme.xaml",
+            "CornerRadius",
+            "TileStartSearchCornerRadius"));
+        Assert.Equal("4", ReadThemeResourceValue(
+            "Win11Theme.xaml",
+            "CornerRadius",
+            "TileStartControlCornerRadius"));
+        Assert.Equal("0", ReadThemeResourceValue(
+            "Win10Theme.xaml",
+            "CornerRadius",
+            "TileStartSearchCornerRadius"));
     }
 
     [Theory]
@@ -780,5 +840,17 @@ public sealed class DarkThemeVisualTests
         return document.Descendants(presentation + elementName)
             .Single(element => (string?)element.Attribute(x + "Key") == key)
             .Value;
+    }
+
+    private static string? ReadThemeStyleSetter(string fileName, string styleKey, string property)
+    {
+        var document = LoadXaml(fileName);
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var style = document.Descendants(presentation + "Style")
+            .Single(element => (string?)element.Attribute(x + "Key") == styleKey);
+        return style.Elements(presentation + "Setter")
+            .Single(element => (string?)element.Attribute("Property") == property)
+            .Attribute("Value")?.Value;
     }
 }
