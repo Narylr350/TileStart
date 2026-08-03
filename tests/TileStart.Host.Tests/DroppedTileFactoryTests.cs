@@ -45,6 +45,36 @@ public sealed class DroppedTileFactoryTests : IDisposable
         Assert.Equal("项目资料", tile.Name);
     }
 
+    [Theory]
+    [InlineData("程序.exe")]
+    [InlineData("启动.cmd")]
+    [InlineData("脚本.ps1")]
+    public void CreateUsesTheTargetDirectoryForProgramsAndScripts(string fileName)
+    {
+        var path = Path.Combine(_directory, fileName);
+        File.WriteAllText(path, string.Empty);
+
+        var tile = DroppedTileFactory.Create(path, _ => null);
+
+        Assert.NotNull(tile);
+        Assert.Equal(_directory, tile.WorkingDirectory);
+    }
+
+    [Theory]
+    [InlineData("工具.lnk")]
+    [InlineData("网站.url")]
+    [InlineData("说明.txt")]
+    public void CreateLeavesShellManagedWorkingDirectoriesEmpty(string fileName)
+    {
+        var path = Path.Combine(_directory, fileName);
+        File.WriteAllText(path, string.Empty);
+
+        var tile = DroppedTileFactory.Create(path, _ => null);
+
+        Assert.NotNull(tile);
+        Assert.Empty(tile.WorkingDirectory);
+    }
+
     [Fact]
     public void CreateUsesDriveIdentityForAFileSystemRoot()
     {

@@ -40,6 +40,30 @@ public sealed class AppLauncherTests
         Assert.Equal("runas", startInfo.Verb);
     }
 
+    [Theory]
+    [InlineData(@"C:\Portable\Tool\tool.exe", @"C:\Portable\Tool")]
+    [InlineData(@"C:\Scripts\launch.cmd", @"C:\Scripts")]
+    [InlineData(@"C:\Scripts\launch.ps1", @"C:\Scripts")]
+    public void CreateStartInfoDefaultsLocalProgramsAndScriptsToTheirTargetDirectory(
+        string target,
+        string expectedWorkingDirectory)
+    {
+        var startInfo = AppLauncher.CreateStartInfo(new TileItem { LaunchTarget = target });
+
+        Assert.Equal(expectedWorkingDirectory, startInfo.WorkingDirectory);
+    }
+
+    [Theory]
+    [InlineData(@"C:\Start Menu\Tool.lnk")]
+    [InlineData("cmd.exe")]
+    [InlineData(@"shell:AppsFolder\Package!App")]
+    public void CreateStartInfoDoesNotOverrideShellManagedWorkingDirectories(string target)
+    {
+        var startInfo = AppLauncher.CreateStartInfo(new TileItem { LaunchTarget = target });
+
+        Assert.Empty(startInfo.WorkingDirectory);
+    }
+
     [Fact]
     public void CreateOpenFileLocationStartInfoSelectsStartMenuShortcut()
     {
@@ -47,7 +71,8 @@ public sealed class AppLauncherTests
             @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tool.lnk");
 
         Assert.Equal("explorer.exe", startInfo.FileName);
-        Assert.Equal("/select,\"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Tool.lnk\"", startInfo.Arguments);
+        Assert.Equal("/select,\"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Tool.lnk\"",
+            startInfo.Arguments);
         Assert.True(startInfo.UseShellExecute);
     }
 
@@ -82,7 +107,8 @@ public sealed class AppLauncherTests
                 },
                 []));
             Assert.Null(AppLauncher.ResolveOpenFileLocationTarget(
-                new TileItem { TargetType = TileTargetType.Application, LaunchTarget = @"shell:AppsFolder\Package!App" },
+                new TileItem
+                    { TargetType = TileTargetType.Application, LaunchTarget = @"shell:AppsFolder\Package!App" },
                 []));
             Assert.Null(AppLauncher.ResolveOpenFileLocationTarget(
                 new TileItem { LaunchTarget = executable, IsTileFolder = true },
@@ -165,7 +191,9 @@ public sealed class AppLauncherTests
         var startInfo = AppLauncher.CreateStartInfo(tile);
 
         Assert.Equal("powershell.exe", startInfo.FileName);
-        Assert.Equal("-NoProfile -ExecutionPolicy Bypass -File \"C:\\Scripts\\deploy task.ps1\" -Environment Test", startInfo.Arguments);
+        Assert.Equal("-NoProfile -ExecutionPolicy Bypass -File \"C:\\Scripts\\deploy task.ps1\" -Environment Test",
+            startInfo.Arguments);
+        Assert.Equal(@"C:\Scripts", startInfo.WorkingDirectory);
         Assert.True(startInfo.UseShellExecute);
     }
 }

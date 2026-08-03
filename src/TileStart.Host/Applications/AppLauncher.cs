@@ -12,6 +12,9 @@ public static class AppLauncher
     private static readonly string[] DirectLaunchExtensions =
         [".exe", ".lnk", ".appref-ms", ".bat", ".cmd", ".url"];
 
+    private static readonly string[] TargetDirectoryWorkingExtensions =
+        [".exe", ".bat", ".cmd", ".ps1"];
+
     public static bool Launch(AppEntry app) =>
         Launch(app.Name, CreateShellTargetStartInfo(app.LaunchTarget));
 
@@ -97,9 +100,12 @@ public static class AppLauncher
             }
             : CreateShellTargetStartInfo(tile.LaunchTarget, tile.Arguments);
 
-        if (!string.IsNullOrWhiteSpace(tile.WorkingDirectory))
+        var workingDirectory = !string.IsNullOrWhiteSpace(tile.WorkingDirectory)
+            ? tile.WorkingDirectory
+            : ResolveTargetWorkingDirectory(tile.LaunchTarget);
+        if (!string.IsNullOrWhiteSpace(workingDirectory))
         {
-            startInfo.WorkingDirectory = tile.WorkingDirectory;
+            startInfo.WorkingDirectory = workingDirectory;
         }
 
         if (tile.RunAsAdministrator || forceAdministrator)
@@ -108,6 +114,20 @@ public static class AppLauncher
         }
 
         return startInfo;
+    }
+
+    internal static string ResolveTargetWorkingDirectory(string target)
+    {
+        var extension = Path.GetExtension(target);
+        if (!TargetDirectoryWorkingExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase)
+            || !Path.IsPathFullyQualified(target))
+        {
+            return string.Empty;
+        }
+
+        // 便携程序和脚本经常按当前目录读取同目录配置；工作目录留空时不能让它们
+        // 继承 TileStart Host 的安装目录。快捷方式仍交给 Shell 使用自身的“起始位置”。
+        return Path.GetDirectoryName(target) ?? string.Empty;
     }
 
     internal static ProcessStartInfo CreateShellTargetStartInfo(

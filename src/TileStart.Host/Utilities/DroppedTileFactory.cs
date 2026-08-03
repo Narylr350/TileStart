@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows.Media;
+using TileStart.Host.Applications;
 using TileStart.Host.Icons;
 using TileStart.Host.Tiles.Models;
 
@@ -44,6 +45,7 @@ public static class DroppedTileFactory
                 Name = name,
                 LaunchTarget = fullPath,
                 TargetType = type,
+                WorkingDirectory = AppLauncher.ResolveTargetWorkingDirectory(fullPath),
                 Size = TileSize.Medium,
                 Icon = iconLoader(fullPath),
             };
