@@ -298,11 +298,9 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(
             ReadThemeBrushColor("Win11Theme.xaml", key),
             ReadThemeBrushColor("Win11LightTheme.xaml", key));
-        Assert.Equal(
-            "{x:Static local:Win10Theme.AccentColor}",
-            ReadThemeBrushColor("Win10Theme.xaml", key));
-        Assert.Equal("0.8", ReadThemeBrushOpacity("Win10Theme.xaml", key));
-        Assert.Equal("0.8", ReadThemeBrushOpacity("Win10LightTheme.xaml", key));
+        Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("Win10Theme.xaml", key));
+        Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10Theme.xaml", key));
+        Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10LightTheme.xaml", key));
     }
 
     [Fact]

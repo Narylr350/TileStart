@@ -78,22 +78,9 @@ public static class AppThemeManager
     {
         if (resources["TileStartDefaultTileBackgroundBrush"] is SolidColorBrush brush)
         {
-            var useAcrylic = style == AppThemeStyle.Windows10
-                             && Win10Theme.ReadStartMaterial(style).UseAcrylic;
-            var tileColor = style == AppThemeStyle.Windows10 && useAcrylic
-                ? Win10Theme.ResolveWin10DefaultTileFaceColor()
-                : brush.Color;
             TileItem.SetThemeDefaultBackgroundColor(
-                tileColor.ToString(),
-                ResolveDefaultTileBackgroundOpacity(style, useAcrylic, brush.Opacity));
+                brush.Color.ToString(),
+                Math.Clamp(brush.Opacity, 0, 1));
         }
     }
-
-    internal static double ResolveDefaultTileBackgroundOpacity(
-        AppThemeStyle style,
-        bool useAcrylic,
-        double transparencyEnabledOpacity) =>
-        style == AppThemeStyle.Windows10 && useAcrylic
-            ? Math.Clamp(transparencyEnabledOpacity, 0, 1)
-            : 1;
 }
