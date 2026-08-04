@@ -43,6 +43,20 @@ public sealed class StartupPerformanceTests
     }
 
     [Fact]
+    public void ApplicationScanPostProcessingDoesNotResumeOnTheUiDispatcher()
+    {
+        var controller = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
+        var scanner = File.ReadAllText(HostSource("Applications", "StartAppScanner.cs"));
+
+        Assert.Contains("StartAppScanner.ScanAsync().ConfigureAwait(false)", controller,
+            StringComparison.Ordinal);
+        Assert.Contains("using var identityResolver = LaunchTargetIdentity.CreateResolver();", controller,
+            StringComparison.Ordinal);
+        Assert.Contains("Task.WhenAll(shortcutTask, packagedTask).ConfigureAwait(false)", scanner,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ApplicationIconGroupsApplyAsEachLoaderCompletes()
     {
         var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));

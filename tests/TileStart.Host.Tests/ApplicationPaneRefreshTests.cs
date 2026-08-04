@@ -64,6 +64,47 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
+    public void ScanPostProcessingResolvesEachDistinctLaunchTargetOnce()
+    {
+        var scanned = new[]
+        {
+            AppEntry.Folder("Tools",
+            [
+                AppEntry.Application("Hidden", "shell:hidden-shortcut", DateTime.MinValue),
+                AppEntry.Application("Existing", "shell:existing-shortcut", DateTime.MinValue),
+            ]),
+        };
+        var custom = new[]
+        {
+            AppEntry.Application("Duplicate", "shell:existing-custom", DateTime.MinValue),
+            AppEntry.Application("Custom", "shell:custom", DateTime.MinValue),
+        };
+        var identities = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["shell:hidden-shortcut"] = "HIDDEN",
+            ["shell:existing-shortcut"] = "EXISTING",
+            ["shell:existing-custom"] = "EXISTING",
+            ["shell:custom"] = "CUSTOM",
+        };
+        var resolutionCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        var merged = ApplicationPaneController.MergeScannedApplications(
+            scanned,
+            custom,
+            new HashSet<string>(["HIDDEN"], StringComparer.OrdinalIgnoreCase),
+            launchTarget =>
+            {
+                resolutionCounts[launchTarget] = resolutionCounts.GetValueOrDefault(launchTarget) + 1;
+                return identities[launchTarget];
+            });
+
+        Assert.Equal(["Tools", "Custom"], merged.Select(app => app.Name));
+        Assert.Equal(["Existing"], merged[0].Children.Select(app => app.Name));
+        Assert.Equal(4, resolutionCounts.Count);
+        Assert.All(resolutionCounts.Values, count => Assert.Equal(1, count));
+    }
+
+    [Fact]
     public void RefreshReusesOnlyIconsWhoseSourceMetadataIsUnchanged()
     {
         var classicIcon = new DrawingImage();

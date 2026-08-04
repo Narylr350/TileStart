@@ -16,7 +16,7 @@ public static class StartAppScanner
             "TileStart Shortcut Scanner",
             ApartmentState.MTA);
         var packagedTask = ScanPackagedAppsAsync();
-        await Task.WhenAll(shortcutTask, packagedTask);
+        await Task.WhenAll(shortcutTask, packagedTask).ConfigureAwait(false);
 
         var shortcutEntries = shortcutTask.Result;
         var applications = shortcutEntries

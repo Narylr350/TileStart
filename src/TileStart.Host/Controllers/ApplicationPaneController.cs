@@ -348,18 +348,47 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private static async Task<List<AppEntry>> ScanApplicationsAsync()
     {
-        var scannedApps = FilterHiddenApplications(
-            await StartAppScanner.ScanAsync(),
-            AppVisibilityStore.Load());
-        var customApps = CustomAppStore.Load();
-        var scannedLaunchableApps = AppEntry.FlattenApplications(scannedApps).ToArray();
-        var apps = customApps.Count == 0
-            ? scannedApps.ToList()
-            : scannedApps
-                .Concat(customApps.Where(custom => !scannedLaunchableApps.Any(existing =>
-                    LaunchTargetIdentity.GetKey(existing.LaunchTarget)
-                    == LaunchTargetIdentity.GetKey(custom.LaunchTarget))))
-                .ToList();
+        var scannedApps = await StartAppScanner.ScanAsync().ConfigureAwait(false);
+        using var identityResolver = LaunchTargetIdentity.CreateResolver();
+        return MergeScannedApplications(
+            scannedApps,
+            CustomAppStore.Load(),
+            AppVisibilityStore.Load(),
+            identityResolver.GetKey);
+    }
+
+    internal static List<AppEntry> MergeScannedApplications(
+        IReadOnlyList<AppEntry> scannedApps,
+        IReadOnlyList<AppEntry> customApps,
+        IReadOnlySet<string> hiddenIdentities,
+        Func<string, string> resolveIdentity)
+    {
+        var identityCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string ResolveIdentity(string launchTarget)
+        {
+            if (identityCache.TryGetValue(launchTarget, out var identity))
+            {
+                return identity;
+            }
+
+            identity = resolveIdentity(launchTarget);
+            identityCache[launchTarget] = identity;
+            return identity;
+        }
+
+        var visibleScannedApps = FilterHiddenApplications(scannedApps, hiddenIdentities, ResolveIdentity);
+        var scannedIdentities = AppEntry.FlattenApplications(visibleScannedApps)
+            .Select(app => ResolveIdentity(app.LaunchTarget))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var apps = visibleScannedApps.ToList();
+        foreach (var customApp in customApps)
+        {
+            if (!scannedIdentities.Contains(ResolveIdentity(customApp.LaunchTarget)))
+            {
+                apps.Add(customApp);
+            }
+        }
+
         RemoveMissingApplications(apps);
         return apps;
     }
@@ -506,14 +535,15 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private static IReadOnlyList<AppEntry> FilterHiddenApplications(
         IEnumerable<AppEntry> entries,
-        IReadOnlySet<string> hiddenIdentities)
+        IReadOnlySet<string> hiddenIdentities,
+        Func<string, string> resolveIdentity)
     {
         var visible = new List<AppEntry>();
         foreach (var entry in entries)
         {
             if (entry.IsFolder)
             {
-                var visibleChildren = FilterHiddenApplications(entry.Children, hiddenIdentities);
+                var visibleChildren = FilterHiddenApplications(entry.Children, hiddenIdentities, resolveIdentity);
                 entry.Children.Clear();
                 foreach (var child in visibleChildren)
                 {
@@ -525,7 +555,7 @@ internal sealed class ApplicationPaneController : IDisposable
                     visible.Add(entry);
                 }
             }
-            else if (!hiddenIdentities.Contains(LaunchTargetIdentity.GetKey(entry.LaunchTarget)))
+            else if (!hiddenIdentities.Contains(resolveIdentity(entry.LaunchTarget)))
             {
                 visible.Add(entry);
             }
