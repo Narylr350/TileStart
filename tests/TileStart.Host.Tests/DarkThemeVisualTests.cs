@@ -314,8 +314,8 @@ public sealed class DarkThemeVisualTests
     }
 
     [Theory]
-    [InlineData("Win10Theme.xaml", "#FF252525")]
-    [InlineData("Win10LightTheme.xaml", "#FFFAFAFA")]
+    [InlineData("Win10Theme.xaml", "#00252525")]
+    [InlineData("Win10LightTheme.xaml", "#00FAFAFA")]
     [InlineData("Win11Theme.xaml", "#00272727")]
     [InlineData("Win11LightTheme.xaml", "#00F9F9F9")]
     public void SettingsChromeUsesThemeSpecificMaterialOverlay(string theme, string expected)
@@ -733,6 +733,10 @@ public sealed class DarkThemeVisualTests
             .Single(element => (string?)element.Attribute(x + "Name") == "Windows10Choice"));
         Assert.NotNull(document.Descendants(presentation + "RadioButton")
             .Single(element => (string?)element.Attribute(x + "Name") == "Windows11Choice"));
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "经典直角、Acrylic 模糊与传统控件层级");
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "Fluent 圆角、Acrylic 模糊与现代控件层级");
         Assert.NotNull(document.Descendants(presentation + "RadioButton")
             .Single(element => (string?)element.Attribute(x + "Name") == "SystemColorChoice"));
         Assert.NotNull(document.Descendants(presentation + "RadioButton")

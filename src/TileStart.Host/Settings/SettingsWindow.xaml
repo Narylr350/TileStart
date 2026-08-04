@@ -162,7 +162,7 @@
                                 <TextBlock Margin="0,4,0,0"
                                            Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                            FontSize="11"
-                                           Text="直角控件与经典深色层级" />
+                                           Text="经典直角、Acrylic 模糊与传统控件层级" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton x:Name="Windows11Choice"
@@ -175,7 +175,7 @@
                                 <TextBlock Margin="0,4,0,0"
                                            Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                            FontSize="11"
-                                           Text="Fluent 表面、圆角与系统强调色" />
+                                           Text="Fluent 圆角、Acrylic 模糊与现代控件层级" />
                             </StackPanel>
                         </RadioButton>
                     </Grid>
