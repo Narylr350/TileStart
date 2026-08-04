@@ -116,12 +116,16 @@ public sealed class StartupPerformanceTests
     {
         var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
 
-        Assert.Contains("var appsByIdentity = BuildApplicationIdentityIndex(apps);", source,
+        Assert.Contains("using var identityResolver = LaunchTargetIdentity.CreateResolver();", source,
             StringComparison.Ordinal);
-        Assert.Contains("LoadTileVisualTree(tile, appsByIdentity, loadedVisuals);", source,
+        Assert.Contains("using var shellIconSession = ShellIconLoader.CreateSession();", source,
             StringComparison.Ordinal);
-        Assert.Contains("LoadTileVisualTree(child, appsByIdentity, loadedVisuals);", source,
+        Assert.Contains("var appsByIdentity = BuildApplicationIdentityIndex(apps, identityResolver.GetKey);", source,
             StringComparison.Ordinal);
+        Assert.Contains("LoadTileVisualTree(tile, appsByIdentity, identityResolver, shellIconSession, loadedVisuals);",
+            source, StringComparison.Ordinal);
+        Assert.Contains("LoadTileVisualTree(child, appsByIdentity, identityResolver, shellIconSession, loadedVisuals);",
+            source, StringComparison.Ordinal);
 
         var singleRestoreStart = source.IndexOf("public static void RestoreTileIcon(", StringComparison.Ordinal);
         var nextMethod = source.IndexOf("private static (ImageSource Icon", singleRestoreStart,

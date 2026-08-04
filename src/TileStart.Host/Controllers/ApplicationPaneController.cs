@@ -1080,11 +1080,13 @@ internal sealed class ApplicationPaneController : IDisposable
         TileLayout layout,
         IReadOnlyList<AppEntry> apps)
     {
-        var appsByIdentity = BuildApplicationIdentityIndex(apps);
+        using var identityResolver = LaunchTargetIdentity.CreateResolver();
+        using var shellIconSession = ShellIconLoader.CreateSession();
+        var appsByIdentity = BuildApplicationIdentityIndex(apps, identityResolver.GetKey);
         var loadedVisuals = new List<LoadedTileVisual>();
         foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
         {
-            LoadTileVisualTree(tile, appsByIdentity, loadedVisuals);
+            LoadTileVisualTree(tile, appsByIdentity, identityResolver, shellIconSession, loadedVisuals);
         }
 
         return loadedVisuals;
@@ -1093,11 +1095,19 @@ internal sealed class ApplicationPaneController : IDisposable
     internal static IReadOnlyDictionary<string, AppEntry> BuildApplicationIdentityIndex(
         IEnumerable<AppEntry> apps)
     {
+        using var identityResolver = LaunchTargetIdentity.CreateResolver();
+        return BuildApplicationIdentityIndex(apps, identityResolver.GetKey);
+    }
+
+    private static IReadOnlyDictionary<string, AppEntry> BuildApplicationIdentityIndex(
+        IEnumerable<AppEntry> apps,
+        Func<string, string> resolveIdentity)
+    {
         var appsByIdentity = new Dictionary<string, AppEntry>(StringComparer.OrdinalIgnoreCase);
         foreach (var app in apps)
         {
             // FirstOrDefault 原本按扫描顺序选中第一个相同身份；TryAdd 保持该兼容行为。
-            appsByIdentity.TryAdd(LaunchTargetIdentity.GetKey(app.LaunchTarget), app);
+            appsByIdentity.TryAdd(resolveIdentity(app.LaunchTarget), app);
         }
 
         return appsByIdentity;
@@ -1106,9 +1116,11 @@ internal sealed class ApplicationPaneController : IDisposable
     private static void LoadTileVisualTree(
         TileItem tile,
         IReadOnlyDictionary<string, AppEntry> appsByIdentity,
+        LaunchTargetIdentity.Resolver identityResolver,
+        ShellIconLoader.Session shellIconSession,
         ICollection<LoadedTileVisual> loadedVisuals)
     {
-        var (icon, usesFullTileLogo) = LoadTileIcon(tile, appsByIdentity);
+        var (icon, usesFullTileLogo) = LoadTileIcon(tile, appsByIdentity, identityResolver, shellIconSession);
         loadedVisuals.Add(new LoadedTileVisual(
             tile,
             ShellIconLoader.LoadImage(tile.BackgroundImagePath),
@@ -1116,7 +1128,7 @@ internal sealed class ApplicationPaneController : IDisposable
             usesFullTileLogo));
         foreach (var child in tile.FolderTiles)
         {
-            LoadTileVisualTree(child, appsByIdentity, loadedVisuals);
+            LoadTileVisualTree(child, appsByIdentity, identityResolver, shellIconSession, loadedVisuals);
         }
     }
 
@@ -1150,25 +1162,33 @@ internal sealed class ApplicationPaneController : IDisposable
             tileTargetKey => apps.FirstOrDefault(candidate =>
                 LaunchTargetIdentity.GetKey(candidate.LaunchTarget).Equals(
                     tileTargetKey,
-                    StringComparison.OrdinalIgnoreCase)));
+                    StringComparison.OrdinalIgnoreCase)),
+            LaunchTargetIdentity.GetKey,
+            ShellIconLoader.Load);
 
     private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
         TileItem tile,
-        IReadOnlyDictionary<string, AppEntry> appsByIdentity) =>
+        IReadOnlyDictionary<string, AppEntry> appsByIdentity,
+        LaunchTargetIdentity.Resolver identityResolver,
+        ShellIconLoader.Session shellIconSession) =>
         LoadTileIcon(
             tile,
-            tileTargetKey => appsByIdentity.TryGetValue(tileTargetKey, out var app) ? app : null);
+            tileTargetKey => appsByIdentity.TryGetValue(tileTargetKey, out var app) ? app : null,
+            identityResolver.GetKey,
+            shellIconSession.Load);
 
     private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
         TileItem tile,
-        Func<string, AppEntry?> resolveApp)
+        Func<string, AppEntry?> resolveApp,
+        Func<string, string> resolveIdentity,
+        Func<string, ImageSource?> loadShellIcon)
     {
         if (!string.IsNullOrWhiteSpace(tile.IconPath))
         {
-            return (ShellIconLoader.Load(tile.IconPath) ?? ResolveFallbackIcon(tile), false);
+            return (loadShellIcon(tile.IconPath) ?? ResolveFallbackIcon(tile), false);
         }
 
-        var tileTargetKey = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
+        var tileTargetKey = resolveIdentity(tile.LaunchTarget);
         var app = resolveApp(tileTargetKey);
         var usesDefaultPackagedAppearance = UsesDefaultPackagedTileAppearance(tile);
         if (app is not null)
@@ -1181,7 +1201,7 @@ internal sealed class ApplicationPaneController : IDisposable
                 return (tileVisual.Icon, tileVisual.UsesFullTileLogo);
             }
 
-            return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
+            return (app.Icon ?? loadShellIcon(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
         }
 
         // Chromium Edge 在 AppsFolder 中以 MSEdge shell alias 暴露，PackageInstallPath/PFN 为空，
@@ -1195,7 +1215,7 @@ internal sealed class ApplicationPaneController : IDisposable
             return (shellAliasVisual.Icon, shellAliasVisual.UsesFullTileLogo);
         }
 
-        return (ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
+        return (loadShellIcon(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
     }
 
     internal static ImageSource ResolveFallbackIcon(TileItem tile) =>
