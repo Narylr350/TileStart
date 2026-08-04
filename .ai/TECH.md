@@ -41,11 +41,11 @@ TileStart.Injector.exe
 ## Fail-open
 
 - Host 正常且 IPC 可用时，阻止原生开始菜单并通知 Host 打开 TileStart。
-- Host 不可用、IPC 超时或当前 Windows build 不受支持时，不阻止原生行为。
+- Host 不可用、IPC 超时、Hook 安装失败或运行时请求失败时，不阻止原生行为。未知或未来 Windows build 会选择最接近的适配器族并记录兼容路径，而不是仅因缺少精确白名单就禁用接管。
 
 ## 系统适配
 
-Win10 和 Win11 使用独立 Shell Adapter，避免把不同系统版本的 Hook 定位和行为混在同一实现中。
+Win10、Win11 legacy 和 Win11 modern 使用独立 Shell Adapter，避免把不同系统版本的 Hook 定位和行为混在同一实现中。Injector 根据 build 范围选择适配器族，ShellHook 校验并记录实际选择；适配失败仍必须 fail-open。
 
 ## Win10 StartUI 源码重建路线
 
@@ -78,6 +78,14 @@ Win10 和 Win11 使用独立 Shell Adapter，避免把不同系统版本的 Hook
 - 对外部目标统一通过 Windows Shell 启动。
 - 不为 MVP 之外的能力建立扩展框架。
 
+## 性能诊断与热点基线（2026-08-04）
+
+日常性能筛选使用 Rider Monitoring；需要确认调用次数、Self Time、线程与等待状态时使用 Rider 集成 dotTrace Timeline；涉及 Explorer、Shell、DWM、磁盘或系统高负载时使用 WPR/WPA 的 ETW 记录。监测列表中的方法持续时间可能是采样区间累计值或模态窗口存活时间，不能在没有调用树和线程证据时直接解释为单次操作延迟。
+
+当前已确认的最高收益热点位于 `ApplicationPaneController.LoadTileVisuals`：每个磁贴通过 `FirstOrDefault` 线性扫描全部应用，并为候选目标重复调用 `LaunchTargetIdentity.GetKey`。在 95 个磁贴、333 个应用的当前布局下，最坏约 31,635 次身份计算；`.lnk` 路径还会重复创建 `WScript.Shell` COM 对象。运行日志记录的完整磁贴视觉恢复耗时为 34.7–55.9 秒。
+
+首选修复是为单次视觉恢复建立 operation-local 应用身份字典，保留“相同身份按现有顺序取第一个”的语义，把复杂度降为 `O(磁贴数 + 应用数)`。不要先引入永久全局缓存或提高所有后台线程优先级；先消除重复工作，再复测是否需要有界 Shell 图标缓存。磁贴设置窗口还应缓存窗口生命周期内未变化的图标和背景，避免滑块每帧同步读取文件或 Shell 图标。
+
 ## NVIDIA App Overlay 兼容（2026-07-22）
 
 当前 Win10 实机上，硬件加速的 `TileStart.Host.exe` 会触发 NVIDIA App 信息悬浮窗，并加载 Overlay 捕获模块 `nvspcap64.dll`。已通过 NVIDIA DRS 创建只关联 `TileStart.Host.exe` 的 `TileStart` 应用 Profile，并实测以下两个隐藏设置需要同时启用：
@@ -89,4 +97,4 @@ Win10 和 Win11 使用独立 Shell Adapter，避免把不同系统版本的 Hook
 
 单独设置 `0x90DE9159=1` 时，`nvspcap64.dll` 仍会延迟注入。两个设置同时写入并重启 NVIDIA Overlay 后，当前 Release 连续启动两次均不再显示信息悬浮窗，等待 20 秒也未加载 `nvspcap64.dll`。
 
-产品化时由安装阶段的一次性管理员 helper 创建或更新该应用 Profile；卸载时只删除 TileStart 自己的 Profile，不全局关闭 NVIDIA Overlay。该设置属于隐藏、驱动版本相关的 DRS 参数，驱动或 NVIDIA App 更新后需要重新验证，必要时重新应用。
+安装器现已通过 Host 的一次性管理员兼容命令创建或更新该应用 Profile；卸载时只删除 TileStart 自己的 Profile，不全局关闭 NVIDIA Overlay。该设置属于隐藏、驱动版本相关的 DRS 参数，驱动或 NVIDIA App 更新后需要重新验证，必要时重新应用。

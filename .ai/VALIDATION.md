@@ -78,11 +78,21 @@ StartMenuExperienceHost 10.0.26100.4768
 
 Win11 开始菜单由 `StartDocked.dll` 实现，不是 Win10 的 `StartUI.dll`；私有研究档案中的 Win10 符号、常量和布局公式不可直接迁移到 Win11。必要的原版截图、布局导出和逆向证据保存在仓库外，不随公共源码分发。
 
-当前 Windows 11 环境已确认 Computer Use 可用，需要桌面自动化时按对应 skill 初始化后直接使用。只有实际失败、恢复后仍阻塞验证时才记录具体限制和未覆盖项，不在每轮重复说明可用性或降级策略。
+开发版默认直接运行 `artifacts\package\TileStart\TileStart.Host.exe`，不使用未发布安装器覆盖正式版。简单改动由用户在 Windows 11 实体机手动验收；只有布局、Shell 接管或真实桌面交互无法由自动测试覆盖，且当前任务提供桌面自动化工具时，才追加自动黑盒验证。
 
-以下 Shell 接管结论来自升级前的 build 22631，尚未在当前 26200 实机复验：Windows 11 build 22631 上已确认 Win11 Shell Adapter 可由 Release Injector 自动注入：单独 `Win` 键和任务栏开始按钮均可打开 TileStart，`Win+E` 保持系统行为；Explorer 重启后 Watcher 能向新的桌面 Shell 自动重新注入，Host 正常退出后 Injector 随之退出并卸载 ShellHook，Explorer 保持响应。
+当前 build 26200 实体机已在日常使用中确认单独 `Win` 键、任务栏开始按钮、TileStart 正常退出以及托盘“打开原生开始菜单”旁路的主路径。连续 `SC_TASKLIST` 请求现由 Host 在限时窗口后主动复位旁路事件。Explorer 重启后的自动重新注入和完整 fail-open 矩阵仍保留 build 22631 的历史证据，后续需要在当前 build 做一次成套复验，不能用日常使用记录替代。
 
 Windows build 不再作为精确白名单门禁。Injector 根据 build 范围选择 Win10、Win11 legacy 或 Win11 modern 适配器；未知或未来 build 使用最接近的兼容路径并记录选择结果。该策略只取消“未验证即禁用”的限制，不把未知 build 视为已经验证，实机结论仍按具体 build 记录。
+
+## 性能分析与响应性验证
+
+本机已具备 Rider Monitoring、Rider 集成 dotTrace 与 Windows Performance Toolkit（WPR/WPA）。使用规则：
+
+- Rider Monitoring 用于日常自动发现长耗时方法；列表时间可能是累计值或方法存活时间，必须进入调用树确认调用次数、Self Time 和线程。
+- dotTrace Timeline 用于三个独立场景：冷启动 60 秒、磁贴设置滑块连续拖动 5 秒、应用右键菜单连续打开 10 次。不同场景不得混在同一采样中。
+- WPR/WPA 用于 Explorer/Shell/DWM、磁盘 I/O、线程 Ready/Wait 和高系统负载问题；不要用单纯 CPU 百分比推断 UI 卡顿。
+
+当前性能基线：95 个磁贴、333 个应用时，`Application content ready` 到完整磁贴视觉恢复曾耗时 34.7–55.9 秒，热点为重复的 `LaunchTargetIdentity.GetKey` / `ResolveShortcutTarget`。完成身份索引优化后，必须在相同数据规模下复测耗时和调用次数。磁贴设置滑块复测时，未变化的图标或背景路径在一个窗口生命周期内最多解码一次。
 
 ## Shell 集成验证
 
