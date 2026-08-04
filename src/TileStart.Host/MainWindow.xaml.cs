@@ -55,7 +55,6 @@ public partial class MainWindow : Window
             toggleAppFolderAsync: folder => _tileWorkspaceController!.ToggleAppFolderAsync(folder),
             pinTileToStart: tile => _tileWorkspaceController!.PinTileToStart(tile),
             ensureGroupGridCoordinates: () => _tileDragCoordinator!.EnsureGroupGridCoordinates(),
-            prepareMotionElements: PrepareMotionElements,
             updateLayout: () => UpdateLayout());
         _tileDragCoordinator = new Controllers.TileDragCoordinator(
             this,
@@ -145,6 +144,7 @@ public partial class MainWindow : Window
         DataContext = this;
         TileLayout.Groups.CollectionChanged += TileGroups_CollectionChanged;
         _appController.RestoreSavedLayout();
+        _controller.ScheduleInitialMotionPreparation();
         _ = _appController.LoadAppsAsync();
     }
 

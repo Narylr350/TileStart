@@ -43,6 +43,25 @@ public sealed class StartupPerformanceTests
     }
 
     [Fact]
+    public void InitialMotionPreparationRunsAtIdleAndCanBeCancelledByInteractiveShow()
+    {
+        var mainWindow = File.ReadAllText(HostSource("MainWindow.xaml.cs"));
+        var applicationPane = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
+        var startController = File.ReadAllText(HostSource("Shell", "StartWindowController.cs"));
+
+        var restore = mainWindow.IndexOf("_appController.RestoreSavedLayout();", StringComparison.Ordinal);
+        var schedule = mainWindow.IndexOf("_controller.ScheduleInitialMotionPreparation();", StringComparison.Ordinal);
+        Assert.True(restore >= 0 && restore < schedule);
+        Assert.DoesNotContain("prepareMotionElements", applicationPane, StringComparison.Ordinal);
+        Assert.Contains("DispatcherPriority.ApplicationIdle", startController, StringComparison.Ordinal);
+
+        var show = startController.IndexOf("public void ShowFromShell()", StringComparison.Ordinal);
+        var cancel = startController.IndexOf("CancelInitialMotionPreparation();", show, StringComparison.Ordinal);
+        var prepare = startController.IndexOf("PrepareMotionElements();", show, StringComparison.Ordinal);
+        Assert.True(show >= 0 && cancel > show && cancel < prepare);
+    }
+
+    [Fact]
     public void TileVisualBatchBuildsOneIdentityIndexForTheWholeTree()
     {
         var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));

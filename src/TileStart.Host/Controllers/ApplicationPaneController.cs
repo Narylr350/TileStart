@@ -57,7 +57,6 @@ internal sealed class ApplicationPaneController : IDisposable
     private readonly Func<AppEntry, Task> _toggleAppFolderAsync;
     private readonly Func<TileItem, bool> _pinTileToStart;
     private readonly Func<bool> _ensureGroupGridCoordinates;
-    private readonly Action _prepareMotionElements;
     private readonly Action _updateLayout;
 
     public ApplicationPaneController(
@@ -71,7 +70,6 @@ internal sealed class ApplicationPaneController : IDisposable
         Func<AppEntry, Task> toggleAppFolderAsync,
         Func<TileItem, bool> pinTileToStart,
         Func<bool> ensureGroupGridCoordinates,
-        Action prepareMotionElements,
         Action updateLayout)
     {
         _lifetimeToken = _lifetimeCancellation.Token;
@@ -85,7 +83,6 @@ internal sealed class ApplicationPaneController : IDisposable
         _toggleAppFolderAsync = toggleAppFolderAsync;
         _pinTileToStart = pinTileToStart;
         _ensureGroupGridCoordinates = ensureGroupGridCoordinates;
-        _prepareMotionElements = prepareMotionElements;
         _updateLayout = updateLayout;
 
         _applicationListItems.Add(_recentSection);
@@ -138,7 +135,6 @@ internal sealed class ApplicationPaneController : IDisposable
             TileLayoutStore.Save(_tileLayout);
         }
 
-        _prepareMotionElements();
         DiagnosticLog.Write($"Tile layout ready: {_tileLayout.Groups.Sum(group => group.Tiles.Count)} tiles.");
         // 已保存布局会先于开始菜单应用扫描显示。立即从磁贴自身的路径恢复本地图标，
         // 否则完整扫描结束前所有磁贴都会退化成名称首字母；扫描后的新批次再补齐 UWP/MSIX 资产。

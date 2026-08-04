@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -71,6 +72,7 @@ public class StartWindowController : IDisposable
     private bool _allowClose;
     private bool _isDismissing;
     private HwndSource? _windowSource;
+    private System.Windows.Threading.DispatcherOperation? _initialMotionPreparationOperation;
     private bool _isDisposed;
 
     private bool _isDisplayChangePending;
@@ -154,6 +156,30 @@ public class StartWindowController : IDisposable
         _windowSource?.AddHook(WindowMessageHook);
     }
 
+    public void ScheduleInitialMotionPreparation()
+    {
+        if (_isDisposed || _window.IsVisible || _initialMotionPreparationOperation is not null)
+        {
+            return;
+        }
+
+        _initialMotionPreparationOperation = _window.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+            () =>
+            {
+                _initialMotionPreparationOperation = null;
+                if (_isDisposed || _window.IsVisible)
+                {
+                    return;
+                }
+
+                var timer = Stopwatch.StartNew();
+                PrepareMotionElements();
+                DiagnosticLog.Write(
+                    $"Initial motion preparation completed: elapsedMs={timer.Elapsed.TotalMilliseconds:F2}.");
+            });
+    }
+
     public void ShowFromShell()
     {
         if (_isDisposed)
@@ -167,6 +193,7 @@ public class StartWindowController : IDisposable
             return;
         }
 
+        CancelInitialMotionPreparation();
         InteractiveProcessPriority.Boost();
         _beforeShow();
 
@@ -238,6 +265,7 @@ public class StartWindowController : IDisposable
         }
 
         _isDisposed = true;
+        CancelInitialMotionPreparation();
         InteractiveProcessPriority.Restore();
         _foregroundActivationGeneration++;
         StopEntranceCache();
@@ -249,6 +277,16 @@ public class StartWindowController : IDisposable
         _windowSource = null;
         WindowDismissing = null;
         WindowShown = null;
+    }
+
+    private void CancelInitialMotionPreparation()
+    {
+        var operation = _initialMotionPreparationOperation;
+        _initialMotionPreparationOperation = null;
+        if (operation?.Status == System.Windows.Threading.DispatcherOperationStatus.Pending)
+        {
+            operation.Abort();
+        }
     }
 
     public void ApplyWindowMaterial()
