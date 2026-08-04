@@ -115,6 +115,11 @@ public sealed class ResponsiveDialogLayoutTests
         Assert.Equal("Auto", (string?)propertyScroller.Attribute("VerticalScrollBarVisibility"));
 
         var tile = LoadXaml("TileSettingsWindow.xaml");
+        var tileContentScroller = tile.Descendants(Presentation + "ScrollViewer")
+            .Single(element => (string?)element.Attribute("Grid.Row") == "1");
+        Assert.Equal("Disabled", (string?)tileContentScroller.Attribute("HorizontalScrollBarVisibility"));
+        Assert.Equal("Disabled", (string?)tileContentScroller.Attribute("VerticalScrollBarVisibility"));
+
         var tileColumns = tile.Descendants(Presentation + "Grid.ColumnDefinitions")
             .SelectMany(definitions => definitions.Elements(Presentation + "ColumnDefinition"))
             .ToArray();

@@ -183,7 +183,7 @@
             </Grid>
 
             <ScrollViewer Grid.Row="1"
-                          HorizontalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
                           VerticalContentAlignment="Stretch"
                           VerticalScrollBarVisibility="Disabled">
             <Grid MinWidth="540">
