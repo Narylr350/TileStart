@@ -9,8 +9,10 @@ namespace TileStart.Host.Utilities;
 
 public static class DiagnosticBundleService
 {
-    private const long MaximumLogBytes = 4 * 1024 * 1024;
-    private static readonly string[] LogFileNames = ["TileStart.log", "ShellHook.log"];
+    private const long MaximumLogBytes = DiagnosticLog.MaximumLogBytes;
+
+    private static readonly string[] LogFileNames =
+        ["TileStart.log", "TileStart.previous.log", "ShellHook.log", "ShellHook.previous.log"];
 
     public static void Export(string destinationPath)
     {

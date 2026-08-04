@@ -13,7 +13,9 @@ public sealed class DiagnosticBundleServiceTests
         var destination = Path.Combine(root, "diagnostics.zip");
         Directory.CreateDirectory(dataDirectory);
         File.WriteAllText(Path.Combine(dataDirectory, "TileStart.log"), "host-log");
+        File.WriteAllText(Path.Combine(dataDirectory, "TileStart.previous.log"), "previous-host-log");
         File.WriteAllText(Path.Combine(dataDirectory, "ShellHook.log"), "hook-log");
+        File.WriteAllText(Path.Combine(dataDirectory, "ShellHook.previous.log"), "previous-hook-log");
 
         try
         {
@@ -24,12 +26,21 @@ public sealed class DiagnosticBundleServiceTests
 
             using var archive = ZipFile.OpenRead(destination);
             Assert.Equal(
-                ["README.txt", "ShellHook.log", "system-info.txt", "TileStart.log"],
+                [
+                    "README.txt",
+                    "ShellHook.log",
+                    "ShellHook.previous.log",
+                    "system-info.txt",
+                    "TileStart.log",
+                    "TileStart.previous.log",
+                ],
                 archive.Entries.Select(entry => entry.FullName).Order().ToArray());
             Assert.Contains("OS version:", ReadEntry(archive, "system-info.txt"), StringComparison.Ordinal);
             Assert.Contains("本地文件路径", ReadEntry(archive, "README.txt"), StringComparison.Ordinal);
             Assert.Equal("host-log", ReadEntry(archive, "TileStart.log"));
+            Assert.Equal("previous-host-log", ReadEntry(archive, "TileStart.previous.log"));
             Assert.Equal("hook-log", ReadEntry(archive, "ShellHook.log"));
+            Assert.Equal("previous-hook-log", ReadEntry(archive, "ShellHook.previous.log"));
         }
         finally
         {

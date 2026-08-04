@@ -275,11 +275,11 @@ public partial class App : System.Windows.Application
         dialog.ShowDialog();
     }
 
-    private async Task CheckForUpdatesAsync()
+    private async Task CheckForUpdatesAsync(Window owner)
     {
         if (_isCheckingForUpdates)
         {
-            TileStartMessageDialog.Show(null, "检查更新", "正在检查更新，请稍候。");
+            TileStartMessageDialog.Show(owner, "检查更新", "正在检查更新，请稍候。");
             return;
         }
 
@@ -287,13 +287,16 @@ public partial class App : System.Windows.Application
         UpdateProgressWindow? progressWindow = null;
         try
         {
+            DiagnosticLog.Write("Update check started.");
             using var checkTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             var release = await _updateService.GetLatestReleaseAsync(checkTimeout.Token);
             var currentVersion = GitHubUpdateService.CurrentVersion;
+            DiagnosticLog.Write(
+                $"Update check completed: current={currentVersion.ToString(3)}, available={release.Version.ToString(3)}.");
             if (!GitHubUpdateService.IsNewer(currentVersion, release.Version))
             {
                 TileStartMessageDialog.Show(
-                    null,
+                    owner,
                     "检查更新",
                     $"当前版本 {currentVersion.ToString(3)} 已是最新版本。");
                 return;
@@ -302,7 +305,7 @@ public partial class App : System.Windows.Application
             var installedCopy = GitHubUpdateService.IsInstalledCopy(Environment.ProcessPath);
             var packageDescription = installedCopy ? "安装器" : "便携版压缩包";
             var shouldDownload = TileStartMessageDialog.Confirm(
-                null,
+                owner,
                 "发现新版本",
                 $"发现新版本 {release.Version.ToString(3)}（当前 {currentVersion.ToString(3)}）。\n\n是否从 GitHub 下载并校验{packageDescription}？",
                 TileStartMessageKind.Question,
@@ -310,19 +313,24 @@ public partial class App : System.Windows.Application
                 secondaryText: "暂不更新");
             if (!shouldDownload)
             {
+                DiagnosticLog.Write("Update download declined by user.");
                 return;
             }
 
+            DiagnosticLog.Write($"Update download accepted: package={packageDescription}.");
             using var downloadTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-            progressWindow = new UpdateProgressWindow();
+            progressWindow = new UpdateProgressWindow(owner);
             var update = progressWindow.Run(
                 (progress, cancellationToken) =>
                     _updateService.DownloadAsync(release, installedCopy, progress, cancellationToken),
                 downloadTimeout.Token);
+            DiagnosticLog.Write(
+                $"Update package ready: version={update.Version.ToString(3)}, kind={update.Kind}.");
             if (update.Kind == UpdatePackageKind.Installer)
             {
                 // 助手先等待当前 Host 完全退出，安装器才会覆盖文件；否则 Injector/Hook 清理与安装会发生竞态。
                 UpdateInstallerLauncher.LaunchAfterHostExit(update.Path, Environment.ProcessId);
+                DiagnosticLog.Write("Update installer helper launched; shutting down Host.");
                 ((MainWindow)MainWindow).AllowClose();
                 Shutdown();
                 return;
@@ -333,27 +341,29 @@ public partial class App : System.Windows.Application
                 UseShellExecute = true,
             });
             TileStartMessageDialog.Show(
-                null,
+                owner,
                 "更新包已就绪",
                 "便携版已下载并通过校验。请退出 TileStart 后解压覆盖旧文件。");
         }
         catch (OperationCanceledException) when (progressWindow?.UserCanceled == true)
         {
             // 用户主动取消不再弹出“超时”，进度窗口本身已经给出即时反馈。
+            DiagnosticLog.Write("Update download canceled by user.");
         }
         catch (OperationCanceledException)
         {
+            DiagnosticLog.Write("Update operation timed out.");
             TileStartMessageDialog.Show(
-                null,
+                owner,
                 "更新超时",
                 "检查或下载更新超时，请稍后重试。",
                 TileStartMessageKind.Warning);
         }
         catch (Exception exception)
         {
-            DiagnosticLog.Write($"Update check failed: {exception}");
+            DiagnosticLog.Write($"Update operation failed: {exception}");
             TileStartMessageDialog.Show(
-                null,
+                owner,
                 "无法完成更新",
                 exception.Message,
                 TileStartMessageKind.Error);

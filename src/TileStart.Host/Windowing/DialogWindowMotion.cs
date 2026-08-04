@@ -30,6 +30,7 @@ public static class DialogWindowMotion
         public bool IsAttached { get; set; }
         public bool AllowClose { get; set; }
         public bool IsClosing { get; set; }
+        public bool? PendingDialogResult { get; set; }
         public TranslateTransform? Translation { get; set; }
     }
 
@@ -79,6 +80,9 @@ public static class DialogWindowMotion
             return;
         }
 
+        // Setting DialogResult closes a modal WPF window. Cancelling that first close for animation
+        // clears the result unless it is captured and restored for the final close.
+        state.PendingDialogResult = window.DialogResult;
         e.Cancel = true;
         if (state.IsClosing)
         {
@@ -91,7 +95,14 @@ public static class DialogWindowMotion
         fade.Completed += (_, _) =>
         {
             state.AllowClose = true;
-            window.Close();
+            if (state.PendingDialogResult is { } dialogResult)
+            {
+                window.DialogResult = dialogResult;
+            }
+            else
+            {
+                window.Close();
+            }
         };
         window.BeginAnimation(UIElement.OpacityProperty, fade, HandoffBehavior.SnapshotAndReplace);
         state.Translation?.BeginAnimation(

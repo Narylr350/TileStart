@@ -19,6 +19,7 @@ namespace
     constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\TileStart.Host";
     constexpr char kOpenCommand[] = "OPEN";
     constexpr DWORD kPipeTimeoutMilliseconds = 75;
+    constexpr LONGLONG kMaximumLogBytes = 4LL * 1024 * 1024;
     constexpr WORD kShellRegisterHotKeyOrdinal = 2671;
     constexpr int kShellStandaloneWinHotKeyId = 1;
     constexpr wchar_t kNativeStartBypassEventName[] = L"Local\\TileStart.NativeStart.Bypass";
@@ -67,16 +68,55 @@ namespace
             return;
         }
 
-        const HANDLE file = CreateFileA(path,
-                                        FILE_APPEND_DATA,
-                                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                        nullptr,
-                                        OPEN_ALWAYS,
-                                        FILE_ATTRIBUTE_NORMAL,
-                                        nullptr);
+        char previous_path[MAX_PATH]{};
+        if (sprintf_s(previous_path, "%s\\TileStart\\ShellHook.previous.log", local_app_data) < 0)
+        {
+            return;
+        }
+
+        HANDLE file = CreateFileA(path,
+                                  FILE_APPEND_DATA | GENERIC_READ,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                  nullptr,
+                                  OPEN_ALWAYS,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  nullptr);
         if (file == INVALID_HANDLE_VALUE)
         {
             return;
+        }
+
+        LARGE_INTEGER size{};
+        if (GetFileSizeEx(file, &size) && size.QuadPart >= kMaximumLogBytes)
+        {
+            CloseHandle(file);
+            // ShellHook 运行在 Explorer 内，轮转必须保持简单且有界；只保留当前和上一代各 4 MiB。
+            if (!MoveFileExA(path, previous_path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+            {
+                const HANDLE truncate_file = CreateFileA(path,
+                                                         GENERIC_WRITE,
+                                                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                                         nullptr,
+                                                         CREATE_ALWAYS,
+                                                         FILE_ATTRIBUTE_NORMAL,
+                                                         nullptr);
+                if (truncate_file != INVALID_HANDLE_VALUE)
+                {
+                    CloseHandle(truncate_file);
+                }
+            }
+
+            file = CreateFileA(path,
+                               FILE_APPEND_DATA,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               nullptr,
+                               OPEN_ALWAYS,
+                               FILE_ATTRIBUTE_NORMAL,
+                               nullptr);
+            if (file == INVALID_HANDLE_VALUE)
+            {
+                return;
+            }
         }
 
         SYSTEMTIME time{};

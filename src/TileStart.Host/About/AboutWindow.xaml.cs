@@ -10,9 +10,9 @@ namespace TileStart.Host.About;
 public partial class AboutWindow : Window
 {
     internal static readonly Uri ProjectUri = new("https://github.com/Narylr350/TileStart");
-    private readonly Func<Task> _checkForUpdates;
+    private readonly Func<Window, Task> _checkForUpdates;
 
-    public AboutWindow(Func<Task> checkForUpdates)
+    public AboutWindow(Func<Window, Task> checkForUpdates)
     {
         _checkForUpdates = checkForUpdates;
         InitializeComponent();
@@ -22,7 +22,7 @@ public partial class AboutWindow : Window
 
     private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
     {
-        await _checkForUpdates();
+        await _checkForUpdates(this);
     }
 
     private void OpenProject_Click(object sender, RoutedEventArgs e)

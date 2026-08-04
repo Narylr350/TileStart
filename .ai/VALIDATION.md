@@ -50,6 +50,7 @@ dotnet publish -c Release -r win-x64 --self-contained true
 - IPC 超时和 Host 不可用时进入原生放行路径。
 - 未知 Windows build 会选择最接近的 Win10 / Win11 适配器族，而不是被精确 build 白名单拦截。
 - 诊断包包含系统/版本信息、Host 日志和 ShellHook 日志，不包含布局或图标资源，并限制单个日志的导出体积。
+- Host 与 ShellHook 运行日志分别只保留当前和上一代文件，每份上限约 4 MiB；已有超大 Host 日志首次轮转时只保留最后 4 MiB，诊断包同时包含可用的当前与上一代日志。
 
 ## 已验证实机环境
 
