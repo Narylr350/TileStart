@@ -18,6 +18,8 @@ namespace TileStart.Host.Tiles.Settings;
 public partial class TileSettingsWindow : Window
 {
     private readonly ImageSource? _defaultIcon;
+    private readonly PreviewImageCache _previewIconCache = new(ShellIconLoader.Load);
+    private readonly PreviewImageCache _previewBackgroundCache = new(ShellIconLoader.LoadImage);
     private readonly bool _defaultUsesFullTileLogo;
     private readonly bool _isTileFolder;
     private readonly string _subtitle;
@@ -374,7 +376,7 @@ public partial class TileSettingsWindow : Window
         PreviewTile.IconPath = IconPath;
         PreviewTile.BackgroundImagePath = BackgroundImagePath;
         PreviewTile.BackgroundImageScale = BackgroundImageScale;
-        PreviewTile.BackgroundImage = ShellIconLoader.LoadImage(BackgroundImagePath);
+        PreviewTile.BackgroundImage = _previewBackgroundCache.Load(BackgroundImagePath);
         PreviewTile.ShowTitle = ShowTitle;
         PreviewTile.TitlePosition = Enum.TryParse<TileTitlePosition>(
             TitlePositionBox.SelectedValue as string,
@@ -397,7 +399,7 @@ public partial class TileSettingsWindow : Window
         }
         else
         {
-            PreviewTile.Icon = File.Exists(IconPath) ? ShellIconLoader.Load(IconPath) : null;
+            PreviewTile.Icon = File.Exists(IconPath) ? _previewIconCache.Load(IconPath) : null;
             PreviewTile.UsesFullTileLogo = false;
         }
 

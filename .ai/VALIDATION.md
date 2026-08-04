@@ -98,7 +98,7 @@ Windows build 不再作为精确白名单门禁。Injector 根据 build 范围�
 - Release 开发构建在 9 个组、72 个顶层磁贴、95 个总磁贴的真实布局上连续采样：`MainWindow` 构造耗时 711.78–795.40 ms，其中 `InitializeComponent` 为 213.03–239.90 ms，`RestoreSavedLayout` 为 435.76–486.83 ms，所有 Controller 构造合计约 23 ms。进一步分段确认，布局恢复中的 `_prepareMotionElements()` 强制隐藏视觉树 `Measure/Arrange/UpdateLayout` 占 443.83–530.77 ms，其余添加组、坐标检查和保存判断合计低于 3 ms。
 - 不能简单删除初始视觉树预热：取消后 Host 启动约从 1.07 秒降到 0.65 秒，但第一次打开从约 217 ms 增到约 723 ms。初始预热现由 `StartWindowController` 以 `DispatcherPriority.ApplicationIdle` 排队，用户打开前会取消尚未执行的任务；真实 Release 开发构建三次 Host 启动为 616、654、633 ms，随后空闲预热耗时 390–441 ms。用户已在 Windows 11 实体机确认第一次打开流畅。Dispatcher 已开始执行的预热无法中途抢占，历史 A/B 中请求恰好落在该窗口时，从请求到 `Window.Show` 约 423 ms。
 - `PrimeApplicationActivation` 的隐藏窗口预热约占 200 ms，但取消后首次 `Window.Show` 从约 197 ms 增到 331 ms；在没有更完整的前台激活回归证据前保留。
-- 磁贴设置滑块复测时，未变化的图标或背景路径在一个窗口生命周期内最多解码一次。
+- 磁贴设置滑块原先每次 `ValueChanged` 都同步重载图标和背景。一次性基准中，普通 PNG/GIF 热路径约 0.05–0.16 ms，EXE 图标约 0.75 ms，简单 SVG 约 0.55 ms，但含 200 个图元的复杂 SVG 为 15.9–19.9 ms 平均、45–51 ms p95，足以阻塞 UI 帧。设置窗口现按路径、文件长度和最后修改时间缓存图标及背景；同一窗口内未变化文件只解码一次，文件被替换、删除或重新出现时自动失效。全量测试 729/729 通过，用户已确认开发版滑块与预览行为正常。
 
 ## Shell 集成验证
 
