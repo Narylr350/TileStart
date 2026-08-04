@@ -60,6 +60,12 @@ internal sealed class RenderFrameProbe : IDisposable
             return;
         }
 
+        var longestIntervals = _frameIntervals
+            .Select((interval, index) => new { Frame = index + 1, Interval = interval })
+            .OrderByDescending(item => item.Interval)
+            .Take(5)
+            .Select(item => $"{item.Frame}:{item.Interval:F2}")
+            .ToArray();
         _frameIntervals.Sort();
         var average = _frameIntervals.Average();
         var percentile95 = Percentile(_frameIntervals, 0.95);
@@ -69,7 +75,8 @@ internal sealed class RenderFrameProbe : IDisposable
         DiagnosticLog.Write(
             $"Render probe: scenario={_scenario}, frames={_frameIntervals.Count + 1}, " +
             $"averageMs={average:F2}, p95Ms={percentile95:F2}, maxMs={maximum:F2}, " +
-            $"over16_7={over16Milliseconds}, over33_3={over33Milliseconds}.");
+            $"over16_7={over16Milliseconds}, over33_3={over33Milliseconds}, " +
+            $"longest={string.Join(',', longestIntervals)}.");
     }
 
     private static double Percentile(IReadOnlyList<double> sortedValues, double percentile)
