@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows.Media;
 using TileStart.Host.Applications;
 using TileStart.Host.Controllers;
 
@@ -60,6 +61,33 @@ public sealed class ApplicationPaneRefreshTests
 
         Assert.False(ApplicationPaneController.ApplicationTreesMatch([currentPackage], [updatedPackage]));
         Assert.False(ApplicationPaneController.ApplicationTreesMatch([currentFolder], [updatedFolder]));
+    }
+
+    [Fact]
+    public void RefreshReusesOnlyIconsWhoseSourceMetadataIsUnchanged()
+    {
+        var classicIcon = new DrawingImage();
+        var packagedIcon = new DrawingImage();
+        var current = new[]
+        {
+            AppEntry.Application("Editor", @"C:\Apps\Editor.lnk", DateTime.MinValue, classicIcon),
+            AppEntry.Application("Store App", @"shell:AppsFolder\Package!App", DateTime.MinValue, packagedIcon,
+                packageInstallPath: @"C:\Program Files\WindowsApps\Package_1.0",
+                appUserModelId: "Package!App"),
+        };
+        var scanned = new[]
+        {
+            AppEntry.Application("Editor", @"C:\Apps\Editor.lnk", DateTime.MinValue),
+            AppEntry.Application("Store App", @"shell:AppsFolder\Package!App", DateTime.MinValue,
+                packageInstallPath: @"C:\Program Files\WindowsApps\Package_2.0",
+                appUserModelId: "Package!App"),
+        };
+
+        ApplicationPaneController.ReuseLoadedIcons(current, scanned);
+
+        Assert.Same(classicIcon, scanned[0].Icon);
+        Assert.Null(scanned[1].Icon);
+        Assert.Equal([scanned[1]], ApplicationPaneController.SelectApplicationsNeedingIcons(scanned));
     }
 
     [Fact]

@@ -403,20 +403,26 @@ internal sealed class ApplicationPaneController : IDisposable
         return true;
     }
 
-    private static void ReuseLoadedIcons(IEnumerable<AppEntry> current, IEnumerable<AppEntry> scanned)
+    internal static void ReuseLoadedIcons(IEnumerable<AppEntry> current, IEnumerable<AppEntry> scanned)
     {
-        var icons = AppEntry.FlattenApplications(current)
+        var loadedApps = AppEntry.FlattenApplications(current)
             .Where(app => app.Icon is not null)
             .GroupBy(app => LaunchTargetIdentity.GetKey(app.LaunchTarget), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First().Icon!, StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         foreach (var app in AppEntry.FlattenApplications(scanned))
         {
-            if (icons.TryGetValue(LaunchTargetIdentity.GetKey(app.LaunchTarget), out var icon))
+            if (loadedApps.TryGetValue(LaunchTargetIdentity.GetKey(app.LaunchTarget), out var loadedApp)
+                && CanReuseLoadedIcon(loadedApp, app))
             {
-                app.Icon = icon;
+                app.Icon = loadedApp.Icon;
             }
         }
     }
+
+    internal static bool CanReuseLoadedIcon(AppEntry current, AppEntry scanned) =>
+        current.IsCustom == scanned.IsCustom
+        && current.AppUserModelId.Equals(scanned.AppUserModelId, StringComparison.OrdinalIgnoreCase)
+        && current.PackageInstallPath.Equals(scanned.PackageInstallPath, StringComparison.OrdinalIgnoreCase);
 
     public void HandleHostRequest(HostRequest request)
     {
@@ -725,17 +731,27 @@ internal sealed class ApplicationPaneController : IDisposable
         try
         {
             var timer = Stopwatch.StartNew();
-            var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
-            var packagedApps = apps.Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
-            var pendingGroups = new Dictionary<Task<IReadOnlyList<LoadedApplicationIcon>>, string>
+            var appsNeedingIcons = SelectApplicationsNeedingIcons(apps);
+            var classicApps = appsNeedingIcons
+                .Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId))
+                .ToArray();
+            var packagedApps = appsNeedingIcons
+                .Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId))
+                .ToArray();
+            var pendingGroups = new Dictionary<Task<IReadOnlyList<LoadedApplicationIcon>>, string>();
+            if (classicApps.Length > 0)
             {
-                [RunBackgroundThreadAsync(
+                pendingGroups[RunBackgroundThreadAsync(
                     () => LoadApplicationIcons(classicApps),
-                    "TileStart Classic Icon Loader")] = "classic",
-                [RunStaThreadAsync(
+                    "TileStart Classic Icon Loader")] = "classic";
+            }
+
+            if (packagedApps.Length > 0)
+            {
+                pendingGroups[RunStaThreadAsync(
                     () => LoadApplicationIcons(packagedApps),
-                    "TileStart Packaged Icon Loader")] = "packaged",
-            };
+                    "TileStart Packaged Icon Loader")] = "packaged";
+            }
             Exception? loadException = null;
             var deferredIcons = new List<LoadedApplicationIcon>();
             while (pendingGroups.Count > 0)
@@ -786,7 +802,7 @@ internal sealed class ApplicationPaneController : IDisposable
             }
 
             DiagnosticLog.Write(
-                $"Application icon loading completed: {apps.Count} entries processed, elapsedMs={timer.Elapsed.TotalMilliseconds:F2}.");
+                $"Application icon loading completed: requested={apps.Count}, loaded={appsNeedingIcons.Count}, elapsedMs={timer.Elapsed.TotalMilliseconds:F2}.");
         }
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
         {
@@ -799,6 +815,9 @@ internal sealed class ApplicationPaneController : IDisposable
 
     internal static bool ShouldApplyApplicationIconGroupEarly(bool windowVisible, int remainingGroups) =>
         remainingGroups > 0 && !windowVisible;
+
+    internal static IReadOnlyList<AppEntry> SelectApplicationsNeedingIcons(IEnumerable<AppEntry> apps) =>
+        apps.Where(app => app.Icon is null).ToArray();
 
     private static IReadOnlyList<LoadedApplicationIcon> LoadApplicationIcons(IEnumerable<AppEntry> apps)
     {
