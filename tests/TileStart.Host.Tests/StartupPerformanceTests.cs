@@ -42,6 +42,45 @@ public sealed class StartupPerformanceTests
         Assert.True(initialVisuals < applicationScan);
     }
 
+    [Fact]
+    public void TileVisualBatchBuildsOneIdentityIndexForTheWholeTree()
+    {
+        var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
+
+        Assert.Contains("var appsByIdentity = BuildApplicationIdentityIndex(apps);", source,
+            StringComparison.Ordinal);
+        Assert.Contains("LoadTileVisualTree(tile, appsByIdentity, loadedVisuals);", source,
+            StringComparison.Ordinal);
+        Assert.Contains("LoadTileVisualTree(child, appsByIdentity, loadedVisuals);", source,
+            StringComparison.Ordinal);
+
+        var singleRestoreStart = source.IndexOf("public static void RestoreTileIcon(", StringComparison.Ordinal);
+        var nextMethod = source.IndexOf("private static (ImageSource Icon", singleRestoreStart,
+            StringComparison.Ordinal);
+        var singleRestore = source[singleRestoreStart..nextMethod];
+        Assert.Contains("LoadTileIcon(tile, apps)", singleRestore, StringComparison.Ordinal);
+        Assert.DoesNotContain("BuildApplicationIdentityIndex", singleRestore, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ApplicationIdentityIndexKeepsTheFirstScannedDuplicate()
+    {
+        var first = AppEntry.Application(
+            "First",
+            "shell:AppsFolder\\Example.Package_abc!App",
+            DateTime.MinValue);
+        var duplicate = AppEntry.Application(
+            "Duplicate",
+            "SHELL:APPSFOLDER\\EXAMPLE.PACKAGE_ABC!APP",
+            DateTime.MinValue);
+
+        var index = TileStart.Host.Controllers.ApplicationPaneController.BuildApplicationIdentityIndex(
+            [first, duplicate]);
+
+        Assert.Single(index);
+        Assert.Same(first, index[LaunchTargetIdentity.GetKey(first.LaunchTarget)]);
+    }
+
     [Theory]
     [InlineData(1, 0, true)]
     [InlineData(2, 1, true)]

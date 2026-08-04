@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -933,6 +934,8 @@ internal sealed class ApplicationPaneController : IDisposable
     private async Task LoadTileVisualsAsync(IReadOnlyList<AppEntry> apps)
     {
         var generation = Interlocked.Increment(ref _tileVisualLoadGeneration);
+        var timer = Stopwatch.StartNew();
+        var applied = false;
         try
         {
             var loadedVisuals = await RunStaThreadAsync(
@@ -951,10 +954,12 @@ internal sealed class ApplicationPaneController : IDisposable
 
                     _tileVisualAppliedGeneration = generation;
                     ApplyTileVisuals(loadedVisuals);
+                    applied = true;
                 },
                 System.Windows.Threading.DispatcherPriority.Background,
                 _lifetimeToken);
-            DiagnosticLog.Write($"Tile visual loading completed: {loadedVisuals.Count} tiles processed.");
+            DiagnosticLog.Write(
+                $"Tile visual loading completed: generation={generation}, apps={apps.Count}, tiles={loadedVisuals.Count}, elapsedMs={timer.Elapsed.TotalMilliseconds:F2}, applied={applied}.");
         }
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
         {
@@ -972,21 +977,35 @@ internal sealed class ApplicationPaneController : IDisposable
         TileLayout layout,
         IReadOnlyList<AppEntry> apps)
     {
+        var appsByIdentity = BuildApplicationIdentityIndex(apps);
         var loadedVisuals = new List<LoadedTileVisual>();
         foreach (var tile in layout.Groups.SelectMany(group => group.Tiles))
         {
-            LoadTileVisualTree(tile, apps, loadedVisuals);
+            LoadTileVisualTree(tile, appsByIdentity, loadedVisuals);
         }
 
         return loadedVisuals;
     }
 
+    internal static IReadOnlyDictionary<string, AppEntry> BuildApplicationIdentityIndex(
+        IEnumerable<AppEntry> apps)
+    {
+        var appsByIdentity = new Dictionary<string, AppEntry>(StringComparer.OrdinalIgnoreCase);
+        foreach (var app in apps)
+        {
+            // FirstOrDefault 原本按扫描顺序选中第一个相同身份；TryAdd 保持该兼容行为。
+            appsByIdentity.TryAdd(LaunchTargetIdentity.GetKey(app.LaunchTarget), app);
+        }
+
+        return appsByIdentity;
+    }
+
     private static void LoadTileVisualTree(
         TileItem tile,
-        IReadOnlyList<AppEntry> apps,
+        IReadOnlyDictionary<string, AppEntry> appsByIdentity,
         ICollection<LoadedTileVisual> loadedVisuals)
     {
-        var (icon, usesFullTileLogo) = LoadTileIcon(tile, apps);
+        var (icon, usesFullTileLogo) = LoadTileIcon(tile, appsByIdentity);
         loadedVisuals.Add(new LoadedTileVisual(
             tile,
             ShellIconLoader.LoadImage(tile.BackgroundImagePath),
@@ -994,7 +1013,7 @@ internal sealed class ApplicationPaneController : IDisposable
             usesFullTileLogo));
         foreach (var child in tile.FolderTiles)
         {
-            LoadTileVisualTree(child, apps, loadedVisuals);
+            LoadTileVisualTree(child, appsByIdentity, loadedVisuals);
         }
     }
 
@@ -1022,7 +1041,24 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
         TileItem tile,
-        IReadOnlyList<AppEntry> apps)
+        IReadOnlyList<AppEntry> apps) =>
+        LoadTileIcon(
+            tile,
+            tileTargetKey => apps.FirstOrDefault(candidate =>
+                LaunchTargetIdentity.GetKey(candidate.LaunchTarget).Equals(
+                    tileTargetKey,
+                    StringComparison.OrdinalIgnoreCase)));
+
+    private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
+        TileItem tile,
+        IReadOnlyDictionary<string, AppEntry> appsByIdentity) =>
+        LoadTileIcon(
+            tile,
+            tileTargetKey => appsByIdentity.TryGetValue(tileTargetKey, out var app) ? app : null);
+
+    private static (ImageSource Icon, bool UsesFullTileLogo) LoadTileIcon(
+        TileItem tile,
+        Func<string, AppEntry?> resolveApp)
     {
         if (!string.IsNullOrWhiteSpace(tile.IconPath))
         {
@@ -1030,10 +1066,7 @@ internal sealed class ApplicationPaneController : IDisposable
         }
 
         var tileTargetKey = LaunchTargetIdentity.GetKey(tile.LaunchTarget);
-        var app = apps.FirstOrDefault(candidate =>
-            LaunchTargetIdentity.GetKey(candidate.LaunchTarget).Equals(
-                tileTargetKey,
-                StringComparison.OrdinalIgnoreCase));
+        var app = resolveApp(tileTargetKey);
         var usesDefaultPackagedAppearance = UsesDefaultPackagedTileAppearance(tile);
         if (app is not null)
         {
