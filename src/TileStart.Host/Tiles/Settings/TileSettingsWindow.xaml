@@ -158,7 +158,7 @@
                 <RowDefinition Height="58" />
             </Grid.RowDefinitions>
 
-            <Grid Background="{StaticResource TileStartLayerBackgroundBrush}">
+            <Grid Background="{DynamicResource TileStartDialogChromeBrush}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -193,7 +193,7 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Padding="22"
-                        Background="{StaticResource TileStartLayerBackgroundBrush}"
+                        Background="{DynamicResource TileStartDialogChromeBrush}"
                         BorderBrush="{StaticResource TileStartDividerBrush}"
                         BorderThickness="0,0,1,0">
                     <Grid>
@@ -824,7 +824,7 @@
 
             <Border Grid.Row="2"
                     Padding="20,12"
-                    Background="{StaticResource TileStartLayerBackgroundBrush}"
+                    Background="{DynamicResource TileStartDialogChromeBrush}"
                     BorderBrush="{StaticResource TileStartDividerBrush}"
                     BorderThickness="0,1,0,0">
                 <Grid>

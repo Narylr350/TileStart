@@ -93,7 +93,7 @@
                 <RowDefinition Height="60" />
             </Grid.RowDefinitions>
 
-            <Grid Background="{StaticResource TileStartLayerBackgroundBrush}"
+            <Grid Background="{DynamicResource TileStartDialogChromeBrush}"
                   MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -306,7 +306,7 @@
 
             <Border Grid.Row="2"
                     Padding="20,12"
-                    Background="{StaticResource TileStartLayerBackgroundBrush}"
+                    Background="{DynamicResource TileStartDialogChromeBrush}"
                     BorderBrush="{StaticResource TileStartDividerBrush}"
                     BorderThickness="0,1,0,0">
                 <Grid>

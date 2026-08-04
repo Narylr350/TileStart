@@ -10,7 +10,7 @@ public sealed class DialogWindowMaterialTests
     [Theory]
     [InlineData(AppThemeStyle.Windows10, true, 0)]
     [InlineData(AppThemeStyle.Windows11, false, 0)]
-    [InlineData(AppThemeStyle.Windows11, true, 2)]
+    [InlineData(AppThemeStyle.Windows11, true, 3)]
     public void SystemBackdropIsLimitedToTransparentWindows11Dialogs(
         AppThemeStyle style,
         bool useMaterial,
@@ -19,6 +19,14 @@ public sealed class DialogWindowMaterialTests
         Assert.Equal(expectedBackdropType, DialogWindowMaterialManager.ResolveBackdropType(style, useMaterial));
     }
 
+    [Theory]
+    [InlineData(0x20, 0x20, 0x20, 0x00202020)]
+    [InlineData(0x12, 0x34, 0x56, 0x00563412)]
+    [InlineData(0xF3, 0xF3, 0xF3, 0x00F3F3F3)]
+    public void CaptionColorUsesNativeColorRefByteOrder(byte red, byte green, byte blue, int expected)
+    {
+        Assert.Equal(expected, DialogWindowMaterialManager.ToColorRef(MediaColor.FromRgb(red, green, blue)));
+    }
     [Theory]
     [InlineData(0x20, 0x20, 0x20, true)]
     [InlineData(0xF3, 0xF3, 0xF3, false)]

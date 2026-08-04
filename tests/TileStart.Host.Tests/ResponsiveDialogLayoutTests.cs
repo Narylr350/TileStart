@@ -36,6 +36,21 @@ public sealed class ResponsiveDialogLayoutTests
     }
 
     [Fact]
+    public void GlobalSettingsUsesTheActiveDialogAsOwnerAndReusesItsVisibleInstance()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "App.xaml.cs"));
+
+        Assert.Contains("_settingsWindow is { IsVisible: true } existing", source, StringComparison.Ordinal);
+        Assert.Contains("var owner = ResolveSettingsOwner(dialog);", source, StringComparison.Ordinal);
+        Assert.Contains("window.IsVisible && window.IsActive", source, StringComparison.Ordinal);
+        Assert.Contains("!ReferenceEquals(window, MainWindow)", source, StringComparison.Ordinal);
+        Assert.Contains("_settingsWindow = null;", source, StringComparison.Ordinal);
+    }
+    [Fact]
     public void SharedToolTipsUseThemeAwareSurfaceAndCornerRadius()
     {
         var document = LoadXaml("SharedStyles.xaml");

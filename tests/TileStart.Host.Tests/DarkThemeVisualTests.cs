@@ -313,6 +313,48 @@ public sealed class DarkThemeVisualTests
         Assert.Equal(highlight, colors.MenuItemSelected);
     }
 
+    [Theory]
+    [InlineData("Win10Theme.xaml", "#FF252525")]
+    [InlineData("Win10LightTheme.xaml", "#FFFAFAFA")]
+    [InlineData("Win11Theme.xaml", "#00272727")]
+    [InlineData("Win11LightTheme.xaml", "#00F9F9F9")]
+    public void SettingsChromeUsesThemeSpecificMaterialOverlay(string theme, string expected)
+    {
+        Assert.Equal(expected, ReadThemeBrushColor(theme, "TileStartDialogChromeBrush"));
+    }
+
+    [Theory]
+    [InlineData("Win10Theme.xaml", "#FF1F1F1F")]
+    [InlineData("Win10LightTheme.xaml", "#FFF2F2F2")]
+    [InlineData("Win11Theme.xaml", "#A6202020")]
+    [InlineData("Win11LightTheme.xaml", "#A6F3F3F3")]
+    public void DialogBackdropUsesOpaqueFallbackOrTintedWindows11Material(string theme, string expected)
+    {
+        Assert.Equal(expected, ReadThemeBrushColor(theme, "TileStartDialogBackdropBrush"));
+    }
+
+    [Fact]
+    public void SettingsTitleAndActionBarsDoNotHideTheWindows11Backdrop()
+    {
+        var document = LoadXaml("SettingsWindow.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var titleBar = document.Descendants(presentation + "Grid")
+            .Single(element => (string?)element.Attribute("MouseLeftButtonDown") == "TitleBar_MouseLeftButtonDown");
+        var actionBar = document.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute("Grid.Row") == "2"
+                               && (string?)element.Attribute("Padding") == "20,12");
+
+        Assert.Equal("{DynamicResource TileStartDialogChromeBrush}", (string?)titleBar.Attribute("Background"));
+        Assert.Equal("{DynamicResource TileStartDialogChromeBrush}", (string?)actionBar.Attribute("Background"));
+
+        var tileSettings = LoadXaml("TileSettingsWindow.xaml");
+        var tileChrome = tileSettings.Descendants()
+            .Where(element => (string?)element.Attribute("Background")
+                              == "{DynamicResource TileStartDialogChromeBrush}")
+            .ToArray();
+        Assert.Equal(3, tileChrome.Length);
+    }
+
     [Fact]
     public void DefaultTileFacesUseStyleSpecificSurfaceLayers()
     {

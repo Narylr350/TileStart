@@ -11,6 +11,8 @@
     <SolidColorBrush x:Key="TileStartTextDisabledBrush" Color="#33000000" />
     <SolidColorBrush x:Key="TileStartWindowBackgroundBrush" Color="#F2F2F2" />
     <SolidColorBrush x:Key="TileStartLayerBackgroundBrush" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="TileStartDialogChromeBrush" Color="#FFFAFAFA" />
+    <SolidColorBrush x:Key="TileStartDialogBackdropBrush" Color="#FFF2F2F2" />
     <SolidColorBrush x:Key="TileStartLayerAltBackgroundBrush" Color="#EDEDED" />
     <SolidColorBrush x:Key="TileStartCardBackgroundBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="TileStartControlBackgroundBrush" Color="#FFFFFFFF" />

@@ -26,6 +26,7 @@ public partial class App : System.Windows.Application
     private bool _isCheckingForUpdates;
     private bool _isSystemThemeSubscribed;
     private bool _isRestartScheduled;
+    private SettingsWindow? _settingsWindow;
     private bool _resolvedDarkMode;
     private AppearancePreferences _appearancePreferences = new();
 
@@ -214,34 +215,59 @@ public partial class App : System.Windows.Application
     {
         Dispatcher.BeginInvoke(() =>
         {
+            if (_settingsWindow is { IsVisible: true } existing)
+            {
+                _ = existing.Activate();
+                existing.Focus();
+                return;
+            }
+
             var dialog = new SettingsWindow(
                 _appearancePreferences.ThemeStyle,
                 _appearancePreferences.ColorMode,
                 OpenBackupAndRestore,
                 OpenAbout,
                 ChangeAppearance);
-            if (MainWindow?.IsVisible == true)
+            _settingsWindow = dialog;
+            var owner = ResolveSettingsOwner(dialog);
+            if (owner is not null)
             {
-                dialog.Owner = MainWindow;
+                dialog.Owner = owner;
             }
             else
             {
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
-            _ = dialog.ShowDialog();
-            if (dialog.WasSaved
-                && dialog.StartupChanged
-                && !StartupRegistration.SetEnabled(dialog.SelectedStartupEnabled))
+            try
             {
-                TileStartMessageDialog.Show(
-                    MainWindow,
-                    "部分设置未保存",
-                    "界面风格和颜色模式已经应用，但无法修改登录启动设置。",
-                    TileStartMessageKind.Warning);
+                _ = dialog.ShowDialog();
+                if (dialog.WasSaved
+                    && dialog.StartupChanged
+                    && !StartupRegistration.SetEnabled(dialog.SelectedStartupEnabled))
+                {
+                    TileStartMessageDialog.Show(
+                        MainWindow,
+                        "部分设置未保存",
+                        "界面风格和颜色模式已经应用，但无法修改登录启动设置。",
+                        TileStartMessageKind.Warning);
+                }
+            }
+            finally
+            {
+                _settingsWindow = null;
             }
         });
     }
+
+    private Window? ResolveSettingsOwner(Window settingsWindow) =>
+        Windows.OfType<Window>().FirstOrDefault(window =>
+            window.IsVisible && window.IsActive && !ReferenceEquals(window, settingsWindow))
+        ?? Windows.OfType<Window>().LastOrDefault(window =>
+            window.IsVisible
+            && !ReferenceEquals(window, settingsWindow)
+            && !ReferenceEquals(window, MainWindow))
+        ?? (MainWindow?.IsVisible == true ? MainWindow : null);
 
     private void OpenAbout(Window owner)
     {
