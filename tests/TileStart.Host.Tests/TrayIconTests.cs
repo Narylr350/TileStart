@@ -69,6 +69,31 @@ public sealed class TrayIconTests
         Assert.Null(failure);
     }
 
+    [Theory]
+    [InlineData(AppThemeStyle.Windows10, true, "Microsoft YaHei UI")]
+    [InlineData(AppThemeStyle.Windows10, false, "Microsoft YaHei UI")]
+    [InlineData(AppThemeStyle.Windows11, false, "Microsoft YaHei UI")]
+    public void TrayMenuFallsBackToTheSystemMenuFontWhenVariableTextIsUnavailable(
+        AppThemeStyle themeStyle,
+        bool variableFontAvailable,
+        string expected)
+    {
+        Assert.Equal(
+            expected,
+            TrayIcon.ResolveMenuFontFamily(themeStyle, variableFontAvailable, "Microsoft YaHei UI"));
+    }
+
+    [Fact]
+    public void Windows11TrayMenuUsesVariableTextOnlyWhenItActuallyExists()
+    {
+        Assert.Equal(
+            "Segoe UI Variable Text",
+            TrayIcon.ResolveMenuFontFamily(
+                AppThemeStyle.Windows11,
+                variableFontAvailable: true,
+                systemMenuFontFamily: "Microsoft YaHei UI"));
+    }
+
     [Fact]
     public void TrayMenuRoundedRegionKeepsCenterAndClipsOuterCorner()
     {

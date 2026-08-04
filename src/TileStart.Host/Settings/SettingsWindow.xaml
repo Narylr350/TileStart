@@ -154,6 +154,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <RadioButton x:Name="Windows10Choice"
+                                     Checked="ThemeChoice_Checked"
                                      GroupName="ThemeStyle"
                                      Style="{StaticResource ThemeChoiceStyle}">
                             <StackPanel>
@@ -165,6 +166,7 @@
                             </StackPanel>
                         </RadioButton>
                         <RadioButton x:Name="Windows11Choice"
+                                     Checked="ThemeChoice_Checked"
                                      Grid.Column="2"
                                      GroupName="ThemeStyle"
                                      Style="{StaticResource ThemeChoiceStyle}">

@@ -67,7 +67,8 @@ function Add-TileCollectionErrors(
             $Errors.Add("$Owner tile '$($tile.Name)' is outside the horizontal bounds.")
             continue
         }
-        if ($null -ne $Rows -and $row + $rowSpan -gt $Rows.Value) {
+        if ($null -ne $Rows -and $row + $rowSpan -gt [int]$Rows) {
+            # PowerShell 会把非空 Nullable<int> 解包为普通 Int32，不能再访问 .Value。
             $Errors.Add("$Owner tile '$($tile.Name)' is outside the fixed group height.")
             continue
         }

@@ -11,7 +11,7 @@
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         Title="TileStart"
         Width="1252"
-        Height="768"
+        Height="640"
         MinWidth="680"
         MinHeight="480"
         Background="Transparent"
@@ -945,7 +945,16 @@
                                      utilities:SmoothScroll.IsEnabled="True">
                                 <ListBox.Resources>
                                     <Style TargetType="ScrollBar"
-                                           BasedOn="{StaticResource StartVerticalScrollBarStyle}" />
+                                           BasedOn="{StaticResource StartVerticalScrollBarStyle}">
+                                        <!-- 原版 All Apps 在静止时不留下贯穿内容右侧的细线；
+                                             保留透明滚动条的命中区域，悬停后再显示 Thumb，避免牺牲拖动操作。 -->
+                                        <Setter Property="Opacity" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="1" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
                                     <DataTemplate DataType="{x:Type apps:RecentApplicationsSection}">
                                         <StackPanel>
                                             <Border
@@ -1401,7 +1410,7 @@
                                                                     Value="Auto" />
                                                             <Setter TargetName="TileIcon" Property="Margin" Value="0" />
                                                             <Setter TargetName="TileIcon" Property="Stretch"
-                                                                    Value="Fill" />
+                                                                    Value="Uniform" />
                                                             <Setter TargetName="TileIcon" Property="RenderTransform">
                                                                 <Setter.Value>
                                                                     <TranslateTransform Y="0" />
@@ -1632,7 +1641,7 @@
                                                                                  <Setter TargetName="FolderChildIcon" Property="Width" Value="Auto" />
                                                                                  <Setter TargetName="FolderChildIcon" Property="Height" Value="Auto" />
                                                                                  <Setter TargetName="FolderChildIcon" Property="Margin" Value="0" />
-                                                                                 <Setter TargetName="FolderChildIcon" Property="Stretch" Value="Fill" />
+                                                                                 <Setter TargetName="FolderChildIcon" Property="Stretch" Value="Uniform" />
                                                                                  <Setter TargetName="FolderChildIcon" Property="RenderTransform">
                                                                                      <Setter.Value>
                                                                                          <TranslateTransform Y="0" />

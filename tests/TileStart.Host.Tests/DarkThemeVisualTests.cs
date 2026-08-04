@@ -324,8 +324,36 @@ public sealed class DarkThemeVisualTests
         Assert.Equal("#FFFFFFFF", ReadThemeBrushColor("Win10Theme.xaml", key));
         Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10Theme.xaml", key));
         Assert.Equal("0.09896", ReadThemeBrushOpacity("Win10LightTheme.xaml", key));
-        Assert.Equal("#0AFFFFFF", ReadThemeBrushColor("Win11Theme.xaml", key));
-        Assert.Equal("#0A000000", ReadThemeBrushColor("Win11LightTheme.xaml", key));
+        Assert.Equal("#18FFFFFF", ReadThemeBrushColor("Win11Theme.xaml", key));
+        Assert.Equal("#12000000", ReadThemeBrushColor("Win11LightTheme.xaml", key));
+    }
+
+    [Fact]
+    public void AllAppsScrollBarOnlyAppearsWhenThePointerReachesIt()
+    {
+        var document = LoadMainWindow();
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var appsList = document.Descendants(presentation + "ListBox")
+            .Single(element => (string?)element.Attribute(x + "Name") == "AppsList");
+        var style = appsList
+            .Element(presentation + "ListBox.Resources")!
+            .Elements(presentation + "Style")
+            .Single(element => (string?)element.Attribute("TargetType") == "ScrollBar");
+
+        Assert.Contains(style.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Opacity"
+            && (string?)setter.Attribute("Value") == "0");
+
+        var hoverTrigger = style
+            .Element(presentation + "Style.Triggers")!
+            .Elements(presentation + "Trigger")
+            .Single(element =>
+                (string?)element.Attribute("Property") == "IsMouseOver"
+                && (string?)element.Attribute("Value") == "True");
+        Assert.Contains(hoverTrigger.Elements(presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "Opacity"
+            && (string?)setter.Attribute("Value") == "1");
     }
 
     [Fact]
@@ -667,6 +695,27 @@ public sealed class DarkThemeVisualTests
     }
 
     [Fact]
+    public void AppearanceSaveIsNotBlockedByStartupRegistrationFailure()
+    {
+        var settingsSource = File.ReadAllText(HostSource("Settings", "SettingsWindow.xaml.cs"));
+        var appSource = File.ReadAllText(HostSource("App.xaml.cs"));
+        var appearanceUpdate = settingsSource.IndexOf(
+            "_changeAppearance(SelectedThemeStyle, SelectedColorMode)",
+            StringComparison.Ordinal);
+        var dialogResult = settingsSource.IndexOf("DialogResult = true", StringComparison.Ordinal);
+        var startupUpdate = appSource.IndexOf(
+            "StartupRegistration.SetEnabled(dialog.SelectedStartupEnabled)",
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain("StartupRegistration.SetEnabled", settingsSource, StringComparison.Ordinal);
+        Assert.True(appearanceUpdate >= 0);
+        Assert.True(dialogResult > appearanceUpdate);
+        Assert.True(startupUpdate >= 0);
+        Assert.Contains("dialog.WasSaved", appSource, StringComparison.Ordinal);
+        Assert.Contains("界面风格和颜色模式已经应用", appSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TileSettingsSeparatesApplyFromSaveAndDoesNotClipDefaultButton()
     {
         var document = LoadXaml("TileSettingsWindow.xaml");
@@ -891,6 +940,9 @@ public sealed class DarkThemeVisualTests
     {
         return LoadXaml("MainWindow.xaml");
     }
+
+    private static string HostSource(params string[] parts) => Path.Combine(
+        [AppContext.BaseDirectory, "TestData", "HostSource", .. parts]);
 
     private static XDocument LoadXaml(string fileName) =>
         XDocument.Load(Path.Combine(AppContext.BaseDirectory, "TestData", "Xaml", fileName));

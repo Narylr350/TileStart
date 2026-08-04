@@ -181,15 +181,19 @@ public static class Win10Theme
         Blend(accentDark1, StartFallbackColor, Win10AccentAcrylicNeutralBlend);
 
     /// <summary>
-    /// StartUI 的 AccentAcrylic 状态使用 SystemAccentColorDark1。宿主 Win11 的 Palette[4] 与 Win10
-    /// Dark1 不同，不能直接复用；当前由 AccentColorMenu/Palette[3] 按实测 90% 通道比例派生。
-    /// 该比例来自同一强调色的 Win10/Win11 注册表证据，后续取得更多色样后再替换为更完整的算法。
+    /// Win10 在 ColorPrevalence 开启时直接发布 StartColorMenu，优先使用该最终 Start 色。
+    /// Win11 宿主或损坏配置可能缺少/滞留此值，此时才从 AccentColorMenu/Palette[3] 派生 Dark1。
     /// </summary>
     internal static MediaColor ResolveWin10AccentAcrylicColor(
         object? accentColorMenu,
         object? startColorMenu,
         byte[]? accentPalette)
     {
+        if (TryReadPackedColor(startColorMenu, out var packed))
+        {
+            return MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16));
+        }
+
         if (TryReadAccentColorMenu(accentColorMenu, out var accent))
         {
             return DeriveWin10Dark1(accent);
@@ -203,11 +207,7 @@ public static class Win10Theme
                 accentPalette[AccentPaletteOffset + 2]));
         }
 
-        // 旧系统或损坏配置可能只留下 StartColorMenu。此值已经是 Start 使用色，无法确认其基础强调色时
-        // 不再二次压暗，避免把真实 Win10 Dark1 再乘一次 0.9。
-        return TryReadPackedColor(startColorMenu, out var packed)
-            ? MediaColor.FromRgb((byte)packed, (byte)(packed >> 8), (byte)(packed >> 16))
-            : StartFallbackColor;
+        return StartFallbackColor;
     }
 
     internal static MediaColor DeriveWin10Dark1(MediaColor accentColor) =>

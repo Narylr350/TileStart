@@ -111,7 +111,7 @@ public sealed class Win10ThemeTests
     }
 
     [Fact]
-    public void Win10LiveResizeUsesDerivedAccentWhenStartAccentIsEnabled()
+    public void Win10LiveResizeUsesPublishedStartColorWhenAccentIsEnabled()
     {
         var material = Win10Theme.ResolveStartMaterial(
             1,
@@ -122,11 +122,11 @@ public sealed class Win10ThemeTests
             accentPalette: null,
             accentColorMenu: unchecked((int)0x0070649E));
 
-        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.LiveResizeColor);
+        Assert.Equal(Color.FromRgb(0x84, 0x4E, 0x57), material.LiveResizeColor);
     }
 
     [Fact]
-    public void Win10StartMaterialDerivesWin10Dark1FromMainAccentInsteadOfHostDark1()
+    public void Win10StartMaterialPrefersPublishedStartColorOverHostPalette()
     {
         var palette = new byte[32];
         palette[12] = 0x9E;
@@ -145,13 +145,12 @@ public sealed class Win10ThemeTests
             accentPalette: palette);
 
         Assert.True(material.UseAcrylic);
-        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.FallbackColor);
-        Assert.NotEqual(Color.FromRgb(0x84, 0x4E, 0x57), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8605686), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x84, 0x4E, 0x57), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8534B7D), material.AcrylicGradientColor);
     }
 
     [Fact]
-    public void Win10AccentAcrylicPrefersAccentColorMenuWhenAvailable()
+    public void Win10AccentAcrylicPrefersPublishedStartColorWhenAvailable()
     {
         var material = Win10Theme.ResolveStartMaterial(
             1,
@@ -162,8 +161,8 @@ public sealed class Win10ThemeTests
             accentPalette: null,
             accentColorMenu: unchecked((int)0x0070649E));
 
-        Assert.Equal(Color.FromRgb(0x8E, 0x5A, 0x65), material.FallbackColor);
-        Assert.Equal(unchecked((int)0xB8605686), material.AcrylicGradientColor);
+        Assert.Equal(Color.FromRgb(0x84, 0x4E, 0x57), material.FallbackColor);
+        Assert.Equal(unchecked((int)0xB8534B7D), material.AcrylicGradientColor);
     }
 
     [Fact]

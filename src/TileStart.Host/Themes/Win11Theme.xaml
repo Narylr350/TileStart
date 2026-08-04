@@ -38,8 +38,9 @@
     <SolidColorBrush x:Key="TileStartAccentBrush" Color="{x:Static local:Win10Theme.AccentColor}" />
     <SolidColorBrush x:Key="TileStartNavigationOverlayBrush"
                      Color="{x:Static local:Win10Theme.StartSurfaceOverlayColor}" />
-    <!-- Win11 cards sit as a weak state layer over the live Acrylic instead of becoming an opaque tile. -->
-    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#0AFFFFFF" />
+    <!-- Win11 cards remain translucent over the live Acrylic, but need enough neutral white to
+         separate from an accent-coloured surface without inheriting its full saturation. -->
+    <SolidColorBrush x:Key="TileStartDefaultTileBackgroundBrush" Color="#18FFFFFF" />
     <SolidColorBrush x:Key="TileStartTileBorderBrush" Color="Transparent" />
     <SolidColorBrush x:Key="TileStartSearchBackgroundBrush" Color="#73000000" />
     <SolidColorBrush x:Key="TileStartSearchStrokeBrush" Color="#45FFFFFF" />

@@ -19,11 +19,7 @@ public sealed class TrayIcon : IDisposable
         Action openSettings, Action exit)
     {
         _palette = TileStartTrayRenderer.GetPalette(themeStyle, useDarkMode);
-        _menuFont = new Drawing.Font(
-            themeStyle == AppThemeStyle.Windows11 ? "Segoe UI Variable Text" : "Segoe UI",
-            10,
-            Drawing.FontStyle.Regular,
-            Drawing.GraphicsUnit.Point);
+        _menuFont = CreateMenuFont(themeStyle);
         var menu = CreateContextMenu(_menuFont, themeStyle, useDarkMode);
         menu.Items.Add(CreateMenuItem("打开 TileStart", (_, _) => showWindow()));
         menu.Items.Add(CreateMenuItem("打开原生开始菜单", (_, _) => openNativeStart()));
@@ -144,6 +140,40 @@ public sealed class TrayIcon : IDisposable
     private Drawing.Color MenuForegroundColor => Forms.SystemInformation.HighContrast
         ? Drawing.SystemColors.MenuText
         : _palette.Text;
+
+    private static Drawing.Font CreateMenuFont(AppThemeStyle themeStyle)
+    {
+        const string windows11FontFamily = "Segoe UI Variable Text";
+        var variableFontAvailable = false;
+        if (themeStyle == AppThemeStyle.Windows11)
+        {
+            using var candidate = new Drawing.Font(
+                windows11FontFamily,
+                10,
+                Drawing.FontStyle.Regular,
+                Drawing.GraphicsUnit.Point);
+            variableFontAvailable = candidate.Name.Equals(windows11FontFamily, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var systemMenuFontFamily = Drawing.SystemFonts.MenuFont?.Name ?? "Segoe UI";
+        var family = ResolveMenuFontFamily(
+            themeStyle,
+            variableFontAvailable,
+            systemMenuFontFamily);
+        return new Drawing.Font(
+            family,
+            10,
+            Drawing.FontStyle.Regular,
+            Drawing.GraphicsUnit.Point);
+    }
+
+    internal static string ResolveMenuFontFamily(
+        AppThemeStyle themeStyle,
+        bool variableFontAvailable,
+        string systemMenuFontFamily) =>
+        themeStyle == AppThemeStyle.Windows11 && variableFontAvailable
+            ? "Segoe UI Variable Text"
+            : systemMenuFontFamily;
 
     private static Drawing.Icon? LoadApplicationIcon()
     {

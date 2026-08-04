@@ -1,10 +1,25 @@
 using Microsoft.Win32;
 using TileStart.Host.Themes;
+using TileStart.Host.Settings;
 
 namespace TileStart.Host.Tests;
 
 public sealed class AppearancePreferencesTests
 {
+    [Theory]
+    [InlineData(true, true, AppThemeStyle.Windows11)]
+    [InlineData(false, true, AppThemeStyle.Windows11)]
+    [InlineData(true, false, AppThemeStyle.Windows10)]
+    public void ThemeSelectionFollowsTheExplicitWin11Choice(
+        bool windows10Checked,
+        bool windows11Checked,
+        AppThemeStyle expected)
+    {
+        Assert.Equal(expected, SettingsWindow.ResolveSelectedThemeStyle(
+            windows10Checked,
+            windows11Checked,
+            AppThemeStyle.Windows10));
+    }
     [Fact]
     public void DefaultsToWindows11Style()
     {

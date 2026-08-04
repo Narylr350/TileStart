@@ -26,6 +26,33 @@ public sealed class PackagedTileAssetLoaderTests
     }
 
     [Fact]
+    public void WideTileSquareFallbackKeepsTheSquareAsset()
+    {
+        var package = CreatePackage();
+        try
+        {
+            var manifest = Path.Combine(package, "AppxManifest.xml");
+            File.WriteAllText(
+                manifest,
+                File.ReadAllText(manifest).Replace(
+                    " Wide310x150Logo=\"Assets\\Wide.png\"",
+                    string.Empty,
+                    StringComparison.Ordinal));
+
+            var path = PackagedTileAssetLoader.ResolveAssetPath(
+                package,
+                "Example.Package_abc!App",
+                TileSize.Wide);
+
+            Assert.Equal("Medium.scale-200.png", Path.GetFileName(path));
+        }
+        finally
+        {
+            Directory.Delete(package, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ResolveAssetPathPrefersScaleClosestToCurrent150PercentBaseline()
     {
         var package = CreatePackage();
@@ -88,7 +115,7 @@ public sealed class PackagedTileAssetLoaderTests
     }
 
     [Fact]
-    public void ResolveKnownEdgeShellAliasUsesTheFullMediumTileLogo()
+    public void ResolveKnownEdgeShellAliasDoesNotStretchSquareFallbackAcrossWideTile()
     {
         var package = CreatePackage();
         try
@@ -108,12 +135,18 @@ public sealed class PackagedTileAssetLoaderTests
                 </Package>
                 """);
 
-            var path = PackagedTileAssetLoader.ResolveKnownShellAliasAssetPath(
+            var manifest = Path.Combine(package, "AppxManifest.xml");
+            var medium = PackagedTileAssetLoader.ResolveKnownShellAliasAssetPath(
                 "shell:AppsFolder\\MSEdge",
                 TileSize.Medium,
-                [Path.Combine(package, "AppxManifest.xml")]);
+                [manifest]);
+            var wide = PackagedTileAssetLoader.ResolveKnownShellAliasAssetPath(
+                "shell:AppsFolder\\MSEdge",
+                TileSize.Wide,
+                [manifest]);
 
-            Assert.Equal("Logo.png", Path.GetFileName(path));
+            Assert.Equal("Logo.png", Path.GetFileName(medium));
+            Assert.Equal("Logo.png", Path.GetFileName(wide));
         }
         finally
         {

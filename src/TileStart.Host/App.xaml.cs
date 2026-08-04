@@ -218,7 +218,8 @@ public partial class App : System.Windows.Application
                 _appearancePreferences.ThemeStyle,
                 _appearancePreferences.ColorMode,
                 OpenBackupAndRestore,
-                OpenAbout);
+                OpenAbout,
+                ChangeAppearance);
             if (MainWindow?.IsVisible == true)
             {
                 dialog.Owner = MainWindow;
@@ -228,9 +229,16 @@ public partial class App : System.Windows.Application
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
-            if (dialog.ShowDialog() == true)
+            _ = dialog.ShowDialog();
+            if (dialog.WasSaved
+                && dialog.StartupChanged
+                && !StartupRegistration.SetEnabled(dialog.SelectedStartupEnabled))
             {
-                ChangeAppearance(dialog.SelectedThemeStyle, dialog.SelectedColorMode);
+                TileStartMessageDialog.Show(
+                    MainWindow,
+                    "部分设置未保存",
+                    "界面风格和颜色模式已经应用，但无法修改登录启动设置。",
+                    TileStartMessageKind.Warning);
             }
         });
     }
@@ -345,6 +353,7 @@ public partial class App : System.Windows.Application
 
     private void ChangeAppearance(AppThemeStyle themeStyle, AppColorMode colorMode)
     {
+        DiagnosticLog.Write($"Appearance change requested: theme={themeStyle}, color={colorMode}.");
         if (_appearancePreferences.ThemeStyle == themeStyle && _appearancePreferences.ColorMode == colorMode)
         {
             return;

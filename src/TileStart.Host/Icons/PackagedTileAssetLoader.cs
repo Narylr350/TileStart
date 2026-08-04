@@ -19,6 +19,13 @@ internal static partial class PackagedTileAssetLoader
         return LoadAsset(ResolveAssetPath(packageInstallPath, appUserModelId, size));
     }
 
+    public static (ImageSource? Icon, bool UsesFullTileLogo) LoadTileVisual(
+        string packageInstallPath, string appUserModelId, TileSize size)
+    {
+        var icon = Load(packageInstallPath, appUserModelId, size);
+        return (icon, icon is not null);
+    }
+
     public static ImageSource? LoadApplicationIcon(string packageInstallPath, string appUserModelId)
     {
         return LoadAsset(ResolveApplicationIconAssetPath(packageInstallPath, appUserModelId));
@@ -27,6 +34,13 @@ internal static partial class PackagedTileAssetLoader
     public static ImageSource? LoadKnownShellAlias(string launchTarget, TileSize size)
     {
         return LoadAsset(ResolveKnownShellAliasAssetPath(launchTarget, size));
+    }
+
+    public static (ImageSource? Icon, bool UsesFullTileLogo) LoadKnownShellAliasTileVisual(
+        string launchTarget, TileSize size)
+    {
+        var icon = LoadKnownShellAlias(launchTarget, size);
+        return (icon, icon is not null);
     }
 
     private static ImageSource? LoadAsset(string? path)

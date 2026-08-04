@@ -13,22 +13,31 @@ public partial class SettingsWindow : Window
 {
     private readonly Action<Window> _openBackupAndRestore;
     private readonly Action<Window> _openAbout;
+    private readonly Action<AppThemeStyle, AppColorMode> _changeAppearance;
+    private readonly bool _initialStartupEnabled;
 
     public AppThemeStyle SelectedThemeStyle { get; private set; }
     public AppColorMode SelectedColorMode { get; private set; }
+    public bool SelectedStartupEnabled { get; private set; }
+    public bool StartupChanged => SelectedStartupEnabled != _initialStartupEnabled;
+    public bool WasSaved { get; private set; }
 
     public SettingsWindow(
         AppThemeStyle currentThemeStyle,
         AppColorMode currentColorMode,
         Action<Window> openBackupAndRestore,
-        Action<Window> openAbout)
+        Action<Window> openAbout,
+        Action<AppThemeStyle, AppColorMode> changeAppearance)
     {
         InitializeComponent();
         SelectedThemeStyle = currentThemeStyle;
         SelectedColorMode = currentColorMode;
         _openBackupAndRestore = openBackupAndRestore;
         _openAbout = openAbout;
-        StartupBox.IsChecked = StartupRegistration.IsEnabled();
+        _changeAppearance = changeAppearance;
+        _initialStartupEnabled = StartupRegistration.IsEnabled();
+        SelectedStartupEnabled = _initialStartupEnabled;
+        StartupBox.IsChecked = _initialStartupEnabled;
         Windows10Choice.IsChecked = currentThemeStyle == AppThemeStyle.Windows10;
         Windows11Choice.IsChecked = currentThemeStyle == AppThemeStyle.Windows11;
         SystemColorChoice.IsChecked = currentColorMode == AppColorMode.System;
@@ -46,24 +55,47 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        var startupEnabled = StartupBox.IsChecked == true;
-        if (StartupRegistration.IsEnabled() != startupEnabled && !StartupRegistration.SetEnabled(startupEnabled))
-        {
-            StatusText.Text = "无法修改登录启动设置。";
-            return;
-        }
-
-        SelectedThemeStyle = Windows10Choice.IsChecked == true
-            ? AppThemeStyle.Windows10
-            : AppThemeStyle.Windows11;
+        SelectedStartupEnabled = StartupBox.IsChecked == true;
+        SelectedThemeStyle = ResolveSelectedThemeStyle(
+            Windows10Choice.IsChecked,
+            Windows11Choice.IsChecked,
+            SelectedThemeStyle);
+        DiagnosticLog.Write($"Settings save requested: win10={Windows10Choice.IsChecked}, win11={Windows11Choice.IsChecked}, selected={SelectedThemeStyle}.");
         SelectedColorMode = LightColorChoice.IsChecked == true
             ? AppColorMode.Light
             : DarkColorChoice.IsChecked == true
                 ? AppColorMode.Dark
                 : AppColorMode.System;
+
+        // 外观保存不能依赖 ShowDialog 的返回值：Win10 前台监控可能隐藏 owner，令模态窗口返回 null。
+        // 先直接落盘并安排重启，再把关闭结果和启动项选择交回 App。
+        WasSaved = true;
+        _changeAppearance(SelectedThemeStyle, SelectedColorMode);
         DialogResult = true;
     }
 
+    private void ThemeChoice_Checked(object sender, RoutedEventArgs e)
+    {
+        // 自定义模板在部分 Win10 环境中可能短暂保留两个选中状态；显式互斥保证保存值跟随最后点击项。
+        if (ReferenceEquals(sender, Windows11Choice))
+        {
+            Windows10Choice.IsChecked = false;
+        }
+        else if (ReferenceEquals(sender, Windows10Choice))
+        {
+            Windows11Choice.IsChecked = false;
+        }
+    }
+
+    internal static AppThemeStyle ResolveSelectedThemeStyle(
+        bool? windows10Checked,
+        bool? windows11Checked,
+        AppThemeStyle currentStyle) =>
+        windows11Checked == true
+            ? AppThemeStyle.Windows11
+            : windows10Checked == true
+                ? AppThemeStyle.Windows10
+                : currentStyle;
     private void BackupRestore_Click(object sender, RoutedEventArgs e)
     {
         _openBackupAndRestore(this);

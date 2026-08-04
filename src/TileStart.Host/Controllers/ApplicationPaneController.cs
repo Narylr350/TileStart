@@ -1037,12 +1037,12 @@ internal sealed class ApplicationPaneController : IDisposable
         var usesDefaultPackagedAppearance = UsesDefaultPackagedTileAppearance(tile);
         if (app is not null)
         {
-            var tileLogo = usesDefaultPackagedAppearance
-                ? PackagedTileAssetLoader.Load(app.PackageInstallPath, app.AppUserModelId, tile.Size)
-                : null;
-            if (tileLogo is not null)
+            var tileVisual = usesDefaultPackagedAppearance
+                ? PackagedTileAssetLoader.LoadTileVisual(app.PackageInstallPath, app.AppUserModelId, tile.Size)
+                : (Icon: (ImageSource?)null, UsesFullTileLogo: false);
+            if (tileVisual.Icon is not null)
             {
-                return (tileLogo, true);
+                return (tileVisual.Icon, tileVisual.UsesFullTileLogo);
             }
 
             return (app.Icon ?? ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
@@ -1051,12 +1051,12 @@ internal sealed class ApplicationPaneController : IDisposable
         // Chromium Edge 在 AppsFolder 中以 MSEdge shell alias 暴露，PackageInstallPath/PFN 为空，
         // 但原生开始菜单仍使用其 Appx Square150x150Logo。只在默认外观下补这条系统资产链，
         // 避免覆盖用户主动设置的图标路径、大小或位置。
-        var shellAliasLogo = usesDefaultPackagedAppearance
-            ? PackagedTileAssetLoader.LoadKnownShellAlias(tile.LaunchTarget, tile.Size)
-            : null;
-        if (shellAliasLogo is not null)
+        var shellAliasVisual = usesDefaultPackagedAppearance
+            ? PackagedTileAssetLoader.LoadKnownShellAliasTileVisual(tile.LaunchTarget, tile.Size)
+            : (Icon: (ImageSource?)null, UsesFullTileLogo: false);
+        if (shellAliasVisual.Icon is not null)
         {
-            return (shellAliasLogo, true);
+            return (shellAliasVisual.Icon, shellAliasVisual.UsesFullTileLogo);
         }
 
         return (ShellIconLoader.Load(tile.LaunchTarget) ?? ResolveFallbackIcon(tile), false);
