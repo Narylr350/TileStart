@@ -51,6 +51,7 @@ public partial class MainWindow : Window
             NavigationToggleButton,
             WindowRoot,
             showFromShell: ShowFromShell,
+            isWindowVisible: () => _controller?.IsWindowVisible ?? false,
             dismissWindow: DismissWindow,
             toggleAppFolderAsync: folder => _tileWorkspaceController!.ToggleAppFolderAsync(folder),
             pinTileToStart: tile => _tileWorkspaceController!.PinTileToStart(tile),

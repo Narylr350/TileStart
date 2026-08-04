@@ -12,12 +12,16 @@ internal sealed class RenderFrameProbe : IDisposable
     private readonly string _scenario;
     private readonly List<double> _frameIntervals = [];
     private readonly DispatcherTimer _stopTimer;
+    private readonly TimeSpan _duration;
+    private readonly long _startedTimestamp;
     private long _lastTimestamp;
     private bool _disposed;
 
     private RenderFrameProbe(Dispatcher dispatcher, string scenario, TimeSpan duration)
     {
         _scenario = scenario;
+        _duration = duration;
+        _startedTimestamp = Stopwatch.GetTimestamp();
         _stopTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle, dispatcher)
         {
             Interval = duration,
@@ -33,6 +37,12 @@ internal sealed class RenderFrameProbe : IDisposable
     private void CompositionTargetRendering(object? sender, EventArgs e)
     {
         var timestamp = Stopwatch.GetTimestamp();
+        if (!IsWithinDuration(Stopwatch.GetElapsedTime(_startedTimestamp, timestamp), _duration))
+        {
+            Dispose();
+            return;
+        }
+
         if (_lastTimestamp != 0)
         {
             _frameIntervals.Add(Stopwatch.GetElapsedTime(_lastTimestamp, timestamp).TotalMilliseconds);
@@ -78,6 +88,8 @@ internal sealed class RenderFrameProbe : IDisposable
             $"over16_7={over16Milliseconds}, over33_3={over33Milliseconds}, " +
             $"longest={string.Join(',', longestIntervals)}.");
     }
+
+    internal static bool IsWithinDuration(TimeSpan elapsed, TimeSpan duration) => elapsed <= duration;
 
     private static double Percentile(IReadOnlyList<double> sortedValues, double percentile)
     {

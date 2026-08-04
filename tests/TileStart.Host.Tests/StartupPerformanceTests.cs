@@ -43,6 +43,39 @@ public sealed class StartupPerformanceTests
     }
 
     [Fact]
+    public void ApplicationIconGroupsApplyAsEachLoaderCompletes()
+    {
+        var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
+        var methodStart = source.IndexOf("private async Task LoadApplicationIconsAsync", StringComparison.Ordinal);
+        var methodEnd = source.IndexOf("private static IReadOnlyList<LoadedApplicationIcon>", methodStart,
+            StringComparison.Ordinal);
+        var method = source[methodStart..methodEnd];
+
+        Assert.Contains("Task.WhenAny(pendingGroups.Keys)", method, StringComparison.Ordinal);
+        Assert.Contains("ApplyApplicationIcons(loadedIcons)", method, StringComparison.Ordinal);
+        Assert.Contains("Application icon group completed:", method, StringComparison.Ordinal);
+        Assert.Contains("deferredIcons.AddRange(loadedIcons)", method, StringComparison.Ordinal);
+        Assert.DoesNotContain("var loadedGroups = await Task.WhenAll", method, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false, 1, true)]
+    [InlineData(true, 1, false)]
+    [InlineData(false, 0, false)]
+    [InlineData(true, 0, false)]
+    public void ApplicationIconGroupAppliesEarlyOnlyWhileWindowIsHiddenAndOtherGroupsRemain(
+        bool windowVisible,
+        int remainingGroups,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            TileStart.Host.Controllers.ApplicationPaneController.ShouldApplyApplicationIconGroupEarly(
+                windowVisible,
+                remainingGroups));
+    }
+
+    [Fact]
     public void InitialMotionPreparationRunsAtIdleAndCanBeCancelledByInteractiveShow()
     {
         var mainWindow = File.ReadAllText(HostSource("MainWindow.xaml.cs"));

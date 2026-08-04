@@ -53,6 +53,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private readonly Button _navigationToggleButton;
     private readonly Grid _windowRoot;
     private readonly Action _showFromShell;
+    private readonly Func<bool> _isWindowVisible;
     private readonly Action<bool> _dismissWindow;
     private readonly Func<AppEntry, Task> _toggleAppFolderAsync;
     private readonly Func<TileItem, bool> _pinTileToStart;
@@ -66,6 +67,7 @@ internal sealed class ApplicationPaneController : IDisposable
         Button navigationToggleButton,
         Grid windowRoot,
         Action showFromShell,
+        Func<bool> isWindowVisible,
         Action<bool> dismissWindow,
         Func<AppEntry, Task> toggleAppFolderAsync,
         Func<TileItem, bool> pinTileToStart,
@@ -79,6 +81,7 @@ internal sealed class ApplicationPaneController : IDisposable
         _navigationToggleButton = navigationToggleButton;
         _windowRoot = windowRoot;
         _showFromShell = showFromShell;
+        _isWindowVisible = isWindowVisible;
         _dismissWindow = dismissWindow;
         _toggleAppFolderAsync = toggleAppFolderAsync;
         _pinTileToStart = pinTileToStart;
@@ -721,18 +724,69 @@ internal sealed class ApplicationPaneController : IDisposable
 
         try
         {
+            var timer = Stopwatch.StartNew();
             var classicApps = apps.Where(app => string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
             var packagedApps = apps.Where(app => !string.IsNullOrWhiteSpace(app.AppUserModelId)).ToArray();
-            var loadedGroups = await Task.WhenAll(
-                RunBackgroundThreadAsync(() => LoadApplicationIcons(classicApps), "TileStart Classic Icon Loader"),
-                RunStaThreadAsync(() => LoadApplicationIcons(packagedApps), "TileStart Packaged Icon Loader"));
-            var loadedIcons = loadedGroups.SelectMany(group => group).ToArray();
-            _lifetimeToken.ThrowIfCancellationRequested();
-            await _dispatcher.InvokeAsync(
-                () => ApplyApplicationIcons(loadedIcons),
-                System.Windows.Threading.DispatcherPriority.Background,
-                _lifetimeToken);
-            DiagnosticLog.Write($"Application icon loading completed: {apps.Count} entries processed.");
+            var pendingGroups = new Dictionary<Task<IReadOnlyList<LoadedApplicationIcon>>, string>
+            {
+                [RunBackgroundThreadAsync(
+                    () => LoadApplicationIcons(classicApps),
+                    "TileStart Classic Icon Loader")] = "classic",
+                [RunStaThreadAsync(
+                    () => LoadApplicationIcons(packagedApps),
+                    "TileStart Packaged Icon Loader")] = "packaged",
+            };
+            Exception? loadException = null;
+            var deferredIcons = new List<LoadedApplicationIcon>();
+            while (pendingGroups.Count > 0)
+            {
+                var completedTask = await Task.WhenAny(pendingGroups.Keys);
+                var groupName = pendingGroups[completedTask];
+                pendingGroups.Remove(completedTask);
+                try
+                {
+                    var loadedIcons = await completedTask;
+                    _lifetimeToken.ThrowIfCancellationRequested();
+                    var applied = false;
+                    var deferred = false;
+                    await _dispatcher.InvokeAsync(
+                        () =>
+                        {
+                            if (ShouldApplyApplicationIconGroupEarly(
+                                    _isWindowVisible(),
+                                    pendingGroups.Count))
+                            {
+                                ApplyApplicationIcons(loadedIcons);
+                                applied = true;
+                                return;
+                            }
+
+                            deferredIcons.AddRange(loadedIcons);
+                            deferred = pendingGroups.Count > 0;
+                            if (pendingGroups.Count == 0)
+                            {
+                                ApplyApplicationIcons(deferredIcons);
+                                applied = true;
+                            }
+                        },
+                        System.Windows.Threading.DispatcherPriority.Background,
+                        _lifetimeToken);
+                    DiagnosticLog.Write(
+                        $"Application icon group completed: kind={groupName}, apps={loadedIcons.Count}, elapsedMs={timer.Elapsed.TotalMilliseconds:F2}, applied={applied}, deferred={deferred}.");
+                }
+                catch (Exception exception)
+                {
+                    loadException ??= exception;
+                }
+            }
+
+            if (loadException is not null)
+            {
+                throw loadException;
+            }
+
+            DiagnosticLog.Write(
+                $"Application icon loading completed: {apps.Count} entries processed, elapsedMs={timer.Elapsed.TotalMilliseconds:F2}.");
         }
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
         {
@@ -742,6 +796,9 @@ internal sealed class ApplicationPaneController : IDisposable
             DiagnosticLog.Write($"Application icon load failed: {exception}");
         }
     }
+
+    internal static bool ShouldApplyApplicationIconGroupEarly(bool windowVisible, int remainingGroups) =>
+        remainingGroups > 0 && !windowVisible;
 
     private static IReadOnlyList<LoadedApplicationIcon> LoadApplicationIcons(IEnumerable<AppEntry> apps)
     {
