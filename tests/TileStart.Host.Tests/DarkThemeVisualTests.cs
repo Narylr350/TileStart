@@ -670,11 +670,40 @@ public sealed class DarkThemeVisualTests
         var toggle = style.Descendants(presentation + "ToggleButton").Single();
         Assert.Equal("{TemplateBinding Foreground}", (string?)toggle.Attribute("Foreground"));
         var header = style.Descendants(presentation + "ContentPresenter")
-            .Single(element => element.Attribute("Content") is not null);
+            .Single(element => (string?)element.Attribute("Content")
+                               == "{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}");
         Assert.Equal("{TemplateBinding Foreground}", (string?)header.Attribute("TextElement.Foreground"));
         var chevron = style.Descendants(presentation + "TextBlock")
             .Single(element => (string?)element.Attribute(x + "Name") == "Chevron");
         Assert.Equal("{TemplateBinding Foreground}", (string?)chevron.Attribute("Foreground"));
+
+        var events = style.Elements(presentation + "EventSetter")
+            .ToDictionary(
+                setter => (string)setter.Attribute("Event")!,
+                setter => (string?)setter.Attribute("Handler"));
+        Assert.Equal("Expander_Loaded", events["Loaded"]);
+        Assert.Equal("Expander_Expanded", events["Expanded"]);
+        Assert.Equal("Expander_Collapsed", events["Collapsed"]);
+
+        var expandSite = style.Descendants(presentation + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "ExpandSite");
+        Assert.Equal("0", (string?)expandSite.Attribute("Height"));
+        Assert.Equal("0", (string?)expandSite.Attribute("Opacity"));
+        Assert.Equal("True", (string?)expandSite.Attribute("ClipToBounds"));
+        Assert.Equal("-6", (string?)expandSite.Descendants(presentation + "TranslateTransform").Single()
+            .Attribute("Y"));
+
+        var motion = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Windowing",
+            "ExpanderMotion.cs"));
+        Assert.Contains("SystemParameters.ClientAreaAnimation", motion, StringComparison.Ordinal);
+        Assert.Contains("TilePreviewEnterDurationMilliseconds", motion, StringComparison.Ordinal);
+        Assert.Contains("TilePreviewExitDurationMilliseconds", motion, StringComparison.Ordinal);
+        Assert.Contains("Win10FolderMotion.StandardSpline", motion, StringComparison.Ordinal);
+        Assert.Contains("existing.IsFrozen ? existing.CloneCurrentValue()", motion, StringComparison.Ordinal);
     }
 
     [Theory]

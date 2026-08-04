@@ -18,6 +18,29 @@ public partial class SharedStyles : ResourceDictionary
         }
     }
 
+    private void Expander_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Expander expander && ReferenceEquals(e.OriginalSource, expander))
+        {
+            ExpanderMotion.Synchronize(expander);
+        }
+    }
+
+    private void Expander_Expanded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Expander expander && ReferenceEquals(e.OriginalSource, expander))
+        {
+            ExpanderMotion.Animate(expander, expanding: true);
+        }
+    }
+
+    private void Expander_Collapsed(object sender, RoutedEventArgs e)
+    {
+        if (sender is Expander expander && ReferenceEquals(e.OriginalSource, expander))
+        {
+            ExpanderMotion.Animate(expander, expanding: false);
+        }
+    }
     private void SubmenuPopup_Opened(object? sender, EventArgs e) =>
         MenuPopupAnimator.OpenSubmenu(sender);
 

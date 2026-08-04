@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 
 #include <cstdint>
 #include <cstdio>
@@ -380,7 +380,9 @@ namespace
     {
         MSG message{};
         PeekMessageW(&message, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
-        g_native_start_bypass_event = CreateEventW(nullptr, FALSE, FALSE, kNativeStartBypassEventName);
+        // 一次注入的 Win 键可能连续投递多条 SC_TASKLIST；旁路必须保持到 Host 主动 Reset，
+        // 否则自动复位只放过第一条，紧随其后的消息仍会重新打开 TileStart。
+        g_native_start_bypass_event = CreateEventW(nullptr, TRUE, FALSE, kNativeStartBypassEventName);
         RefreshStartButton();
         g_mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, g_module, 0);
         const HWND progman = FindWindowW(L"Progman", nullptr);
