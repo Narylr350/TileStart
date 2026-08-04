@@ -27,7 +27,7 @@ public static class StartMenuFolderBuilder
         var folders = candidates
             .Where(candidate => candidate.Folders.Length > 0)
             .GroupBy(candidate => candidate.Folders[0], StringComparer.CurrentCultureIgnoreCase)
-            .Select(group => AppEntry.Folder(group.Key,
+            .Select(group => CreateVisibleFolderEntry(group.Key,
                 BuildLevel(group.Select(candidate => candidate with { Folders = candidate.Folders[1..] }).ToArray())));
 
         return applications
@@ -36,6 +36,14 @@ public static class StartMenuFolderBuilder
             .Select(group => group.OrderByDescending(entry => entry.AddedAt).First())
             .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
+    }
+
+    private static AppEntry CreateVisibleFolderEntry(string name, IReadOnlyList<AppEntry> children)
+    {
+        // Win10 All Apps 会折叠安装器仅为一个入口创建的包装目录；保留该目录会把普通应用错误显示成文件夹。
+        return children.Count == 1 && !children[0].IsFolder
+            ? children[0]
+            : AppEntry.Folder(name, children);
     }
 
     private static string GetEntryIdentity(AppEntry entry)

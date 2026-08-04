@@ -8,8 +8,14 @@ namespace TileStart.Host.Applications;
 public static class StartAppScanner
 {
     private static readonly string[] ShortcutExtensions = [".lnk", ".url", ".appref-ms"];
-    // Win10 AppResolver 用该 Shell 属性区分真正的 AppsFolder launcher；只看 PFN 会把目录模型降级成近似实现。
-    private const string MetroAppLauncherProperty = "{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3} 14";
+    private static readonly HashSet<string> ExcludedAppsFolderAppUserModelIds =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Windows 11 会在 AppsFolder 中预注册 Click to Do；不满足设备资格时原生开始菜单会隐藏它，
+            // 但公开 Shell 目录仍返回这个无法激活的入口，因此只能按其稳定系统 AUMID 做兼容排除。
+            "MicrosoftWindows.Client.CoreAI_cw5n1h2txyewy!ClickToDoApp",
+        };
+    private const string AppHostEnvironmentProperty = "{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3} 14";
     private const string DesktopAppUserModelId = "Microsoft.Windows.Desktop";
 
     public static Task<IReadOnlyList<AppEntry>> ScanAsync()
@@ -210,8 +216,9 @@ public static class StartAppScanner
                     var parsingPath = (string?)app.Path;
                     var appUserModelId = GetShellStringProperty(app, "System.AppUserModel.ID");
                     var parentAppUserModelId = GetShellStringProperty(app, "System.AppUserModel.ParentID");
-                    var launcherKind = GetShellIntProperty(app, MetroAppLauncherProperty);
-                    if (!IsAppsFolderLauncher(name, appUserModelId, parentAppUserModelId, launcherKind))
+                    var hostEnvironment = GetShellIntProperty(app, AppHostEnvironmentProperty);
+                    if (!IsAppsFolderLauncher(name, appUserModelId, parentAppUserModelId, hostEnvironment)
+                        || IsExcludedAppsFolderSystemEntry(appUserModelId))
                     {
                         continue;
                     }
@@ -284,12 +291,15 @@ public static class StartAppScanner
         string? name,
         string? appUserModelId,
         string? parentAppUserModelId,
-        int launcherKind) =>
+        int hostEnvironment) =>
         !string.IsNullOrWhiteSpace(name)
         && !string.IsNullOrWhiteSpace(appUserModelId)
         && string.IsNullOrWhiteSpace(parentAppUserModelId)
-        && launcherKind != 0
+        && hostEnvironment != 0
         && !appUserModelId.Equals(DesktopAppUserModelId, StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsExcludedAppsFolderSystemEntry(string appUserModelId) =>
+        ExcludedAppsFolderAppUserModelIds.Contains(appUserModelId);
 
     internal static bool IsExcludedStartMenuShortcut(
         string path,

@@ -16,6 +16,20 @@ public sealed class StartAppScannerTests
             launcherKind));
     }
 
+    [Fact]
+    public void AppsFolderExcludesUnavailableClickToDoSystemEntry()
+    {
+        Assert.True(StartAppScanner.IsExcludedAppsFolderSystemEntry(
+            "MicrosoftWindows.Client.CoreAI_cw5n1h2txyewy!ClickToDoApp"));
+    }
+
+    [Fact]
+    public void AppsFolderKeepsNormalPackagedApplications()
+    {
+        Assert.False(StartAppScanner.IsExcludedAppsFolderSystemEntry(
+            "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"));
+    }
+
     [Theory]
     [InlineData(null, "App", null, 1)]
     [InlineData("App", null, null, 1)]

@@ -17,12 +17,37 @@ public sealed class StartMenuFolderBuilderTests
 
         Assert.Equal(["Developer Tools", "Root"], entries.Select(entry => entry.Name));
         var folder = Assert.Single(entries, entry => entry.IsFolder);
-        Assert.Equal("Compiler", folder.Children[0].Name);
-        var nested = Assert.Single(folder.Children, entry => entry.IsFolder);
-        Assert.Equal("Diagnostics", nested.Name);
-        Assert.Equal("Profiler", Assert.Single(nested.Children).Name);
+        Assert.Equal(["Compiler", "Profiler"], folder.Children.Select(entry => entry.Name));
         Assert.Equal(["Compiler", "Profiler", "Root"],
             AppEntry.FlattenApplications(entries).Select(entry => entry.Name).Order());
+    }
+
+    [Fact]
+    public void BuildPromotesTheOnlyApplicationOutOfInstallerFolders()
+    {
+        var entries = StartMenuFolderBuilder.Build(
+        [
+            Shortcut("Android Studio", "studio.lnk", @"Android\Android Studio"),
+        ]);
+
+        var app = Assert.Single(entries);
+        Assert.False(app.IsFolder);
+        Assert.Equal("Android Studio", app.Name);
+        Assert.Equal("studio.lnk", app.LaunchTarget);
+    }
+
+    [Fact]
+    public void BuildKeepsFoldersThatContainMultipleApplications()
+    {
+        var entries = StartMenuFolderBuilder.Build(
+        [
+            Shortcut("Compiler", "compiler.lnk", "Developer Tools"),
+            Shortcut("Profiler", "profiler.lnk", "Developer Tools"),
+        ]);
+
+        var folder = Assert.Single(entries);
+        Assert.True(folder.IsFolder);
+        Assert.Equal(["Compiler", "Profiler"], folder.Children.Select(entry => entry.Name));
     }
 
     [Fact]
@@ -36,8 +61,8 @@ public sealed class StartMenuFolderBuilderTests
             new StartMenuShortcut("Tool", "new.lnk", newer, "Utilities", "TARGET:tool.exe"),
         ]);
 
-        var folder = Assert.Single(entries);
-        var app = Assert.Single(folder.Children);
+        var app = Assert.Single(entries);
+        Assert.False(app.IsFolder);
         Assert.Equal("new.lnk", app.LaunchTarget);
         Assert.Equal(newer, app.AddedAt);
     }
