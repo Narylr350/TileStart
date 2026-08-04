@@ -160,7 +160,7 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
-    public void ApplicationEnumerationUsesLowestPriorityWorkerThreads()
+    public void ApplicationEnumerationUsesOneLowestPriorityStaWorker()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -169,6 +169,7 @@ public sealed class ApplicationPaneRefreshTests
             "Applications",
             "StartAppScanner.cs"));
 
-        Assert.Equal(2, source.Split("Priority = ThreadPriority.Lowest", StringSplitOptions.None).Length - 1);
+        Assert.Equal(1, source.Split("Priority = ThreadPriority.Lowest", StringSplitOptions.None).Length - 1);
+        Assert.Contains("ApartmentState.STA", source, StringComparison.Ordinal);
     }
 }

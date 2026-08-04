@@ -52,7 +52,9 @@ public sealed class StartupPerformanceTests
             StringComparison.Ordinal);
         Assert.Contains("using var identityResolver = LaunchTargetIdentity.CreateResolver();", controller,
             StringComparison.Ordinal);
-        Assert.Contains("Task.WhenAll(shortcutTask, packagedTask).ConfigureAwait(false)", scanner,
+        Assert.Contains("return RunOnBackgroundThread(", scanner, StringComparison.Ordinal);
+        Assert.Contains("ScanShellCatalog", scanner, StringComparison.Ordinal);
+        Assert.Contains("ApartmentState.STA", scanner,
             StringComparison.Ordinal);
     }
 

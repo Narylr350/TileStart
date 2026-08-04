@@ -5,20 +5,34 @@ namespace TileStart.Host.Tests;
 public sealed class StartAppScannerTests
 {
     [Theory]
-    [InlineData("Microsoft.WindowsCalculator_8wekyb3d8bbwe")]
-    [InlineData("52295McMullenSoftware.TileGenie_kfbqnnmtpr2vc")]
-    public void AppsFolderIncludesPackagedApplications(string packageFamilyName)
+    [InlineData(1)]
+    [InlineData(2)]
+    public void AppsFolderIncludesPrimaryLaunchers(int launcherKind)
     {
-        Assert.True(StartAppScanner.IsPackagedAppsFolderItem(packageFamilyName));
+        Assert.True(StartAppScanner.IsAppsFolderLauncher(
+            "Calculator",
+            "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
+            null,
+            launcherKind));
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void AppsFolderExcludesClassicShortcuts(string? packageFamilyName)
+    [InlineData(null, "App", null, 1)]
+    [InlineData("App", null, null, 1)]
+    [InlineData("App", "App.Id", null, 0)]
+    [InlineData("App", "App.Id", "Parent.Id", 1)]
+    [InlineData("Desktop", "Microsoft.Windows.Desktop", null, 1)]
+    public void AppsFolderExcludesItemsThatAreNotPrimaryLaunchers(
+        string? name,
+        string? appUserModelId,
+        string? parentAppUserModelId,
+        int launcherKind)
     {
-        Assert.False(StartAppScanner.IsPackagedAppsFolderItem(packageFamilyName));
+        Assert.False(StartAppScanner.IsAppsFolderLauncher(
+            name,
+            appUserModelId,
+            parentAppUserModelId,
+            launcherKind));
     }
 
     [Theory]

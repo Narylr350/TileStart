@@ -2,7 +2,13 @@ using System.IO;
 
 namespace TileStart.Host.Applications;
 
-public sealed record StartMenuShortcut(string Name, string LaunchTarget, DateTime AddedAt, string FolderPath);
+public sealed record StartMenuShortcut(
+    string Name,
+    string LaunchTarget,
+    DateTime AddedAt,
+    string FolderPath,
+    string CatalogIdentity = "",
+    string AppUserModelId = "");
 
 public static class StartMenuFolderBuilder
 {
@@ -15,7 +21,9 @@ public static class StartMenuFolderBuilder
             .Where(candidate => candidate.Folders.Length == 0)
             .Select(candidate => AppEntry.Application(candidate.Shortcut.Name,
                 candidate.Shortcut.LaunchTarget,
-                candidate.Shortcut.AddedAt));
+                candidate.Shortcut.AddedAt,
+                appUserModelId: candidate.Shortcut.AppUserModelId,
+                catalogIdentity: candidate.Shortcut.CatalogIdentity));
         var folders = candidates
             .Where(candidate => candidate.Folders.Length > 0)
             .GroupBy(candidate => candidate.Folders[0], StringComparer.CurrentCultureIgnoreCase)
@@ -24,10 +32,22 @@ public static class StartMenuFolderBuilder
 
         return applications
             .Concat(folders)
-            .GroupBy(entry => (entry.Name, entry.IsFolder), EntryKeyComparer.Instance)
+            .GroupBy(GetEntryIdentity, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.OrderByDescending(entry => entry.AddedAt).First())
             .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
+    }
+
+    private static string GetEntryIdentity(AppEntry entry)
+    {
+        if (entry.IsFolder)
+        {
+            return $"FOLDER:{entry.Name}";
+        }
+
+        return !string.IsNullOrWhiteSpace(entry.CatalogIdentity)
+            ? $"APP:{entry.CatalogIdentity}"
+            : $"PATH:{entry.LaunchTarget}";
     }
 
     private static string[] SplitPath(string path) =>
@@ -35,15 +55,4 @@ public static class StartMenuFolderBuilder
             StringSplitOptions.RemoveEmptyEntries);
 
     private sealed record Candidate(StartMenuShortcut Shortcut, string[] Folders);
-
-    private sealed class EntryKeyComparer : IEqualityComparer<(string Name, bool IsFolder)>
-    {
-        public static EntryKeyComparer Instance { get; } = new();
-
-        public bool Equals((string Name, bool IsFolder) x, (string Name, bool IsFolder) y) =>
-            x.IsFolder == y.IsFolder && StringComparer.CurrentCultureIgnoreCase.Equals(x.Name, y.Name);
-
-        public int GetHashCode((string Name, bool IsFolder) value) =>
-            HashCode.Combine(StringComparer.CurrentCultureIgnoreCase.GetHashCode(value.Name), value.IsFolder);
-    }
 }

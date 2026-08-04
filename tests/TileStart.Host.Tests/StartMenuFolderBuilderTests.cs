@@ -22,7 +22,7 @@ public sealed class StartMenuFolderBuilderTests
         Assert.Equal("Diagnostics", nested.Name);
         Assert.Equal("Profiler", Assert.Single(nested.Children).Name);
         Assert.Equal(["Compiler", "Profiler", "Root"],
-                     AppEntry.FlattenApplications(entries).Select(entry => entry.Name).Order());
+            AppEntry.FlattenApplications(entries).Select(entry => entry.Name).Order());
     }
 
     [Fact]
@@ -32,8 +32,8 @@ public sealed class StartMenuFolderBuilderTests
         var newer = new DateTime(2026, 1, 1);
         var entries = StartMenuFolderBuilder.Build(
         [
-            new StartMenuShortcut("Tool", "old.lnk", old, "Utilities"),
-            new StartMenuShortcut("Tool", "new.lnk", newer, "Utilities"),
+            new StartMenuShortcut("Tool", "old.lnk", old, "Utilities", "TARGET:tool.exe"),
+            new StartMenuShortcut("Tool", "new.lnk", newer, "Utilities", "TARGET:tool.exe"),
         ]);
 
         var folder = Assert.Single(entries);
@@ -43,10 +43,38 @@ public sealed class StartMenuFolderBuilderTests
     }
 
     [Fact]
+    public void BuildKeepsSameNameApplicationsWithDifferentShellIdentities()
+    {
+        var entries = StartMenuFolderBuilder.Build(
+        [
+            new StartMenuShortcut("Tool", "first.lnk", DateTime.MinValue, "", "AUMID:Tool.First"),
+            new StartMenuShortcut("Tool", "second.lnk", DateTime.MinValue, "", "AUMID:Tool.Second"),
+        ]);
+
+        Assert.Equal(2, entries.Count);
+        Assert.Equal(["first.lnk", "second.lnk"], entries.Select(entry => entry.LaunchTarget));
+    }
+
+    [Fact]
+    public void BuildMergesUserAndCommonFoldersByShellDisplayName()
+    {
+        var entries = StartMenuFolderBuilder.Build(
+        [
+            new StartMenuShortcut("放大镜", "magnify.lnk", DateTime.MinValue, "辅助功能", "AUMID:Magnify"),
+            new StartMenuShortcut("讲述人", "narrator.lnk", DateTime.MinValue, "辅助功能", "AUMID:Narrator"),
+        ]);
+
+        var folder = Assert.Single(entries);
+        Assert.Equal("辅助功能", folder.Name);
+        Assert.Equal(["放大镜", "讲述人"], folder.Children.Select(entry => entry.Name));
+    }
+
+    [Fact]
     public void OnlyStartMenuShortcutEntriesExposeOpenFileLocation()
     {
         var shortcut = AppEntry.Application("Tool", @"C:\Start Menu\Tool.LNK", DateTime.MinValue);
-        var packaged = AppEntry.Application("Calculator", @"shell:AppsFolder\Microsoft.WindowsCalculator!App", DateTime.MinValue);
+        var packaged = AppEntry.Application("Calculator", @"shell:AppsFolder\Microsoft.WindowsCalculator!App",
+            DateTime.MinValue);
         var folder = AppEntry.Folder("Utilities", [shortcut]);
 
         Assert.True(shortcut.CanOpenFileLocation);
