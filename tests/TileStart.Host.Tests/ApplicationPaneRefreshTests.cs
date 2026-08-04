@@ -145,6 +145,34 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
+    public void ColdStartShowRequestsWaitForApplicationContent()
+    {
+        var mainWindow = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "MainWindow.xaml.cs"));
+        var controller = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Controllers",
+            "ApplicationPaneController.cs"));
+
+        Assert.Contains("public void ShowFromShell() => _appController.ShowFromShellWhenReady();", mainWindow,
+            StringComparison.Ordinal);
+        Assert.Contains("showFromShell: () => _controller!.ShowFromShell()", mainWindow,
+            StringComparison.Ordinal);
+        Assert.Contains("_showRequestedBeforeApplicationContentReady = true;", controller,
+            StringComparison.Ordinal);
+
+        var ready = controller.IndexOf("_applicationContentReady = true;", StringComparison.Ordinal);
+        var replay = controller.IndexOf("if (_showRequestedBeforeApplicationContentReady)", ready,
+            StringComparison.Ordinal);
+        Assert.True(ready >= 0 && replay > ready);
+    }
+
+    [Fact]
     public void ApplicationChangesAreMonitoredOutsideTheMenuShowPath()
     {
         var source = File.ReadAllText(Path.Combine(

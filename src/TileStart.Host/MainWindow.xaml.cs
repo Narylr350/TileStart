@@ -50,7 +50,7 @@ public partial class MainWindow : Window
             Dispatcher,
             NavigationToggleButton,
             WindowRoot,
-            showFromShell: ShowFromShell,
+            showFromShell: () => _controller!.ShowFromShell(),
             isWindowVisible: () => _controller?.IsWindowVisible ?? false,
             dismissWindow: DismissWindow,
             toggleAppFolderAsync: folder => _tileWorkspaceController!.ToggleAppFolderAsync(folder),
@@ -168,7 +168,7 @@ public partial class MainWindow : Window
         _controller.ApplyWindowMaterial();
     }
 
-    public void ShowFromShell() => _controller.ShowFromShell();
+    public void ShowFromShell() => _appController.ShowFromShellWhenReady();
 
     public void AllowClose() => _controller.AllowClose();
 

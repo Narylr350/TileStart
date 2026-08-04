@@ -43,6 +43,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private bool _applicationRefreshPending;
     private bool _recentAppsExpanded;
     private bool _layoutRestored;
+    private bool _showRequestedBeforeApplicationContentReady;
     private bool _isDisposed;
     private int _tileVisualLoadGeneration;
     private int _tileVisualAppliedGeneration;
@@ -181,6 +182,12 @@ internal sealed class ApplicationPaneController : IDisposable
             while (_pendingHostRequests.Count > 0)
             {
                 HandleHostRequest(_pendingHostRequests.Dequeue());
+            }
+
+            if (_showRequestedBeforeApplicationContentReady)
+            {
+                _showRequestedBeforeApplicationContentReady = false;
+                _showFromShell();
             }
         }
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
@@ -480,6 +487,24 @@ internal sealed class ApplicationPaneController : IDisposable
         }
     }
 
+    public void ShowFromShellWhenReady()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        if (!_applicationContentReady)
+        {
+            _showRequestedBeforeApplicationContentReady = true;
+            DiagnosticLog.Write("Start window show deferred until application content is ready.");
+            return;
+        }
+
+        _showRequestedBeforeApplicationContentReady = false;
+        _showFromShell();
+    }
+
     private void AddExternalApplication(string path)
     {
         var identity = LaunchTargetIdentity.GetKey(path);
@@ -533,7 +558,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
     public void ShowIfHidden()
     {
-        _showFromShell();
+        ShowFromShellWhenReady();
     }
 
     private static IReadOnlyList<AppEntry> FilterHiddenApplications(
@@ -1359,6 +1384,7 @@ internal sealed class ApplicationPaneController : IDisposable
         _packagedAppRefreshTask = null;
         _contextMenuPrewarmOperation?.Abort();
         _contextMenuPrewarmOperation = null;
+        _showRequestedBeforeApplicationContentReady = false;
         _pendingHostRequests.Clear();
         _lifetimeCancellation.Dispose();
     }
