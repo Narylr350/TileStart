@@ -20,6 +20,7 @@
 
 - 本机 Ghidra 逆向工具目录为 `D:\Narylr\tools\Ghidra`；本项目需要 Ghidra、符号或现有逆向辅助工具时先检查该目录。
 - TileStart 的本机逆向研究目录为 `D:\Narylr\TileStart-Research`：`startui-ghidra` 保存 StartUI Ghidra 工程，`exports` 保存函数与布局导出，`scripts` 保存研究脚本，仓库原 `tools\reverse` 固定迁移到 `D:\Narylr\TileStart-Research\tools\reverse`；开始新的逆向工作前先检查并复用这里的材料。
+- Rider 对应的 dotTrace CLI 固定保存在 `D:\Narylr\TileStart-Research\tools\dottrace`；诊断 Host 首次交互、卡顿和 CPU 热点时优先复用该工具，将 `.dtp` 快照等分析产物留在研究目录，禁止提交到公共仓库。
 - `D:\Narylr\TileStart-Research\docs` 保存原版截图、个人布局、完整逆向规格和研究过程；这些材料可能包含个人应用、用户名、绝对路径和桌面内容，禁止重新提交到公共仓库。
 - 研究目录位于主仓库外；微软二进制、PDB、Ghidra 数据库和大体积导出不提交到 TileStart 仓库。
 - 缺少本项目必要的逆向工具时直接下载；一次性工具、克隆和分析产物放在 Windows 临时目录。

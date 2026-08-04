@@ -139,6 +139,9 @@ internal sealed class ApplicationPaneController : IDisposable
         }
 
         DiagnosticLog.Write($"Tile layout ready: {_tileLayout.Groups.Sum(group => group.Tiles.Count)} tiles.");
+        // 磁贴菜单的首次 Popup 创建必须在窗口接收输入前完成；等应用扫描结束再预热，
+        // 用户冷启动后立即打开开始菜单时，创建成本会落到第一次右键操作上。
+        QueueContextMenuPrewarm(System.Windows.Threading.DispatcherPriority.Normal);
         // 已保存布局会先于开始菜单应用扫描显示。立即从磁贴自身的路径恢复本地图标，
         // 否则完整扫描结束前所有磁贴都会退化成名称首字母；扫描后的新批次再补齐 UWP/MSIX 资产。
         _ = LoadTileVisualsAsync([]);
@@ -171,9 +174,9 @@ internal sealed class ApplicationPaneController : IDisposable
             RestoreSavedLayout();
             _applicationContentReady = true;
             DiagnosticLog.Write("Application content ready.");
-            QueueContextMenuPrewarm();
-            _ = LoadTileVisualsAsync(launchableApps);
-            _ = LoadApplicationIconsAsync(launchableApps);
+            var tileVisualTask = LoadTileVisualsAsync(launchableApps);
+            var applicationIconTask = LoadApplicationIconsAsync(launchableApps);
+            _ = PrewarmApplicationContextMenuAfterVisualsAsync(tileVisualTask, applicationIconTask);
             StartApplicationChangeMonitoring();
             while (_pendingHostRequests.Count > 0)
             {
@@ -657,7 +660,8 @@ internal sealed class ApplicationPaneController : IDisposable
         AlphabetIndex.UpdateAvailability(AlphabetLetters, _apps, RecentApps.Count > 0);
     }
 
-    private void QueueContextMenuPrewarm()
+    private void QueueContextMenuPrewarm(
+        System.Windows.Threading.DispatcherPriority priority = System.Windows.Threading.DispatcherPriority.Background)
     {
         if (_isDisposed)
         {
@@ -665,48 +669,108 @@ internal sealed class ApplicationPaneController : IDisposable
         }
 
         _contextMenuPrewarmOperation = _dispatcher.BeginInvoke(
-            PrewarmContextMenus,
-            System.Windows.Threading.DispatcherPriority.Background);
+            () =>
+            {
+                _contextMenuPrewarmOperation = null;
+                _ = PrewarmContextMenusAsync();
+            },
+            priority);
     }
 
-    private void PrewarmContextMenus()
+    private async Task PrewarmContextMenusAsync()
     {
-        _contextMenuPrewarmOperation = null;
         if (_isDisposed)
         {
             return;
         }
 
-        var startedAt = Environment.TickCount64;
-        var owners = new List<Button> { _navigationToggleButton };
-        var appOwner = FindVisualDescendants<Button>(_windowRoot)
-            .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is AppEntry { IsFolder: false });
-        var tileOwner = FindVisualDescendants<Button>(_windowRoot)
-            .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is TileItem);
-        if (appOwner is not null)
+        try
         {
-            owners.Add(appOwner);
-        }
-
-        if (tileOwner is not null)
-        {
-            owners.Add(tileOwner);
-        }
-
-        var prewarmed = 0;
-        foreach (var owner in owners.Distinct())
-        {
-            if (PrewarmContextMenu(owner))
+            var timer = Stopwatch.StartNew();
+            var owners = new List<Button> { _navigationToggleButton };
+            var appOwner = FindVisualDescendants<Button>(_windowRoot)
+                .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is AppEntry { IsFolder: false });
+            var tileOwner = FindVisualDescendants<Button>(_windowRoot)
+                                .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is TileItem)
+                            ?? CreateTileContextMenuPrewarmOwner();
+            if (appOwner is not null)
             {
-                prewarmed++;
+                owners.Add(appOwner);
             }
-        }
 
-        DiagnosticLog.Write(
-            $"Context menu prewarm completed: {prewarmed} menus in {Environment.TickCount64 - startedAt} ms.");
+            if (tileOwner is not null)
+            {
+                owners.Add(tileOwner);
+            }
+
+            var prewarmed = 0;
+            foreach (var owner in owners.Distinct())
+            {
+                if (await PrewarmContextMenuAsync(owner))
+                {
+                    prewarmed++;
+                }
+            }
+
+            DiagnosticLog.Write(
+                $"Context menu prewarm completed: {prewarmed} menus in {timer.Elapsed.TotalMilliseconds:F2} ms.");
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Context menu prewarm failed: {exception.Message}");
+        }
     }
 
-    private static bool PrewarmContextMenu(Button owner)
+    private async Task PrewarmApplicationContextMenuAfterVisualsAsync(params Task[] visualTasks)
+    {
+        try
+        {
+            await Task.WhenAll(visualTasks);
+            _lifetimeToken.ThrowIfCancellationRequested();
+
+            var appOwner = FindVisualDescendants<Button>(_windowRoot)
+                .FirstOrDefault(button => button.ContextMenu is not null && button.Tag is AppEntry { IsFolder: false });
+            if (appOwner is null)
+            {
+                return;
+            }
+
+            var timer = Stopwatch.StartNew();
+            var prewarmed = await PrewarmContextMenuAsync(appOwner);
+            DiagnosticLog.Write(
+                $"Application context menu prewarm completed: success={prewarmed}, " +
+                $"elapsedMs={timer.Elapsed.TotalMilliseconds:F2}.");
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            DiagnosticLog.Write($"Application context menu prewarm failed: {exception.Message}");
+        }
+    }
+
+    private Button? CreateTileContextMenuPrewarmOwner()
+    {
+        var tile = _tileLayout.Groups
+            .SelectMany(group => group.Tiles)
+            .FirstOrDefault();
+        if (tile is null || _windowRoot.TryFindResource("TileContextMenu") is not ContextMenu menu)
+        {
+            return null;
+        }
+
+        return new Button
+        {
+            Tag = tile,
+            ContextMenu = menu
+        };
+    }
+
+    private async Task<bool> PrewarmContextMenuAsync(Button owner)
     {
         var menu = owner.ContextMenu;
         if (menu is null)
@@ -727,6 +791,10 @@ internal sealed class ApplicationPaneController : IDisposable
             menu.VerticalOffset = -32000;
             menu.Opacity = 0;
             menu.IsOpen = true;
+            await _dispatcher.InvokeAsync(
+                static () => { },
+                System.Windows.Threading.DispatcherPriority.Loaded,
+                _lifetimeToken);
             menu.UpdateLayout();
 
             var submenu = EnumerateMenuItems(menu)
@@ -734,6 +802,10 @@ internal sealed class ApplicationPaneController : IDisposable
             if (submenu is not null)
             {
                 submenu.IsSubmenuOpen = true;
+                await _dispatcher.InvokeAsync(
+                    static () => { },
+                    System.Windows.Threading.DispatcherPriority.Loaded,
+                    _lifetimeToken);
                 submenu.UpdateLayout();
                 submenu.IsSubmenuOpen = false;
             }

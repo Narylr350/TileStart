@@ -22,7 +22,7 @@ public sealed class StartupPerformanceTests
     {
         var source = File.ReadAllText(HostSource("Controllers", "ApplicationPaneController.cs"));
         var ready = source.IndexOf("_applicationContentReady = true;", StringComparison.Ordinal);
-        var visuals = source.IndexOf("_ = LoadTileVisualsAsync(launchableApps);", StringComparison.Ordinal);
+        var visuals = source.IndexOf("var tileVisualTask = LoadTileVisualsAsync(launchableApps);", StringComparison.Ordinal);
 
         Assert.True(ready >= 0 && ready < visuals);
         Assert.Contains("RunStaThreadAsync(", source, StringComparison.Ordinal);

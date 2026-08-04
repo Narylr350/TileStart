@@ -533,7 +533,8 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
-        <ContextMenu x:Key="TileContextMenu" x:Shared="False"
+        <!-- 磁贴必须共享同一菜单实例；独立实例会让每个磁贴首次右键都同步创建 Popup 视觉树。 -->
+        <ContextMenu x:Key="TileContextMenu"
                      DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
             <MenuItem Header="从 TileStart 磁贴区取消固定"
                       Click="UnpinTile_Click">

@@ -961,6 +961,7 @@ public sealed class DarkThemeVisualTests
         Assert.Equal("{Binding SettingsMenuHeader}", (string?)settingsItem.Attribute("Header"));
         var tileMenu = settingsItem.Ancestors(presentation + "ContextMenu").Single();
         Assert.Equal("TileContextMenu", (string?)tileMenu.Attribute(x + "Key"));
+        Assert.Null(tileMenu.Attribute(x + "Shared"));
         Assert.Equal("{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}",
             (string?)tileMenu.Attribute("DataContext"));
 

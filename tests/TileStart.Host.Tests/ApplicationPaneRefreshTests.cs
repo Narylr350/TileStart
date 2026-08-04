@@ -160,6 +160,33 @@ public sealed class ApplicationPaneRefreshTests
     }
 
     [Fact]
+    public void TileContextMenuIsPrewarmedBeforeColdStartInput()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HostSource",
+            "Controllers",
+            "ApplicationPaneController.cs"));
+
+        var layoutReady = source.IndexOf("Tile layout ready", StringComparison.Ordinal);
+        var earlyPrewarm = source.IndexOf(
+            "QueueContextMenuPrewarm(System.Windows.Threading.DispatcherPriority.Normal)",
+            layoutReady,
+            StringComparison.Ordinal);
+        var initialVisualLoad = source.IndexOf("LoadTileVisualsAsync([])", layoutReady, StringComparison.Ordinal);
+
+        Assert.True(layoutReady >= 0);
+        Assert.True(earlyPrewarm > layoutReady);
+        Assert.True(initialVisualLoad > earlyPrewarm);
+        Assert.Contains("TryFindResource(\"TileContextMenu\")", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "PrewarmApplicationContextMenuAfterVisualsAsync(tileVisualTask, applicationIconTask)",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ApplicationEnumerationUsesOneLowestPriorityStaWorker()
     {
         var source = File.ReadAllText(Path.Combine(
