@@ -20,17 +20,25 @@ public static class ShellIconLoader
 
     public static ImageSource? Load(string displayName)
     {
+        using var session = CreateSession();
+        return session.Load(displayName);
+    }
+
+    internal static Session CreateSession() => new();
+
+    private static ImageSource? LoadCore(string displayName, Session session)
+    {
         var loadedImage = LoadImage(displayName);
         if (loadedImage is not null)
         {
             return loadedImage;
         }
 
-        var shortcutTarget = ResolveShortcutTargetWithoutIcon(displayName);
+        var shortcutTarget = session.ResolveShortcutTargetWithoutIcon(displayName);
         if (!string.IsNullOrWhiteSpace(shortcutTarget)
             && !shortcutTarget.Equals(displayName, StringComparison.OrdinalIgnoreCase))
         {
-            var targetIcon = Load(shortcutTarget);
+            var targetIcon = LoadCore(shortcutTarget, session);
             if (targetIcon is not null)
             {
                 return targetIcon;
@@ -122,50 +130,74 @@ public static class ShellIconLoader
         }
     }
 
-    private static string? ResolveShortcutTargetWithoutIcon(string displayName)
+    internal sealed class Session : IDisposable
     {
-        if (!File.Exists(displayName)
-            || !Path.GetExtension(displayName).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+        private object? _shell;
+        private bool _shellCreationAttempted;
+
+        public ImageSource? Load(string displayName) => LoadCore(displayName, this);
+
+        public void Dispose()
         {
-            return null;
+            ReleaseComObject(_shell);
+            _shell = null;
         }
 
-        object? shell = null;
-        object? shortcut = null;
-        try
+        internal string? ResolveShortcutTargetWithoutIcon(string displayName)
         {
-            var shellType = Type.GetTypeFromProgID("WScript.Shell");
-            shell = shellType is null ? null : Activator.CreateInstance(shellType);
+            if (!File.Exists(displayName)
+                || !Path.GetExtension(displayName).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var shell = GetOrCreateShell();
             if (shell is null)
             {
                 return null;
             }
 
-            shortcut = ((dynamic)shell).CreateShortcut(displayName);
-            dynamic shortcutApi = shortcut;
-            var iconLocation = shortcutApi.IconLocation as string ?? string.Empty;
-            var separator = iconLocation.LastIndexOf(',');
-            var iconPath = separator >= 0 ? iconLocation[..separator] : iconLocation;
-            if (!string.IsNullOrWhiteSpace(iconPath.Trim().Trim('"')))
+            object? shortcut = null;
+            try
             {
+                shortcut = ((dynamic)shell).CreateShortcut(displayName);
+                dynamic shortcutApi = shortcut;
+                var iconLocation = shortcutApi.IconLocation as string ?? string.Empty;
+                var separator = iconLocation.LastIndexOf(',');
+                var iconPath = separator >= 0 ? iconLocation[..separator] : iconLocation;
+                if (!string.IsNullOrWhiteSpace(iconPath.Trim().Trim('"')))
+                {
+                    return null;
+                }
+
+                var targetPath = shortcutApi.TargetPath as string;
+                return !string.IsNullOrWhiteSpace(targetPath) && File.Exists(targetPath)
+                    ? targetPath
+                    : null;
+            }
+            catch (Exception exception)
+            {
+                DiagnosticLog.Write(
+                    $"Shortcut icon target resolution failed: shortcut={displayName}, error={exception.Message}");
                 return null;
             }
+            finally
+            {
+                ReleaseComObject(shortcut);
+            }
+        }
 
-            var targetPath = shortcutApi.TargetPath as string;
-            return !string.IsNullOrWhiteSpace(targetPath) && File.Exists(targetPath)
-                ? targetPath
-                : null;
-        }
-        catch (Exception exception)
+        private object? GetOrCreateShell()
         {
-            DiagnosticLog.Write(
-                $"Shortcut icon target resolution failed: shortcut={displayName}, error={exception.Message}");
-            return null;
-        }
-        finally
-        {
-            ReleaseComObject(shortcut);
-            ReleaseComObject(shell);
+            if (_shell is not null || _shellCreationAttempted)
+            {
+                return _shell;
+            }
+
+            _shellCreationAttempted = true;
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            _shell = shellType is null ? null : Activator.CreateInstance(shellType);
+            return _shell;
         }
     }
 

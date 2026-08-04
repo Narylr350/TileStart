@@ -67,9 +67,12 @@ public sealed class ShellIconLoaderTests
             await CreateShortcutAsync(shortcutPath, targetPath);
 
             var expected = Assert.IsAssignableFrom<BitmapSource>(ShellIconLoader.Load(targetPath));
-            var actual = Assert.IsAssignableFrom<BitmapSource>(ShellIconLoader.Load(shortcutPath));
+            using var session = ShellIconLoader.CreateSession();
+            var actual = Assert.IsAssignableFrom<BitmapSource>(session.Load(shortcutPath));
+            var repeated = Assert.IsAssignableFrom<BitmapSource>(session.Load(shortcutPath));
 
             Assert.Equal(GetPixels(expected), GetPixels(actual));
+            Assert.Equal(GetPixels(actual), GetPixels(repeated));
         }
         finally
         {

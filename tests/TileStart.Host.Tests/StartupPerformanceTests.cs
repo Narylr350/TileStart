@@ -66,6 +66,9 @@ public sealed class StartupPerformanceTests
         var method = source[methodStart..methodEnd];
 
         Assert.Contains("Task.WhenAny(pendingGroups.Keys)", method, StringComparison.Ordinal);
+        Assert.Contains("using var shellIconSession = ShellIconLoader.CreateSession();", source,
+            StringComparison.Ordinal);
+        Assert.Contains("shellIconSession.Load(app.LaunchTarget)", source, StringComparison.Ordinal);
         Assert.Contains("ApplyApplicationIcons(loadedIcons)", method, StringComparison.Ordinal);
         Assert.Contains("Application icon group completed:", method, StringComparison.Ordinal);
         Assert.Contains("deferredIcons.AddRange(loadedIcons)", method, StringComparison.Ordinal);

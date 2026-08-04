@@ -851,6 +851,7 @@ internal sealed class ApplicationPaneController : IDisposable
 
     private static IReadOnlyList<LoadedApplicationIcon> LoadApplicationIcons(IEnumerable<AppEntry> apps)
     {
+        using var shellIconSession = ShellIconLoader.CreateSession();
         var loadedIcons = new List<LoadedApplicationIcon>();
         foreach (var app in apps)
         {
@@ -860,7 +861,7 @@ internal sealed class ApplicationPaneController : IDisposable
                 // Prefer that deterministic asset over the Shell thumbnail API, which can
                 // return a large bitmap containing only a tiny glyph on some Windows builds.
                 var icon = PackagedTileAssetLoader.LoadApplicationIcon(app.PackageInstallPath, app.AppUserModelId)
-                           ?? ShellIconLoader.Load(app.LaunchTarget)
+                           ?? shellIconSession.Load(app.LaunchTarget)
                            ?? GenericAppIcon.Image;
                 loadedIcons.Add(new LoadedApplicationIcon(app, icon));
             }
