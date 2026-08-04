@@ -18,6 +18,7 @@ internal static class DialogWindowMaterialManager
     private const int DwmSystemBackdropNone = 0;
     private const int DwmSystemBackdropTransientWindow = 3;
     private const int DwmWindowCornerRound = 2;
+    private const int DwmColorNone = unchecked((int)0xFFFFFFFE);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Margins
@@ -54,7 +55,9 @@ internal static class DialogWindowMaterialManager
         _ = DwmSetWindowAttribute(handle, DwmUseImmersiveDarkMode, ref darkMode, sizeof(int));
         var cornerPreference = DwmWindowCornerRound;
         _ = DwmSetWindowAttribute(handle, DwmWindowCornerPreference, ref cornerPreference, sizeof(int));
-        var captionColor = ToColorRef(fallbackBrush.Color);
+        // 自绘标题栏必须让完整客户区的 Transient Acrylic 继续透出。
+        // 使用实体 CaptionColor 会在 Acrylic 上方额外画出一条 #202020/#F3F3F3 色带。
+        var captionColor = ResolveCaptionColor(backdropType, fallbackBrush.Color);
         _ = DwmSetWindowAttribute(handle, DwmCaptionColor, ref captionColor, sizeof(int));
         var backdropResult = DwmSetWindowAttribute(handle, DwmSystemBackdropType, ref backdropType, sizeof(int));
         var margins = new Margins { Left = -1, Right = -1, Top = -1, Bottom = -1 };
@@ -93,6 +96,9 @@ internal static class DialogWindowMaterialManager
 
     internal static bool IsDarkSurface(MediaColor color) =>
         (color.R * 299 + color.G * 587 + color.B * 114) < 128_000;
+
+    internal static int ResolveCaptionColor(int backdropType, MediaColor fallbackColor) =>
+        backdropType == DwmSystemBackdropNone ? ToColorRef(fallbackColor) : DwmColorNone;
 
     internal static int ToColorRef(MediaColor color) => color.R | color.G << 8 | color.B << 16;
 
