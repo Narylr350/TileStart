@@ -39,6 +39,7 @@ internal sealed class ApplicationPaneController : IDisposable
     private AppEntry[] _launchableApps = [];
     private AppEntry[] _recentAppCandidates = [];
     private bool _applicationContentReady;
+    private bool _applicationVisualsReady;
     private bool _applicationRefreshInProgress;
     private bool _applicationRefreshPending;
     private bool _recentAppsExpanded;
@@ -178,16 +179,11 @@ internal sealed class ApplicationPaneController : IDisposable
             var tileVisualTask = LoadTileVisualsAsync(launchableApps);
             var applicationIconTask = LoadApplicationIconsAsync(launchableApps);
             _ = PrewarmApplicationContextMenuAfterVisualsAsync(tileVisualTask, applicationIconTask);
+            _ = CompleteApplicationVisualsAsync(tileVisualTask, applicationIconTask);
             StartApplicationChangeMonitoring();
             while (_pendingHostRequests.Count > 0)
             {
                 HandleHostRequest(_pendingHostRequests.Dequeue());
-            }
-
-            if (_showRequestedBeforeApplicationContentReady)
-            {
-                _showRequestedBeforeApplicationContentReady = false;
-                _showFromShell();
             }
         }
         catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
@@ -487,6 +483,41 @@ internal sealed class ApplicationPaneController : IDisposable
         }
     }
 
+    private async Task CompleteApplicationVisualsAsync(
+        Task tileVisualTask,
+        Task applicationIconTask)
+    {
+        try
+        {
+            await Task.WhenAll(tileVisualTask, applicationIconTask);
+        }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            // 单批视觉失败时仍允许窗口显示；各加载器会为失败项保留已有或通用回退图标。
+            DiagnosticLog.Write($"Application visuals completed with fallback icons: {exception}");
+        }
+
+        if (_isDisposed || _lifetimeToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        _applicationVisualsReady = true;
+        DiagnosticLog.Write("Application visuals ready.");
+        if (_showRequestedBeforeApplicationContentReady)
+        {
+            _showRequestedBeforeApplicationContentReady = false;
+            _showFromShell();
+        }
+    }
+
+    internal static bool CanShowFromShell(bool applicationContentReady, bool applicationVisualsReady) =>
+        applicationContentReady && applicationVisualsReady;
+
     public void ShowFromShellWhenReady()
     {
         if (_isDisposed)
@@ -494,10 +525,13 @@ internal sealed class ApplicationPaneController : IDisposable
             return;
         }
 
-        if (!_applicationContentReady)
+        if (!CanShowFromShell(_applicationContentReady, _applicationVisualsReady))
         {
             _showRequestedBeforeApplicationContentReady = true;
-            DiagnosticLog.Write("Start window show deferred until application content is ready.");
+            DiagnosticLog.Write(
+                _applicationContentReady
+                    ? "Start window show deferred until application visuals are ready."
+                    : "Start window show deferred until application content is ready.");
             return;
         }
 
@@ -1385,6 +1419,7 @@ internal sealed class ApplicationPaneController : IDisposable
         _contextMenuPrewarmOperation?.Abort();
         _contextMenuPrewarmOperation = null;
         _showRequestedBeforeApplicationContentReady = false;
+        _applicationVisualsReady = false;
         _pendingHostRequests.Clear();
         _lifetimeCancellation.Dispose();
     }

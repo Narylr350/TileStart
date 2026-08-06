@@ -144,8 +144,22 @@ public sealed class ApplicationPaneRefreshTests
         Assert.DoesNotContain("CheckAndRemoveMissingApps", source, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, true)]
+    public void ShellShowRequiresApplicationContentAndVisuals(
+        bool applicationContentReady,
+        bool applicationVisualsReady,
+        bool expected)
+    {
+        Assert.Equal(expected,
+            ApplicationPaneController.CanShowFromShell(applicationContentReady, applicationVisualsReady));
+    }
+
     [Fact]
-    public void ColdStartShowRequestsWaitForApplicationContent()
+    public void ColdStartShowRequestsWaitForApplicationContentAndVisuals()
     {
         var mainWindow = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -165,13 +179,24 @@ public sealed class ApplicationPaneRefreshTests
             StringComparison.Ordinal);
         Assert.Contains("_showRequestedBeforeApplicationContentReady = true;", controller,
             StringComparison.Ordinal);
-
-        var ready = controller.IndexOf("_applicationContentReady = true;", StringComparison.Ordinal);
-        var replay = controller.IndexOf("if (_showRequestedBeforeApplicationContentReady)", ready,
+        Assert.Contains("CompleteApplicationVisualsAsync(tileVisualTask, applicationIconTask)", controller,
             StringComparison.Ordinal);
-        Assert.True(ready >= 0 && replay > ready);
-    }
+        Assert.Contains("CanShowFromShell(_applicationContentReady, _applicationVisualsReady)", controller,
+            StringComparison.Ordinal);
 
+        var contentReady = controller.IndexOf("_applicationContentReady = true;", StringComparison.Ordinal);
+        var visualBatchStarted = controller.IndexOf("var tileVisualTask = LoadTileVisualsAsync(launchableApps);",
+            contentReady,
+            StringComparison.Ordinal);
+        var visualsReady = controller.IndexOf("_applicationVisualsReady = true;", visualBatchStarted,
+            StringComparison.Ordinal);
+        var replay = controller.IndexOf("if (_showRequestedBeforeApplicationContentReady)", visualsReady,
+            StringComparison.Ordinal);
+        Assert.True(contentReady >= 0
+                    && visualBatchStarted > contentReady
+                    && visualsReady > visualBatchStarted
+                    && replay > visualsReady);
+    }
     [Fact]
     public void ApplicationChangesAreMonitoredOutsideTheMenuShowPath()
     {
