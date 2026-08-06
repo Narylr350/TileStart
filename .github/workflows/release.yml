@@ -1,4 +1,5 @@
 name: Release
+run-name: Release ${{ inputs.version || github.ref_name }}
 
 on:
   push:
@@ -11,29 +12,29 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.version || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: windows-latest
+  prepare:
+    name: Validate release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
-      - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Resolve release version
+      - name: Resolve and validate release version
+        id: release
         shell: pwsh
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -57,8 +58,31 @@ jobs:
             throw "Version must use major.minor.patch format: $version"
           }
 
-          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          if ($env:EVENT_NAME -eq 'workflow_dispatch' -and (git tag --list $tag)) {
+            throw "Release tag already exists: $tag"
+          }
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+  build:
+    name: Test and package
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
 
       - name: Install Inno Setup
         shell: pwsh
@@ -70,30 +94,91 @@ jobs:
 
       - name: Build release packages
         shell: pwsh
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: .\scripts\Build-Package.ps1 -Version $env:VERSION
 
-      - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: TileStart-${{ env.VERSION }}-win-x64
-          if-no-files-found: error
-          path: |
-            artifacts/installer/TileStart-Setup-win-x64.exe
-            artifacts/package/TileStart-portable-win-x64.zip
-            artifacts/package/SHA256SUMS.txt
+      - name: Stage release assets
+        shell: pwsh
+        run: |
+          $releaseRoot = 'artifacts/release-assets'
+          if (Test-Path -LiteralPath $releaseRoot) {
+            Remove-Item -LiteralPath $releaseRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $releaseRoot | Out-Null
+          Copy-Item 'artifacts/installer/TileStart-Setup-win-x64.exe' $releaseRoot
+          Copy-Item 'artifacts/package/TileStart-portable-win-x64.zip' $releaseRoot
+          Copy-Item 'artifacts/package/SHA256SUMS.txt' $releaseRoot
 
-      - name: Create GitHub Release
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: TileStart-${{ needs.prepare.outputs.version }}-win-x64
+          retention-days: 7
+          if-no-files-found: error
+          path: artifacts/release-assets/*
+
+  publish:
+    name: Publish GitHub Release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: TileStart-${{ needs.prepare.outputs.version }}-win-x64
+          path: release-assets
+
+      - name: Verify release checksums
+        working-directory: release-assets
+        run: sha256sum --check SHA256SUMS.txt
+
+      - name: Create draft release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: >-
+          gh release create "$RELEASE_TAG"
+          --repo "$GITHUB_REPOSITORY"
+          --target "$GITHUB_SHA"
+          --title "TileStart $RELEASE_TAG"
+          --generate-notes
+          --draft
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: >-
+          gh release upload "$RELEASE_TAG"
+          release-assets/TileStart-Setup-win-x64.exe
+          release-assets/TileStart-portable-win-x64.zip
+          release-assets/SHA256SUMS.txt
+          --repo "$GITHUB_REPOSITORY"
+          --clobber
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+
+      - name: Delete incomplete draft
+        if: failure() && steps.create_release.outcome == 'success'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          $assets = @(
-            'artifacts/installer/TileStart-Setup-win-x64.exe',
-            'artifacts/package/TileStart-portable-win-x64.zip',
-            'artifacts/package/SHA256SUMS.txt'
-          )
-          gh release create $env:RELEASE_TAG $assets `
-            --repo $env:GITHUB_REPOSITORY `
-            --target $env:GITHUB_SHA `
-            --title "TileStart $env:RELEASE_TAG" `
-            --generate-notes
+          if ($env:EVENT_NAME -eq 'workflow_dispatch') {
+            gh release delete $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --yes --cleanup-tag
+          }
+          else {
+            gh release delete $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --yes
+          }

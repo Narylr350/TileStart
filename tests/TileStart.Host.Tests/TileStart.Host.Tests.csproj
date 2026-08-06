@@ -119,6 +119,9 @@
     <Content Include="..\..\src\TileStart.Injector\main.cpp"
              Link="TestData\Native\InjectorMain.cpp"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\.github\workflows\release.yml"
+             Link="TestData\Automation\release.yml"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\.github\workflows\local-hotfix.yml"
              Link="TestData\Automation\local-hotfix.yml"
              CopyToOutputDirectory="PreserveNewest" />
