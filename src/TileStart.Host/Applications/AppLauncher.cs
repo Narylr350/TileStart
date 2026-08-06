@@ -12,16 +12,17 @@ public static class AppLauncher
     private static readonly string[] DirectLaunchExtensions =
         [".exe", ".lnk", ".appref-ms", ".bat", ".cmd", ".url"];
 
-    private static readonly string[] TargetDirectoryWorkingExtensions =
-        [".exe", ".bat", ".cmd", ".ps1"];
-
-    public static bool Launch(AppEntry app) =>
-        Launch(app.Name, CreateShellTargetStartInfo(app.LaunchTarget));
+    public static bool Launch(AppEntry app)
+    {
+        var startInfo = CreateShellTargetStartInfo(app.LaunchTarget);
+        ApplyWorkingDirectory(startInfo, ResolveTargetWorkingDirectory(app.LaunchTarget));
+        return Launch(app.Name, startInfo);
+    }
 
     public static bool Launch(TileItem tile) => Launch(tile.Name, CreateStartInfo(tile));
 
     public static bool LaunchShellTarget(string name, string target) =>
-        Launch(name, new ProcessStartInfo(target) { UseShellExecute = true });
+        Launch(name, CreateShellTargetStartInfo(target));
 
     public static bool LaunchProcess(string name, string fileName, string arguments) =>
         Launch(name, new ProcessStartInfo(fileName)
@@ -89,24 +90,22 @@ public static class AppLauncher
 
     internal static ProcessStartInfo CreateStartInfo(TileItem tile, bool forceAdministrator = false)
     {
+        var runtimeTarget = LaunchTargetResolver.ResolveExistingTarget(tile.LaunchTarget);
         var isPowerShellScript =
-            Path.GetExtension(tile.LaunchTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);
+            Path.GetExtension(runtimeTarget).Equals(".ps1", StringComparison.OrdinalIgnoreCase);
         var startInfo = isPowerShellScript
             ? new ProcessStartInfo("powershell.exe")
             {
                 Arguments =
-                    $"-NoProfile -ExecutionPolicy Bypass -File \"{tile.LaunchTarget}\"{AppendArguments(tile.Arguments)}",
+                    $"-NoProfile -ExecutionPolicy Bypass -File \"{runtimeTarget}\"{AppendArguments(tile.Arguments)}",
                 UseShellExecute = true,
             }
-            : CreateShellTargetStartInfo(tile.LaunchTarget, tile.Arguments);
+            : CreateShellTargetStartInfo(runtimeTarget, tile.Arguments);
 
         var workingDirectory = !string.IsNullOrWhiteSpace(tile.WorkingDirectory)
             ? tile.WorkingDirectory
             : ResolveTargetWorkingDirectory(tile.LaunchTarget);
-        if (!string.IsNullOrWhiteSpace(workingDirectory))
-        {
-            startInfo.WorkingDirectory = workingDirectory;
-        }
+        ApplyWorkingDirectory(startInfo, workingDirectory);
 
         if (tile.RunAsAdministrator || forceAdministrator)
         {
@@ -116,25 +115,15 @@ public static class AppLauncher
         return startInfo;
     }
 
-    internal static string ResolveTargetWorkingDirectory(string target)
-    {
-        var extension = Path.GetExtension(target);
-        if (!TargetDirectoryWorkingExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase)
-            || !Path.IsPathFullyQualified(target))
-        {
-            return string.Empty;
-        }
-
-        // 便携程序和脚本经常按当前目录读取同目录配置；工作目录留空时不能让它们
-        // 继承 TileStart Host 的安装目录。快捷方式仍交给 Shell 使用自身的“起始位置”。
-        return Path.GetDirectoryName(target) ?? string.Empty;
-    }
+    internal static string ResolveTargetWorkingDirectory(string target) =>
+        LaunchTargetResolver.ResolveDefaultWorkingDirectory(target);
 
     internal static ProcessStartInfo CreateShellTargetStartInfo(
         string target,
         string arguments = "",
         bool? hasFileAssociation = null)
     {
+        target = LaunchTargetResolver.ResolveExistingTarget(target);
         if (Directory.Exists(target))
         {
             return new ProcessStartInfo("explorer.exe")
@@ -154,6 +143,14 @@ public static class AppLauncher
             Arguments = arguments,
             UseShellExecute = true,
         };
+    }
+
+    private static void ApplyWorkingDirectory(ProcessStartInfo startInfo, string workingDirectory)
+    {
+        if (!string.IsNullOrWhiteSpace(workingDirectory))
+        {
+            startInfo.WorkingDirectory = workingDirectory;
+        }
     }
 
     private static bool ShouldOpenFileLocation(string path, bool? hasFileAssociation)

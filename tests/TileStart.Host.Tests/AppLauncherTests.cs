@@ -53,14 +53,70 @@ public sealed class AppLauncherTests
         Assert.Equal(expectedWorkingDirectory, startInfo.WorkingDirectory);
     }
 
+    [Fact]
+    public void CreateStartInfoUnwrapsAnExistingAppsFolderExecutableAtRuntime()
+    {
+        var directory = Directory.CreateTempSubdirectory("TileStart-AppsFolder-");
+        var executable = Path.Combine(directory.FullName, "Tool.exe");
+        File.WriteAllText(executable, string.Empty);
+        var originalTarget = $@"shell:AppsFolder\{executable}";
+        var tile = new TileItem
+        {
+            LaunchTarget = originalTarget,
+            Arguments = "--portable --profile default",
+        };
+
+        try
+        {
+            var startInfo = AppLauncher.CreateStartInfo(tile);
+
+            Assert.Equal(executable, startInfo.FileName);
+            Assert.Equal(tile.Arguments, startInfo.Arguments);
+            Assert.Equal(directory.FullName, startInfo.WorkingDirectory);
+            Assert.Equal(originalTarget, tile.LaunchTarget);
+        }
+        finally
+        {
+            directory.Delete(true);
+        }
+    }
+
+    [Fact]
+    public void CreateStartInfoUnwrapsAnExistingAppsFolderPowerShellScriptAtRuntime()
+    {
+        var directory = Directory.CreateTempSubdirectory("TileStart-AppsFolder-");
+        var script = Path.Combine(directory.FullName, "launch.ps1");
+        File.WriteAllText(script, "Write-Output TileStart");
+        var tile = new TileItem
+        {
+            LaunchTarget = $@"shell:AppsFolder\{script}",
+            Arguments = "-NoExit",
+        };
+
+        try
+        {
+            var startInfo = AppLauncher.CreateStartInfo(tile);
+
+            Assert.Equal("powershell.exe", startInfo.FileName);
+            Assert.Equal($"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -NoExit", startInfo.Arguments);
+            Assert.Equal(directory.FullName, startInfo.WorkingDirectory);
+        }
+        finally
+        {
+            directory.Delete(true);
+        }
+    }
+
     [Theory]
     [InlineData(@"C:\Start Menu\Tool.lnk")]
     [InlineData("cmd.exe")]
     [InlineData(@"shell:AppsFolder\Package!App")]
+    [InlineData(@"shell:AppsFolder\::{645FF040-5081-101B-9F08-00AA002F954E}")]
     public void CreateStartInfoDoesNotOverrideShellManagedWorkingDirectories(string target)
     {
         var startInfo = AppLauncher.CreateStartInfo(new TileItem { LaunchTarget = target });
 
+        Assert.Equal(target, startInfo.FileName);
         Assert.Empty(startInfo.WorkingDirectory);
     }
 

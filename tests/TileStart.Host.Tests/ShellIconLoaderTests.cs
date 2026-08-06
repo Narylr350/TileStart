@@ -20,6 +20,27 @@ public sealed class ShellIconLoaderTests
     }
 
     [Fact]
+    public void LoadUnwrapsAnExistingAppsFolderExecutable()
+    {
+        var target = Path.Combine(Environment.SystemDirectory, "notepad.exe");
+
+        var icon = ShellIconLoader.Load($@"shell:AppsFolder\{target}");
+
+        var bitmap = Assert.IsAssignableFrom<BitmapSource>(icon);
+        Assert.True(bitmap.IsFrozen);
+        Assert.True(bitmap.PixelWidth >= 32);
+        Assert.True(bitmap.PixelHeight >= 32);
+    }
+
+    [Fact]
+    public void LoadKeepsShellNamespaceTargetsWhenTheyHaveNoFileSystemPath()
+    {
+        var icon = ShellIconLoader.Load(@"shell:AppsFolder\::{645FF040-5081-101B-9F08-00AA002F954E}");
+
+        Assert.NotNull(icon);
+    }
+
+    [Fact]
     public void LoadReturnsNullForUnknownShellItem()
     {
         Assert.Null(ShellIconLoader.Load("TileStart.Does.Not.Exist.7D9D3D48"));

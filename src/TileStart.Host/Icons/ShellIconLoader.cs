@@ -57,7 +57,7 @@ public static class ShellIconLoader
         nint itemIdList = 0;
         try
         {
-            if (SHParseDisplayName(displayName, 0, out itemIdList, 0, out _) != 0 || itemIdList == 0)
+            if (!TryParseDisplayName(displayName, out itemIdList))
             {
                 return null;
             }
@@ -135,7 +135,8 @@ public static class ShellIconLoader
         private object? _shell;
         private bool _shellCreationAttempted;
 
-        public ImageSource? Load(string displayName) => LoadCore(displayName, this);
+        public ImageSource? Load(string displayName) =>
+            LoadCore(LaunchTargetResolver.ResolveExistingTarget(displayName), this);
 
         public void Dispose()
         {
@@ -208,6 +209,36 @@ public static class ShellIconLoader
             Marshal.FinalReleaseComObject(value);
         }
     }
+
+    private static bool TryParseDisplayName(string displayName, out nint itemIdList)
+    {
+        itemIdList = 0;
+        if (TryParseDisplayNameCore(displayName, ref itemIdList))
+        {
+            return true;
+        }
+
+        if (itemIdList != 0)
+        {
+            Marshal.FreeCoTaskMem(itemIdList);
+            itemIdList = 0;
+        }
+
+        const string appsFolderPrefix = @"shell:AppsFolder\";
+        if (!displayName.StartsWith(appsFolderPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var nestedTarget = displayName[appsFolderPrefix.Length..];
+        // AppsFolder 包装的 Shell namespace（例如回收站）需要用内层 PIDL 语法解析；
+        // AUMID/普通 Shell 别名不能剥掉前缀，否则会失去应用激活上下文。
+        return nestedTarget.StartsWith("::", StringComparison.Ordinal)
+               && TryParseDisplayNameCore(nestedTarget, ref itemIdList);
+    }
+
+    private static bool TryParseDisplayNameCore(string displayName, ref nint itemIdList) =>
+        SHParseDisplayName(displayName, 0, out itemIdList, 0, out _) == 0 && itemIdList != 0;
 
     private static ImageSource? LoadShellItemImage(nint itemIdList, int size)
     {
