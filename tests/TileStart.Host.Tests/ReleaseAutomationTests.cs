@@ -24,8 +24,8 @@ public sealed class ReleaseAutomationTests
     {
         var workflow = ReadWorkflow();
 
-        Assert.Contains("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", workflow);
-        Assert.Contains("actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9", workflow);
+        Assert.Contains("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1", workflow);
+        Assert.Contains("actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68", workflow);
         Assert.Contains("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", workflow);
         Assert.Contains("actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093", workflow);
         Assert.DoesNotContain("actions/checkout@v", workflow);
