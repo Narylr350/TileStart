@@ -736,7 +736,11 @@ public sealed class DarkThemeVisualTests
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == "经典直角、Acrylic 模糊与传统控件层级");
         Assert.Contains(document.Descendants(presentation + "TextBlock"),
-            element => (string?)element.Attribute("Text") == "Fluent 圆角、Acrylic 模糊与现代控件层级");
+            element => (string?)element.Attribute("Text") == "Fluent 圆角、Acrylic 模糊与现代控件层级（仅支持 Windows 11）");
+        Assert.Contains(document.Descendants(presentation + "TextBlock"),
+            element => ((string?)element.Attribute("Text"))?.StartsWith(
+                "Windows 10 上使用 Windows 11 风格不受支持",
+                StringComparison.Ordinal) == true);
         Assert.NotNull(document.Descendants(presentation + "RadioButton")
             .Single(element => (string?)element.Attribute(x + "Name") == "SystemColorChoice"));
         Assert.NotNull(document.Descendants(presentation + "RadioButton")

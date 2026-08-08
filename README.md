@@ -27,7 +27,7 @@ TileStart 在 Windows 11 上重新实现 Windows 10 的磁贴开始菜单：保�
 ## 外观与主题
 
 - **Windows 10 风格**：按 Windows 10 22H2 原版开始菜单校准应用列表、导航层、磁贴材质、文件夹、右键菜单与 Light / Dark 状态。
-- **Windows 11 风格**：保留同一套 Win10 布局和交互，只替换字体、材质、颜色、描边、圆角与控件状态；使用 4 DIP 磁贴圆角、Subtle Fill、Popup Acrylic、系统 Acrylic 对话框和现代窗口过渡。
+- **Windows 11 风格**：保留同一套 Win10 布局和交互，只替换字体、材质、颜色、描边、圆角与控件状态；使用 4 DIP 磁贴圆角、Subtle Fill、Popup Acrylic、系统 Acrylic 对话框和现代窗口过渡。该风格仅支持 Windows 11，在 Windows 10 上使用不受支持。
 - 界面风格与颜色模式分别设置，可选择 Windows 10 / 11 风格以及随系统 / 浅色 / 深色模式。
 - 支持自定义磁贴背景色、文字色、图标大小与位置、标题显示、六种标题位置和背景缩放；静态图片与 GIF 均可作为磁贴背景。
 - 磁贴设置提供实时预览、一键恢复默认外观，以及“应用”和“保存并关闭”两种提交方式。
@@ -124,7 +124,7 @@ ShellHook.log        Explorer Hook 诊断日志
 
 ## 兼容性
 
-TileStart 面向 Windows 11。当前主要开发在 Windows 11 上进行，同时保留 Windows 10 适配。
+TileStart 面向 Windows 11，同时保留 Windows 10 适配。Windows 10 仅支持 Windows 10 风格；设置中仍可选择 Windows 11 风格，但该组合不受支持，圆角、模糊和弹出菜单材质可能异常。
 
 ## 已知问题与限制
 

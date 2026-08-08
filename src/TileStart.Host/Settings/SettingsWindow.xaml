@@ -175,14 +175,15 @@
                                 <TextBlock Margin="0,4,0,0"
                                            Foreground="{StaticResource TileStartTextSecondaryBrush}"
                                            FontSize="11"
-                                           Text="Fluent 圆角、Acrylic 模糊与现代控件层级" />
+                                           Text="Fluent 圆角、Acrylic 模糊与现代控件层级（仅支持 Windows 11）" />
                             </StackPanel>
                         </RadioButton>
                     </Grid>
                     <TextBlock Margin="2,8,0,0"
                                Foreground="{StaticResource TileStartTextTertiaryBrush}"
                                FontSize="11"
-                               Text="切换界面风格后 TileStart 会自动重启。" />
+                               TextWrapping="Wrap"
+                               Text="Windows 10 上使用 Windows 11 风格不受支持，圆角、模糊和弹出菜单材质可能异常。切换界面风格后 TileStart 会自动重启。" />
 
                     <TextBlock Margin="0,22,0,10"
                                FontSize="15"

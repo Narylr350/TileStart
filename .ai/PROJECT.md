@@ -51,6 +51,7 @@
 - 不读取 Windows 原生 Live Tile 数据，不做天气和新闻等在线磁贴。
 - 不实现独立搜索结果页；开始菜单中的搜索输入转交 Windows Search。
 - 不复刻或引入 Win11 原生开始菜单的 Pinned、Recommended、分类或分页布局；Win11 只作为现有 Win10 UI/UX 的视觉主题。
+- 不兼容 Windows 10 上使用 Win11 主题；该选项仍可选择，但圆角、模糊和 Popup 材质只在 Windows 11 上受支持。
 - 不做云同步、账号、插件市场、后台自动更新和非 Windows 平台版本。
 
 ## Seed Tasks
