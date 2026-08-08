@@ -16,6 +16,13 @@
 - 用户提供录屏或超大截图时，主代理禁止直接打开原尺寸画面，避免大图解码和上下文处理造成卡顿；先读取文件元数据，再将原始分辨率关键帧或原图的视觉观察直接交给单个子代理，主代理只整合结构化观察结论。除非用户明确要求，不降低子代理查看材料的清晰度，也不允许该子代理再次委派视觉分析。
 - 测试完成后关闭本轮启动的软件进程。
 
+## Win10 虚拟机远程验证
+
+- Win10 22H2 虚拟机固定通过 SSH 访问：主机 `192.168.3.128`，用户 `Narylr`，密钥 `%USERPROFILE%\.ssh\tilestart_win10_vm_ed25519`；当前已验证系统 build 为 `19045.6466`。
+- SSH 服务进程不在用户当前桌面 Session。发送开发版、读取日志和执行普通命令可以直接使用 SSH；启动或关闭 TileStart GUI 必须投递到当前交互桌面 Session，不能直接从 SSH 后台运行 `TileStart.Host.exe`。
+- VM 已配置交互式计划任务 `\TileStart-Dev-Shutdown` 和 `\TileStart-Dev`：前者关闭当前桌面 Session 中的 TileStart Host，后者在该桌面 Session 启动已发送的开发版。Win10 兼容改动完成构建后，默认通过 SCP 发送开发版并依次运行这两个任务，不再要求用户手动安装开发安装包。
+- VM 的 TileStart 日志位于 `C:\Users\Narylr\AppData\Local\TileStart\TileStart.log`，崩溃转储位于 `C:\Users\Narylr\AppData\Local\CrashDumps`。出现 Win10 专属异常时先通过 SSH 读取这些证据，再判断是否改代码。
+
 ## 逆向研究工具
 
 - 本机 Ghidra 逆向工具目录为 `D:\Narylr\tools\Ghidra`；本项目需要 Ghidra、符号或现有逆向辅助工具时先检查该目录。
